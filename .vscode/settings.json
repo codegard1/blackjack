@@ -1,0 +1,10 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+    "files.associations": {
+        "*.js": "javascriptreact"
+    },
+    // "editor.formatOnSave": true,
+    "flow.useNPMPackagedFlow": true,
+    "javascript.validate.enable": false,
+    "javascript.format.enable": false
+}
