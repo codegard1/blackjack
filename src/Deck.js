@@ -1,4 +1,7 @@
 import React, { Component } from "react";
+import * as T from "proptypes";
+
+import { Card } from "./Card";
 
 export class Deck extends Component {
   constructor(props) {
@@ -12,87 +15,58 @@ export class Deck extends Component {
     var suits = ["Hearts", "Spades", "Clubs", "Diamonds"];
     var deck0 = suits.map(function(value, index) {
       return [
-        { suit: value, pointValue: 1, title: "Ace" },
-        { suit: value, pointValue: 1, title: "One" },
-        { suit: value, pointValue: 1, title: "Two" },
-        { suit: value, pointValue: 1, title: "Three" },
-        { suit: value, pointValue: 1, title: "Four" },
-        { suit: value, pointValue: 1, title: "Five" },
-        { suit: value, pointValue: 1, title: "Six" },
-        { suit: value, pointValue: 1, title: "Seven" },
-        { suit: value, pointValue: 1, title: "Eight" },
-        { suit: value, pointValue: 1, title: "Nine" },
-        { suit: value, pointValue: 10, title: "Ten" },
-        { suit: value, pointValue: 10, title: "Jack" },
-        { suit: value, pointValue: 10, title: "Queen" },
-        { suit: value, pointValue: 10, title: "King" }
+        { suit: value, pointValue: 1, i: "A", title: "Ace" },
+        { suit: value, pointValue: 1, i: "2", title: "Two" },
+        { suit: value, pointValue: 1, i: "3", title: "Three" },
+        { suit: value, pointValue: 1, i: "4", title: "Four" },
+        { suit: value, pointValue: 1, i: "5", title: "Five" },
+        { suit: value, pointValue: 1, i: "6", title: "Six" },
+        { suit: value, pointValue: 1, i: "7", title: "Seven" },
+        { suit: value, pointValue: 1, i: "8", title: "Eight" },
+        { suit: value, pointValue: 1, i: "9", title: "Nine" },
+        { suit: value, pointValue: 10, i: "10", title: "Ten" },
+        { suit: value, pointValue: 10, i: "J", title: "Jack" },
+        { suit: value, pointValue: 10, i: "Q", title: "Queen" },
+        { suit: value, pointValue: 10, i: "K", title: "King" }
       ];
     });
     var deck = [];
-    deck0[0].forEach(function(item) {
+    // Hearts
+    deck0[0].forEach(item => {
+      item.suitClass = item.suit.toLowerCase();
       deck.push(item);
     });
-    deck0[1].forEach(function(item) {
+    // Spades
+    deck0[1].forEach(item => {
+      item.suitClass = item.suit.toLowerCase();
       deck.push(item);
     });
-    deck0[2].forEach(function(item) {
+    // Clubs
+    deck0[2].forEach(item => {
+      item.suitClass = item.suit.toLowerCase();
       deck.push(item);
     });
-    deck0[3].forEach(function(item) {
+    // Diamonds
+    deck0[3].forEach(item => {
+      item.suitClass = item.suit.toLowerCase();
       deck.push(item);
     });
     this.setState({ cards: deck });
   }
 
-  _shuffle() {
-    var oldState = this.state;
-
-    // var deck =
-  }
+  // _shuffle() {
+  //   var oldState = this.state;
+  // }
 
   render() {
-    var cardsArray = this.state.cards.map(function(card, index) {
-      <Card
-        key={index}
-        suit={card.suit}
-        title={card.title}
-        pointValue={card.pointValue}
-      />;
+    const cardsArray = this.state.cards.map(function(card, index) {
+      return <Card suitClass={card.suitClass} key={index} {...card} />;
     });
-    var divStyle = {
-      display: "flex",
-      "flex-direction": "row",
-      padding: "2em",
-      border: "1px solid salmon"
-    };
-    return <div style={divStyle}>{cardsArray}</div>;
-  }
-}
 
-class Card extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      suit: "",
-      title: "",
-      pointValue: 0
-    };
-  }
-
-  componentWillMount() {
-    this.setState({
-      suit: this.props.suit,
-      title: this.props.title,
-      pointValue: this.props.pointValue
-    });
-  }
-
-  render() {
-    var divStyle = {
-      display: "inline-block",
-      border: "1px solid black",
-      padding: "1em"
-    };
-    return <div style={divStyle}>{this.props.title} of {this.props.suit}</div>;
+    return (
+      <div className="deck">
+        {cardsArray}
+      </div>
+    );
   }
 }
