@@ -1,26 +1,29 @@
 import React, { Component } from "react";
 import Masonry from "react-masonry-component";
+import Shuffle from 'shuffle';
 
 import { Card } from "./Card";
 
 class Gallery extends Component {
   render() {
     const masonryOptions = {
-      transitionDuration: 10,
+      transitionDuration: "0.5s"
     };
 
     const childElements = this.props.elements.map(function(element, index) {
       return (
-        <li className="image-element-class">
-          <Card suitClass={element.suitClass} key={index} {...element} />
-        </li>
+        <Card
+          suitClass={element.suitClass}
+          key={element.suitClass + "-" + element.title}
+          {...element}
+        />
       );
     });
 
     return (
       <Masonry
         className={"deck"} // default ''
-        elementType={"ul"} // default 'div'
+        elementType={"div"}
         options={masonryOptions} // default {}
         disableImagesLoaded={false} // default false
         updateOnEachImageLoad={false} // default false and works only if disableImagesLoaded is false
@@ -82,14 +85,15 @@ export class Deck extends Component {
     this.setState({ cards: deck });
   }
 
-  // _shuffle() {
-  //   var oldState = this.state;
-  // }
+  _shuffle() {
+    var oldState = this.state;
+
+  }
 
   render() {
-    const cardsArray = this.state.cards.map(function(card, index) {
-      return <Card suitClass={card.suitClass} key={index} {...card} />;
-    });
+    // const cardsArray = this.state.cards.map(function(card, index) {
+    //   return <Card suitClass={card.suitClass} key={card.suitClass + "-" + card.title} {...card} />;
+    // });
 
     return (
       <div id="DeckContainer">
