@@ -1,7 +1,35 @@
 import React, { Component } from "react";
-import * as T from "proptypes";
+import Masonry from "react-masonry-component";
 
 import { Card } from "./Card";
+
+class Gallery extends Component {
+  render() {
+    const masonryOptions = {
+      transitionDuration: 10,
+    };
+
+    const childElements = this.props.elements.map(function(element, index) {
+      return (
+        <li className="image-element-class">
+          <Card suitClass={element.suitClass} key={index} {...element} />
+        </li>
+      );
+    });
+
+    return (
+      <Masonry
+        className={"deck"} // default ''
+        elementType={"ul"} // default 'div'
+        options={masonryOptions} // default {}
+        disableImagesLoaded={false} // default false
+        updateOnEachImageLoad={false} // default false and works only if disableImagesLoaded is false
+      >
+        {childElements}
+      </Masonry>
+    );
+  }
+}
 
 export class Deck extends Component {
   constructor(props) {
@@ -64,8 +92,9 @@ export class Deck extends Component {
     });
 
     return (
-      <div className="deck">
-        {cardsArray}
+      <div id="DeckContainer">
+        {/*{cardsArray}*/}
+        <Gallery elements={this.state.cards} />
       </div>
     );
   }
