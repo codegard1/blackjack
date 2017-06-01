@@ -13,19 +13,19 @@ export class ControlPanel extends Component {
           Reset
         </DefaultButton>
         <DefaultButton onClick={this.props.draw}>
-          draw
+          Draw
         </DefaultButton>
         <DefaultButton onClick={this.props.drawFromBottomOfDeck}>
-          drawFromBottomOfDeck
+          Draw from Bottom of Deck
         </DefaultButton>
         <DefaultButton onClick={this.props.drawRandom}>
-          drawRandom
+          Draw Random
         </DefaultButton>
         <DefaultButton onClick={this.props.putOnTopOfDeck}>
-          putOnTopOfDeck
+          Put on Top of Deck
         </DefaultButton>
         <DefaultButton onClick={this.props.putOnBottomOfDeck}>
-          putOnBottomOfDeck
+          Put on Bottom of Deck
         </DefaultButton>
       </div>
     );

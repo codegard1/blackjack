@@ -31,6 +31,3 @@
   color: white;
 }
 
-.hearts:before {
-  content: '&hearts;';
-}
