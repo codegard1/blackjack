@@ -10,16 +10,14 @@
 #DeckContainer {
   display: block;
   box-sizing: content-box;
-  width: 600px;
-  padding: 100px;
-}
-
-.deck {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
+  width: auto;
   padding: 2em;
   border: 1px solid salmon;
+}
+
+#ControlPanel {
+  padding: 2em;
+  border: 1px solid green;
 }
 
 .hearts,
