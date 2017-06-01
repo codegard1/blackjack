@@ -1,14 +1,19 @@
 div.card {
   display: block;
+  box-sizing: content-box;
   height: 100px;
   width: 65px;
-  padding: 0.5em;
+  padding: 0.25em;
   overflow: hidden;
+  background-color: ghostwhite;
+  cursor: pointer;
+  margin: 2px;
+  box-shadow: 2px 2px 2px rgba(25, 25, 25, 0.3);
   border-radius: 5px;
-  border-right: 1px solid rgba(25,25,25,0.3);
-  border-bottom: 1px solid rgba(25,25,25,0.3);
-  border-top: 1px solid rgba(25,25,25,0.1);
-  border-left: 1px solid rgba(25,25,25,0.1);
+  border-right: 1px solid rgba(25, 25, 25, 0.3);
+  border-bottom: 1px solid rgba(25, 25, 25, 0.3);
+  border-top: 1px solid rgba(25, 25, 25, 0.1);
+  border-left: 1px solid rgba(25, 25, 25, 0.1);
 }
 
 #DeckContainer {
@@ -25,26 +30,26 @@ div.card {
 }
 
 #ControlPanel #button-container {
-  border:1px solid #333;
-}
-
-
-div.card {
-  background-color: ghostwhite;
+  border: 1px solid #333;
 }
 
 div.card.hearts span.card-title,
 div.card.diamonds span.card-title {
-color: salmon;
+  color: salmon;
 }
+
 div.card.spades span.card-title,
 div.card.clubs span.card-title {
-color: #333;
+  color: #333;
 }
 
 span.card-title {
-  display:inline-block;
-  position:relative;
-  left:0;
-  top:0;
+  display: inline-block;
+  position: relative;
+  left: 0;
+  top: 0;
+}
+
+div.card.selected {
+  border: 2px solid blue;
 }

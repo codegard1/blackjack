@@ -28,6 +28,9 @@ export class ControlPanel extends Component {
           <DefaultButton onClick={this.props.putOnBottomOfDeck}>
             Put on Bottom of Deck
           </DefaultButton>
+          <DefaultButton onClick={this.props.deal}>
+            Deal
+          </DefaultButton>
         </div>
       </div>
     );
@@ -41,7 +44,8 @@ ControlPanel.propTypes = {
   drawFromBottomOfDeck: T.func,
   draw: T.func,
   reset: T.func,
-  shuffle: T.func
+  shuffle: T.func,
+  deal: T.func
 };
 
 export default ControlPanel;

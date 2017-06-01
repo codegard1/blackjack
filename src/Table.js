@@ -8,6 +8,8 @@ export class Table extends Component {
     super(props);
     this.state = {
       deck: undefined,
+      drawn: [],
+      selected: [],
       players: ["Player1"]
     };
 
@@ -18,14 +20,15 @@ export class Table extends Component {
     this._draw = this._draw.bind(this);
     this._reset = this._reset.bind(this);
     this._shuffle = this._shuffle.bind(this);
+    this._deal = this._deal.bind(this);
+    this._select = this._select.bind(this);
+    this._deselect = this._deselect.bind(this);
   }
 
   componentWillMount() {
     const deck = Shuffle.shuffle();
     console.log("deck:", deck);
-    this.setState({
-      deck: deck
-    });
+    this.setState({ deck });
   }
 
   _shuffle() {
@@ -37,28 +40,36 @@ export class Table extends Component {
 
   _reset() {
     const deck = this.state.deck;
+    const drawn = [];
     deck.reset(); //sets the deck back to a full 52-card deck, unshuffled
-    this.setState({ deck: deck });
+    this.setState({ deck, drawn });
   }
+
   _draw(num) {
     const deck = this.state.deck;
+    const drawn = this.state.drawn;
     const ret = deck.draw(1);
+    drawn.push(ret);
     console.log("draw:", ret);
-    this.setState({ deck });
+    this.setState({ deck, drawn });
   }
 
   _drawFromBottomOfDeck(num) {
     const deck = this.state.deck;
+    const drawn = this.state.drawn;
     const ret = deck.drawFromBottomOfDeck(1);
+    drawn.push(ret);
     console.log("drawFromBottomOfDeck:", ret);
-    this.setState({ deck });
+    this.setState({ deck, drawn });
   }
 
   _drawRandom(num) {
     const deck = this.state.deck;
+    const drawn = this.state.drawn;
     const ret = deck.drawRandom(1);
+    drawn.push(ret);
     console.log("drawRandom:", ret);
-    this.setState({ deck });
+    this.setState({ deck, drawn });
   }
 
   _putOnTopOfDeck(cards) {
@@ -78,10 +89,32 @@ export class Table extends Component {
     this.setState({ deck: deck });
   }
 
+  _select(card) {
+    const selected = this.state.selected;
+    selected.push(card);
+    this.setState({ selected });
+  }
+
+  _deselect() {
+    const selected = this.state.selected;
+    this.setState({ selected });
+  }
+
   render() {
     return (
       <div id="Table">
-        <DeckContainer deck={this.state.deck} />
+        <DeckContainer
+          deck={this.state.deck.cards}
+          title="Deck"
+          select={this._select}
+          deselect={this._deselect}
+        />
+        <DeckContainer
+          deck={this.state.drawn}
+          title="Drawn"
+          select={this._select}
+          deselect={this._deselect}
+        />
         <ControlPanel
           shuffle={this._shuffle}
           putOnBottomOfDeck={this._putOnBottomOfDeck}
@@ -90,6 +123,7 @@ export class Table extends Component {
           drawFromBottomOfDeck={this._drawFromBottomOfDeck}
           draw={this._draw}
           reset={this._reset}
+          deal={this._deal}
         />
       </div>
     );
