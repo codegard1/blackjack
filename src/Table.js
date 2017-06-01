@@ -42,24 +42,32 @@ export class Table extends Component {
   }
   _draw(num) {
     const deck = this.state.deck;
-    const ret = deck.draw(num);
+    const ret = deck.draw(1);
     console.log("draw:", ret);
     this.setState({ deck });
   }
 
   _drawFromBottomOfDeck(num) {
-    console.log("drawFromBottomOfDeck:");
+    const deck = this.state.deck;
+    const ret = deck.drawFromBottomOfDeck(1);
+    console.log("drawFromBottomOfDeck:", ret);
+    this.setState({ deck });
   }
 
   _drawRandom(num) {
-    console.log("drawRandom:");
+    const deck = this.state.deck;
+    const ret = deck.drawRandom(1);
+    console.log("drawRandom:", ret);
+    this.setState({ deck });
   }
 
   _putOnTopOfDeck(cards) {
+    const deck = this.state.deck;
     console.log("putOnTopOfDeck:");
   }
 
   _putOnBottomOfDeck(cards) {
+    const deck = this.state.deck;
     console.log("putOnBottomOfDeck:");
   }
 
@@ -74,7 +82,15 @@ export class Table extends Component {
     return (
       <div id="Table">
         <DeckContainer deck={this.state.deck} />
-        <ControlPanel shuffle={this._shuffle} />
+        <ControlPanel
+          shuffle={this._shuffle}
+          putOnBottomOfDeck={this._putOnBottomOfDeck}
+          putOnTopOfDeck={this._putOnTopOfDeck}
+          drawRandom={this._drawRandom}
+          drawFromBottomOfDeck={this._drawFromBottomOfDeck}
+          draw={this._draw}
+          reset={this._reset}
+        />
       </div>
     );
   }

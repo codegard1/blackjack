@@ -9,6 +9,24 @@ export class ControlPanel extends Component {
         <DefaultButton onClick={this.props.shuffle}>
           Shuffle
         </DefaultButton>
+        <DefaultButton onClick={this.props.reset}>
+          Reset
+        </DefaultButton>
+        <DefaultButton onClick={this.props.draw}>
+          draw
+        </DefaultButton>
+        <DefaultButton onClick={this.props.drawFromBottomOfDeck}>
+          drawFromBottomOfDeck
+        </DefaultButton>
+        <DefaultButton onClick={this.props.drawRandom}>
+          drawRandom
+        </DefaultButton>
+        <DefaultButton onClick={this.props.putOnTopOfDeck}>
+          putOnTopOfDeck
+        </DefaultButton>
+        <DefaultButton onClick={this.props.putOnBottomOfDeck}>
+          putOnBottomOfDeck
+        </DefaultButton>
       </div>
     );
   }
