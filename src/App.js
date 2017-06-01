@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import "./App.css";
+import "office-ui-fabric-react/dist/css/fabric.min.css";
 
 import { Table } from "./Table";
 

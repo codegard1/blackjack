@@ -6,31 +6,28 @@ import * as T from "prop-types";
 export class CardContainer extends Component {
   render() {
     const suitClass = this.props.suit.toLowerCase() + "s";
-    let suitIcon = "";
+    let cardTitle = this.props.sort + " ";
     switch (this.props.suit) {
       case "Heart":
-        suitIcon = "&hearts;";
+        cardTitle += "\u2665";
         break;
 
-      case "Heart":
-        suitIcon = "&hearts;";
+      case "Spade":
+        cardTitle += "\u2660";
         break;
 
-      case "Heart":
-        suitIcon = "&hearts;";
+      case "Diamond":
+        cardTitle += "\u2666";
         break;
 
-      case "Heart":
-        suitIcon = "&hearts;";
+      case "Club":
+        cardTitle += "\u2663";
         break;
-
-      default:
-        suitIcon = "&hearts;";
     }
     return (
       <div className={"card " + suitClass}>
-        <span>{suitIcon}</span>
-        <p>{this.props.description} of {this.props.suit}</p>
+        <span className="ms-font-xl card-title">{cardTitle}</span>
+        <p className="ms-font-m">{this.props.description} of {this.props.suit + 's'}</p>
       </div>
     );
   }
