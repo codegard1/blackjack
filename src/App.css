@@ -16,13 +16,18 @@ div.card {
   box-sizing: content-box;
   width: auto;
   padding: 2em;
-  border: 1px solid salmon;
+  border-bottom: 3px solid blueviolet;
 }
 
 #ControlPanel {
   padding: 2em;
   border: 1px solid green;
 }
+
+#ControlPanel #button-container {
+  border:1px solid #333;
+}
+
 
 div.card {
   background-color: ghostwhite;

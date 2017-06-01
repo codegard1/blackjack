@@ -6,27 +6,29 @@ export class ControlPanel extends Component {
   render() {
     return (
       <div id="ControlPanel">
-        <DefaultButton onClick={this.props.shuffle}>
-          Shuffle
-        </DefaultButton>
-        <DefaultButton onClick={this.props.reset}>
-          Reset
-        </DefaultButton>
-        <DefaultButton onClick={this.props.draw}>
-          Draw
-        </DefaultButton>
-        <DefaultButton onClick={this.props.drawFromBottomOfDeck}>
-          Draw from Bottom of Deck
-        </DefaultButton>
-        <DefaultButton onClick={this.props.drawRandom}>
-          Draw Random
-        </DefaultButton>
-        <DefaultButton onClick={this.props.putOnTopOfDeck}>
-          Put on Top of Deck
-        </DefaultButton>
-        <DefaultButton onClick={this.props.putOnBottomOfDeck}>
-          Put on Bottom of Deck
-        </DefaultButton>
+        <div id="button-container">
+          <DefaultButton onClick={this.props.shuffle}>
+            Shuffle
+          </DefaultButton>
+          <DefaultButton onClick={this.props.reset}>
+            Reset
+          </DefaultButton>
+          <DefaultButton onClick={this.props.draw}>
+            Draw
+          </DefaultButton>
+          <DefaultButton onClick={this.props.drawFromBottomOfDeck}>
+            Draw from Bottom of Deck
+          </DefaultButton>
+          <DefaultButton onClick={this.props.drawRandom}>
+            Draw Random
+          </DefaultButton>
+          <DefaultButton onClick={this.props.putOnTopOfDeck}>
+            Put on Top of Deck
+          </DefaultButton>
+          <DefaultButton onClick={this.props.putOnBottomOfDeck}>
+            Put on Bottom of Deck
+          </DefaultButton>
+        </div>
       </div>
     );
   }
