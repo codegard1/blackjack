@@ -67,7 +67,6 @@ export class CardContainer extends Component {
         break;
 
       default:
-        cardTitle;
         break;
     }
     return (

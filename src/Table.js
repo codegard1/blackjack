@@ -10,7 +10,7 @@ export class Table extends Component {
       deck: undefined,
       drawn: [],
       selected: [],
-      players: []
+      player1: []
     };
 
     this._putOnBottomOfDeck = this._putOnBottomOfDeck.bind(this);
@@ -74,25 +74,27 @@ export class Table extends Component {
 
   _putOnTopOfDeck(cards) {
     const deck = this.state.deck;
-    console.log("putOnTopOfDeck:");
+    deck.push(cards);
+    console.log("putOnTopOfDeck:", deck);
+    this.setState({ deck });
   }
 
   _putOnBottomOfDeck(cards) {
     const deck = this.state.deck;
-    console.log("putOnBottomOfDeck:");
+    deck.unshift(cards);
+    console.log("putOnBottomOfDeck:", deck);
+    this.setState({ deck });
   }
 
-  // var deal = function(numberOfCards, arrayOfHands){
-  //   for(var i = 0; i < numberOfCards; i++)
-  //     for(var j = 0; j < arrayOfHands.length; j++)
-  //       arrayOfHands[j].push(this.cards.pop());
-  // };
-
   _deal() {
+    console.log("deal!");
     const deck = this.state.deck;
-    const players = this.state.players;
-    deck.deal(2, this.state.players);
-    this.setState({ deck, players });
+    let player1 = this.state.player1;
+    const ret = deck.draw(2);
+    player1 = ret;
+    console.log("post-deal deck:", deck);
+    console.log("post-deal player1", player1);
+    this.setState({ deck, player1 });
   }
 
   _select(card) {
@@ -116,8 +118,8 @@ export class Table extends Component {
           deselect={this._deselect}
         />
         <DeckContainer
-          deck={this.state.players}
-          title="Players"
+          deck={this.state.player1}
+          title="player1"
           select={this._select}
           deselect={this._deselect}
         />
