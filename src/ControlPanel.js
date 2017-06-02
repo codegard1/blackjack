@@ -31,6 +31,9 @@ export class ControlPanel extends Component {
           <DefaultButton onClick={this.props.deal}>
             Deal
           </DefaultButton>
+          <DefaultButton onClick={this.props.hit}>
+            Hit
+            </DefaultButton>
         </div>
       </div>
     );

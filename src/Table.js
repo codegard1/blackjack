@@ -30,6 +30,7 @@ export class Table extends Component {
     this._select = this._select.bind(this);
     this._deselect = this._deselect.bind(this);
     this._evaluateHand = this._evaluateHand.bind(this);
+    this._hit = this._hit.bind(this);
   }
 
   componentWillMount() {
@@ -64,6 +65,18 @@ export class Table extends Component {
     drawn.push(ret);
     console.log("draw:", ret);
     this.setState({ deck, drawn });
+  }
+
+  _hit() {
+    let deck = this.state.deck;
+    let drawn = this.state.drawn;
+    let player1 = this.state.player1;
+    const ret = deck.draw(1);
+    player1.hand.push(ret);
+    player1.handValue = this._evaluateHand(player1.hand);
+    drawn.push(ret);
+    console.log("post-hit:", player1.hand);
+    this.setState({ deck, drawn, player1 });
   }
 
   _drawFromBottomOfDeck(num) {
@@ -159,12 +172,11 @@ export class Table extends Component {
 
   render() {
     return (
-      <Fabric>
-        <div className="ms-Grid">
+      <div id="Table">
+        <Fabric>
+          <div className="ms-Grid">
 
-          <div id="Table">
-
-            <div className="ms-Grid-row">
+            {/*<div className="ms-Grid-row">
               <div className="ms-Grid-col ms-u-sm12">
                 <DeckContainer
                   deck={this.state.deck.cards}
@@ -173,7 +185,7 @@ export class Table extends Component {
                   deselect={this._deselect}
                 />
               </div>
-            </div>
+            </div>*/}
 
             <div className="ms-Grid-row">
               <div className="ms-Grid-col ms-u-sm12">
@@ -184,11 +196,7 @@ export class Table extends Component {
                   select={this._select}
                   deselect={this._deselect}
                 />
-              </div>
-            </div>
 
-            <div className="ms-Grid-row">
-              <div className="ms-Grid-col ms-u-sm12">
                 <ControlPanel
                   shuffle={this._shuffle}
                   putOnBottomOfDeck={this._putOnBottomOfDeck}
@@ -198,14 +206,14 @@ export class Table extends Component {
                   draw={this._draw}
                   reset={this._reset}
                   deal={this._deal}
+                  hit={this._hit}
                 />
               </div>
             </div>
 
           </div>
-        </div>
-
-      </Fabric>
+        </Fabric>
+      </div>
     );
   }
 }
