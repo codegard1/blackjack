@@ -82,11 +82,18 @@ export class Table extends Component {
     console.log("putOnBottomOfDeck:");
   }
 
+  // this.deal = function(numberOfCards, arrayOfHands){
+  //   for(var i = 0; i < numberOfCards; i++)
+  //     for(var j = 0; j < arrayOfHands.length; j++)
+  //       arrayOfHands[j].push(this.cards.pop());
+  //   this.length = this.cards.length;
+  // };
+
   _deal() {
     const deck = this.state.deck;
-    const player1 = "Chris";
-    deck.deal(1, [player1]);
-    this.setState({ deck: deck });
+    const players = this.state.players;
+    deck.deal(2, players);
+    this.setState({ deck, players });
   }
 
   _select(card) {

@@ -1,6 +1,6 @@
 {
-  "name": "poker",
-  "version": "0.3.0",
+  "name": "blackjack",
+  "version": "0.3.1",
   "private": true,
   "dependencies": {
     "office-ui-fabric-react": "^4.1.1",
@@ -11,8 +11,8 @@
     "shuffle": "git+https://github.com/codegard1/node-shuffle.git"
   },
   "devDependencies": {
-    "proptypes": "^1.0.0",
-    "react-scripts": "1.0.5"
+    "react-dev-tools": "0.0.1",
+    "react-scripts": "^1.0.5"
   },
   "scripts": {
     "start": "react-scripts start",
