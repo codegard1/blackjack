@@ -1,5 +1,8 @@
 div.card {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  /*justify-content: center;*/
+  justify-content: center;
   box-sizing: content-box;
   height: 100px;
   width: 65px;
@@ -43,13 +46,26 @@ div.card.clubs span.card-title {
   color: #333;
 }
 
+.card p:after {
+text-align: center;
+  content: attr(data-p);
+  /*border: 1px solid green;*/
+}
+
 span.card-title {
   display: inline-block;
-  position: relative;
-  left: 0;
-  top: 0;
+}
+
+span.card-title.bottom {
+  text-align: right;
+  /*border: 1px solid gold;*/
+}
+
+span.card-title.top {
+  text-align: left;
+  /*border: 1px solid gold;*/
 }
 
 div.card.selected {
-  border: 2px solid blue;
+  border: 1px solid blue;
 }

@@ -74,10 +74,11 @@ export class CardContainer extends Component {
         className={"card " + suitClass + selectedClass}
         onClick={this._toggleSelect}
       >
-        <span className="ms-font-xl card-title">{cardTitle}</span>
-        <p className="ms-font-m">
-          {short}
+        <span className="ms-font-xl card-title top">{cardTitle}</span>
+        <p className="ms-font-m" data-p={short}>
+          
         </p>
+        <span className="ms-font-xl card-title bottom">{cardTitle}</span>
       </div>
     );
   }
