@@ -10,7 +10,7 @@ export class Table extends Component {
       deck: undefined,
       drawn: [],
       selected: [],
-      players: ["Player1"]
+      players: []
     };
 
     this._putOnBottomOfDeck = this._putOnBottomOfDeck.bind(this);
@@ -82,17 +82,16 @@ export class Table extends Component {
     console.log("putOnBottomOfDeck:");
   }
 
-  // this.deal = function(numberOfCards, arrayOfHands){
+  // var deal = function(numberOfCards, arrayOfHands){
   //   for(var i = 0; i < numberOfCards; i++)
   //     for(var j = 0; j < arrayOfHands.length; j++)
   //       arrayOfHands[j].push(this.cards.pop());
-  //   this.length = this.cards.length;
   // };
 
   _deal() {
     const deck = this.state.deck;
     const players = this.state.players;
-    deck.deal(2, players);
+    deck.deal(2, this.state.players);
     this.setState({ deck, players });
   }
 
@@ -117,8 +116,8 @@ export class Table extends Component {
           deselect={this._deselect}
         />
         <DeckContainer
-          deck={this.state.drawn}
-          title="Drawn"
+          deck={this.state.players}
+          title="Players"
           select={this._select}
           deselect={this._deselect}
         />
