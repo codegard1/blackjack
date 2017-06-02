@@ -35,7 +35,7 @@ export class DeckContainer extends Component {
       : <i className="ms-Icon ms-Icon--ChevronUpMed" />;
 
     return (
-      <div id="DeckContainer">
+      <div className="DeckContainer">
         <h3 className="ms-font-xl" onClick={this._toggleDeck}>
           {this.props.title} &nbsp;
           {toggleIcon}

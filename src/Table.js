@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import Shuffle from "shuffle";
 import DeckContainer from "./DeckContainer";
 import ControlPanel from "./ControlPanel";
+import { Fabric } from "office-ui-fabric-react/lib/Fabric";
 
 export class Table extends Component {
   constructor(props) {
@@ -41,8 +42,9 @@ export class Table extends Component {
   _reset() {
     const deck = this.state.deck;
     const drawn = [];
+    const player1 = [];
     deck.reset(); //sets the deck back to a full 52-card deck, unshuffled
-    this.setState({ deck, drawn });
+    this.setState({ deck, drawn, player1 });
   }
 
   _draw(num) {
@@ -110,30 +112,52 @@ export class Table extends Component {
 
   render() {
     return (
-      <div id="Table">
-        <DeckContainer
-          deck={this.state.deck.cards}
-          title="Deck"
-          select={this._select}
-          deselect={this._deselect}
-        />
-        <DeckContainer
-          deck={this.state.player1}
-          title="player1"
-          select={this._select}
-          deselect={this._deselect}
-        />
-        <ControlPanel
-          shuffle={this._shuffle}
-          putOnBottomOfDeck={this._putOnBottomOfDeck}
-          putOnTopOfDeck={this._putOnTopOfDeck}
-          drawRandom={this._drawRandom}
-          drawFromBottomOfDeck={this._drawFromBottomOfDeck}
-          draw={this._draw}
-          reset={this._reset}
-          deal={this._deal}
-        />
-      </div>
+      <Fabric>
+        <div className="ms-Grid">
+
+          <div id="Table">
+            
+            <div className="ms-Grid-row">
+              <div className="ms-Grid-col ms-u-sm612">
+                <DeckContainer
+                  deck={this.state.deck.cards}
+                  title="Deck"
+                  select={this._select}
+                  deselect={this._deselect}
+                />
+              </div>
+            </div>
+
+            <div className="ms-Grid-row">
+              <div className="ms-Grid-col ms-u-sm12">
+                <DeckContainer
+                  deck={this.state.player1}
+                  title="player1"
+                  select={this._select}
+                  deselect={this._deselect}
+                />
+              </div>
+            </div>
+
+            <div className="ms-Grid-row">
+              <div className="ms-Grid-col ms-u-sm12">
+                <ControlPanel
+                  shuffle={this._shuffle}
+                  putOnBottomOfDeck={this._putOnBottomOfDeck}
+                  putOnTopOfDeck={this._putOnTopOfDeck}
+                  drawRandom={this._drawRandom}
+                  drawFromBottomOfDeck={this._drawFromBottomOfDeck}
+                  draw={this._draw}
+                  reset={this._reset}
+                  deal={this._deal}
+                />
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </Fabric>
     );
   }
 }

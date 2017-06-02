@@ -6,7 +6,7 @@ div.card {
   box-sizing: content-box;
   height: 100px;
   width: 65px;
-  padding: 0.25em;
+  padding: 0.35em;
   overflow: hidden;
   background-color: ghostwhite;
   cursor: pointer;
@@ -17,23 +17,6 @@ div.card {
   border-bottom: 1px solid rgba(25, 25, 25, 0.3);
   border-top: 1px solid rgba(25, 25, 25, 0.1);
   border-left: 1px solid rgba(25, 25, 25, 0.1);
-}
-
-#DeckContainer {
-  display: block;
-  box-sizing: content-box;
-  width: auto;
-  padding: 2em;
-  border-bottom: 3px solid blueviolet;
-}
-
-#ControlPanel {
-  padding: 2em;
-  border: 1px solid green;
-}
-
-#ControlPanel #button-container {
-  border: 1px solid #333;
 }
 
 div.card.hearts span.card-title,
@@ -47,7 +30,7 @@ div.card.clubs span.card-title {
 }
 
 .card p:after {
-text-align: center;
+  text-align: center;
   content: attr(data-p);
   /*border: 1px solid green;*/
 }
@@ -68,4 +51,30 @@ span.card-title.top {
 
 div.card.selected {
   border: 1px solid blue;
+}
+
+.DeckContainer {
+  padding: 2em;
+  /*border-bottom: 3px solid blueviolet;*/
+}
+
+#ControlPanel {
+  padding: 2em;
+  border: 1px solid green;
+}
+
+#ControlPanel #button-container {
+  border: 1px solid #333;
+}
+
+div#Table {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.ms-Grid-col {
+  border: 1px solid gold;
+  width:100%;
 }
