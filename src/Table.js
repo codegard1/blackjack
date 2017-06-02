@@ -11,7 +11,12 @@ export class Table extends Component {
       deck: undefined,
       drawn: [],
       selected: [],
-      player1: []
+      player1: {
+        title: "player1",
+        hand: [],
+        handValue: undefined,
+        status: undefined
+      }
     };
 
     this._putOnBottomOfDeck = this._putOnBottomOfDeck.bind(this);
@@ -24,6 +29,7 @@ export class Table extends Component {
     this._deal = this._deal.bind(this);
     this._select = this._select.bind(this);
     this._deselect = this._deselect.bind(this);
+    this._evaluateHand = this._evaluateHand.bind(this);
   }
 
   componentWillMount() {
@@ -40,11 +46,15 @@ export class Table extends Component {
   }
 
   _reset() {
-    const deck = this.state.deck;
-    const drawn = [];
-    const player1 = [];
+    let deck = this.state.deck;
     deck.reset(); //sets the deck back to a full 52-card deck, unshuffled
-    this.setState({ deck, drawn, player1 });
+    const drawn = [];
+    const selected = [];
+    let player1 = this.state.player1;
+    player1.hand = [];
+    player1.handValue = undefined;
+    player1.status = undefined;
+    this.setState({ deck, drawn, selected, player1 });
   }
 
   _draw(num) {
@@ -89,13 +99,11 @@ export class Table extends Component {
   }
 
   _deal() {
-    console.log("deal!");
     const deck = this.state.deck;
     let player1 = this.state.player1;
     const ret = deck.draw(2);
-    player1 = ret;
-    console.log("post-deal deck:", deck);
-    console.log("post-deal player1", player1);
+    player1.hand = ret;
+    player1.handValue = this._evaluateHand(player1.hand);
     this.setState({ deck, player1 });
   }
 
@@ -110,15 +118,54 @@ export class Table extends Component {
     this.setState({ selected });
   }
 
+  _evaluateHand(hand) {
+    let handValue = {
+      aceAsOne: 0,
+      aceAsTen: 0
+    };
+
+    hand.forEach(card => {
+      switch (card.sort) {
+        case 14:
+          handValue.aceAsOne += 1;
+          handValue.aceAsTen += 11;
+          break;
+
+        case 13:
+          handValue.aceAsOne += 10;
+          handValue.aceAsTen += 10;
+          break;
+
+        case 12:
+          handValue.aceAsOne += 10;
+          handValue.aceAsTen += 10;
+          break;
+
+        case 11:
+          handValue.aceAsOne += 10;
+          handValue.aceAsTen += 10;
+          break;
+
+        default:
+          handValue.aceAsOne += card.sort;
+          handValue.aceAsTen += card.sort;
+          break;
+      }
+    });
+
+    console.log("hand value:", handValue);
+    return handValue;
+  }
+
   render() {
     return (
       <Fabric>
         <div className="ms-Grid">
 
           <div id="Table">
-            
+
             <div className="ms-Grid-row">
-              <div className="ms-Grid-col ms-u-sm612">
+              <div className="ms-Grid-col ms-u-sm12">
                 <DeckContainer
                   deck={this.state.deck.cards}
                   title="Deck"
@@ -131,8 +178,9 @@ export class Table extends Component {
             <div className="ms-Grid-row">
               <div className="ms-Grid-col ms-u-sm12">
                 <DeckContainer
-                  deck={this.state.player1}
-                  title="player1"
+                  deck={this.state.player1.hand}
+                  title={this.state.player1.title}
+                  handValue={this.state.player1.handValue}
                   select={this._select}
                   deselect={this._deselect}
                 />

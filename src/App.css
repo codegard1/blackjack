@@ -76,5 +76,11 @@ div#Table {
 
 .ms-Grid-col {
   border: 1px solid gold;
-  width:100%;
+  width: 100%;
+}
+
+.handValue {
+  float: right;
+  margin-left: 10px;
+  margin-right: 10px;
 }

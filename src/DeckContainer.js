@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import * as T from "prop-types";
 import Masonry from "react-masonry-component";
 import CardContainer from "./CardContainer";
 
@@ -49,6 +50,15 @@ export class DeckContainer extends Component {
             updateOnEachImageLoad={false} // default false and works only if disableImagesLoaded is false
           >
             {childElements}
+            {" "}
+            {this.props.handValue && 
+              <span className="handValue ms-font-xl">
+                Hand Value:
+                {" "}
+                {this.props.handValue.aceAsOne}
+                {this.props.handValue.aceAsOne !== this.props.handValue.aceAsTen &&
+                " / " + this.props.handValue.aceAsTen}
+              </span>}
           </Masonry>}
       </div>
     );
