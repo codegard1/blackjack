@@ -51,18 +51,27 @@ export class DeckContainer extends Component {
           >
             {childElements}
             {" "}
-            {this.props.handValue && 
+            {this.props.handValue &&
               <span className="handValue ms-font-xl">
                 Hand Value:
                 {" "}
                 {this.props.handValue.aceAsOne}
-                {this.props.handValue.aceAsOne !== this.props.handValue.aceAsTen &&
-                " / " + this.props.handValue.aceAsTen}
+                {this.props.handValue.aceAsOne !==
+                  this.props.handValue.aceAsTen &&
+                  " / " + this.props.handValue.aceAsTen}
               </span>}
           </Masonry>}
       </div>
     );
   }
 }
+
+DeckContainer.propTypes = {
+  deck: T.object,
+  title: T.string,
+  handValue: T.object,
+  select: T.func,
+  deselect: T.func
+};
 
 export default DeckContainer;

@@ -11,12 +11,22 @@ export class Table extends Component {
       deck: undefined,
       drawn: [],
       selected: [],
+      gameStatus: undefined,
+      dealer: {
+        title: "Dealer",
+        hand: [],
+        handValue: undefined,
+        status: undefined,
+        turn: false
+      },
       player1: {
         title: "player1",
         hand: [],
         handValue: undefined,
-        status: undefined
-      }
+        status: undefined,
+        turn: false
+      },
+      currentPlayer: undefined
     };
 
     this._putOnBottomOfDeck = this._putOnBottomOfDeck.bind(this);
@@ -31,11 +41,11 @@ export class Table extends Component {
     this._deselect = this._deselect.bind(this);
     this._evaluateHand = this._evaluateHand.bind(this);
     this._hit = this._hit.bind(this);
+    this._stay = this._stay.bind(this);
   }
 
   componentWillMount() {
     const deck = Shuffle.shuffle();
-    console.log("deck:", deck);
     this.setState({ deck });
   }
 
@@ -75,8 +85,13 @@ export class Table extends Component {
     player1.hand.push(ret);
     player1.handValue = this._evaluateHand(player1.hand);
     drawn.push(ret);
-    console.log("post-hit:", player1.hand);
-    this.setState({ deck, drawn, player1 });
+    this.setState({ deck, drawn, player1, currentPlayer: player1 });
+  }
+
+  _stay() {
+    let deck = this.state.deck;
+    let drawn = this.state.drawn;
+    let player1 = this.state.player1;
   }
 
   _drawFromBottomOfDeck(num) {
@@ -116,8 +131,14 @@ export class Table extends Component {
     let player1 = this.state.player1;
     const ret = deck.draw(2);
     player1.hand = ret;
+    player1.turn = true;
     player1.handValue = this._evaluateHand(player1.hand);
-    this.setState({ deck, player1 });
+    this.setState({
+      deck,
+      player1,
+      gameStatus: "New",
+      currentPlayer: player1
+    });
   }
 
   _select(card) {
@@ -207,6 +228,9 @@ export class Table extends Component {
                   reset={this._reset}
                   deal={this._deal}
                   hit={this._hit}
+                  stay={this._stay}
+                  gameStatus={this.state.gameStatus}
+                  currentPlayer={this.state.currentPlayer}
                 />
               </div>
             </div>

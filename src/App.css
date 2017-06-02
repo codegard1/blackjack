@@ -59,12 +59,13 @@ div.card.selected {
 }
 
 #ControlPanel {
-  padding: 2em;
-  border: 1px solid green;
+  padding: 1em;
+  /*border: 1px solid green;*/
 }
 
 #ControlPanel #button-container {
   border: 1px solid #333;
+  overflow: hidden;
 }
 
 div#Table {
@@ -72,11 +73,6 @@ div#Table {
   height: 100%;
   padding: 0;
   margin: 0;
-}
-
-.ms-Grid-col {
-  border: 1px solid gold;
-  /*width: 100%;*/
 }
 
 .handValue {
