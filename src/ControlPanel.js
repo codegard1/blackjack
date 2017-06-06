@@ -4,6 +4,22 @@ import { DefaultButton } from "office-ui-fabric-react/lib/Button";
 
 export class ControlPanel extends Component {
   render() {
+    let bustedFlag = false;
+    let gameStatus = this.props.gameStatus;
+    let currentPlayer = this.props.currentPlayer || undefined;
+
+    // set bustedFlag
+    if (currentPlayer) {
+      bustedFlag = this.props.currentPlayer.status === "busted" ? true : false;
+    }
+
+    const gameStatusDisplay =
+      gameStatus &&
+      <div>
+        <span>
+          Game Status: <strong>{gameStatus || "N/A"}</strong>
+        </span>
+      </div>;
 
     const buttons = (
       <div>
@@ -13,16 +29,20 @@ export class ControlPanel extends Component {
             Deal
           </DefaultButton>}
 
-        {this.props.gameStatus &&  
+        {this.props.gameStatus &&
           <DefaultButton
             title="Hit"
             onClick={this.props.hit}
-            disabled={this.props.currentPlayer.handValue <= 21 ? true : false}
+            disabled={bustedFlag}
           >
             Hit
           </DefaultButton>}
         {this.props.gameStatus &&
-          <DefaultButton title="Stay" onClick={this.props.stay}>
+          <DefaultButton
+            title="Stay"
+            onClick={this.props.stay}
+            disabled={bustedFlag}
+          >
             Stay
           </DefaultButton>}
 
@@ -52,20 +72,19 @@ export class ControlPanel extends Component {
       </div>
     );
 
-    const gameStatus = (
-      <span>
-        Game Status: <strong>{this.props.gameStatus || "N/A"}</strong>
-      </span>
-    );
-    const currentPlayer =
-      this.props.currentPlayer &&
-      "Current Player: " + this.props.currentPlayer.title;
+    const currentPlayerDisplay =
+      currentPlayer &&
+      <div>
+        <span>{`Current Player: ${currentPlayer.title}`}</span> <br />
+        <span>{`Player Status: ${currentPlayer.status}`}</span>
+      </div>;
 
     return (
       <div id="ControlPanel">
         <div id="button-container">
           <p className="ms-font-l">
-            {gameStatus} {currentPlayer}
+            {gameStatusDisplay} <br />
+            {currentPlayerDisplay}
           </p>
           {buttons}
         </div>

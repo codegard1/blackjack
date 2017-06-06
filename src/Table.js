@@ -16,14 +16,14 @@ export class Table extends Component {
         title: "Dealer",
         hand: [],
         handValue: undefined,
-        status: undefined,
+        status: 'ok',
         turn: false
       },
       player1: {
-        title: "player1",
+        title: "Player1",
         hand: [],
         handValue: undefined,
-        status: undefined,
+        status: 'ok',
         turn: false
       },
       currentPlayer: undefined
@@ -82,9 +82,19 @@ export class Table extends Component {
     let drawn = this.state.drawn;
     let player1 = this.state.player1;
     const ret = deck.draw(1);
+    drawn.push(ret);
     player1.hand.push(ret);
     player1.handValue = this._evaluateHand(player1.hand);
-    drawn.push(ret);
+
+    if (player1.handValue.aceAsOne > 21 && player1.handValue.aceAsTen > 21) {
+      player1.status = "busted";
+    }
+    if (
+      player1.handValue.aceAsOne === 21 || player1.handValue.aceAsTen === 21
+    ) {
+      player1.status = "blackjack";
+    }
+
     this.setState({ deck, drawn, player1, currentPlayer: player1 });
   }
 
