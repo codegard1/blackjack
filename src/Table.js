@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import Shuffle from "shuffle";
 import DeckContainer from "./DeckContainer";
 import ControlPanel from "./ControlPanel";
-import { Fabric } from "office-ui-fabric-react/lib/Fabric";
+
 
 export class Table extends Component {
   constructor(props) {
@@ -16,14 +16,14 @@ export class Table extends Component {
         title: "Dealer",
         hand: [],
         handValue: undefined,
-        status: 'ok',
+        status: "ok",
         turn: false
       },
       player1: {
         title: "Player1",
         hand: [],
         handValue: undefined,
-        status: 'ok',
+        status: "ok",
         turn: false
       },
       currentPlayer: undefined
@@ -204,49 +204,46 @@ export class Table extends Component {
   render() {
     return (
       <div id="Table">
-        <Fabric>
-          <div className="ms-Grid">
+        <div className="ms-Grid">
 
-            {/*<div className="ms-Grid-row">
-              <div className="ms-Grid-col ms-u-sm12">
-                <DeckContainer
-                  deck={this.state.deck.cards}
-                  title="Deck"
-                  select={this._select}
-                  deselect={this._deselect}
-                />
-              </div>
-            </div>*/}
+          <div className="ms-Grid-row">
+            <div className="ms-Grid-col ms-u-sm12">
 
-            <div className="ms-Grid-row">
-              <div className="ms-Grid-col ms-u-sm12">
-                <DeckContainer
-                  deck={this.state.player1.hand}
-                  title={this.state.player1.title}
-                  handValue={this.state.player1.handValue}
-                  select={this._select}
-                  deselect={this._deselect}
-                />
+              <DeckContainer
+                deck={this.state.deck.cards}
+                title="Deck"
+                select={this._select}
+                deselect={this._deselect}
+                hidden={false}
+              />
 
-                <ControlPanel
-                  shuffle={this._shuffle}
-                  putOnBottomOfDeck={this._putOnBottomOfDeck}
-                  putOnTopOfDeck={this._putOnTopOfDeck}
-                  drawRandom={this._drawRandom}
-                  drawFromBottomOfDeck={this._drawFromBottomOfDeck}
-                  draw={this._draw}
-                  reset={this._reset}
-                  deal={this._deal}
-                  hit={this._hit}
-                  stay={this._stay}
-                  gameStatus={this.state.gameStatus}
-                  currentPlayer={this.state.currentPlayer}
-                />
-              </div>
+              <DeckContainer
+                deck={this.state.player1.hand}
+                title={this.state.player1.title}
+                handValue={this.state.player1.handValue}
+                select={this._select}
+                deselect={this._deselect}
+                hidden={false}
+              />
+
+            <ControlPanel
+                shuffle={this._shuffle}
+                putOnBottomOfDeck={this._putOnBottomOfDeck}
+                putOnTopOfDeck={this._putOnTopOfDeck}
+                drawRandom={this._drawRandom}
+                drawFromBottomOfDeck={this._drawFromBottomOfDeck}
+                draw={this._draw}
+                reset={this._reset}
+                deal={this._deal}
+                hit={this._hit}
+                stay={this._stay}
+                gameStatus={this.state.gameStatus}
+                currentPlayer={this.state.currentPlayer}
+              />              
             </div>
-
           </div>
-        </Fabric>
+
+        </div>
       </div>
     );
   }

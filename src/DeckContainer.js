@@ -11,13 +11,19 @@ export class DeckContainer extends Component {
     this._toggleDeck = this._toggleDeck.bind(this);
   }
 
+  componentWillMount() {
+    if (this.props.hidden === true) {
+      this.setState({ deckIsVisible: false });
+    }
+  }
+
   _toggleDeck() {
     this.setState({ deckIsVisible: !this.state.deckIsVisible });
   }
 
   render() {
     const masonryOptions = {
-      transitionDuration: "0.2s"
+      transitionDuration: "0.3s"
     };
     const childElements = this.props.deck
       ? this.props.deck.map((card, index) => {
@@ -37,7 +43,7 @@ export class DeckContainer extends Component {
 
     return (
       <div className="DeckContainer">
-        <h3 className="ms-font-xl" onClick={this._toggleDeck}>
+        <h3 className="deckTitle ms-font-xl" onClick={this._toggleDeck}>
           {this.props.title} &nbsp;
           {toggleIcon}
         </h3>
@@ -45,9 +51,12 @@ export class DeckContainer extends Component {
           <Masonry
             className={"deck"}
             elementType={"div"}
+            itemSelector={'.card'}
+            columnWidth={'.card'}
             options={masonryOptions}
             disableImagesLoaded={false}
             updateOnEachImageLoad={false} // default false and works only if disableImagesLoaded is false
+            fitWidth={true}
           >
             {childElements}
             {" "}
@@ -71,7 +80,8 @@ DeckContainer.propTypes = {
   title: T.string,
   handValue: T.object,
   select: T.func,
-  deselect: T.func
+  deselect: T.func,
+  hidden: T.bool
 };
 
 export default DeckContainer;

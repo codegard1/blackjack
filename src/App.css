@@ -54,8 +54,15 @@ div.card.selected {
 }
 
 .DeckContainer {
+  display: block;
   padding: 2em;
-  /*border-bottom: 3px solid blueviolet;*/
+  /*width: 100%;*/
+  /*border: 3px solid blueviolet;*/
+}
+
+.deck {
+  /*border: 2px dotted gold;*/
+  /*width: 100%;*/
 }
 
 #ControlPanel {
@@ -64,13 +71,13 @@ div.card.selected {
 }
 
 #ControlPanel #button-container {
-  border: 1px solid #333;
   overflow: hidden;
+  border: 1px solid #333;
 }
 
 div#Table {
-  width: 100%;
-  height: 100%;
+  /*width: 100%;*/
+  /*height: 100%;*/
   padding: 0;
   margin: 0;
 }
