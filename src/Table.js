@@ -134,7 +134,7 @@ export class Table extends Component {
     this._removeSelectedFromPlayerHand();
     this._removeSelectedFromDrawn();
     this._clearSelected();
-    this._evaluateHand();
+
   }
 
   _putOnBottomOfDeck(cards) {
@@ -144,7 +144,7 @@ export class Table extends Component {
     this._removeSelectedFromPlayerHand();
     this._removeSelectedFromDrawn();
     this._clearSelected();
-    this._evaluateHand();
+
   }
 
   _deal() {
@@ -197,6 +197,7 @@ export class Table extends Component {
       });
       player.hand.splice(index, 1);
     });
+    player.handValue = this._evaluateHand(player.hand);
     this.setState({ player1: player });
   }
 
