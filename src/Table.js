@@ -175,12 +175,13 @@ export class Table extends Component {
 
   _deselect(cardAttributes) {
     const selected = this.state.selected;
-    const toDelete = selected.findIndex(function(card) {
+    const toDelete = selected.filter(function(card) {
       return (
         card.suit === cardAttributes.suit && card.sort === cardAttributes.sort
       );
     });
-    selected.splice(toDelete, 1);
+    const index = selected.indexOf(toDelete);
+    selected.splice(index, 1);
     this.setState({ selected });
   }
 
