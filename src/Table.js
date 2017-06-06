@@ -43,6 +43,10 @@ export class Table extends Component {
     this._evaluateHand = this._evaluateHand.bind(this);
     this._hit = this._hit.bind(this);
     this._stay = this._stay.bind(this);
+    this._removeSelectedFromPlayerHand = this._removeSelectedFromPlayerHand.bind(
+      this
+    );
+    this._removeSelectedFromDrawn = this._removeSelectedFromDrawn.bind(this);
   }
 
   componentWillMount() {
@@ -125,16 +129,22 @@ export class Table extends Component {
 
   _putOnTopOfDeck(cards) {
     const deck = this.state.deck;
-    deck.push(cards);
-    console.log("putOnTopOfDeck:", deck);
+    deck.putOnTopOfDeck(this.state.selected);
     this.setState({ deck });
+    this._removeSelectedFromPlayerHand();
+    this._removeSelectedFromDrawn();
+    this._clearSelected();
+    this._evaluateHand();
   }
 
   _putOnBottomOfDeck(cards) {
     const deck = this.state.deck;
-    deck.unshift(cards);
-    console.log("putOnBottomOfDeck:", deck);
+    deck.putOnBottomOfDeck(this.state.selected);
     this.setState({ deck });
+    this._removeSelectedFromPlayerHand();
+    this._removeSelectedFromDrawn();
+    this._clearSelected();
+    this._evaluateHand();
   }
 
   _deal() {
@@ -158,7 +168,6 @@ export class Table extends Component {
       cardAttributes.description,
       cardAttributes.sort
     );
-    console.log("selectedCard:", selectedCard);
     const selected = this.state.selected;
     selected.push(selectedCard);
     this.setState({ selected });
@@ -171,10 +180,36 @@ export class Table extends Component {
         card.suit === cardAttributes.suit && card.sort === cardAttributes.sort
       );
     });
-    console.log("toDelete:", toDelete);
-    console.log("object in selected:", selected[toDelete]);
     selected.splice(toDelete, 1);
     this.setState({ selected });
+  }
+
+  _clearSelected() {
+    this.setState({ selected: [] });
+  }
+
+  _removeSelectedFromPlayerHand(playerName, cards) {
+    const player = this.state.player1;
+    const selected = this.state.selected;
+    selected.forEach(card => {
+      const index = player.hand.findIndex(element => {
+        return element.suit === card.suit && card.sort === card.sort;
+      });
+      player.hand.splice(index, 1);
+    });
+    this.setState({ player1: player });
+  }
+
+  _removeSelectedFromDrawn(cards) {
+    const drawn = this.state.drawn;
+    const selected = this.state.selected;
+    selected.forEach(card => {
+      const index = drawn.findIndex(element => {
+        return element.suit === card.suit && card.sort === card.sort;
+      });
+      drawn.splice(index, 1);
+    });
+    this.setState({ drawn });
   }
 
   _evaluateHand(hand) {
@@ -182,37 +217,37 @@ export class Table extends Component {
       aceAsOne: 0,
       aceAsTen: 0
     };
+    // Do not evaluate if the hand is empty!
+    if (hand) {
+      hand.forEach(card => {
+        switch (card.sort) {
+          case 14:
+            handValue.aceAsOne += 1;
+            handValue.aceAsTen += 11;
+            break;
 
-    hand.forEach(card => {
-      switch (card.sort) {
-        case 14:
-          handValue.aceAsOne += 1;
-          handValue.aceAsTen += 11;
-          break;
+          case 13:
+            handValue.aceAsOne += 10;
+            handValue.aceAsTen += 10;
+            break;
 
-        case 13:
-          handValue.aceAsOne += 10;
-          handValue.aceAsTen += 10;
-          break;
+          case 12:
+            handValue.aceAsOne += 10;
+            handValue.aceAsTen += 10;
+            break;
 
-        case 12:
-          handValue.aceAsOne += 10;
-          handValue.aceAsTen += 10;
-          break;
+          case 11:
+            handValue.aceAsOne += 10;
+            handValue.aceAsTen += 10;
+            break;
 
-        case 11:
-          handValue.aceAsOne += 10;
-          handValue.aceAsTen += 10;
-          break;
-
-        default:
-          handValue.aceAsOne += card.sort;
-          handValue.aceAsTen += card.sort;
-          break;
-      }
-    });
-
-    console.log("hand value:", handValue);
+          default:
+            handValue.aceAsOne += card.sort;
+            handValue.aceAsTen += card.sort;
+            break;
+        }
+      });
+    }
     return handValue;
   }
 

@@ -3,8 +3,23 @@ import * as T from "prop-types";
 import { DefaultButton } from "office-ui-fabric-react/lib/Button";
 
 export class ControlPanel extends Component {
+  constructor(props) {
+    super(props);
+
+    this._handlePutOnTopOfDeck = this._handlePutOnTopOfDeck.bind(this);
+    this._handlePutOnBottomOfDeck = this._handlePutOnBottomOfDeck.bind(this);
+  }
+
+  _handlePutOnTopOfDeck() {
+    this.props.putOnTopOfDeck(this.props.selected);
+  }
+
+  _handlePutOnBottomOfDeck(){
+    this.props.putOnBottomOfDeck(this.props.selected);
+  }
+
   render() {
-    let selectedFlag = this.props.selected.length > 0 ? true : false;
+    let selectedFlag = this.props.selected.length > 0 ? false : true;
     let bustedFlag = false;
     let gameStatus = this.props.gameStatus;
     let currentPlayer = this.props.currentPlayer || undefined;
@@ -71,7 +86,7 @@ export class ControlPanel extends Component {
             Draw Random
           </DefaultButton>
           <DefaultButton
-            onClick={this.props.putOnTopOfDeck}
+            onClick={this._handlePutOnTopOfDeck}
             disabled={selectedFlag}
           >
             Put on Top of Deck
@@ -114,7 +129,7 @@ ControlPanel.propTypes = {
   stay: T.func,
   gameStatus: T.string,
   currentPlayer: T.object,
-  selected: T.array
+  selected: T.array,
 };
 
 export default ControlPanel;
