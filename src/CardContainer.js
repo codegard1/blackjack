@@ -12,13 +12,18 @@ export class CardContainer extends Component {
   }
 
   _toggleSelect() {
+    const cardAttributes = {
+      description: this.props.description,
+      suit: this.props.suit,
+      sort: this.props.sort
+    };
     if (this.state.selected === false) {
-      this.props.select(this);
+      this.props.select(cardAttributes);
       this.setState({ selected: true });
     }
     if (this.state.selected === true) {
-      this.props.select(this);
-      this.setState({ selected: false});
+      this.props.deselect(cardAttributes);
+      this.setState({ selected: false });
     }
   }
 
@@ -75,9 +80,7 @@ export class CardContainer extends Component {
         onClick={this._toggleSelect}
       >
         <span className="ms-font-xl card-title top">{cardTitle}</span>
-        <p className="ms-font-m" data-p={short}>
-          
-        </p>
+        <p className="ms-font-m" data-p={short} />
         <span className="ms-font-xl card-title bottom">{cardTitle}</span>
       </div>
     );

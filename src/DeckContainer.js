@@ -22,9 +22,15 @@ export class DeckContainer extends Component {
   }
 
   render() {
+    // Options passed into the Masonry component
     const masonryOptions = {
-      transitionDuration: "0.3s"
+      transitionDuration: "0.3s",
+      itemSelector: ".card",
+      columnWidth: ".card",
+      fitWidth: true
     };
+
+    // Create CardContainers to display cards
     const childElements = this.props.deck
       ? this.props.deck.map((card, index) => {
           return (
@@ -37,13 +43,24 @@ export class DeckContainer extends Component {
           );
         })
       : undefined;
+
+    // Set toggle icon for Deck titles
     const toggleIcon = this.state.deckIsVisible
       ? <i className="ms-Icon ms-Icon--ChevronDownMed" />
       : <i className="ms-Icon ms-Icon--ChevronUpMed" />;
 
+    // Set hand value text
+    const handValueDisplay =
+      this.props.handValue &&
+      <span className="handValue ms-font-xl">
+        Hand Value: {this.props.handValue.aceAsOne}
+        {this.props.handValue.aceAsOne !== this.props.handValue.aceAsTen &&
+          " / " + this.props.handValue.aceAsTen}
+      </span>;
+
     return (
       <div className="DeckContainer">
-        <h3 className="deckTitle ms-font-xl" onClick={this._toggleDeck}>
+        <h3 className="ms-font-xl" onClick={this._toggleDeck}>
           {this.props.title} &nbsp;
           {toggleIcon}
         </h3>
@@ -51,32 +68,20 @@ export class DeckContainer extends Component {
           <Masonry
             className={"deck"}
             elementType={"div"}
-            itemSelector={'.card'}
-            columnWidth={'.card'}
-            options={masonryOptions}
             disableImagesLoaded={false}
             updateOnEachImageLoad={false} // default false and works only if disableImagesLoaded is false
-            fitWidth={true}
+            options={masonryOptions}
           >
             {childElements}
-            {" "}
-            {this.props.handValue &&
-              <span className="handValue ms-font-xl">
-                Hand Value:
-                {" "}
-                {this.props.handValue.aceAsOne}
-                {this.props.handValue.aceAsOne !==
-                  this.props.handValue.aceAsTen &&
-                  " / " + this.props.handValue.aceAsTen}
-              </span>}
           </Masonry>}
+        {handValueDisplay}
       </div>
     );
   }
 }
 
 DeckContainer.propTypes = {
-  deck: T.object,
+  deck: T.array,
   title: T.string,
   handValue: T.object,
   select: T.func,

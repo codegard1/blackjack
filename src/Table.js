@@ -3,6 +3,7 @@ import Shuffle from "shuffle";
 import DeckContainer from "./DeckContainer";
 import ControlPanel from "./ControlPanel";
 
+const PlayingCard = require("shuffle/lib/playingCard");
 
 export class Table extends Component {
   constructor(props) {
@@ -151,14 +152,28 @@ export class Table extends Component {
     });
   }
 
-  _select(card) {
+  _select(cardAttributes) {
+    const selectedCard = new PlayingCard(
+      cardAttributes.suit,
+      cardAttributes.description,
+      cardAttributes.sort
+    );
+    console.log("selectedCard:", selectedCard);
     const selected = this.state.selected;
-    selected.push(card);
+    selected.push(selectedCard);
     this.setState({ selected });
   }
 
-  _deselect() {
+  _deselect(cardAttributes) {
     const selected = this.state.selected;
+    const toDelete = selected.findIndex(function(card) {
+      return (
+        card.suit === cardAttributes.suit && card.sort === cardAttributes.sort
+      );
+    });
+    console.log("toDelete:", toDelete);
+    console.log("object in selected:", selected[toDelete]);
+    selected.splice(toDelete, 1);
     this.setState({ selected });
   }
 
@@ -218,15 +233,32 @@ export class Table extends Component {
               />
 
               <DeckContainer
-                deck={this.state.player1.hand}
-                title={this.state.player1.title}
-                handValue={this.state.player1.handValue}
+                deck={this.state.drawn}
+                title="Drawn"
                 select={this._select}
                 deselect={this._deselect}
                 hidden={false}
               />
 
-            <ControlPanel
+              <DeckContainer
+                deck={this.state.selected}
+                title="Selected"
+                select={this._select}
+                deselect={this._deselect}
+                hidden={false}
+              />
+
+              {this.state.gameStatus === "New" &&
+                <DeckContainer
+                  deck={this.state.player1.hand}
+                  title={this.state.player1.title}
+                  handValue={this.state.player1.handValue}
+                  select={this._select}
+                  deselect={this._deselect}
+                  hidden={false}
+                />}
+
+              <ControlPanel
                 shuffle={this._shuffle}
                 putOnBottomOfDeck={this._putOnBottomOfDeck}
                 putOnTopOfDeck={this._putOnTopOfDeck}
@@ -239,7 +271,8 @@ export class Table extends Component {
                 stay={this._stay}
                 gameStatus={this.state.gameStatus}
                 currentPlayer={this.state.currentPlayer}
-              />              
+                selected={this.state.selected}
+              />
             </div>
           </div>
 

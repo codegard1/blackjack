@@ -83,7 +83,11 @@ div#Table {
 }
 
 .handValue {
-  float: right;
+  float: left;
   margin-left: 10px;
   margin-right: 10px;
+}
+
+div#StatusPanel {
+  border: 1px solid #333;
 }

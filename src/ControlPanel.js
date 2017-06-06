@@ -4,6 +4,7 @@ import { DefaultButton } from "office-ui-fabric-react/lib/Button";
 
 export class ControlPanel extends Component {
   render() {
+    let selectedFlag = this.props.selected.length > 0 ? true : false;
     let bustedFlag = false;
     let gameStatus = this.props.gameStatus;
     let currentPlayer = this.props.currentPlayer || undefined;
@@ -15,11 +16,18 @@ export class ControlPanel extends Component {
 
     const gameStatusDisplay =
       gameStatus &&
-      <div>
+      <p className="ms-font-l">
         <span>
           Game Status: <strong>{gameStatus || "N/A"}</strong>
         </span>
-      </div>;
+      </p>;
+
+    const currentPlayerDisplay =
+      currentPlayer &&
+      <p className="ms-font-l">
+        <span>{`Current Player: ${currentPlayer.title}`}</span> <br />
+        <span>{`Player Status: ${currentPlayer.status}`}</span>
+      </p>;
 
     const buttons = (
       <div>
@@ -62,30 +70,30 @@ export class ControlPanel extends Component {
           <DefaultButton onClick={this.props.drawRandom}>
             Draw Random
           </DefaultButton>
-          <DefaultButton onClick={this.props.putOnTopOfDeck}>
+          <DefaultButton
+            onClick={this.props.putOnTopOfDeck}
+            disabled={selectedFlag}
+          >
             Put on Top of Deck
           </DefaultButton>
-          <DefaultButton onClick={this.props.putOnBottomOfDeck}>
+          <DefaultButton
+            onClick={this.props.putOnBottomOfDeck}
+            disabled={selectedFlag}
+          >
             Put on Bottom of Deck
           </DefaultButton>
         </div>
       </div>
     );
 
-    const currentPlayerDisplay =
-      currentPlayer &&
-      <div>
-        <span>{`Current Player: ${currentPlayer.title}`}</span> <br />
-        <span>{`Player Status: ${currentPlayer.status}`}</span>
-      </div>;
-
     return (
       <div id="ControlPanel">
-        <div id="button-container">
-          <p className="ms-font-l">
-            {gameStatusDisplay} <br />
+        {gameStatus &&
+          <div id="StatusPanel">
+            {gameStatusDisplay}
             {currentPlayerDisplay}
-          </p>
+          </div>}
+        <div id="button-container">
           {buttons}
         </div>
       </div>
@@ -105,7 +113,8 @@ ControlPanel.propTypes = {
   hit: T.func,
   stay: T.func,
   gameStatus: T.string,
-  currentPlayer: T.object
+  currentPlayer: T.object,
+  selected: T.array
 };
 
 export default ControlPanel;
