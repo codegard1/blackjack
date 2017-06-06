@@ -266,7 +266,7 @@ export class Table extends Component {
                 title="Deck"
                 select={this._select}
                 deselect={this._deselect}
-                hidden={false}
+                hidden={TextTrackCueList}
               />
 
               <DeckContainer
@@ -274,7 +274,7 @@ export class Table extends Component {
                 title="Drawn"
                 select={this._select}
                 deselect={this._deselect}
-                hidden={false}
+                hidden={true}
               />
 
               <DeckContainer
@@ -282,7 +282,7 @@ export class Table extends Component {
                 title="Selected"
                 select={this._select}
                 deselect={this._deselect}
-                hidden={false}
+                hidden={true}
               />
 
               {this.state.gameStatus === "New" &&

@@ -5,17 +5,6 @@ import { DefaultButton } from "office-ui-fabric-react/lib/Button";
 export class ControlPanel extends Component {
   constructor(props) {
     super(props);
-
-    this._handlePutOnTopOfDeck = this._handlePutOnTopOfDeck.bind(this);
-    this._handlePutOnBottomOfDeck = this._handlePutOnBottomOfDeck.bind(this);
-  }
-
-  _handlePutOnTopOfDeck() {
-    this.props.putOnTopOfDeck(this.props.selected);
-  }
-
-  _handlePutOnBottomOfDeck(){
-    this.props.putOnBottomOfDeck(this.props.selected);
   }
 
   render() {
@@ -47,34 +36,36 @@ export class ControlPanel extends Component {
     const buttons = (
       <div>
 
-        {!this.props.gameStatus &&
-          <DefaultButton title="Deal" onClick={this.props.deal}>
-            Deal
-          </DefaultButton>}
+        <div>
+          {!this.props.gameStatus &&
+            <DefaultButton title="Deal" onClick={this.props.deal}>
+              Deal
+            </DefaultButton>}
 
-        {this.props.gameStatus &&
-          <DefaultButton
-            title="Hit"
-            onClick={this.props.hit}
-            disabled={bustedFlag}
-          >
-            Hit
-          </DefaultButton>}
-        {this.props.gameStatus &&
-          <DefaultButton
-            title="Stay"
-            onClick={this.props.stay}
-            disabled={bustedFlag}
-          >
-            Stay
-          </DefaultButton>}
+          {this.props.gameStatus &&
+            <DefaultButton
+              title="Hit"
+              onClick={this.props.hit}
+              disabled={bustedFlag}
+            >
+              Hit
+            </DefaultButton>}
+          {this.props.gameStatus &&
+            <DefaultButton
+              title="Stay"
+              onClick={this.props.stay}
+              disabled={bustedFlag}
+            >
+              Stay
+            </DefaultButton>}
+          <DefaultButton onClick={this.props.reset}>
+            Reset
+          </DefaultButton>
+        </div>
 
         <div>
           <DefaultButton onClick={this.props.shuffle}>
             Shuffle
-          </DefaultButton>
-          <DefaultButton onClick={this.props.reset}>
-            Reset
           </DefaultButton>
           <DefaultButton onClick={this.props.draw}>
             Draw
@@ -85,8 +76,11 @@ export class ControlPanel extends Component {
           <DefaultButton onClick={this.props.drawRandom}>
             Draw Random
           </DefaultButton>
+        </div>
+
+        <div>
           <DefaultButton
-            onClick={this._handlePutOnTopOfDeck}
+            onClick={this.props.putOnTopOfDeck}
             disabled={selectedFlag}
           >
             Put on Top of Deck
@@ -98,6 +92,7 @@ export class ControlPanel extends Component {
             Put on Bottom of Deck
           </DefaultButton>
         </div>
+
       </div>
     );
 
@@ -129,7 +124,7 @@ ControlPanel.propTypes = {
   stay: T.func,
   gameStatus: T.string,
   currentPlayer: T.object,
-  selected: T.array,
+  selected: T.array
 };
 
 export default ControlPanel;
