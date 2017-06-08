@@ -13,21 +13,16 @@ export class Table extends Component {
       drawn: [],
       selected: [],
       gameStatus: undefined,
-      dealer: {
-        title: "Dealer",
-        hand: [],
-        handValue: undefined,
-        status: "ok",
-        turn: false
-      },
-      player1: {
-        title: "Player1",
-        hand: [],
-        handValue: undefined,
-        status: "ok",
-        turn: false
-      },
-      currentPlayer: undefined
+      players: [
+        {
+          title: "Dealer",
+          hand: [],
+          handValue: undefined,
+          status: "ok",
+          turn: false
+        }
+      ],
+      currentPlayer: 1
     };
 
     this._putOnBottomOfDeck = this._putOnBottomOfDeck.bind(this);
@@ -47,30 +42,57 @@ export class Table extends Component {
       this
     );
     this._removeSelectedFromDrawn = this._removeSelectedFromDrawn.bind(this);
+    this._newPlayer = this._newPlayer.bind(this);
+    this._clearHand = this._clearHand.bind(this);
+    this._resetGame = this._resetGame.bind(this);
   }
 
   componentWillMount() {
+    this._newDeck();
+    this._newPlayer("Chris");
+  }
+
+  _newDeck() {
     const deck = Shuffle.shuffle();
     this.setState({ deck });
   }
 
+  _newPlayer(title) {
+    let players = this.state.players;
+    const newPlayer = {
+      title: title,
+      hand: [],
+      handValue: undefined,
+      status: "ok",
+      turn: false
+    };
+    players.push(newPlayer);
+    this.setState({ players });
+  }
+
+  _clearHand(index) {
+    const players = this.state.players;
+    players[index].hand = [];
+    players[index].handValue = undefined;
+    this.setState({ players });
+  }
+
   _shuffle() {
     const deck = this.state.deck;
-    console.log("_shuffle new deck:", deck);
     deck.shuffle();
     this.setState({ deck });
   }
 
+  _resetGame() {
+    this._newDeck();
+    this._clearHand(this.state.currentPlayer);
+    this.setState({ drawn: [], selected: [], gameStatus: undefined });
+  }
+
   _reset() {
-    let deck = this.state.deck;
+    const deck = this.state.deck;
     deck.reset(); //sets the deck back to a full 52-card deck, unshuffled
-    const drawn = [];
-    const selected = [];
-    let player1 = this.state.player1;
-    player1.hand = [];
-    player1.handValue = undefined;
-    player1.status = undefined;
-    this.setState({ deck, drawn, selected, player1 });
+    this.setState({ deck });
   }
 
   _draw(num) {
@@ -78,35 +100,56 @@ export class Table extends Component {
     const drawn = this.state.drawn;
     const ret = deck.draw(1);
     drawn.push(ret);
-    console.log("draw:", ret);
     this.setState({ deck, drawn });
+  }
+
+  _deal() {
+    const deck = this.state.deck;
+    let players = this.state.players;
+    let currentPlayer = players[this.state.currentPlayer];
+    const ret = deck.draw(2);
+    currentPlayer.hand = ret;
+    currentPlayer.turn = true;
+    currentPlayer.handValue = this._evaluateHand(currentPlayer.hand);
+    players[this.state.currentPlayer] = currentPlayer;
+    this.setState({
+      deck,
+      players,
+      gameStatus: "New"
+    });
   }
 
   _hit() {
     let deck = this.state.deck;
     let drawn = this.state.drawn;
-    let player1 = this.state.player1;
+    let players = this.state.players;
+    let currentPlayer = players[this.state.currentPlayer];
     const ret = deck.draw(1);
     drawn.push(ret);
-    player1.hand.push(ret);
-    player1.handValue = this._evaluateHand(player1.hand);
+    currentPlayer.hand.push(ret);
+    currentPlayer.handValue = this._evaluateHand(currentPlayer.hand);
 
-    if (player1.handValue.aceAsOne > 21 && player1.handValue.aceAsTen > 21) {
-      player1.status = "busted";
+    if (
+      currentPlayer.handValue.aceAsOne > 21 &&
+      currentPlayer.handValue.aceAsTen > 21
+    ) {
+      currentPlayer.status = "busted";
     }
     if (
-      player1.handValue.aceAsOne === 21 || player1.handValue.aceAsTen === 21
+      currentPlayer.handValue.aceAsOne === 21 ||
+      currentPlayer.handValue.aceAsTen === 21
     ) {
-      player1.status = "blackjack";
+      currentPlayer.status = "blackjack";
     }
 
-    this.setState({ deck, drawn, player1, currentPlayer: player1 });
+    this.setState({ deck, drawn, players });
   }
 
   _stay() {
     let deck = this.state.deck;
     let drawn = this.state.drawn;
-    let player1 = this.state.player1;
+    let players = this.state.players;
+    let currentPlayer = players[this.state.currentPlayer];
   }
 
   _drawFromBottomOfDeck(num) {
@@ -134,7 +177,6 @@ export class Table extends Component {
     this._removeSelectedFromPlayerHand();
     this._removeSelectedFromDrawn();
     this._clearSelected();
-
   }
 
   _putOnBottomOfDeck(cards) {
@@ -144,31 +186,15 @@ export class Table extends Component {
     this._removeSelectedFromPlayerHand();
     this._removeSelectedFromDrawn();
     this._clearSelected();
-
-  }
-
-  _deal() {
-    const deck = this.state.deck;
-    let player1 = this.state.player1;
-    const ret = deck.draw(2);
-    player1.hand = ret;
-    player1.turn = true;
-    player1.handValue = this._evaluateHand(player1.hand);
-    this.setState({
-      deck,
-      player1,
-      gameStatus: "New",
-      currentPlayer: player1
-    });
   }
 
   _select(cardAttributes) {
+    const selected = this.state.selected;
     const selectedCard = new PlayingCard(
       cardAttributes.suit,
       cardAttributes.description,
       cardAttributes.sort
     );
-    const selected = this.state.selected;
     selected.push(selectedCard);
     this.setState({ selected });
   }
@@ -189,17 +215,18 @@ export class Table extends Component {
     this.setState({ selected: [] });
   }
 
-  _removeSelectedFromPlayerHand(playerName, cards) {
-    const player = this.state.player1;
+  _removeSelectedFromPlayerHand(playerIndex, cards) {
+    const players = this.state.players;
+    let currentPlayer = players[this.state.currentPlayer];
     const selected = this.state.selected;
     selected.forEach(card => {
-      const index = player.hand.findIndex(element => {
+      const index = currentPlayer.hand.findIndex(element => {
         return element.suit === card.suit && card.sort === card.sort;
       });
-      player.hand.splice(index, 1);
+      currentPlayer.hand.splice(index, 1);
     });
-    player.handValue = this._evaluateHand(player.hand);
-    this.setState({ player1: player });
+    currentPlayer.handValue = this._evaluateHand(currentPlayer.hand);
+    this.setState({ players });
   }
 
   _removeSelectedFromDrawn(cards) {
@@ -254,6 +281,8 @@ export class Table extends Component {
   }
 
   render() {
+    const c = this.state.currentPlayer;
+
     return (
       <div id="Table">
         <div className="ms-Grid">
@@ -266,7 +295,7 @@ export class Table extends Component {
                 title="Deck"
                 select={this._select}
                 deselect={this._deselect}
-                hidden={TextTrackCueList}
+                hidden
                 isSelectable={false}
               />
 
@@ -279,20 +308,20 @@ export class Table extends Component {
                 isSelectable={false}
               />*/}
 
-              <DeckContainer
+              {/*<DeckContainer
                 deck={this.state.selected}
                 title="Selected"
                 select={this._select}
                 deselect={this._deselect}
                 isSelectable={false}
                 hidden
-              />
+              />*/}
 
               {this.state.gameStatus === "New" &&
                 <DeckContainer
-                  deck={this.state.player1.hand}
-                  title={this.state.player1.title}
-                  handValue={this.state.player1.handValue}
+                  deck={this.state.players[c].hand}
+                  title={this.state.players[c].title}
+                  handValue={this.state.players[c].handValue}
                   select={this._select}
                   deselect={this._deselect}
                   hidden={false}
@@ -310,8 +339,9 @@ export class Table extends Component {
                 deal={this._deal}
                 hit={this._hit}
                 stay={this._stay}
+                resetGame={this._resetGame}
                 gameStatus={this.state.gameStatus}
-                currentPlayer={this.state.currentPlayer}
+                currentPlayer={this.state.players[c]}
                 selected={this.state.selected}
               />
             </div>

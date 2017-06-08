@@ -58,8 +58,8 @@ export class ControlPanel extends Component {
             >
               Stay
             </DefaultButton>}
-          <DefaultButton onClick={this.props.reset}>
-            Reset
+          <DefaultButton onClick={this.props.resetGame}>
+            Reset Game
           </DefaultButton>
         </div>
 
@@ -122,6 +122,7 @@ ControlPanel.propTypes = {
   deal: T.func,
   hit: T.func,
   stay: T.func,
+  resetGame: T.func,
   gameStatus: T.string,
   currentPlayer: T.object,
   selected: T.array
