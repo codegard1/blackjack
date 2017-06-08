@@ -11,8 +11,10 @@ The game was originally meant to be Texas Hold 'Em (hence the repo name), but I 
 * [Masonry](https://masonry.desandro.com/) 
 * [node-shuffle](https://github.com/codegard1/node-shuffle)
 
-#### Project Status as of 6/1/17
+#### Project Status as of 6/8/17
 * Visual logic is basically done, but will improve over time
 * App state has *deck* and *drawn* arrays. Next up: players' hands
-* A rudimentary Control Panel is available, but not all of the buttons are fully functional
-* No game logic yet
+* All control panel buttons work as expected
+* Selecting / deselecting cards works as expected
+* Game correctly calculates the value of each hand
+* The Masonry component does not render with the correct width when embedded inside an ms-Grid 
