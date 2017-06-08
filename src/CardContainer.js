@@ -1,12 +1,10 @@
 import React, { Component } from "react";
 import * as T from "prop-types";
 
-// &spades;	&hearts;	&diams;	&clubs;
-
 export class CardContainer extends Component {
   constructor(props) {
     super(props);
-    this.state = { selected: false };
+    this.state = { isSelected: false };
 
     this._toggleSelect = this._toggleSelect.bind(this);
   }
@@ -17,20 +15,18 @@ export class CardContainer extends Component {
       suit: this.props.suit,
       sort: this.props.sort
     };
-    if (this.state.selected === false) {
+    if (this.state.isSelected === false) {
       this.props.select(cardAttributes);
-      this.setState({ selected: true });
+      this.setState({ isSelected: true });
     }
-    if (this.state.selected === true) {
+    if (this.state.isSelected === true) {
       this.props.deselect(cardAttributes);
-      this.setState({ selected: false });
+      this.setState({ isSelected: false });
     }
   }
 
   render() {
-    const selectedClass = this.state.selected ? " selected " : "";
     const short = this.props.toString();
-    const suitClass = this.props.suit.toLowerCase() + "s";
     let cardTitle = "";
     switch (this.props.sort) {
       case 14:
@@ -50,7 +46,7 @@ export class CardContainer extends Component {
         break;
 
       default:
-        cardTitle = this.props.sort + " ";
+        cardTitle = this.props.sort;
         break;
     }
 
@@ -74,10 +70,16 @@ export class CardContainer extends Component {
       default:
         break;
     }
+
+    let cardClass = "card ";
+    cardClass += this.props.suit.toLowerCase() + "s ";
+    cardClass += this.state.isSelected ? " selected " : "";
+    cardClass += this.props.isSelectable ? "selectable " : "unselectable";
+
     return (
       <div
-        className={"card " + suitClass + selectedClass}
-        onClick={this._toggleSelect}
+        className={cardClass}
+        onClick={this.props.isSelectable && this._toggleSelect}
       >
         <span className="ms-font-xl card-title top">{cardTitle}</span>
         <p className="ms-font-m" data-p={short} />

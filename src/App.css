@@ -53,6 +53,10 @@ div.card.selected {
   border: 1px solid blue;
 }
 
+div.card.unselectable {
+  cursor: default;
+}
+
 .DeckContainer {
   display: block;
   padding: 2em;

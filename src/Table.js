@@ -267,22 +267,25 @@ export class Table extends Component {
                 select={this._select}
                 deselect={this._deselect}
                 hidden={TextTrackCueList}
+                isSelectable={false}
               />
 
-              <DeckContainer
+              {/*<DeckContainer
                 deck={this.state.drawn}
                 title="Drawn"
                 select={this._select}
                 deselect={this._deselect}
                 hidden={true}
-              />
+                isSelectable={false}
+              />*/}
 
               <DeckContainer
                 deck={this.state.selected}
                 title="Selected"
                 select={this._select}
                 deselect={this._deselect}
-                hidden={true}
+                isSelectable={false}
+                hidden
               />
 
               {this.state.gameStatus === "New" &&
@@ -293,6 +296,7 @@ export class Table extends Component {
                   select={this._select}
                   deselect={this._deselect}
                   hidden={false}
+                  isSelectable
                 />}
 
               <ControlPanel

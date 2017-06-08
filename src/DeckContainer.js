@@ -39,6 +39,7 @@ export class DeckContainer extends Component {
               {...card}
               select={this.props.select}
               deselect={this.props.deselect}
+              isSelectable={this.props.isSelectable}
             />
           );
         })
