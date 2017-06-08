@@ -1,8 +1,8 @@
 div.card {
   display: flex;
   flex-direction: column;
-  /*justify-content: center;*/
   justify-content: center;
+  align-content: center;
   box-sizing: content-box;
   height: 100px;
   width: 65px;
@@ -19,6 +19,11 @@ div.card {
   border-left: 1px solid rgba(25, 25, 25, 0.1);
 }
 
+div.card * {
+  /*border: 1px solid blue;*/
+  margin:0;
+}
+
 div.card.hearts span.card-title,
 div.card.diamonds span.card-title {
   color: salmon;
@@ -26,26 +31,42 @@ div.card.diamonds span.card-title {
 
 div.card.spades span.card-title,
 div.card.clubs span.card-title {
-  color: #333;
+  color: #444;
 }
 
-.card p:after {
+div.card p {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  flex-grow: 1;
+}
+
+div.card p:after {
   text-align: center;
   content: attr(data-p);
   /*border: 1px solid green;*/
 }
 
+
 span.card-title {
   display: inline-block;
+  position: relative;
+  flex-grow: 0;
 }
 
 span.card-title.bottom {
   text-align: right;
+  right: 0;
+  bottom: 0px;
   /*border: 1px solid gold;*/
 }
 
 span.card-title.top {
   text-align: left;
+  top:0;
+  left:0;
   /*border: 1px solid gold;*/
 }
 
@@ -58,6 +79,7 @@ div.card.unselectable {
 }
 
 .DeckContainer {
+  margin: auto 0;
   display: block;
   padding: 2em;
   /*width: 100%;*/
@@ -84,6 +106,7 @@ div#Table {
   /*height: 100%;*/
   padding: 0;
   margin: 0;
+  /*border:2px solid salmon;*/
 }
 
 .handValue {
@@ -94,4 +117,8 @@ div#Table {
 
 div#StatusPanel {
   border: 1px solid #333;
+}
+
+.ms-Grid-col {
+  /*border:1px solid lightgreen;*/
 }

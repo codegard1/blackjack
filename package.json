@@ -9,7 +9,7 @@
   },
   "private": true,
   "dependencies": {
-    "office-ui-fabric-react": "^4.1.1",
+    "office-ui-fabric-react": "^4.2.2",
     "prop-types": "^15.5.10",
     "react": "^15.5.4",
     "react-dom": "^15.5.4",

@@ -2,6 +2,11 @@ import React, { Component } from "react";
 import Shuffle from "shuffle";
 import DeckContainer from "./DeckContainer";
 import ControlPanel from "./ControlPanel";
+import {
+  MessageBar,
+  MessageBarType
+} from "office-ui-fabric-react/lib/MessageBar";
+import { Fabric } from "office-ui-fabric-react/lib/Fabric";
 
 const PlayingCard = require("shuffle/lib/playingCard");
 
@@ -22,7 +27,13 @@ export class Table extends Component {
           turn: false
         }
       ],
-      currentPlayer: 1
+      currentPlayer: 1,
+      isMessageBarVisible: false,
+      messageBarDefinition: {
+        type: MessageBarType.info,
+        text: "",
+        isMultiLine: false
+      }
     };
 
     this._putOnBottomOfDeck = this._putOnBottomOfDeck.bind(this);
@@ -45,6 +56,8 @@ export class Table extends Component {
     this._newPlayer = this._newPlayer.bind(this);
     this._clearHand = this._clearHand.bind(this);
     this._resetGame = this._resetGame.bind(this);
+    this._showMessageBar = this._showMessageBar.bind(this);
+    this._evaluateGame = this._evaluateGame.bind(this);
   }
 
   componentWillMount() {
@@ -74,6 +87,7 @@ export class Table extends Component {
     const players = this.state.players;
     players[index].hand = [];
     players[index].handValue = undefined;
+    players[index].status = undefined;
     this.setState({ players });
   }
 
@@ -87,6 +101,7 @@ export class Table extends Component {
     this._newDeck();
     this._clearHand(this.state.currentPlayer);
     this.setState({ drawn: [], selected: [], gameStatus: undefined });
+    this._showMessageBar("Game reset", MessageBarType.info);
   }
 
   _reset() {
@@ -134,12 +149,14 @@ export class Table extends Component {
       currentPlayer.handValue.aceAsTen > 21
     ) {
       currentPlayer.status = "busted";
+      this._showMessageBar("Busted!", MessageBarType.warning);
     }
     if (
       currentPlayer.handValue.aceAsOne === 21 ||
       currentPlayer.handValue.aceAsTen === 21
     ) {
       currentPlayer.status = "blackjack";
+      this._showMessageBar("Blackjack!",MessageBarType.success);
     }
 
     this.setState({ deck, drawn, players });
@@ -150,6 +167,10 @@ export class Table extends Component {
     let drawn = this.state.drawn;
     let players = this.state.players;
     let currentPlayer = players[this.state.currentPlayer];
+  }
+
+  _evaluateGame () {
+    // do something
   }
 
   _drawFromBottomOfDeck(num) {
@@ -280,6 +301,13 @@ export class Table extends Component {
     return handValue;
   }
 
+  _showMessageBar(text, type) {
+    const messageBarDefinition = this.state.messageBarDefinition;
+    messageBarDefinition.text = text;
+    messageBarDefinition.type = type;
+    this.setState({ messageBarDefinition, isMessageBarVisible: true });
+  }
+
   render() {
     const c = this.state.currentPlayer;
 
@@ -289,33 +317,20 @@ export class Table extends Component {
 
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-sm12">
+              {this.state.isMessageBarVisible &&
+                <MessageBar
+                  messageBarType={this.state.messageBarDefinition.type}
+                  isMultiline={this.state.messageBarDefinition.isMultiLine}
+                  onDismiss={() =>
+                    this.setState({ isMessageBarVisible: false })}
+                >
+                  {this.state.messageBarDefinition.text}
+                </MessageBar>}
+            </div>
+          </div>
 
-              <DeckContainer
-                deck={this.state.deck.cards}
-                title="Deck"
-                select={this._select}
-                deselect={this._deselect}
-                hidden
-                isSelectable={false}
-              />
-
-              {/*<DeckContainer
-                deck={this.state.drawn}
-                title="Drawn"
-                select={this._select}
-                deselect={this._deselect}
-                hidden={true}
-                isSelectable={false}
-              />*/}
-
-              {/*<DeckContainer
-                deck={this.state.selected}
-                title="Selected"
-                select={this._select}
-                deselect={this._deselect}
-                isSelectable={false}
-                hidden
-              />*/}
+          <div className="ms-Grid-row">
+            <div className="ms-Grid-col ms-u-sm12">
 
               {this.state.gameStatus === "New" &&
                 <DeckContainer
@@ -344,6 +359,34 @@ export class Table extends Component {
                 currentPlayer={this.state.players[c]}
                 selected={this.state.selected}
               />
+
+              <DeckContainer
+                deck={this.state.deck.cards}
+                title="Deck"
+                select={this._select}
+                deselect={this._deselect}
+                hidden={false}
+                isSelectable={false}
+              />
+
+              {/*<DeckContainer
+                deck={this.state.drawn}
+                title="Drawn"
+                select={this._select}
+                deselect={this._deselect}
+                hidden={true}
+                isSelectable={false}
+              />*/}
+
+              {/*<DeckContainer
+                deck={this.state.selected}
+                title="Selected"
+                select={this._select}
+                deselect={this._deselect}
+                isSelectable={false}
+                hidden
+              />*/}
+
             </div>
           </div>
 

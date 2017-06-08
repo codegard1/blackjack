@@ -47,8 +47,8 @@ export class DeckContainer extends Component {
 
     // Set toggle icon for Deck titles
     const toggleIcon = this.state.deckIsVisible
-      ? <i className="ms-Icon ms-Icon--ChevronDownMed" />
-      : <i className="ms-Icon ms-Icon--ChevronUpMed" />;
+      ? <i className="ms-Icon ms-Icon--ChevronDown" aria-hidden="true" />
+      : <i className="ms-Icon ms-Icon--ChevronUp" aria-hidden="true" />;
 
     // Set hand value text
     const handValueDisplay =
