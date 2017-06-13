@@ -63,7 +63,7 @@ export class ControlPanel extends Component {
           </DefaultButton>
         </div>
 
-        <div>
+        {/*<div>
           <DefaultButton onClick={this.props.shuffle}>
             Shuffle
           </DefaultButton>
@@ -91,7 +91,7 @@ export class ControlPanel extends Component {
           >
             Put on Bottom of Deck
           </DefaultButton>
-        </div>
+        </div>*/}
 
       </div>
     );
