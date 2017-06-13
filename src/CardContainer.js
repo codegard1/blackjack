@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import * as T from "prop-types";
 
+import './CardContainer.css';
+
 export class CardContainer extends Component {
   constructor(props) {
     super(props);
