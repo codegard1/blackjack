@@ -18,3 +18,9 @@ The game was originally meant to be Texas Hold 'Em (hence the repo name), but I 
 * Selecting / deselecting cards works as expected
 * Game correctly calculates the value of each hand
 * The Masonry component does not render with the correct width when embedded inside an ms-Grid 
+
+#### Wish List
+* Use [CSS Card Tricks](https://designshack.net/articles/css/css-card-tricks/) to style cards (6/13/17)
+* Use CSS transitions to flip / move cards (6/13/17)
+* Implement JSDoc across the board (6/13/17)
+* Convert the node-shuffle module to React components (6/13/17)
