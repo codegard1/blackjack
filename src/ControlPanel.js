@@ -2,11 +2,24 @@ import React, { Component } from "react";
 import * as T from "prop-types";
 import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
 
-/**
- * ControlPanel contains buttons that manipulate the game state
+/** Contains buttons that manipulate state in Table
  * @namespace ControlPanel
- * @augments Component
- */
+ * @memberof App.Components
+ * @prop {function} putOnBottomOfDeck   - move selected cards to the bottom of the deck (in state)
+ * @prop {function} putOnTopOfDeck  - move selected cards to the top of the deck (in state)
+ * @prop {function} drawRandom  - draw a random card from the deck (in state)
+ * @prop {function} drawFromBottomOfDeck  - draw arbitrary number of cards from the bottom of the deck (in state)
+ * @prop {function} draw  - draw arbitrary number of cards from the top of the deck (in state)
+ * @prop {function} reset   - reset the deck (in state); order cards by suit and number 
+ * @prop {function} shuffle   - shuffle the deck (in state)
+ * @prop {function} deal  - moves an arbitrary number of cards to the current player's hand (in state)
+ * @prop {function} hit   - move one card to the current player's hand (in state)
+ * @prop {function} stay  - advances turn to the next player (in state)
+ * @prop {function} resetGame   - resets the deck, players' hands, drawn, and selected arrays, and sets gameStatus to New 
+ * @prop {string} gameStatus - string representing the current game's status
+ * @prop {number} currentPlayer - index of of the players array (in state) that corresponds to the current player 
+ * @prop {array} selected - array containing currently selected cards; passed in from state
+  */
 export class ControlPanel extends Component {
   constructor(props) {
     super(props);
