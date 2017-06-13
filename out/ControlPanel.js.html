@@ -1,4 +1,32 @@
-import React, { Component } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: ControlPanel.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: ControlPanel.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import React, { Component } from "react";
 import * as T from "prop-types";
 import { DefaultButton } from "office-ui-fabric-react/lib/Button";
 
@@ -37,94 +65,94 @@ export class ControlPanel extends Component {
     }
 
     const gameStatusDisplay =
-      gameStatus &&
-      <p className="ms-font-l">
-        <span>
-          Game Status: <strong>{gameStatus || "N/A"}</strong>
-        </span>
-      </p>;
+      gameStatus &amp;&amp;
+      &lt;p className="ms-font-l">
+        &lt;span>
+          Game Status: &lt;strong>{gameStatus || "N/A"}&lt;/strong>
+        &lt;/span>
+      &lt;/p>;
 
     const currentPlayerDisplay =
-      currentPlayer &&
-      <p className="ms-font-l">
-        <span>{`Current Player: ${currentPlayer.title}`}</span> <br />
-        <span>{`Player Status: ${currentPlayer.status}`}</span>
-      </p>;
+      currentPlayer &amp;&amp;
+      &lt;p className="ms-font-l">
+        &lt;span>{`Current Player: ${currentPlayer.title}`}&lt;/span> &lt;br />
+        &lt;span>{`Player Status: ${currentPlayer.status}`}&lt;/span>
+      &lt;/p>;
 
     const buttons = (
-      <div>
+      &lt;div>
 
-        <div>
-          {!this.props.gameStatus &&
-            <DefaultButton title="Deal" onClick={this.props.deal}>
+        &lt;div>
+          {!this.props.gameStatus &amp;&amp;
+            &lt;DefaultButton title="Deal" onClick={this.props.deal}>
               Deal
-            </DefaultButton>}
+            &lt;/DefaultButton>}
 
-          {this.props.gameStatus &&
-            <DefaultButton
+          {this.props.gameStatus &amp;&amp;
+            &lt;DefaultButton
               title="Hit"
               onClick={this.props.hit}
               disabled={bustedFlag}
             >
               Hit
-            </DefaultButton>}
-          {this.props.gameStatus &&
-            <DefaultButton
+            &lt;/DefaultButton>}
+          {this.props.gameStatus &amp;&amp;
+            &lt;DefaultButton
               title="Stay"
               onClick={this.props.stay}
               disabled={bustedFlag}
             >
               Stay
-            </DefaultButton>}
-          <DefaultButton onClick={this.props.resetGame}>
+            &lt;/DefaultButton>}
+          &lt;DefaultButton onClick={this.props.resetGame}>
             Reset Game
-          </DefaultButton>
-        </div>
+          &lt;/DefaultButton>
+        &lt;/div>
 
-        <div>
-          <DefaultButton onClick={this.props.shuffle}>
+        &lt;div>
+          &lt;DefaultButton onClick={this.props.shuffle}>
             Shuffle
-          </DefaultButton>
-          <DefaultButton onClick={this.props.draw}>
+          &lt;/DefaultButton>
+          &lt;DefaultButton onClick={this.props.draw}>
             Draw
-          </DefaultButton>
-          <DefaultButton onClick={this.props.drawFromBottomOfDeck}>
+          &lt;/DefaultButton>
+          &lt;DefaultButton onClick={this.props.drawFromBottomOfDeck}>
             Draw from Bottom of Deck
-          </DefaultButton>
-          <DefaultButton onClick={this.props.drawRandom}>
+          &lt;/DefaultButton>
+          &lt;DefaultButton onClick={this.props.drawRandom}>
             Draw Random
-          </DefaultButton>
-        </div>
+          &lt;/DefaultButton>
+        &lt;/div>
 
-        <div>
-          <DefaultButton
+        &lt;div>
+          &lt;DefaultButton
             onClick={this.props.putOnTopOfDeck}
             disabled={selectedFlag}
           >
             Put on Top of Deck
-          </DefaultButton>
-          <DefaultButton
+          &lt;/DefaultButton>
+          &lt;DefaultButton
             onClick={this.props.putOnBottomOfDeck}
             disabled={selectedFlag}
           >
             Put on Bottom of Deck
-          </DefaultButton>
-        </div>
+          &lt;/DefaultButton>
+        &lt;/div>
 
-      </div>
+      &lt;/div>
     );
 
     return (
-      <div id="ControlPanel">
-        {gameStatus &&
-          <div id="StatusPanel">
+      &lt;div id="ControlPanel">
+        {gameStatus &amp;&amp;
+          &lt;div id="StatusPanel">
             {gameStatusDisplay}
             {currentPlayerDisplay}
-          </div>}
-        <div id="button-container">
+          &lt;/div>}
+        &lt;div id="button-container">
           {buttons}
-        </div>
-      </div>
+        &lt;/div>
+      &lt;/div>
     );
   }
 }
@@ -147,3 +175,26 @@ ControlPanel.propTypes = {
 };
 
 export default ControlPanel;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Namespaces</h3><ul><li><a href="App.Components.ControlPanel.html">ControlPanel</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Tue Jun 13 2017 19:16:31 GMT-0400 (Eastern Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
