@@ -1,14 +1,20 @@
 import React, { Component } from "react";
 import * as T from "prop-types";
 
-import './CardContainer.css';
+import "./CardContainer.css";
 
 export class CardContainer extends Component {
   constructor(props) {
     super(props);
-    this.state = { isSelected: false };
+    this.state = { isSelected: false, isBackfacing: false };
 
     this._toggleSelect = this._toggleSelect.bind(this);
+    this._toggleBackfacing = this._toggleBackfacing.bind(this);
+  }
+
+  _toggleBackfacing() {
+    const isBackfacing = this.state.isBackfacing;
+    this.setState({ isBackfacing: !isBackfacing });
   }
 
   _toggleSelect() {
@@ -75,8 +81,8 @@ export class CardContainer extends Component {
 
     let cardClass = "card ";
     cardClass += this.props.suit.toLowerCase() + "s ";
-    cardClass += this.state.isSelected ? " selected " : "";
     cardClass += this.props.isSelectable ? "selectable " : "unselectable";
+    cardClass += this.state.isSelected ? " selected " : "";
 
     return (
       <div
@@ -86,6 +92,7 @@ export class CardContainer extends Component {
         <span className="ms-font-xl card-title top">{cardTitle}</span>
         <p className="ms-font-m" data-p={short} />
         <span className="ms-font-xl card-title bottom">{cardTitle}</span>
+        {this.state.isBackfacing && <div className="card-back" />}
       </div>
     );
   }
