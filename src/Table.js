@@ -156,7 +156,7 @@ export class Table extends Component {
       currentPlayer.handValue.aceAsTen === 21
     ) {
       currentPlayer.status = "blackjack";
-      this._showMessageBar("Blackjack!",MessageBarType.success);
+      this._showMessageBar("Blackjack!", MessageBarType.success);
     }
 
     this.setState({ deck, drawn, players });
@@ -169,7 +169,7 @@ export class Table extends Component {
     let currentPlayer = players[this.state.currentPlayer];
   }
 
-  _evaluateGame () {
+  _evaluateGame() {
     // do something
   }
 
@@ -332,17 +332,6 @@ export class Table extends Component {
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-sm12">
 
-              {this.state.gameStatus === "New" &&
-                <DeckContainer
-                  deck={this.state.players[c].hand}
-                  title={this.state.players[c].title}
-                  handValue={this.state.players[c].handValue}
-                  select={this._select}
-                  deselect={this._deselect}
-                  hidden={false}
-                  isSelectable
-                />}
-
               <ControlPanel
                 shuffle={this._shuffle}
                 putOnBottomOfDeck={this._putOnBottomOfDeck}
@@ -359,6 +348,17 @@ export class Table extends Component {
                 currentPlayer={this.state.players[c]}
                 selected={this.state.selected}
               />
+
+              {this.state.gameStatus === "New" &&
+                <DeckContainer
+                  deck={this.state.players[c].hand}
+                  title={this.state.players[c].title}
+                  handValue={this.state.players[c].handValue}
+                  select={this._select}
+                  deselect={this._deselect}
+                  hidden={false}
+                  isSelectable
+                />}
 
               <DeckContainer
                 deck={this.state.deck.cards}

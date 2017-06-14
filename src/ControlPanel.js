@@ -1,79 +1,150 @@
 import React, { Component } from "react";
 import * as T from "prop-types";
-import { DefaultButton } from "office-ui-fabric-react/lib/Button";
 import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
 
 export class ControlPanel extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      commandBarItems: []
+    };
   }
+
+  componentWillMount() {}
 
   render() {
     let selectedFlag = this.props.selected.length > 0 ? false : true;
-    let bustedFlag = false;
     let gameStatus = this.props.gameStatus;
     let currentPlayer = this.props.currentPlayer || undefined;
-
-    // Define buttons in CommandBar
-    const commandBarDefinition = {
-      items: [
-        {
-          key: "mmgApps",
-          name: "MMG Apps",
-          ariaLabel: "MMG Applications. Use up and down arrows to navigate",
-          iconProps: { iconName: "FavoriteStarFill" },
-          onClick(ev) {
-            ev.preventDefault();
-            console.log("onMouseDown:", ev);
-          },
-          subMenuProps: {
-            items: [],
-            isSubMenu: true,
-            isBeakVisible: true
-          }
-        },
-        {
-          key: "mail",
-          name: "Mail",
-          ariaLabel: "Mail",
-          iconProps: { iconName: "OutlookLogo" },
-          href: "https://outlook.office365.com/owa/?realm=macys.com&exsvurl=1&ll-cc=1033&modurl=0"
-        },
-        {
-          key: "Calendar",
-          name: "Calendar",
-          ariaLabel: "Calendar",
-          iconProps: { iconName: "Calendar" },
-          href: "https://outlook.office365.com/owa/?realm=macys.com&exsvurl=1&ll-cc=1033&modurl=1"
-        },
-        {
-          key: "People",
-          name: "People",
-          ariaLabel: "People",
-          iconProps: { iconName: "People" },
-          href: "https://outlook.office365.com/owa/?realm=macys.com&exsvurl=1&ll-cc=1033&modurl=2"
-        },
-        {
-          key: "OneDrive",
-          name: "OneDrive",
-          ariaLabel: "OneDrive",
-          iconProps: { iconName: "OneDrive" },
-          href: "https://macysinc-my.sharepoint.com/_layouts/15/MySite.aspx?MySiteRedirect=AllDocuments"
-        },
-        {
-          key: "Yammer",
-          name: "Yammer",
-          ariaLabel: "Yammer",
-          iconProps: { iconName: "YammerLogo" },
-          href: "https://www.yammer.com/macys.com"
-        }
-      ]
-    };
-
+    let bustedFlag = false;
     // set bustedFlag
     if (currentPlayer) {
       bustedFlag = this.props.currentPlayer.status === "busted" ? true : false;
     }
+
+    // Define buttons in CommandBar
+    const drawItems = [
+      {
+        key: "shuffle",
+        name: "Shuffle",
+        ariaLabel: "Shuffle",
+        iconProps: "",
+        disabled: false,
+        onClick: this.props.shuffle
+      },
+      {
+        key: "draw",
+        name: "Draw",
+        ariaLabel: "Draw",
+        iconProps: "",
+        disabled: false,
+        onClick: this.props.draw
+      },
+      {
+        key: "draw-from-bottom-of-deck",
+        name: "Draw from Bottom of Deck",
+        ariaLabel: "Draw from Bottom of Deck",
+        iconProps: "",
+        disabled: false,
+        onClick: this.props.drawFromBottomOfDeck
+      },
+      {
+        key: "draw-random",
+        name: "Draw Random",
+        ariaLabel: "Draw Random",
+        iconProps: "",
+        disabled: false,
+        onClick: this.props.drawRandom
+      }
+    ];
+    const putItems = [
+      {
+        key: "put-on-top-of-deck",
+        name: "Put on Top of Deck",
+        ariaLabel: "Put on Top of Deck",
+        iconProps: "",
+        disabled: false,
+        onClick: this.props.putOnTopOfDeck
+      },
+      {
+        key: "put-on-bottom-of-deck",
+        name: "Put on Bottom of Deck",
+        ariaLabel: "Put on Bottom of Deck",
+        iconProps: "",
+        disabled: false,
+        onClick: this.props.putOnBottomOfDeck
+      }
+    ];
+    const commandBarDefinition = {
+      defaultItems: [
+        {
+          key: "deal",
+          name: "Deal",
+          ariaLabel: "Deal",
+          iconProps: "",
+          disabled: false,
+          onClick: this.props.deal
+        }
+      ],
+      blackJackItems: [
+        {
+          key: "hit",
+          name: "Hit",
+          ariaLabel: "Hit",
+          iconProps: "",
+          disabled: bustedFlag,
+          onClick: this.props.hit
+        },
+        {
+          key: "stay",
+          name: "Stay",
+          ariaLabel: "Stay",
+          iconProps: "",
+          disabled: bustedFlag,
+          onClick: this.props.stay
+        },
+        {
+          key: "reset-game",
+          name: "Reset Game",
+          ariaLabel: "Reset Game",
+          iconProps: "",
+          disabled: false,
+          onClick: this.props.resetGame
+        }
+      ],
+      drawMenu: [
+        {
+          key: "deck-menu",
+          name: "Draw",
+          ariaLabel: "Draw",
+          iconProps: "",
+          onClick(ev) {
+            ev.preventDefault();
+          },
+          subMenuProps: {
+            items: drawItems,
+            isSubMenu: true,
+            isBeakVisible: true
+          }
+        }
+      ],
+      putMenu: [
+        {
+          key: "put-menu",
+          name: "Put",
+          ariaLabel: "Put",
+          iconProps: "",
+          onClick(ev) {
+            ev.preventDefault();
+          },
+          subMenuProps: {
+            items: putItems,
+            isSubMenu: true,
+            isBeakVisible: true
+          }
+        }
+      ]
+    };
 
     const gameStatusDisplay =
       gameStatus &&
@@ -90,80 +161,25 @@ export class ControlPanel extends Component {
         <span>{`Player Status: ${currentPlayer.status}`}</span>
       </p>;
 
-    const buttons = (
-      <div>
-
-        <div>
-          {!this.props.gameStatus &&
-            <DefaultButton title="Deal" onClick={this.props.deal}>
-              Deal
-            </DefaultButton>}
-
-          {this.props.gameStatus &&
-            <DefaultButton
-              title="Hit"
-              onClick={this.props.hit}
-              disabled={bustedFlag}
-            >
-              Hit
-            </DefaultButton>}
-          {this.props.gameStatus &&
-            <DefaultButton
-              title="Stay"
-              onClick={this.props.stay}
-              disabled={bustedFlag}
-            >
-              Stay
-            </DefaultButton>}
-          <DefaultButton onClick={this.props.resetGame}>
-            Reset Game
-          </DefaultButton>
-        </div>
-
-        {/*<div>
-          <DefaultButton onClick={this.props.shuffle}>
-            Shuffle
-          </DefaultButton>
-          <DefaultButton onClick={this.props.draw}>
-            Draw
-          </DefaultButton>
-          <DefaultButton onClick={this.props.drawFromBottomOfDeck}>
-            Draw from Bottom of Deck
-          </DefaultButton>
-          <DefaultButton onClick={this.props.drawRandom}>
-            Draw Random
-          </DefaultButton>
-        </div>
-
-        <div>
-          <DefaultButton
-            onClick={this.props.putOnTopOfDeck}
-            disabled={selectedFlag}
-          >
-            Put on Top of Deck
-          </DefaultButton>
-          <DefaultButton
-            onClick={this.props.putOnBottomOfDeck}
-            disabled={selectedFlag}
-          >
-            Put on Bottom of Deck
-          </DefaultButton>
-        </div>*/}
-
-      </div>
+    let commandBarItems = this.state.commandBarItems.concat(
+      commandBarDefinition.defaultItems
     );
+    if (gameStatus) {
+      commandBarItems = commandBarItems.concat(
+        commandBarDefinition.blackJackItems,
+        commandBarDefinition.putMenu,
+        commandBarDefinition.drawMenu
+      );
+    }
 
     return (
       <div id="ControlPanel">
-        <CommandBar isSearchBoxVisible={false} items={commandBarDefinition} />
+        <CommandBar isSearchBoxVisible={false} items={commandBarItems} />
         {gameStatus &&
           <div id="StatusPanel">
             {gameStatusDisplay}
             {currentPlayerDisplay}
           </div>}
-        <div id="button-container">
-          {buttons}
-        </div>
       </div>
     );
   }
