@@ -2,7 +2,7 @@
   "name": "blackjack",
   "description": "Chris's own blackjack game, made for fun",
   "author": "Chris Odegard <c.odegard@gmail.com>",
-  "version": "0.3.1",
+  "version": "0.3.3",
   "repository": {
     "type": "git",
     "url": "git://github.com/codegard1/blackjack"
@@ -14,14 +14,14 @@
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
     "react-masonry-component": "^5.0.7",
-    "shuffle": "git+https://github.com/codegard1/node-shuffle.git"
+    "shuffle": "git+https://github.com/codegard1/node-shuffle.git#use-react"
   },
   "devDependencies": {
-    "react-dev-tools": "0.0.1",
-    "react-scripts": "^1.0.5",
     "babel-eslint": "^7.2.3",
     "eslint-plugin-import": "^2.2.0",
-    "eslint-plugin-react": "^6.9.0"
+    "eslint-plugin-react": "^7.0.1",
+    "react-dev-tools": "0.0.1",
+    "react-scripts": "^1.0.5"
   },
   "scripts": {
     "start": "react-scripts start",

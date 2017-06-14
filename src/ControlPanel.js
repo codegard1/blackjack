@@ -4,6 +4,7 @@ import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
 
 /**
  * ControlPanel contains buttons that manipulate the game state
+ * @namespace ControlPanel
  * @augments Component
  */
 export class ControlPanel extends Component {
