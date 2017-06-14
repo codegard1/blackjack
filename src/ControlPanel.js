@@ -3,7 +3,7 @@ import * as T from "prop-types";
 import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
 
 /** Contains buttons that manipulate state in Table
- * @namespace ControlPanel
+ * @namespace
  * @memberof App.Components
  * @prop {function} putOnBottomOfDeck   - move selected cards to the bottom of the deck (in state)
  * @prop {function} putOnTopOfDeck  - move selected cards to the top of the deck (in state)
@@ -21,9 +21,17 @@ import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
  * @prop {array} selected - array containing currently selected cards; passed in from state
   */
 export class ControlPanel extends Component {
+  /**
+   * @namespace ControlPanel
+   * @constructor
+   */
   constructor(props) {
     super(props);
     this.state = {
+      /**
+       * @type {array}
+       * @defaultvalue
+       */
       commandBarItems: []
     };
   }
@@ -40,7 +48,11 @@ export class ControlPanel extends Component {
       bustedFlag = this.props.currentPlayer.status === "busted" ? true : false;
     }
 
-    // Define buttons in CommandBar
+    /**
+     * optionsItems: Define buttons in CommandBar
+     * @memberof ControlPanel
+     * @property {array} - items for the Options menu
+     */
     const optionsItems = [
       {
         key: "show-deck",
@@ -73,6 +85,12 @@ export class ControlPanel extends Component {
         onClick: this.props.toggleSelectedVisibility
       }
     ];
+
+    /**
+     * Menu items related to drawing cards from the deck
+     * @memberof ControlPanel
+     * @property {array} - items for the Options menu
+     */
     const drawItems = [
       {
         key: "draw",
@@ -99,6 +117,12 @@ export class ControlPanel extends Component {
         onClick: this.props.drawRandom
       }
     ];
+
+    /**
+     * Menu items related to putting cards in the deck
+     * @memberof ControlPanel
+     * @property {array} - items for the Options menu
+     */
     const putItems = [
       {
         key: "put-on-top-of-deck",
@@ -117,6 +141,12 @@ export class ControlPanel extends Component {
         onClick: this.props.putOnBottomOfDeck
       }
     ];
+
+    /**
+     * master repository of menu items
+     * @memberof ControlPanel
+     * @property {object} - items for the Options menu
+     */
     const commandBarDefinition = {
       defaultItems: [
         {
@@ -131,7 +161,7 @@ export class ControlPanel extends Component {
           key: "shuffle",
           name: "Shuffle",
           ariaLabel: "Shuffle",
-          iconProps: {iconName: "Sync"},
+          iconProps: { iconName: "Sync" },
           disabled: false,
           onClick: this.props.shuffle
         }
@@ -213,9 +243,9 @@ export class ControlPanel extends Component {
     };
 
     /**
-     * Configures the game status display
-     * @param {String} gameStatus
-     * @returns {JSX} Game status panel
+     * If gameStatus is no undefined then set gameStatusDisplay to a JSX element containing {gamestatus}
+     * @memberof ControlPanel
+     * @param {string} gameStatus
      */
     const gameStatusDisplay =
       gameStatus &&
@@ -226,9 +256,9 @@ export class ControlPanel extends Component {
       </p>;
 
     /** 
-       * Configures the player's panel
-       * @param {Object} currentPlayer
-       * @returns {JSX} Current player title and status
+       * If currentPlayer is set then set currentPLayerDisplay to a JSX element containing {currentPlayer.title} and {currentPlayer.status}
+       * @memberof ControlPanel
+       * @param {object} currentPlayer
        */
     const currentPlayerDisplay =
       currentPlayer &&
@@ -239,8 +269,8 @@ export class ControlPanel extends Component {
 
     /**
      * Configure the CommandBar 
-     * @param {Object} commandBarDefinition
-     * @returns {Array} commandBarItems
+     * @memberof ControlPanel
+     * @param {object} commandBarDefinition
      */
     let commandBarItems = this.state.commandBarItems.concat(
       commandBarDefinition.defaultItems
@@ -271,6 +301,10 @@ export class ControlPanel extends Component {
   }
 }
 
+/**
+ * Defines the propTypes for ControlPanel
+ * @memberof ControlPanel
+ */
 ControlPanel.propTypes = {
   putOnBottomOfDeck: T.func,
   putOnTopOfDeck: T.func,
