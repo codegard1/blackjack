@@ -1,10 +1,11 @@
 import React, { Component } from "react";
 import * as T from "prop-types";
 import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
-import {
-  ContextualMenuItemType
-} from "office-ui-fabric-react/lib/ContextualMenu";
 
+/**
+ * ControlPanel contains buttons that manipulate the game state
+ * @augments Component
+ */
 export class ControlPanel extends Component {
   constructor(props) {
     super(props);
@@ -108,7 +109,7 @@ export class ControlPanel extends Component {
           key: "deal",
           name: "Deal",
           ariaLabel: "Deal",
-          iconProps: "",
+          iconProps: { iconName: "StackIndicator" },
           disabled: false,
           onClick: this.props.deal
         },
@@ -116,7 +117,7 @@ export class ControlPanel extends Component {
           key: "shuffle",
           name: "Shuffle",
           ariaLabel: "Shuffle",
-          iconProps: "",
+          iconProps: {iconName: "Sync"},
           disabled: false,
           onClick: this.props.shuffle
         }
@@ -126,7 +127,7 @@ export class ControlPanel extends Component {
           key: "hit",
           name: "Hit",
           ariaLabel: "Hit",
-          iconProps: "",
+          iconProps: { iconName: "Add" },
           disabled: bustedFlag,
           onClick: this.props.hit
         },
@@ -134,7 +135,7 @@ export class ControlPanel extends Component {
           key: "stay",
           name: "Stay",
           ariaLabel: "Stay",
-          iconProps: "",
+          iconProps: { iconName: "Forward" },
           disabled: bustedFlag,
           onClick: this.props.stay
         },
@@ -142,7 +143,7 @@ export class ControlPanel extends Component {
           key: "reset-game",
           name: "Reset Game",
           ariaLabel: "Reset Game",
-          iconProps: "",
+          iconProps: { iconName: "Refresh" },
           disabled: false,
           onClick: this.props.resetGame
         }
@@ -197,6 +198,11 @@ export class ControlPanel extends Component {
       ]
     };
 
+    /**
+     * Configures the game status display
+     * @param {String} gameStatus
+     * @returns {JSX} Game status panel
+     */
     const gameStatusDisplay =
       gameStatus &&
       <p className="ms-font-l">
@@ -205,6 +211,11 @@ export class ControlPanel extends Component {
         </span>
       </p>;
 
+    /** 
+       * Configures the player's panel
+       * @param {Object} currentPlayer
+       * @returns {JSX} Current player title and status
+       */
     const currentPlayerDisplay =
       currentPlayer &&
       <p className="ms-font-l">
@@ -212,17 +223,21 @@ export class ControlPanel extends Component {
         <span>{`Player Status: ${currentPlayer.status}`}</span>
       </p>;
 
+    /**
+     * Configure the CommandBar 
+     * @param {Object} commandBarDefinition
+     * @returns {Array} commandBarItems
+     */
     let commandBarItems = this.state.commandBarItems.concat(
       commandBarDefinition.defaultItems
     );
     if (gameStatus) {
-      commandBarItems = commandBarItems.concat(
-        commandBarDefinition.blackJackItems,
-        commandBarDefinition.putMenu,
-        commandBarDefinition.drawMenu
-      );
+      commandBarItems = [].concat(commandBarDefinition.blackJackItems);
     }
     const farItems = commandBarDefinition.optionsMenu;
+    const overFlowItems = selectedFlag
+      ? []
+      : [].concat(commandBarDefinition.putMenu, commandBarDefinition.drawMenu);
 
     return (
       <div id="ControlPanel">
@@ -230,6 +245,7 @@ export class ControlPanel extends Component {
           isSearchBoxVisible={false}
           items={commandBarItems}
           farItems={farItems}
+          overflowItems={overFlowItems}
         />
         {gameStatus &&
           <div id="StatusPanel">
