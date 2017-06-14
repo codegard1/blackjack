@@ -1,6 +1,9 @@
 import React, { Component } from "react";
 import * as T from "prop-types";
 import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
+import {
+  ContextualMenuItemType
+} from "office-ui-fabric-react/lib/ContextualMenu";
 
 export class ControlPanel extends Component {
   constructor(props) {
@@ -23,15 +26,39 @@ export class ControlPanel extends Component {
     }
 
     // Define buttons in CommandBar
-    const drawItems = [
+    const optionsItems = [
       {
-        key: "shuffle",
-        name: "Shuffle",
-        ariaLabel: "Shuffle",
+        key: "show-deck",
+        name: "Show Deck",
+        ariaLabel: "Show Deck",
         iconProps: "",
         disabled: false,
-        onClick: this.props.shuffle
+        canCheck: true,
+        checked: this.props.isDeckVisible,
+        onClick: this.props.toggleDeckVisibility
       },
+      {
+        key: "show-drawn",
+        name: "Show Drawn",
+        ariaLabel: "Show Drawn",
+        iconProps: "",
+        disabled: false,
+        canCheck: true,
+        checked: this.props.isDrawnVisible,
+        onClick: this.props.toggleDrawnVisibility
+      },
+      {
+        key: "show-selected",
+        name: "Show Selected",
+        ariaLabel: "Show Selected",
+        iconProps: "",
+        disabled: false,
+        canCheck: true,
+        checked: this.props.isSelectedVisible,
+        onClick: this.props.toggleSelectedVisibility
+      }
+    ];
+    const drawItems = [
       {
         key: "draw",
         name: "Draw",
@@ -84,6 +111,14 @@ export class ControlPanel extends Component {
           iconProps: "",
           disabled: false,
           onClick: this.props.deal
+        },
+        {
+          key: "shuffle",
+          name: "Shuffle",
+          ariaLabel: "Shuffle",
+          iconProps: "",
+          disabled: false,
+          onClick: this.props.shuffle
         }
       ],
       blackJackItems: [
@@ -143,6 +178,22 @@ export class ControlPanel extends Component {
             isBeakVisible: true
           }
         }
+      ],
+      optionsMenu: [
+        {
+          key: "options-menu",
+          name: "Options",
+          ariaLabel: "Options",
+          iconProps: "",
+          onClick(ev) {
+            ev.preventDefault();
+          },
+          subMenuProps: {
+            items: optionsItems,
+            isSubMenu: true,
+            isBeakVisible: true
+          }
+        }
       ]
     };
 
@@ -171,10 +222,15 @@ export class ControlPanel extends Component {
         commandBarDefinition.drawMenu
       );
     }
+    const farItems = commandBarDefinition.optionsMenu;
 
     return (
       <div id="ControlPanel">
-        <CommandBar isSearchBoxVisible={false} items={commandBarItems} />
+        <CommandBar
+          isSearchBoxVisible={false}
+          items={commandBarItems}
+          farItems={farItems}
+        />
         {gameStatus &&
           <div id="StatusPanel">
             {gameStatusDisplay}
@@ -199,7 +255,13 @@ ControlPanel.propTypes = {
   resetGame: T.func,
   gameStatus: T.string,
   currentPlayer: T.object,
-  selected: T.array
+  selected: T.array,
+  toggleDeckVisibility: T.func,
+  toggleSelectedVisibility: T.func,
+  toggleDrawnVisibility: T.func,
+  isDeckVisible: T.bool,
+  isDrawnVisible: T.bool,
+  isSelectedVisible: T.bool
 };
 
 export default ControlPanel;

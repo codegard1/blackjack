@@ -14,7 +14,7 @@ export class Table extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      deck: undefined,
+      deck: [],
       drawn: [],
       selected: [],
       gameStatus: undefined,
@@ -28,12 +28,15 @@ export class Table extends Component {
         }
       ],
       currentPlayer: 1,
-      isMessageBarVisible: false,
       messageBarDefinition: {
         type: MessageBarType.info,
         text: "",
         isMultiLine: false
-      }
+      },
+      isMessageBarVisible: false,
+      isDeckVisible: true,
+      isDrawnVisible: false,
+      isSelectedVisible: false,
     };
 
     this._putOnBottomOfDeck = this._putOnBottomOfDeck.bind(this);
@@ -58,6 +61,9 @@ export class Table extends Component {
     this._resetGame = this._resetGame.bind(this);
     this._showMessageBar = this._showMessageBar.bind(this);
     this._evaluateGame = this._evaluateGame.bind(this);
+    this._toggleDeckVisibility = this._toggleDeckVisibility.bind(this);
+    this._toggleDrawnVisibility = this._toggleDrawnVisibility.bind(this);
+    this._toggleSelectedVisibility = this._toggleSelectedVisibility.bind(this);
   }
 
   componentWillMount() {
@@ -308,6 +314,21 @@ export class Table extends Component {
     this.setState({ messageBarDefinition, isMessageBarVisible: true });
   }
 
+  _toggleDeckVisibility() {
+    const isDeckVisible = !this.state.isDeckVisible;
+    this.setState({ isDeckVisible });
+  }
+
+  _toggleDrawnVisibility() {
+    const isDrawnVisible = !this.state.isDrawnVisible;
+    this.setState({ isDrawnVisible });
+  }
+  
+  _toggleSelectedVisibility() {
+    const isSelectedVisible = !this.state.isSelectedVisible;
+    this.setState({ isSelectedVisible });
+  }
+
   render() {
     const c = this.state.currentPlayer;
 
@@ -347,6 +368,12 @@ export class Table extends Component {
                 gameStatus={this.state.gameStatus}
                 currentPlayer={this.state.players[c]}
                 selected={this.state.selected}
+                isDeckVisible={this.state.isDeckVisible}
+                toggleDeckVisibility={this._toggleDeckVisibility}
+                isDrawnVisible={this.state.isDrawnVisible}
+                toggleDrawnVisibility={this._toggleDrawnVisibility}
+                isSelectedVisible={this.state.isSelectedVisible}
+                toggleSelectedVisibility={this.state._toggleSelectedVisibility}
               />
 
               {this.state.gameStatus === "New" &&
@@ -360,32 +387,35 @@ export class Table extends Component {
                   isSelectable
                 />}
 
-              <DeckContainer
-                deck={this.state.deck.cards}
-                title="Deck"
-                select={this._select}
-                deselect={this._deselect}
-                hidden={false}
-                isSelectable={false}
-              />
+              {this.state.isDeckVisible &&
+                <DeckContainer
+                  deck={this.state.deck.cards}
+                  title="Deck"
+                  select={this._select}
+                  deselect={this._deselect}
+                  hidden={false}
+                  isSelectable={false}
+                />}
 
-              {/*<DeckContainer
+              {this.state.isDrawnVisible && 
+              <DeckContainer
                 deck={this.state.drawn}
                 title="Drawn"
                 select={this._select}
                 deselect={this._deselect}
-                hidden={true}
+                hidden={false}
                 isSelectable={false}
-              />*/}
+              />}
 
-              {/*<DeckContainer
+              {this.state.isSelectedVisible &&
+                <DeckContainer
                 deck={this.state.selected}
                 title="Selected"
                 select={this._select}
                 deselect={this._deselect}
+                hidden={false}
                 isSelectable={false}
-                hidden
-              />*/}
+              />}
 
             </div>
           </div>
