@@ -42,11 +42,10 @@ export class ControlPanel extends Component {
     let selectedFlag = this.props.selectedCards.length > 0 ? false : true;
     let gameStatus = this.props.gameStatus;
     let currentPlayer = this.props.currentPlayer || undefined;
-    let bustedFlag = false;
-    // set bustedFlag
-    if (currentPlayer) {
-      bustedFlag = this.props.currentPlayer.status === "busted" ? true : false;
-    }
+
+    const bustedFlag = this.props.currentPlayer.status === "busted";
+    const blackjackflag = this.props.currentPlayer.status === "blackjack";
+    const gameStatusFlag = gameStatus > 1 && gameStatus !== 6;
 
     /**
      * optionsItems: Define buttons in CommandBar
@@ -142,56 +141,60 @@ export class ControlPanel extends Component {
       }
     ];
 
+    const defaultItems = [
+      {
+        key: "deal",
+        name: "Deal",
+        ariaLabel: "Deal",
+        iconProps: { iconName: "StackIndicator" },
+        disabled: false,
+        onClick: this.props.deal
+      },
+      {
+        key: "shuffle",
+        name: "Shuffle",
+        ariaLabel: "Shuffle",
+        iconProps: { iconName: "Sync" },
+        disabled: false,
+        onClick: this.props.shuffle
+      }
+    ];
+
+    const blackJackItems = [
+      {
+        key: "hit",
+        name: "Hit",
+        ariaLabel: "Hit",
+        iconProps: { iconName: "Add" },
+        disabled: gameStatusFlag,
+        onClick: this.props.hit
+      },
+      {
+        key: "stay",
+        name: "Stay",
+        ariaLabel: "Stay",
+        iconProps: { iconName: "Forward" },
+        disabled: gameStatusFlag,
+        onClick: this.props.stay
+      },
+      {
+        key: "reset-game",
+        name: "Reset Game",
+        ariaLabel: "Reset Game",
+        iconProps: { iconName: "Refresh" },
+        disabled: false,
+        onClick: this.props.resetGame
+      }
+    ];
+
     /**
      * master repository of menu items
      * @memberof ControlPanel
      * @property {object} - items for the Options menu
      */
     const commandBarDefinition = {
-      defaultItems: [
-        {
-          key: "deal",
-          name: "Deal",
-          ariaLabel: "Deal",
-          iconProps: { iconName: "StackIndicator" },
-          disabled: false,
-          onClick: this.props.deal
-        },
-        {
-          key: "shuffle",
-          name: "Shuffle",
-          ariaLabel: "Shuffle",
-          iconProps: { iconName: "Sync" },
-          disabled: false,
-          onClick: this.props.shuffle
-        }
-      ],
-      blackJackItems: [
-        {
-          key: "hit",
-          name: "Hit",
-          ariaLabel: "Hit",
-          iconProps: { iconName: "Add" },
-          disabled: bustedFlag,
-          onClick: this.props.hit
-        },
-        {
-          key: "stay",
-          name: "Stay",
-          ariaLabel: "Stay",
-          iconProps: { iconName: "Forward" },
-          disabled: bustedFlag,
-          onClick: this.props.stay
-        },
-        {
-          key: "reset-game",
-          name: "Reset Game",
-          ariaLabel: "Reset Game",
-          iconProps: { iconName: "Refresh" },
-          disabled: false,
-          onClick: this.props.resetGame
-        }
-      ],
+      defaultItems,
+      blackJackItems,
       drawMenu: [
         {
           key: "deck-menu",
@@ -296,7 +299,8 @@ ControlPanel.propTypes = {
   toggleDrawnVisibility: T.func,
   isDeckVisible: T.bool,
   isDrawnVisible: T.bool,
-  isSelectedVisible: T.bool
+  isSelectedVisible: T.bool,
+  turnCount: T.number
 };
 
 export default ControlPanel;
@@ -310,25 +314,25 @@ export function StatusDisplay(props) {
      * @memberof ControlPanel
      * @param {string} gameStatus
      */
-  const gameStatusDisplay =
-    gameStatus > 0 &&
-    <p className="ms-font-l">
-      <span>
-        Game Status: <strong>{gameStatus || "N/A"}</strong>
-      </span>
-    </p>;
+  const gameStatusDisplay = (
+    <span className="ms-font-m">
+      Game Status: <strong>{gameStatus}</strong>
+      <br />
+      Turn Count: {props.turnCount}
+    </span>
+  );
 
   /** 
        * If currentPlayer is set then set currentPLayerDisplay to a JSX element containing {currentPlayer.title} and {currentPlayer.status}
        * @memberof ControlPanel
        * @param {object} currentPlayer
        */
-  const currentPlayerDisplay =
-    currentPlayer &&
+  const currentPlayerDisplay = (
     <p className="ms-font-l">
       <span>{`Current Player: ${currentPlayer.title}`}</span> <br />
       <span>{`Player Status: ${currentPlayer.status}`}</span>
-    </p>;
+    </p>
+  );
 
   return (
     <div id="StatusPanel">

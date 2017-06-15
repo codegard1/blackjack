@@ -23,12 +23,13 @@ export class Table extends Component {
         {
           title: "Dealer",
           hand: [],
-          handValue: undefined,
+          handValue: 0,
           status: "ok",
           turn: false
         }
       ],
       currentPlayer: 1,
+      turnCount: 0,
       messageBarDefinition: {
         type: MessageBarType.info,
         text: "",
@@ -39,7 +40,7 @@ export class Table extends Component {
       isDrawnVisible: false,
       isSelectedVisible: false
     };
-
+    //Deck Methods
     this._putOnBottomOfDeck = this._putOnBottomOfDeck.bind(this);
     this._putOnTopOfDeck = this._putOnTopOfDeck.bind(this);
     this._drawRandom = this._drawRandom.bind(this);
@@ -50,7 +51,7 @@ export class Table extends Component {
     this._deal = this._deal.bind(this);
     this._select = this._select.bind(this);
     this._deselect = this._deselect.bind(this);
-    this._evaluateHand = this._evaluateHand.bind(this);
+    // ControlPanel methods
     this._hit = this._hit.bind(this);
     this._stay = this._stay.bind(this);
     this._removeSelectedFromPlayerHand = this._removeSelectedFromPlayerHand.bind(
@@ -61,10 +62,12 @@ export class Table extends Component {
     this._clearHand = this._clearHand.bind(this);
     this._resetGame = this._resetGame.bind(this);
     this._showMessageBar = this._showMessageBar.bind(this);
-    this._evaluateGame = this._evaluateGame.bind(this);
     this._toggleDeckVisibility = this._toggleDeckVisibility.bind(this);
     this._toggleDrawnVisibility = this._toggleDrawnVisibility.bind(this);
     this._toggleSelectedVisibility = this._toggleSelectedVisibility.bind(this);
+    //Game Status Methods
+    this._evaluateHand = this._evaluateHand.bind(this);
+    this._evaluateGame = this._evaluateGame.bind(this);
   }
 
   componentWillMount() {
@@ -82,7 +85,7 @@ export class Table extends Component {
     const newPlayer = {
       title: title,
       hand: [],
-      handValue: undefined,
+      handValue: 0,
       status: "ok",
       turn: false
     };
@@ -129,16 +132,19 @@ export class Table extends Component {
     const deck = this.state.deck;
     let players = this.state.players;
     let currentPlayer = players[this.state.currentPlayer];
-    const ret = deck.draw(2);
-    currentPlayer.hand = ret;
+
     currentPlayer.turn = true;
+    currentPlayer.hand = deck.draw(2);
     currentPlayer.handValue = this._evaluateHand(currentPlayer.hand);
     players[this.state.currentPlayer] = currentPlayer;
-    this.setState({
-      deck,
-      players,
-      gameStatus: 1
-    });
+
+    this.setState(
+      {
+        deck,
+        players
+      },
+      this._evaluateGame(1)
+    );
   }
 
   _hit() {
@@ -151,22 +157,7 @@ export class Table extends Component {
     currentPlayer.hand.push(ret);
     currentPlayer.handValue = this._evaluateHand(currentPlayer.hand);
 
-    if (
-      currentPlayer.handValue.aceAsOne > 21 &&
-      currentPlayer.handValue.aceAsTen > 21
-    ) {
-      currentPlayer.status = "busted";
-      this._showMessageBar("Busted!", MessageBarType.warning);
-    }
-    if (
-      currentPlayer.handValue.aceAsOne === 21 ||
-      currentPlayer.handValue.aceAsTen === 21
-    ) {
-      currentPlayer.status = "blackjack";
-      this._showMessageBar("Blackjack!", MessageBarType.success);
-    }
-
-    this.setState({ deck, drawn, players });
+    this.setState({ deck, drawn, players }, this._evaluateGame);
   }
 
   _stay() {
@@ -174,10 +165,139 @@ export class Table extends Component {
     let drawn = this.state.drawn;
     let players = this.state.players;
     let currentPlayer = players[this.state.currentPlayer];
+
+    this._evaluateGame(6);
   }
 
-  _evaluateGame() {
-    // do something
+  _evaluateGame(nextGameStatus = this.state.gameStatus) {
+    // set gameStatus from somewhere other than state
+    let gameStatus = nextGameStatus;
+    let players = this.state.players;
+    let currentPlayer = players[this.state.currentPlayer];
+    let nextPlayer = -1;
+    const busted = "busted";
+    const blackjack = "blackjack";
+    const winner = "winner";
+
+    console.log("gamestatus", gameStatus);
+
+    switch (gameStatus) {
+      case 0: //Off
+        this._showMessageBar("Hello", MessageBarType.info);
+        break;
+
+      case 1: // New Game
+        this._showMessageBar("Game in progress", MessageBarType.info);
+        // determine if any hands are busted
+        let bustedHands = [];
+        players.forEach((player, index) => {
+          if (
+            player.handValue.aceAsOne > 21 && player.handValue.aceAsTen > 21
+          ) {
+            player.status = busted;
+            bustedHands.push(index);
+          }
+        });
+        // if curerentPlayer is the last remaining player
+        if (
+          bustedHands.length === players.length - 1 &&
+          currentPlayer.status !== busted
+        ) {
+          currentPlayer.status = winner;
+          gameStatus = 2;
+        }
+
+        // determine if any hands are blackjack
+        players.forEach((player, index) => {
+          if (
+            player.handValue.aceAsOne === 21 || player.handValue.aceAsTen === 21
+          ) {
+            player.status = blackjack;
+          }
+        });
+
+        // Determine which player has the highest-value hand under 21
+        let highestHandValue = 0;
+        let highestHandPlayer = -1;
+        players.forEach((player, index) => {
+          if (
+            player.handValue.aceAsOne > highestHandValue &&
+            player.handValue.aceAsOne <= 21
+          ) {
+            highestHandValue = player.handValue;
+            highestHandPlayer = index;
+          }
+          if (
+            player.handValue.aceAsTen > highestHandValue &&
+            player.handValue.aceAsTen <= 21
+          ) {
+            highestHandValue = player.handValue.aceAsTen;
+            highestHandPlayer = index;
+          }
+        });
+        /**
+         * @todo if currentPlayer has highest hand, do something. currentplayer wins only if all other players are busted
+         */
+        console.log("highestHandPlayer", highestHandPlayer);
+        if (
+          (highestHandPlayer =
+            this.state.currentPlayer &&
+            bustedHands.indexOf(this.state.currentPlayer) === -1)
+        ) {
+          gameStatus = 2;
+        } else if (
+          currentPlayer.status === blackjack &&
+          bustedHands.indexOf(this.state.currentPlayer) === -1
+        ) {
+          gameStatus = 4;
+        }
+        break;
+
+      case 2: // currentPlayer Wins
+        this._showMessageBar("You win!", MessageBarType.success);
+        gameStatus = 0;
+        break;
+
+      case 3: // human player busted
+        this._showMessageBar("Busted!", MessageBarType.warning);
+        gameStatus = 0;
+        break;
+
+      case 4: // human player blackjack
+        this._showMessageBar("Blackjack!", MessageBarType.success);
+        gameStatus = 0;
+        break;
+
+      case 5: // tie
+        this._showMessageBar("Tie?", MessageBarType.warning);
+        gameStatus = 0;
+        break;
+
+      case 6: // stay (go to next turn)
+        this._showMessageBar("Stayed", MessageBarType.info);
+        // const nextPlayer = (this.state.currentPlayer + 1) > players.length
+        // ? 0
+        // : this.state.currentPlayer + 1;
+
+        // temporary
+        nextPlayer = this.state.currentPlayer;
+        break;
+
+      default:
+        // do nothing
+        break;
+    }
+
+    console.log("nextgamestatus:", nextGameStatus);
+
+    const placeholder = nextPlayer > 0 ? nextPlayer : this.state.currentPlayer;
+    this.setState({
+      turnCount: this.state.turnCount + 1,
+      players,
+      gameStatus,
+      currentPlayer: placeholder
+    });
+    console.log("Evaluated Game.");
   }
 
   _drawFromBottomOfDeck(num) {
@@ -375,7 +495,9 @@ export class Table extends Component {
                   isDrawnVisible: this.state.isDrawnVisible,
                   toggleDrawnVisibility: this._toggleDrawnVisibility,
                   isSelectedVisible: this.state.isSelectedVisible,
-                  toggleSelectedVisibility: this.state._toggleSelectedVisibility
+                  toggleSelectedVisibility: this.state
+                    ._toggleSelectedVisibility,
+                  turnCount: this.state.turnCount
                 }}
                 deckContainerProps={{
                   deck: this.state.players[c].hand,
@@ -387,9 +509,6 @@ export class Table extends Component {
                   isSelectable: true
                 }}
               />
-
-              
-                
 
               {this.state.isDeckVisible &&
                 <DeckContainer

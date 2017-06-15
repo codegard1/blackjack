@@ -6,7 +6,7 @@ import ControlPanel from "./ControlPanel";
 export class Player extends Component {
   render() {
     return (
-      <div class="player">
+      <div className="player">
         <ControlPanel {...this.props.controlPanelProps} />
         {this.props.controlPanelProps.gameStatus === 1 &&
           <DeckContainer {...this.props.deckContainerProps} />}

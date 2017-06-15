@@ -61,6 +61,7 @@ After setting the initial state, do:
           
       0 : Off 
       1 : New Game 
+      2 : Game Over (Win)
       3 : Game Over (Busted!)
       4 : Game Over (Blackjack!)
       5 : Tie (dealer wins?)
