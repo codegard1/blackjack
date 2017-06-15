@@ -18,7 +18,7 @@ import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
  * @prop {function} resetGame   - resets the deck, players' hands, drawn, and selected arrays, and sets gameStatus to New 
  * @prop {string} gameStatus - string representing the current game's status
  * @prop {number} currentPlayer - index of of the players array (in state) that corresponds to the current player 
- * @prop {array} selected - array containing currently selected cards; passed in from state
+ * @prop {array} selectedCards - array containing currently selected cards; passed in from state
   */
 export class ControlPanel extends Component {
   /**
@@ -39,7 +39,7 @@ export class ControlPanel extends Component {
   componentWillMount() {}
 
   render() {
-    let selectedFlag = this.props.selected.length > 0 ? false : true;
+    let selectedFlag = this.props.selectedCards.length > 0 ? false : true;
     let gameStatus = this.props.gameStatus;
     let currentPlayer = this.props.currentPlayer || undefined;
     let bustedFlag = false;
@@ -248,7 +248,7 @@ export class ControlPanel extends Component {
      * @param {string} gameStatus
      */
     const gameStatusDisplay =
-      gameStatus &&
+      gameStatus > 0 &&
       <p className="ms-font-l">
         <span>
           Game Status: <strong>{gameStatus || "N/A"}</strong>
@@ -275,7 +275,7 @@ export class ControlPanel extends Component {
     let commandBarItems = this.state.commandBarItems.concat(
       commandBarDefinition.defaultItems
     );
-    if (gameStatus) {
+    if (gameStatus > 0) {
       commandBarItems = [].concat(commandBarDefinition.blackJackItems);
     }
     const farItems = commandBarDefinition.optionsMenu;
@@ -291,7 +291,7 @@ export class ControlPanel extends Component {
           farItems={farItems}
           overflowItems={overFlowItems}
         />
-        {gameStatus &&
+        {gameStatus > 0 &&
           <div id="StatusPanel">
             {gameStatusDisplay}
             {currentPlayerDisplay}
@@ -317,8 +317,8 @@ ControlPanel.propTypes = {
   hit: T.func,
   stay: T.func,
   resetGame: T.func,
-  gameStatus: T.string,
-  currentPlayer: T.object,
+  gameStatus: T.number.isRequired,
+  currentPlayer: T.object.isRequired,
   selected: T.array,
   toggleDeckVisibility: T.func,
   toggleSelectedVisibility: T.func,

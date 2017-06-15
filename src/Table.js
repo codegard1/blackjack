@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import Shuffle from "shuffle";
 import DeckContainer from "./DeckContainer";
 import ControlPanel from "./ControlPanel";
+import Player from "./Player";
 import {
   MessageBar,
   MessageBarType
@@ -17,7 +18,7 @@ export class Table extends Component {
       deck: [],
       drawn: [],
       selected: [],
-      gameStatus: undefined,
+      gameStatus: 0,
       players: [
         {
           title: "Dealer",
@@ -36,7 +37,7 @@ export class Table extends Component {
       isMessageBarVisible: false,
       isDeckVisible: true,
       isDrawnVisible: false,
-      isSelectedVisible: false,
+      isSelectedVisible: false
     };
 
     this._putOnBottomOfDeck = this._putOnBottomOfDeck.bind(this);
@@ -106,7 +107,7 @@ export class Table extends Component {
   _resetGame() {
     this._newDeck();
     this._clearHand(this.state.currentPlayer);
-    this.setState({ drawn: [], selected: [], gameStatus: undefined });
+    this.setState({ drawn: [], selected: [], gameStatus: 0 });
     this._showMessageBar("Game reset", MessageBarType.info);
   }
 
@@ -136,7 +137,7 @@ export class Table extends Component {
     this.setState({
       deck,
       players,
-      gameStatus: "New"
+      gameStatus: 1
     });
   }
 
@@ -323,7 +324,7 @@ export class Table extends Component {
     const isDrawnVisible = !this.state.isDrawnVisible;
     this.setState({ isDrawnVisible });
   }
-  
+
   _toggleSelectedVisibility() {
     const isSelectedVisible = !this.state.isSelectedVisible;
     this.setState({ isSelectedVisible });
@@ -353,39 +354,42 @@ export class Table extends Component {
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-sm12">
 
-              <ControlPanel
-                shuffle={this._shuffle}
-                putOnBottomOfDeck={this._putOnBottomOfDeck}
-                putOnTopOfDeck={this._putOnTopOfDeck}
-                drawRandom={this._drawRandom}
-                drawFromBottomOfDeck={this._drawFromBottomOfDeck}
-                draw={this._draw}
-                reset={this._reset}
-                deal={this._deal}
-                hit={this._hit}
-                stay={this._stay}
-                resetGame={this._resetGame}
-                gameStatus={this.state.gameStatus}
-                currentPlayer={this.state.players[c]}
-                selected={this.state.selected}
-                isDeckVisible={this.state.isDeckVisible}
-                toggleDeckVisibility={this._toggleDeckVisibility}
-                isDrawnVisible={this.state.isDrawnVisible}
-                toggleDrawnVisibility={this._toggleDrawnVisibility}
-                isSelectedVisible={this.state.isSelectedVisible}
-                toggleSelectedVisibility={this.state._toggleSelectedVisibility}
+              <Player
+                controlPanelProps={{
+                  shuffle: this._shuffle,
+                  putOnBottomOfDeck: this._putOnBottomOfDeck,
+                  putOnTopOfDeck: this._putOnTopOfDeck,
+                  drawRandom: this._drawRandom,
+                  drawFromBottomOfDeck: this._drawFromBottomOfDeck,
+                  draw: this._draw,
+                  reset: this._reset,
+                  deal: this._deal,
+                  hit: this._hit,
+                  stay: this._stay,
+                  resetGame: this._resetGame,
+                  gameStatus: this.state.gameStatus,
+                  currentPlayer: this.state.players[c],
+                  selectedCards: this.state.selected,
+                  isDeckVisible: this.state.isDeckVisible,
+                  toggleDeckVisibility: this._toggleDeckVisibility,
+                  isDrawnVisible: this.state.isDrawnVisible,
+                  toggleDrawnVisibility: this._toggleDrawnVisibility,
+                  isSelectedVisible: this.state.isSelectedVisible,
+                  toggleSelectedVisibility: this.state._toggleSelectedVisibility
+                }}
+                deckContainerProps={{
+                  deck: this.state.players[c].hand,
+                  title: this.state.players[c].title,
+                  handValue: this.state.players[c].handValue,
+                  select: this._select,
+                  deselect: this._deselect,
+                  hidden: false,
+                  isSelectable: true
+                }}
               />
 
-              {this.state.gameStatus === "New" &&
-                <DeckContainer
-                  deck={this.state.players[c].hand}
-                  title={this.state.players[c].title}
-                  handValue={this.state.players[c].handValue}
-                  select={this._select}
-                  deselect={this._deselect}
-                  hidden={false}
-                  isSelectable
-                />}
+              
+                
 
               {this.state.isDeckVisible &&
                 <DeckContainer
@@ -397,25 +401,25 @@ export class Table extends Component {
                   isSelectable={false}
                 />}
 
-              {this.state.isDrawnVisible && 
-              <DeckContainer
-                deck={this.state.drawn}
-                title="Drawn"
-                select={this._select}
-                deselect={this._deselect}
-                hidden={false}
-                isSelectable={false}
-              />}
+              {this.state.isDrawnVisible &&
+                <DeckContainer
+                  deck={this.state.drawn}
+                  title="Drawn"
+                  select={this._select}
+                  deselect={this._deselect}
+                  hidden={false}
+                  isSelectable={false}
+                />}
 
               {this.state.isSelectedVisible &&
                 <DeckContainer
-                deck={this.state.selected}
-                title="Selected"
-                select={this._select}
-                deselect={this._deselect}
-                hidden={false}
-                isSelectable={false}
-              />}
+                  deck={this.state.selected}
+                  title="Selected"
+                  select={this._select}
+                  deselect={this._deselect}
+                  hidden={false}
+                  isSelectable={false}
+                />}
 
             </div>
           </div>
