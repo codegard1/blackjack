@@ -243,31 +243,6 @@ export class ControlPanel extends Component {
     };
 
     /**
-     * If gameStatus is no undefined then set gameStatusDisplay to a JSX element containing {gamestatus}
-     * @memberof ControlPanel
-     * @param {string} gameStatus
-     */
-    const gameStatusDisplay =
-      gameStatus > 0 &&
-      <p className="ms-font-l">
-        <span>
-          Game Status: <strong>{gameStatus || "N/A"}</strong>
-        </span>
-      </p>;
-
-    /** 
-       * If currentPlayer is set then set currentPLayerDisplay to a JSX element containing {currentPlayer.title} and {currentPlayer.status}
-       * @memberof ControlPanel
-       * @param {object} currentPlayer
-       */
-    const currentPlayerDisplay =
-      currentPlayer &&
-      <p className="ms-font-l">
-        <span>{`Current Player: ${currentPlayer.title}`}</span> <br />
-        <span>{`Player Status: ${currentPlayer.status}`}</span>
-      </p>;
-
-    /**
      * Configure the CommandBar 
      * @memberof ControlPanel
      * @param {object} commandBarDefinition
@@ -291,11 +266,7 @@ export class ControlPanel extends Component {
           farItems={farItems}
           overflowItems={overFlowItems}
         />
-        {gameStatus > 0 &&
-          <div id="StatusPanel">
-            {gameStatusDisplay}
-            {currentPlayerDisplay}
-          </div>}
+        {gameStatus > 0 && <StatusDisplay {...this.props} />}
       </div>
     );
   }
@@ -329,3 +300,40 @@ ControlPanel.propTypes = {
 };
 
 export default ControlPanel;
+
+export function StatusDisplay(props) {
+  let gameStatus = props.gameStatus;
+  let currentPlayer = props.currentPlayer || undefined;
+
+  /**
+     * If gameStatus is not undefined then set gameStatusDisplay to a JSX element containing {gamestatus}
+     * @memberof ControlPanel
+     * @param {string} gameStatus
+     */
+  const gameStatusDisplay =
+    gameStatus > 0 &&
+    <p className="ms-font-l">
+      <span>
+        Game Status: <strong>{gameStatus || "N/A"}</strong>
+      </span>
+    </p>;
+
+  /** 
+       * If currentPlayer is set then set currentPLayerDisplay to a JSX element containing {currentPlayer.title} and {currentPlayer.status}
+       * @memberof ControlPanel
+       * @param {object} currentPlayer
+       */
+  const currentPlayerDisplay =
+    currentPlayer &&
+    <p className="ms-font-l">
+      <span>{`Current Player: ${currentPlayer.title}`}</span> <br />
+      <span>{`Player Status: ${currentPlayer.status}`}</span>
+    </p>;
+
+  return (
+    <div id="StatusPanel">
+      {gameStatusDisplay}
+      {currentPlayerDisplay}
+    </div>
+  );
+}
