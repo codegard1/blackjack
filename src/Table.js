@@ -472,8 +472,45 @@ export class Table extends Component {
           </div>
 
           <div className="ms-Grid-row">
-            <div className="ms-Grid-col ms-u-sm12">
+            <div className="ms-Grid-col ms-u-sm6">
+              <Player
+                controlPanelProps={{
+                  shuffle: this._shuffle,
+                  putOnBottomOfDeck: this._putOnBottomOfDeck,
+                  putOnTopOfDeck: this._putOnTopOfDeck,
+                  drawRandom: this._drawRandom,
+                  drawFromBottomOfDeck: this._drawFromBottomOfDeck,
+                  draw: this._draw,
+                  reset: this._reset,
+                  deal: this._deal,
+                  hit: this._hit,
+                  stay: this._stay,
+                  resetGame: this._resetGame,
+                  gameStatus: this.state.gameStatus,
+                  currentPlayer: this.state.players[c],
+                  selectedCards: this.state.selected,
+                  isDeckVisible: this.state.isDeckVisible,
+                  toggleDeckVisibility: this._toggleDeckVisibility,
+                  isDrawnVisible: this.state.isDrawnVisible,
+                  toggleDrawnVisibility: this._toggleDrawnVisibility,
+                  isSelectedVisible: this.state.isSelectedVisible,
+                  toggleSelectedVisibility: this.state
+                    ._toggleSelectedVisibility,
+                  turnCount: this.state.turnCount
+                }}
+                deckContainerProps={{
+                  deck: this.state.players[0].hand,
+                  title: this.state.players[0].title,
+                  handValue: this.state.players[0].handValue,
+                  select: this._select,
+                  deselect: this._deselect,
+                  hidden: false,
+                  isSelectable: true
+                }}
+              />
+            </div>
 
+            <div className="ms-Grid-col ms-u-sm6">
               <Player
                 controlPanelProps={{
                   shuffle: this._shuffle,
@@ -509,6 +546,12 @@ export class Table extends Component {
                   isSelectable: true
                 }}
               />
+            </div>
+
+          </div>
+
+          <div className="ms-Grid-row">
+            <div className="ms-Grid-col ms-u-sm12">
 
               {this.state.isDeckVisible &&
                 <DeckContainer
