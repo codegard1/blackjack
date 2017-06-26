@@ -36,8 +36,6 @@ export class ControlPanel extends Component {
     };
   }
 
-  componentWillMount() {}
-
   render() {
     let selectedFlag = this.props.selectedCards.length > 0 ? false : true;
     let gameStatus = this.props.gameStatus;
@@ -263,13 +261,17 @@ export class ControlPanel extends Component {
 
     return (
       <div id="ControlPanel">
-        <CommandBar
-          isSearchBoxVisible={false}
-          items={commandBarItems}
-          farItems={farItems}
-          overflowItems={overFlowItems}
-        />
-        {gameStatus > 0 && <StatusDisplay {...this.props} />}
+        {!this.props.hidden &&
+          <CommandBar
+            isSearchBoxVisible={false}
+            items={commandBarItems}
+            farItems={farItems}
+            overflowItems={overFlowItems}
+          />}
+        {!this.props.hidden &&
+          gameStatus > 0 &&
+          <StatusDisplay {...this.props} />}
+
       </div>
     );
   }
@@ -315,7 +317,7 @@ export function StatusDisplay(props) {
      * @param {string} gameStatus
      */
   const gameStatusDisplay = (
-    <span className="ms-font-m">
+    <span className="ms-font-m" style={{ float: "left" }}>
       Game Status: <strong>{gameStatus}</strong>
       <br />
       Turn Count: {props.turnCount}

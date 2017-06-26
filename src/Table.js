@@ -198,6 +198,8 @@ export class Table extends Component {
             bustedHands.push(index);
           }
         });
+        break;
+
         // if curerentPlayer is the last remaining player
         if (
           bustedHands.length === players.length - 1 &&
@@ -496,7 +498,8 @@ export class Table extends Component {
                   isSelectedVisible: this.state.isSelectedVisible,
                   toggleSelectedVisibility: this.state
                     ._toggleSelectedVisibility,
-                  turnCount: this.state.turnCount
+                  turnCount: this.state.turnCount,
+                  hidden: true
                 }}
                 deckContainerProps={{
                   deck: this.state.players[0].hand,
