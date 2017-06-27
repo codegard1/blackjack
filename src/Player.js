@@ -8,7 +8,7 @@ export class Player extends Component {
     return (
       <div className="player">
         <ControlPanel {...this.props.controlPanelProps} />
-        {this.props.controlPanelProps.gameStatus === 1 &&
+        {this.props.controlPanelProps.gameStatus > 0 &&
           <DeckContainer {...this.props.deckContainerProps} />}
       </div>
     );

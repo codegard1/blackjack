@@ -269,9 +269,8 @@ export class ControlPanel extends Component {
             overflowItems={overFlowItems}
           />}
         {!this.props.hidden &&
-          gameStatus > 0 &&
+          
           <StatusDisplay {...this.props} />}
-
       </div>
     );
   }
