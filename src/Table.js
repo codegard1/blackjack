@@ -436,7 +436,33 @@ export class Table extends Component {
   }
 
   render() {
-    const c = this.state.currentPlayer;
+    const playersArray = this.state.players.map((player, index) => {
+      return (
+        <Player
+          key={index}
+          player={player}
+          controlPanelMethods={this.controlPanelMethods}
+          deckMethods={this.deckMethods}
+          controlPanelProps={{
+            gameStatus: this.state.gameStatus,
+            currentPlayer: player,
+            selectedCards: this.state.selected,
+            isDeckVisible: this.state.isDeckVisible,
+            isDrawnVisible: this.state.isDrawnVisible,
+            isSelectedVisible: this.state.isSelectedVisible,
+            turnCount: this.state.turnCount,
+            hidden: false
+          }}
+          deckContainerProps={{
+            deck: player.hand,
+            title: player.title,
+            handValue: player.handValue,
+            isSelectable: true,
+            hidden: false
+          }}
+        />
+      );
+    });
 
     return (
       <div id="Table">
@@ -458,32 +484,11 @@ export class Table extends Component {
 
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-sm6">
-              <Player
-                player={this.state.players[0]}
-                controlPanelMethods={this.controlPanelMethods}
-                deckMethods={this.deckMethods}
-                controlPanelProps={{
-                  gameStatus: this.state.gameStatus,
-                  currentPlayer: this.state.players[0],
-                  selectedCards: this.state.selected,
-                  isDeckVisible: this.state.isDeckVisible,
-                  isDrawnVisible: this.state.isDrawnVisible,
-                  isSelectedVisible: this.state.isSelectedVisible,
-                  turnCount: this.state.turnCount,
-                  hidden: false
-                }}
-                deckContainerProps={{
-                  deck: this.state.players[0].hand,
-                  title: this.state.players[0].title,
-                  handValue: this.state.players[0].handValue,
-                  isSelectable: true,
-                  hidden: false
-                }}
-              />
+              {playersArray[0]}
             </div>
 
             <div className="ms-Grid-col ms-u-sm6">
-              Player 1 goes here
+              {playersArray[1]}
             </div>
 
           </div>
