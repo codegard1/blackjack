@@ -14,7 +14,7 @@
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
     "react-masonry-component": "^5.0.7",
-    "shuffle": "git+https://github.com/codegard1/node-shuffle.git#use-react"
+    "shuffle": "git+https://github.com/codegard1/node-shuffle.git"
   },
   "devDependencies": {
     "babel-eslint": "^7.2.3",

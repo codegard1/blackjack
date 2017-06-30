@@ -82,11 +82,12 @@ export class DeckContainer extends Component {
 }
 
 DeckContainer.propTypes = {
+  select: T.func,
+  deselect: T.func,
   deck: T.array,
   title: T.string,
   handValue: T.object,
-  select: T.func,
-  deselect: T.func,
+  isSelectable: T.bool,
   hidden: T.bool
 };
 

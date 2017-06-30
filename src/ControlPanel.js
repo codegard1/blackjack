@@ -268,9 +268,7 @@ export class ControlPanel extends Component {
             farItems={farItems}
             overflowItems={overFlowItems}
           />}
-        {!this.props.hidden &&
-          
-          <StatusDisplay {...this.props} />}
+        {!this.props.hidden && <StatusDisplay {...this.props} />}
       </div>
     );
   }
@@ -281,27 +279,28 @@ export class ControlPanel extends Component {
  * @memberof ControlPanel
  */
 ControlPanel.propTypes = {
+  deal: T.func,
+  hit: T.func,
+  stay: T.func,
+  draw: T.func,
+  reset: T.func,
+  shuffle: T.func,
+  resetGame: T.func,
   putOnBottomOfDeck: T.func,
   putOnTopOfDeck: T.func,
   drawRandom: T.func,
   drawFromBottomOfDeck: T.func,
-  draw: T.func,
-  reset: T.func,
-  shuffle: T.func,
-  deal: T.func,
-  hit: T.func,
-  stay: T.func,
-  resetGame: T.func,
-  gameStatus: T.number.isRequired,
-  currentPlayer: T.object.isRequired,
-  selected: T.array,
   toggleDeckVisibility: T.func,
   toggleSelectedVisibility: T.func,
   toggleDrawnVisibility: T.func,
+  gameStatus: T.number.isRequired,
+  currentPlayer: T.object.isRequired,
+  selectedCards: T.array,
   isDeckVisible: T.bool,
   isDrawnVisible: T.bool,
   isSelectedVisible: T.bool,
-  turnCount: T.number
+  turnCount: T.number,
+  hidden: T.bool
 };
 
 export default ControlPanel;

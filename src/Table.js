@@ -1,13 +1,11 @@
 import React, { Component } from "react";
 import Shuffle from "shuffle";
 import DeckContainer from "./DeckContainer";
-import ControlPanel from "./ControlPanel";
 import Player from "./Player";
 import {
   MessageBar,
   MessageBarType
 } from "office-ui-fabric-react/lib/MessageBar";
-import { Fabric } from "office-ui-fabric-react/lib/Fabric";
 
 const PlayingCard = require("shuffle/lib/playingCard");
 
@@ -19,16 +17,8 @@ export class Table extends Component {
       drawn: [],
       selected: [],
       gameStatus: 0,
-      players: [
-        {
-          title: "Dealer",
-          hand: [],
-          handValue: 0,
-          status: "ok",
-          turn: false
-        }
-      ],
-      currentPlayer: 1,
+      players: [],
+      currentPlayer: 0,
       turnCount: 0,
       messageBarDefinition: {
         type: MessageBarType.info,
@@ -41,38 +31,74 @@ export class Table extends Component {
       isSelectedVisible: false
     };
     //Deck Methods
-    this._putOnBottomOfDeck = this._putOnBottomOfDeck.bind(this);
-    this._putOnTopOfDeck = this._putOnTopOfDeck.bind(this);
-    this._drawRandom = this._drawRandom.bind(this);
-    this._drawFromBottomOfDeck = this._drawFromBottomOfDeck.bind(this);
-    this._draw = this._draw.bind(this);
-    this._reset = this._reset.bind(this);
-    this._shuffle = this._shuffle.bind(this);
-    this._deal = this._deal.bind(this);
     this._select = this._select.bind(this);
     this._deselect = this._deselect.bind(this);
-    // ControlPanel methods
-    this._hit = this._hit.bind(this);
-    this._stay = this._stay.bind(this);
     this._removeSelectedFromPlayerHand = this._removeSelectedFromPlayerHand.bind(
       this
     );
     this._removeSelectedFromDrawn = this._removeSelectedFromDrawn.bind(this);
-    this._newPlayer = this._newPlayer.bind(this);
-    this._clearHand = this._clearHand.bind(this);
+    // ControlPanel methods
+    this._deal = this._deal.bind(this);
+    this._hit = this._hit.bind(this);
+    this._stay = this._stay.bind(this);
+    this._draw = this._draw.bind(this);
+    this._reset = this._reset.bind(this);
+    this._shuffle = this._shuffle.bind(this);
     this._resetGame = this._resetGame.bind(this);
-    this._showMessageBar = this._showMessageBar.bind(this);
+    this._putOnBottomOfDeck = this._putOnBottomOfDeck.bind(this);
+    this._putOnTopOfDeck = this._putOnTopOfDeck.bind(this);
+    this._drawRandom = this._drawRandom.bind(this);
+    this._drawFromBottomOfDeck = this._drawFromBottomOfDeck.bind(this);
+    this._clearHand = this._clearHand.bind(this);
     this._toggleDeckVisibility = this._toggleDeckVisibility.bind(this);
     this._toggleDrawnVisibility = this._toggleDrawnVisibility.bind(this);
     this._toggleSelectedVisibility = this._toggleSelectedVisibility.bind(this);
-    //Game Status Methods
+    //Game State Methods
+    this._showMessageBar = this._showMessageBar.bind(this);
     this._evaluateHand = this._evaluateHand.bind(this);
     this._evaluateGame = this._evaluateGame.bind(this);
+    this._newPlayer = this._newPlayer.bind(this);
+
+    // group methods to pass into Player as props
+    this.controlPanelMethods = {
+      deal: this._deal,
+      hit: this._hit,
+      stay: this._stay,
+      draw: this._draw,
+      reset: this._reset,
+      shuffle: this._shuffle,
+      resetGame: this._resetGame,
+      putOnBottomOfDeck: this._putOnBottomOfDeck,
+      putOnTopOfDeck: this._putOnTopOfDeck,
+      drawRandom: this._drawRandom,
+      drawFromBottomOfDeck: this._drawFromBottomOfDeck,
+      toggleDeckVisibility: this._toggleDeckVisibility,
+      toggleDrawnVisibility: this._toggleDrawnVisibility,
+      toggleSelectedVisibility: this._toggleSelectedVisibility
+    };
+    this.deckMethods = {
+      select: this._select,
+      deselect: this._deselect,
+      removeSelectedFromPlayerHand: this._removeSelectedFromPlayerHand,
+      removeSelectedFromDrawn: this._removeSelectedFromDrawn,
+      removeSelectedFromDrawn: this._removeSelectedFromDrawn,
+      clearHand: this._clearHand
+    };
+    this.gameMethods = {
+      showMessageBar: this._showMessageBar,
+      evaluateHand: this._evaluateHand,
+      evaluateGame: this._evaluateGame,
+      newPlayer: this._newPlayer
+    };
   }
 
   componentWillMount() {
     this._newDeck();
-    this._newPlayer("Chris");
+
+    const players = ["Chris", "Dealer"];
+    players.forEach(player => {
+      this._newPlayer(player);
+    });
   }
 
   _newDeck() {
@@ -433,80 +459,31 @@ export class Table extends Component {
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-sm6">
               <Player
+                player={this.state.players[0]}
+                controlPanelMethods={this.controlPanelMethods}
+                deckMethods={this.deckMethods}
                 controlPanelProps={{
-                  shuffle: this._shuffle,
-                  putOnBottomOfDeck: this._putOnBottomOfDeck,
-                  putOnTopOfDeck: this._putOnTopOfDeck,
-                  drawRandom: this._drawRandom,
-                  drawFromBottomOfDeck: this._drawFromBottomOfDeck,
-                  draw: this._draw,
-                  reset: this._reset,
-                  deal: this._deal,
-                  hit: this._hit,
-                  stay: this._stay,
-                  resetGame: this._resetGame,
                   gameStatus: this.state.gameStatus,
-                  currentPlayer: this.state.players[c],
+                  currentPlayer: this.state.players[0],
                   selectedCards: this.state.selected,
                   isDeckVisible: this.state.isDeckVisible,
-                  toggleDeckVisibility: this._toggleDeckVisibility,
                   isDrawnVisible: this.state.isDrawnVisible,
-                  toggleDrawnVisibility: this._toggleDrawnVisibility,
                   isSelectedVisible: this.state.isSelectedVisible,
-                  toggleSelectedVisibility: this.state
-                    ._toggleSelectedVisibility,
                   turnCount: this.state.turnCount,
-                  hidden: true
+                  hidden: false
                 }}
                 deckContainerProps={{
                   deck: this.state.players[0].hand,
                   title: this.state.players[0].title,
                   handValue: this.state.players[0].handValue,
-                  select: this._select,
-                  deselect: this._deselect,
-                  hidden: false,
-                  isSelectable: true
+                  isSelectable: true,
+                  hidden: false
                 }}
               />
             </div>
 
             <div className="ms-Grid-col ms-u-sm6">
-              <Player
-                controlPanelProps={{
-                  shuffle: this._shuffle,
-                  putOnBottomOfDeck: this._putOnBottomOfDeck,
-                  putOnTopOfDeck: this._putOnTopOfDeck,
-                  drawRandom: this._drawRandom,
-                  drawFromBottomOfDeck: this._drawFromBottomOfDeck,
-                  draw: this._draw,
-                  reset: this._reset,
-                  deal: this._deal,
-                  hit: this._hit,
-                  stay: this._stay,
-                  resetGame: this._resetGame,
-                  gameStatus: this.state.gameStatus,
-                  currentPlayer: this.state.players[c],
-                  selectedCards: this.state.selected,
-                  isDeckVisible: this.state.isDeckVisible,
-                  toggleDeckVisibility: this._toggleDeckVisibility,
-                  isDrawnVisible: this.state.isDrawnVisible,
-                  toggleDrawnVisibility: this._toggleDrawnVisibility,
-                  isSelectedVisible: this.state.isSelectedVisible,
-                  toggleSelectedVisibility: this.state
-                    ._toggleSelectedVisibility,
-                  turnCount: this.state.turnCount,
-                  hidden: false
-                }}
-                deckContainerProps={{
-                  deck: this.state.players[c].hand,
-                  title: this.state.players[c].title,
-                  handValue: this.state.players[c].handValue,
-                  select: this._select,
-                  deselect: this._deselect,
-                  hidden: false,
-                  isSelectable: true
-                }}
-              />
+              Player 1 goes here
             </div>
 
           </div>
