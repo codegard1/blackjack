@@ -17,7 +17,7 @@ export class ControlPanel extends Component {
 
     const bustedFlag = player.status === "busted";
     const blackjackflag = player.status === "blackjack";
-    const gameStatusFlag = gameStatus > 2 || this.props.player.turn === false;
+    const gameStatusFlag = gameStatus > 2 || this.props.player.turn === false ;
 
     /**
      * optionsItems: Define buttons in CommandBar

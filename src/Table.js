@@ -61,6 +61,7 @@ export class Table extends Component {
     this._evaluateHand = this._evaluateHand.bind(this);
     this._evaluateGame = this._evaluateGame.bind(this);
     this._newPlayer = this._newPlayer.bind(this);
+    this._newGame = this._newGame.bind(this);
 
     // group methods to pass into Player as props
     this.controlPanelMethods = {
@@ -106,7 +107,7 @@ export class Table extends Component {
     const newPlayer = {
       title: title,
       hand: [],
-      handValue: 0,
+      handValue: { aceAsOne: 0, aceAsTen: 0 },
       status: "ok",
       turn: false
     };
@@ -125,8 +126,8 @@ export class Table extends Component {
   _clearHand(index) {
     const players = this.state.players;
     players[index].hand = [];
-    players[index].handValue = undefined;
-    players[index].status = undefined;
+    players[index].handValue = { aceAsOne: 0, aceAsTen: 0 };
+    players[index].status = "ok";
     this.setState({ players });
   }
 
@@ -139,10 +140,18 @@ export class Table extends Component {
   _resetGame() {
     this._newDeck();
     this.state.players.forEach((player, index) => {
-      this._clearHand(this.state.player[index]);
+      this._clearHand(index);
     });
-    this.setState({ drawn: [], selected: [], gameStatus: 0 });
-    this._showMessageBar("Game reset", MessageBarType.info);
+    this.setState(
+      {
+        drawn: [],
+        selected: [],
+        gameStatus: 0,
+        turnCount: 0,
+        currentPlayer: 0
+      },
+      this._showMessageBar("Game reset", MessageBarType.info)
+    );
   }
 
   /**
@@ -167,8 +176,6 @@ export class Table extends Component {
     let players = this.state.players;
     players.forEach(player => {
       player.hand = deck.draw(2);
-
-      //player.handValue = this._evaluateHand(player.hand);
     });
     players[this.state.currentPlayer].turn = true;
 
@@ -179,7 +186,6 @@ export class Table extends Component {
       },
       this._evaluateGame(1)
     );
-    this._showMessageBar("_deal called", MessageBarType.info);
   }
 
   _hit(ev, target, index = this.state.currentPlayer) {
@@ -389,43 +395,45 @@ export class Table extends Component {
           ) {
             player.status = blackjack;
           }
-
-          // if (players[this.state.currentPlayer].status === busted) {
-
-          //   nextGameStatus = 3;
-
-          //}
         });
+
+        if (players[this.state.currentPlayer].status === busted) {
+          nextGameStatus = 3;
+        }
+        if (players[this.state.currentPlayer].status === winner) {
+          nextGameStatus: 4;
+        }
+        if (players[this.state.currentPlayer].status === blackjack) {
+          nextGameStatus: 5;
+        }
         break;
 
       case 2: // stay (go to next turn)
         this._showMessageBar("Stayed", MessageBarType.info);
-        const nextPlayerIndex = this.state.currentPlayer + 1 == players.length
+        const nextPlayerIndex = this.state.currentPlayer + 1 === players.length
           ? 0
           : this.state.currentPlayer + 1;
         nextPlayer = nextPlayerIndex;
-        players.forEach(player=>{
-          player.turn = players.indexOf(player) === nextPlayerIndex 
-          ? true
-          : false;
+        players.forEach(player => {
+          player.turn = players.indexOf(player) === nextPlayerIndex
+            ? true
+            : false;
         });
-
-        //nextGameStatus = 1;
         break;
 
-      case 3: // currentPlayer Wins
-        this._showMessageBar("You win!", MessageBarType.success);
-        //nextGameStatus = 0;
-        break;
-
-      case 4: // human player busted
+      case 3: // human player busted
         this._showMessageBar("Busted!", MessageBarType.warning);
-        //nextGameStatus = 0;
+        nextGameStatus = 0;
+        break;
+
+      case 4: // currentPlayer Wins
+        this._showMessageBar("You win!", MessageBarType.success);
+        nextGameStatus = 0;
         break;
 
       case 5: // human player blackjack
         this._showMessageBar("Blackjack!", MessageBarType.success);
-        //nextGameStatus = 0;
+        nextGameStatus = 0;
         break;
 
       case 6: // tie
@@ -445,8 +453,15 @@ export class Table extends Component {
         gameStatus: nextGameStatus,
         currentPlayer: nextPlayer
       },
-      console.log("Evaluated Game.")
+      this._endGameTrap(nextGameStatus)
     );
+  }
+
+  // immediately evaluate game again if status > 2 (endgame condition)
+  _endGameTrap(statusCode) {
+    if (statusCode > 2) {
+      this._evaluateGame(statusCode);
+    }
   }
 
   render() {
