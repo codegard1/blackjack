@@ -8,10 +8,11 @@ export class Player extends Component {
     return (
       <div className="playerContainer">
         <ControlPanel
+          player={this.props.player}
           {...this.props.controlPanelMethods}
           {...this.props.controlPanelProps}
         />
-        {this.props.controlPanelProps.gameStatus > 0 &&
+        {this.props.controlPanelProps.gameStatus >= 0 &&
           <DeckContainer
             {...this.props.deckContainerProps}
             {...this.props.deckMethods}

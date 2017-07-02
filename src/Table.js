@@ -30,6 +30,7 @@ export class Table extends Component {
       isDrawnVisible: false,
       isSelectedVisible: false
     };
+
     //Deck Methods
     this._select = this._select.bind(this);
     this._deselect = this._deselect.bind(this);
@@ -37,6 +38,7 @@ export class Table extends Component {
       this
     );
     this._removeSelectedFromDrawn = this._removeSelectedFromDrawn.bind(this);
+
     // ControlPanel methods
     this._deal = this._deal.bind(this);
     this._hit = this._hit.bind(this);
@@ -53,6 +55,7 @@ export class Table extends Component {
     this._toggleDeckVisibility = this._toggleDeckVisibility.bind(this);
     this._toggleDrawnVisibility = this._toggleDrawnVisibility.bind(this);
     this._toggleSelectedVisibility = this._toggleSelectedVisibility.bind(this);
+
     //Game State Methods
     this._showMessageBar = this._showMessageBar.bind(this);
     this._evaluateHand = this._evaluateHand.bind(this);
@@ -81,24 +84,16 @@ export class Table extends Component {
       deselect: this._deselect,
       removeSelectedFromPlayerHand: this._removeSelectedFromPlayerHand,
       removeSelectedFromDrawn: this._removeSelectedFromDrawn,
-      removeSelectedFromDrawn: this._removeSelectedFromDrawn,
       clearHand: this._clearHand
-    };
-    this.gameMethods = {
-      showMessageBar: this._showMessageBar,
-      evaluateHand: this._evaluateHand,
-      evaluateGame: this._evaluateGame,
-      newPlayer: this._newPlayer
     };
   }
 
-  componentWillMount() {
-    this._newDeck();
-
+  componentDidMount() {
     const players = ["Chris", "Dealer"];
     players.forEach(player => {
       this._newPlayer(player);
     });
+    this._newDeck();
   }
 
   _newDeck() {
@@ -119,6 +114,14 @@ export class Table extends Component {
     this.setState({ players });
   }
 
+  /**
+ * @todo use this to instantiate Players and Deck, instead of doing it in componentWillMount
+ */
+  _newGame() {
+    // game Initialization
+    this._evaluateGame(1);
+  }
+
   _clearHand(index) {
     const players = this.state.players;
     players[index].hand = [];
@@ -135,11 +138,16 @@ export class Table extends Component {
 
   _resetGame() {
     this._newDeck();
-    this._clearHand(this.state.currentPlayer);
+    this.state.players.forEach((player, index) => {
+      this._clearHand(this.state.player[index]);
+    });
     this.setState({ drawn: [], selected: [], gameStatus: 0 });
     this._showMessageBar("Game reset", MessageBarType.info);
   }
 
+  /**
+   * @todo rename to _resetHand
+   */
   _reset() {
     const deck = this.state.deck;
     deck.reset(); //sets the deck back to a full 52-card deck, unshuffled
@@ -159,7 +167,8 @@ export class Table extends Component {
     let players = this.state.players;
     players.forEach(player => {
       player.hand = deck.draw(2);
-      player.handValue = this._evaluateHand(player.hand);
+
+      //player.handValue = this._evaluateHand(player.hand);
     });
     players[this.state.currentPlayer].turn = true;
 
@@ -170,125 +179,29 @@ export class Table extends Component {
       },
       this._evaluateGame(1)
     );
+    this._showMessageBar("_deal called", MessageBarType.info);
   }
 
-  _hit() {
+  _hit(ev, target, index = this.state.currentPlayer) {
     let deck = this.state.deck;
     let drawn = this.state.drawn;
     let players = this.state.players;
-    let currentPlayer = players[this.state.currentPlayer];
+    let currentPlayer = players[index];
     const ret = deck.draw(1);
     drawn.push(ret);
     currentPlayer.hand.push(ret);
-    currentPlayer.handValue = this._evaluateHand(currentPlayer.hand);
 
-    this.setState({ deck, drawn, players }, this._evaluateGame);
+    this.setState({ deck, drawn, players }, this._evaluateGame(1));
   }
 
   _stay() {
-    this._evaluateGame(6);
-  }
-
-  _evaluateGame(nextGameStatus = this.state.gameStatus) {
-    // set gameStatus from somewhere other than state
-    let gameStatus = nextGameStatus;
-    let players = this.state.players;
-    let nextPlayer = -1;
-    nextGameStatus = -1;
-    const busted = "busted";
-    const blackjack = "blackjack";
-    const winner = "winner";
-
-    console.log("gamestatus", gameStatus);
-
-    switch (gameStatus) {
-      case 0: //Off
-        this._showMessageBar("Hello", MessageBarType.info);
-        break;
-
-      case 1: // New Game
-        this._showMessageBar("Game in progress", MessageBarType.info);
-
-        // evaluate hands
-        players.forEach(player => {
-          player.handValue = this._evaluateHand(player.hand);
-
-          // set busted status
-          if (
-            player.handValue.aceAsOne > 21 && player.handValue.aceAsTen > 21
-          ) {
-            player.status = busted;
-          }
-
-          // set blackjack status
-          if (
-            player.handValue.aceAsOne === 21 || player.handValue.aceAsTen === 21
-          ) {
-            player.status = blackjack;
-          }
-        });
-
-        if (players[this.state.currentPlayer].status === busted) {
-          nextGameStatus = 3;
-        }
-
-        break;
-
-      case 2: // currentPlayer Wins
-        this._showMessageBar("You win!", MessageBarType.success);
-        nextGameStatus = 0;
-        break;
-
-      case 3: // human player busted
-        this._showMessageBar("Busted!", MessageBarType.warning);
-        nextGameStatus = 0;
-        break;
-
-      case 4: // human player blackjack
-        this._showMessageBar("Blackjack!", MessageBarType.success);
-        nextGameStatus = 0;
-        break;
-
-      case 5: // tie
-        this._showMessageBar("Tie?", MessageBarType.warning);
-        nextGameStatus = 0;
-        break;
-
-      case 6: // stay (go to next turn)
-        this._showMessageBar("Stayed", MessageBarType.info);
-        // const nextPlayer = (this.state.currentPlayer + 1) > players.length
-        // ? 0
-        // : this.state.currentPlayer + 1;
-
-        // temporary
-        nextPlayer = this.state.currentPlayer;
-        nextGameStatus = 1;
-        break;
-
-      default:
-        // do nothing
-        break;
-    }
-
-    console.log("nextgamestatus:", nextGameStatus);
-    console.log("nextPlayer", nextPlayer);
-
-    gameStatus = nextGameStatus > -1 ? nextGameStatus : gameStatus;
-    let currentPlayer = nextPlayer > -1 ? nextPlayer : this.state.currentPlayer;
-
-    this.setState({
-      turnCount: this.state.turnCount + 1,
-      players,
-      gameStatus,
-      currentPlayer
-    });
-    console.log("Evaluated Game.");
+    this._evaluateGame(2);
   }
 
   _drawFromBottomOfDeck(num) {
     const deck = this.state.deck;
     const drawn = this.state.drawn;
-    const ret = deck.drawFromBottomOfDeck(1);
+    const ret = deck.drawFromBottomOfDeck(num);
     drawn.push(ret);
     console.log("drawFromBottomOfDeck:", ret);
     this.setState({ deck, drawn });
@@ -297,7 +210,7 @@ export class Table extends Component {
   _drawRandom(num) {
     const deck = this.state.deck;
     const drawn = this.state.drawn;
-    const ret = deck.drawRandom(1);
+    const ret = deck.drawRandom(num);
     drawn.push(ret);
     console.log("drawRandom:", ret);
     this.setState({ deck, drawn });
@@ -321,6 +234,10 @@ export class Table extends Component {
     this._clearSelected();
   }
 
+  /**
+ * @todo use PlayingCard object per se instead of cardAttributes
+ * @param {Object} cardAttributes - the suit, description, and sort values to assign to the selected card 
+ */
   _select(cardAttributes) {
     const selected = this.state.selected;
     const selectedCard = new PlayingCard(
@@ -348,9 +265,9 @@ export class Table extends Component {
     this.setState({ selected: [] });
   }
 
-  _removeSelectedFromPlayerHand(playerIndex, cards) {
+  _removeSelectedFromPlayerHand(playerIndex = this.state.currentPlayer, cards) {
     const players = this.state.players;
-    let currentPlayer = players[this.state.currentPlayer];
+    let currentPlayer = players[playerIndex];
     const selected = this.state.selected;
     selected.forEach(card => {
       const index = currentPlayer.hand.findIndex(element => {
@@ -358,7 +275,7 @@ export class Table extends Component {
       });
       currentPlayer.hand.splice(index, 1);
     });
-    currentPlayer.handValue = this._evaluateHand(currentPlayer.hand);
+    //currentPlayer.handValue = this._evaluateHand(currentPlayer.hand);
     this.setState({ players });
   }
 
@@ -374,13 +291,35 @@ export class Table extends Component {
     this.setState({ drawn });
   }
 
+  _showMessageBar(text, type) {
+    this.setState({
+      messageBarDefinition: {
+        text: text,
+        type: type
+      },
+      isMessageBarVisible: true
+    });
+  }
+
+  _toggleDeckVisibility() {
+    this.setState({ isDeckVisible: !this.state.isDeckVisible });
+  }
+
+  _toggleDrawnVisibility() {
+    this.setState({ isDrawnVisible: !this.state.isDrawnVisible });
+  }
+
+  _toggleSelectedVisibility() {
+    this.setState({ isSelectedVisible: !this.state.isSelectedVisible });
+  }
+
   _evaluateHand(hand) {
     let handValue = {
       aceAsOne: 0,
       aceAsTen: 0
     };
     // Do not evaluate if the hand is empty!
-    if (hand) {
+    if (hand.length > 0) {
       hand.forEach(card => {
         switch (card.sort) {
           case 14:
@@ -413,26 +352,101 @@ export class Table extends Component {
     return handValue;
   }
 
-  _showMessageBar(text, type) {
-    const messageBarDefinition = this.state.messageBarDefinition;
-    messageBarDefinition.text = text;
-    messageBarDefinition.type = type;
-    this.setState({ messageBarDefinition, isMessageBarVisible: true });
-  }
+  _evaluateGame(
+    nextGameStatus = this.state.gameStatus,
+    nextPlayer = this.state.currentPlayer
+  ) {
+    let players = this.state.players;
 
-  _toggleDeckVisibility() {
-    const isDeckVisible = !this.state.isDeckVisible;
-    this.setState({ isDeckVisible });
-  }
+    const busted = "busted";
+    const blackjack = "blackjack";
+    const winner = "winner";
 
-  _toggleDrawnVisibility() {
-    const isDrawnVisible = !this.state.isDrawnVisible;
-    this.setState({ isDrawnVisible });
-  }
+    console.log("nextGameStatus", nextGameStatus);
 
-  _toggleSelectedVisibility() {
-    const isSelectedVisible = !this.state.isSelectedVisible;
-    this.setState({ isSelectedVisible });
+    switch (nextGameStatus) {
+      case 0: //Off
+        this._showMessageBar("Hello", MessageBarType.info);
+        break;
+
+      case 1: // New Game
+        this._showMessageBar("Game in progress", MessageBarType.info);
+
+        // evaluate hands
+        players.forEach(player => {
+          player.handValue = this._evaluateHand(player.hand);
+
+          // set busted status
+          if (
+            player.handValue.aceAsOne > 21 && player.handValue.aceAsTen > 21
+          ) {
+            player.status = busted;
+          }
+
+          // set blackjack status
+          if (
+            player.handValue.aceAsOne === 21 || player.handValue.aceAsTen === 21
+          ) {
+            player.status = blackjack;
+          }
+
+          // if (players[this.state.currentPlayer].status === busted) {
+
+          //   nextGameStatus = 3;
+
+          //}
+        });
+        break;
+
+      case 2: // stay (go to next turn)
+        this._showMessageBar("Stayed", MessageBarType.info);
+        const nextPlayerIndex = this.state.currentPlayer + 1 == players.length
+          ? 0
+          : this.state.currentPlayer + 1;
+        nextPlayer = nextPlayerIndex;
+        players.forEach(player=>{
+          player.turn = players.indexOf(player) === nextPlayerIndex 
+          ? true
+          : false;
+        });
+
+        //nextGameStatus = 1;
+        break;
+
+      case 3: // currentPlayer Wins
+        this._showMessageBar("You win!", MessageBarType.success);
+        //nextGameStatus = 0;
+        break;
+
+      case 4: // human player busted
+        this._showMessageBar("Busted!", MessageBarType.warning);
+        //nextGameStatus = 0;
+        break;
+
+      case 5: // human player blackjack
+        this._showMessageBar("Blackjack!", MessageBarType.success);
+        //nextGameStatus = 0;
+        break;
+
+      case 6: // tie
+        this._showMessageBar("Tie?", MessageBarType.warning);
+        //nextGameStatus = 0;
+        break;
+
+      default:
+        // do nothing
+        break;
+    }
+
+    this.setState(
+      {
+        turnCount: this.state.turnCount + 1,
+        players,
+        gameStatus: nextGameStatus,
+        currentPlayer: nextPlayer
+      },
+      console.log("Evaluated Game.")
+    );
   }
 
   render() {
@@ -445,7 +459,7 @@ export class Table extends Component {
           deckMethods={this.deckMethods}
           controlPanelProps={{
             gameStatus: this.state.gameStatus,
-            currentPlayer: player,
+            currentPlayer: this.state.currentPlayer,
             selectedCards: this.state.selected,
             isDeckVisible: this.state.isDeckVisible,
             isDrawnVisible: this.state.isDrawnVisible,

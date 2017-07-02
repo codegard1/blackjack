@@ -2,36 +2,10 @@ import React, { Component } from "react";
 import * as T from "prop-types";
 import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
 
-/** Contains buttons that manipulate state in Table
- * @namespace
- * @memberof App.Components
- * @prop {function} putOnBottomOfDeck   - move selected cards to the bottom of the deck (in state)
- * @prop {function} putOnTopOfDeck  - move selected cards to the top of the deck (in state)
- * @prop {function} drawRandom  - draw a random card from the deck (in state)
- * @prop {function} drawFromBottomOfDeck  - draw arbitrary number of cards from the bottom of the deck (in state)
- * @prop {function} draw  - draw arbitrary number of cards from the top of the deck (in state)
- * @prop {function} reset   - reset the deck (in state); order cards by suit and number 
- * @prop {function} shuffle   - shuffle the deck (in state)
- * @prop {function} deal  - moves an arbitrary number of cards to the current player's hand (in state)
- * @prop {function} hit   - move one card to the current player's hand (in state)
- * @prop {function} stay  - advances turn to the next player (in state)
- * @prop {function} resetGame   - resets the deck, players' hands, drawn, and selected arrays, and sets gameStatus to New 
- * @prop {string} gameStatus - string representing the current game's status
- * @prop {number} currentPlayer - index of of the players array (in state) that corresponds to the current player 
- * @prop {array} selectedCards - array containing currently selected cards; passed in from state
-  */
 export class ControlPanel extends Component {
-  /**
-   * @namespace ControlPanel
-   * @constructor
-   */
   constructor(props) {
     super(props);
     this.state = {
-      /**
-       * @type {array}
-       * @defaultvalue
-       */
       commandBarItems: []
     };
   }
@@ -39,11 +13,11 @@ export class ControlPanel extends Component {
   render() {
     let selectedFlag = this.props.selectedCards.length > 0 ? false : true;
     let gameStatus = this.props.gameStatus;
-    let currentPlayer = this.props.currentPlayer || undefined;
+    let player = this.props.player || undefined;
 
-    const bustedFlag = this.props.currentPlayer.status === "busted";
-    const blackjackflag = this.props.currentPlayer.status === "blackjack";
-    const gameStatusFlag = gameStatus > 1 && gameStatus !== 6;
+    const bustedFlag = player.status === "busted";
+    const blackjackflag = player.status === "blackjack";
+    const gameStatusFlag = gameStatus > 2 || this.props.player.turn === false;
 
     /**
      * optionsItems: Define buttons in CommandBar
@@ -83,11 +57,6 @@ export class ControlPanel extends Component {
       }
     ];
 
-    /**
-     * Menu items related to drawing cards from the deck
-     * @memberof ControlPanel
-     * @property {array} - items for the Options menu
-     */
     const drawItems = [
       {
         key: "draw",
@@ -115,11 +84,6 @@ export class ControlPanel extends Component {
       }
     ];
 
-    /**
-     * Menu items related to putting cards in the deck
-     * @memberof ControlPanel
-     * @property {array} - items for the Options menu
-     */
     const putItems = [
       {
         key: "put-on-top-of-deck",
@@ -185,11 +149,6 @@ export class ControlPanel extends Component {
       }
     ];
 
-    /**
-     * master repository of menu items
-     * @memberof ControlPanel
-     * @property {object} - items for the Options menu
-     */
     const commandBarDefinition = {
       defaultItems,
       blackJackItems,
@@ -243,11 +202,6 @@ export class ControlPanel extends Component {
       ]
     };
 
-    /**
-     * Configure the CommandBar 
-     * @memberof ControlPanel
-     * @param {object} commandBarDefinition
-     */
     let commandBarItems = this.state.commandBarItems.concat(
       commandBarDefinition.defaultItems
     );
@@ -268,7 +222,12 @@ export class ControlPanel extends Component {
             farItems={farItems}
             overflowItems={overFlowItems}
           />}
-        {!this.props.hidden && <StatusDisplay {...this.props} />}
+        {!this.props.hidden &&
+          <StatusDisplay
+            player={this.props.player}
+            gameStatus={this.props.gameStatus}
+            turnCount={this.props.turnCount}
+          />}
       </div>
     );
   }
@@ -294,7 +253,7 @@ ControlPanel.propTypes = {
   toggleSelectedVisibility: T.func,
   toggleDrawnVisibility: T.func,
   gameStatus: T.number.isRequired,
-  currentPlayer: T.object.isRequired,
+  currentPlayer: T.number.isRequired,
   selectedCards: T.array,
   isDeckVisible: T.bool,
   isDrawnVisible: T.bool,
@@ -306,38 +265,35 @@ ControlPanel.propTypes = {
 export default ControlPanel;
 
 export function StatusDisplay(props) {
-  let gameStatus = props.gameStatus;
-  let currentPlayer = props.currentPlayer || undefined;
-
-  /**
-     * If gameStatus is not undefined then set gameStatusDisplay to a JSX element containing {gamestatus}
-     * @memberof ControlPanel
-     * @param {string} gameStatus
-     */
   const gameStatusDisplay = (
-    <span className="ms-font-m" style={{ float: "left" }}>
-      Game Status: <strong>{gameStatus}</strong>
+    <span className="ms-font-s" style={{ float: "left" }}>
+      Game Status: <strong>{props.gameStatus}</strong>
       <br />
       Turn Count: {props.turnCount}
     </span>
   );
 
-  /** 
-       * If currentPlayer is set then set currentPLayerDisplay to a JSX element containing {currentPlayer.title} and {currentPlayer.status}
-       * @memberof ControlPanel
-       * @param {object} currentPlayer
-       */
   const currentPlayerDisplay = (
-    <p className="ms-font-l">
-      <span>{`Current Player: ${currentPlayer.title}`}</span> <br />
-      <span>{`Player Status: ${currentPlayer.status}`}</span>
+    <p className="ms-font-s">
+      <span>{`Player: ${props.player.title}`}</span> <br />
+      <span>{`Status: ${props.player.status}`}</span><br />
+      <span
+      >{`Hand Value: ${props.player.handValue.aceAsTen} / ${props.player.handValue.aceAsOne}`}</span><br />
+      <span>{`Turn: ${props.player.turn}`}</span><br />
     </p>
   );
 
   return (
     <div id="StatusPanel">
       {gameStatusDisplay}
+      <br /><br />
       {currentPlayerDisplay}
     </div>
   );
 }
+
+StatusDisplay.propTypes = {
+  gameStatus: T.number,
+  turnCount: T.number,
+  player: T.object
+};

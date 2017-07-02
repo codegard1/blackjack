@@ -12,9 +12,9 @@ export class DeckContainer extends Component {
   }
 
   componentWillMount() {
-    if (this.props.hidden === true) {
-      this.setState({ deckIsVisible: false });
-    }
+    // if (this.props.hidden === true) {
+    //   this.setState({ deckIsVisible: false });
+    // }
   }
 
   _toggleDeck() {
