@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import * as T from "prop-types";
 import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
+import { StatusDisplay } from "./StatusDisplay";
 
 export class ControlPanel extends Component {
   constructor(props) {
@@ -17,7 +18,7 @@ export class ControlPanel extends Component {
 
     const bustedFlag = player.status === "busted";
     const blackjackflag = player.status === "blackjack";
-    const gameStatusFlag = gameStatus > 2 || this.props.player.turn === false ;
+    const gameStatusFlag = gameStatus > 2 || this.props.player.turn === false;
 
     /**
      * optionsItems: Define buttons in CommandBar
@@ -263,37 +264,3 @@ ControlPanel.propTypes = {
 };
 
 export default ControlPanel;
-
-export function StatusDisplay(props) {
-  const gameStatusDisplay = (
-    <span className="ms-font-s" style={{ float: "left" }}>
-      Game Status: <strong>{props.gameStatus}</strong>
-      <br />
-      Turn Count: {props.turnCount}
-    </span>
-  );
-
-  const currentPlayerDisplay = (
-    <p className="ms-font-s">
-      <span>{`Player: ${props.player.title}`}</span> <br />
-      <span>{`Status: ${props.player.status}`}</span><br />
-      <span
-      >{`Hand Value: ${props.player.handValue.aceAsTen} / ${props.player.handValue.aceAsOne}`}</span><br />
-      <span>{`Turn: ${props.player.turn}`}</span><br />
-    </p>
-  );
-
-  return (
-    <div id="StatusPanel">
-      {gameStatusDisplay}
-      <br /><br />
-      {currentPlayerDisplay}
-    </div>
-  );
-}
-
-StatusDisplay.propTypes = {
-  gameStatus: T.number,
-  turnCount: T.number,
-  player: T.object
-};
