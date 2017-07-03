@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import * as T from "prop-types";
 import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
-import { StatusDisplay } from "./StatusDisplay";
 
 export class ControlPanel extends Component {
   constructor(props) {
@@ -222,12 +221,6 @@ export class ControlPanel extends Component {
             items={commandBarItems}
             farItems={farItems}
             overflowItems={overFlowItems}
-          />}
-        {!this.props.hidden &&
-          <StatusDisplay
-            player={this.props.player}
-            gameStatus={this.props.gameStatus}
-            turnCount={this.props.turnCount}
           />}
       </div>
     );
