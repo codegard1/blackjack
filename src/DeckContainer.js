@@ -62,8 +62,8 @@ export class DeckContainer extends Component {
         return (
             <div className="DeckContainer">
                 <h3 className="ms-font-xl">
-                    {this.props.title} &nbsp;
-          {toggleIcon}
+                    {this.props.title}{' '}{this.props.handValue && <i className="ms-Icon ms-Icon--Info">&nbsp;</i>}
+                    {toggleIcon}
                 </h3>
                 {this.state.deckIsVisible &&
                     <Masonry
