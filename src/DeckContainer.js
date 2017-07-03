@@ -75,7 +75,7 @@ export class DeckContainer extends Component {
           >
             {childElements}
           </Masonry>}
-        {handValueDisplay}
+        {/*handValueDisplay*/}
       </div>
     );
   }
