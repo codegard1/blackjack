@@ -2,19 +2,26 @@ import React, { Component } from "react";
 import * as T from "prop-types";
 import Masonry from "react-masonry-component";
 import CardContainer from "./CardContainer";
+import StatusDisplay from './StatusDisplay'
+import { Callout } from 'office-ui-fabric-react/lib/Callout';
 
 export class DeckContainer extends Component {
     constructor(props) {
         super(props);
-        this.state = { deckIsVisible: true };
+        this.state = { deckIsVisible: true, isCalloutVisible: false };
 
         this._toggleDeck = this._toggleDeck.bind(this);
+        this._toggleCallout = this._toggleCallout.bind(this);
     }
 
     componentWillMount() {
         if (this.props.hidden === true) {
             this.setState({ deckIsVisible: false });
         }
+    }
+
+    _toggleCallout() {
+        this.setState({ isCalloutVisible: !this.state.isCalloutVisible });
     }
 
     _toggleDeck() {
@@ -62,9 +69,26 @@ export class DeckContainer extends Component {
         return (
             <div className="DeckContainer">
                 <h3 className="ms-font-xl">
-                    {this.props.title}{' '}{this.props.handValue && <i className="ms-Icon ms-Icon--Info">&nbsp;</i>}
+                    {this.props.title}{' '}
+                    {this.props.handValue &&
+                        <i className="ms-Icon ms-Icon--Info"
+                            onClick={this._toggleCallout}
+                            ref={(calloutTarget) => this._menuButtonElement = calloutTarget}>&nbsp;</i>}
                     {toggleIcon}
                 </h3>
+                {this.state.isCalloutVisible &&
+                    <Callout
+                        gapSpace={1}
+                        targetElement={this._menuButtonElement}
+                        onDismiss={this._toggleCallout}
+                        setInitialFocus={true}>
+                        <StatusDisplay
+                            player={this.props.player}
+                            gameStatus={this.props.gameStatus}
+                            turnCount={this.props.turnCount}
+                        />
+                    </Callout>
+                }
                 {this.state.deckIsVisible &&
                     <Masonry
                         className={"deck"}
