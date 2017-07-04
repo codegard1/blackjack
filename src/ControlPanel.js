@@ -148,9 +148,9 @@ export class ControlPanel extends Component {
         onClick: this.props.stay
       },
       {
-        key: "reset-game",
-        name: "Reset Game",
-        ariaLabel: "Reset Game",
+        key: "new-round",
+        name: "New Round",
+        ariaLabel: "New Round",
         iconProps: { iconName: "Refresh" },
         disabled: false,
         onClick: this.props.resetGame
