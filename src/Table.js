@@ -20,6 +20,7 @@ export class Table extends Component {
       players: [],
       currentPlayer: 0,
       turnCount: 0,
+      pot: 0,
       messageBarDefinition: {
         type: MessageBarType.info,
         text: "",
@@ -109,7 +110,9 @@ export class Table extends Component {
       hand: [],
       handValue: { aceAsOne: 0, aceAsEleven: 0 },
       status: "ok",
-      turn: false
+      turn: false,
+      bank: 1000,
+      bet: 0
     };
     players.push(newPlayer);
     this.setState({ players });
@@ -391,7 +394,8 @@ export class Table extends Component {
 
           // set blackjack status
           if (
-            player.handValue.aceAsOne === 21 || player.handValue.aceAsEleven === 21
+            player.handValue.aceAsOne === 21 ||
+            player.handValue.aceAsEleven === 21
           ) {
             player.status = blackjack;
           }
