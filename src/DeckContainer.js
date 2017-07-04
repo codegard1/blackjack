@@ -72,27 +72,24 @@ export class DeckContainer extends Component {
           onClick={this._toggleDeck}
         />;
 
-    // Set hand value text
-    const handValueDisplay =
-      this.props.handValue &&
-      <span className="handValue ms-font-xl">
-        Hand Value: {this.props.handValue.aceAsOne}
-        {this.props.handValue.aceAsOne !== this.props.handValue.aceAsEleven &&
-          " / " + this.props.handValue.aceAsEleven}
-      </span>;
-
     const style = this.props.player && this.props.player.turn
       ? "DeckContainer selected"
       : "DeckContainer";
 
+    const titleBar =
+      this.props.player &&
+      <span>
+        {this.props.player.title}{" "}
+        {` ($${this.props.player.bank}) `}{" "}
+        Hand Value: {this.props.handValue.aceAsOne}
+        {this.props.handValue.aceAsOne !== this.props.handValue.aceAsEleven &&
+          " / " + this.props.handValue.aceAsEleven}{" "}
+      </span>;
+
     return (
       <div className={style}>
         <h3 className="ms-font-xl">
-          <span>
-            {this.props.title}{" "}
-            {this.props.player && ` ($${this.props.player.bank}) `}
-          </span>
-          {" "}
+          {titleBar}
           {this.props.gameStatus > 0 &&
             <i
               className="ms-Icon ms-Icon--Info"
