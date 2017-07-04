@@ -62,8 +62,8 @@ export class DeckContainer extends Component {
             this.props.handValue &&
             <span className="handValue ms-font-xl">
                 Hand Value: {this.props.handValue.aceAsOne}
-                {this.props.handValue.aceAsOne !== this.props.handValue.aceAsTen &&
-                    " / " + this.props.handValue.aceAsTen}
+                {this.props.handValue.aceAsOne !== this.props.handValue.aceAsEleven &&
+                    " / " + this.props.handValue.aceAsEleven}
             </span>;
 
         return (

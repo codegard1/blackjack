@@ -107,7 +107,7 @@ export class Table extends Component {
     const newPlayer = {
       title: title,
       hand: [],
-      handValue: { aceAsOne: 0, aceAsTen: 0 },
+      handValue: { aceAsOne: 0, aceAsEleven: 0 },
       status: "ok",
       turn: false
     };
@@ -126,7 +126,7 @@ export class Table extends Component {
   _clearHand(index) {
     const players = this.state.players;
     players[index].hand = [];
-    players[index].handValue = { aceAsOne: 0, aceAsTen: 0 };
+    players[index].handValue = { aceAsOne: 0, aceAsEleven: 0 };
     players[index].status = "ok";
     this.setState({ players });
   }
@@ -322,7 +322,7 @@ export class Table extends Component {
   _evaluateHand(hand) {
     let handValue = {
       aceAsOne: 0,
-      aceAsTen: 0
+      aceAsEleven: 0
     };
     // Do not evaluate if the hand is empty!
     if (hand.length > 0) {
@@ -330,27 +330,27 @@ export class Table extends Component {
         switch (card.sort) {
           case 14:
             handValue.aceAsOne += 1;
-            handValue.aceAsTen += 11;
+            handValue.aceAsEleven += 11;
             break;
 
           case 13:
             handValue.aceAsOne += 10;
-            handValue.aceAsTen += 10;
+            handValue.aceAsEleven += 10;
             break;
 
           case 12:
             handValue.aceAsOne += 10;
-            handValue.aceAsTen += 10;
+            handValue.aceAsEleven += 10;
             break;
 
           case 11:
             handValue.aceAsOne += 10;
-            handValue.aceAsTen += 10;
+            handValue.aceAsEleven += 10;
             break;
 
           default:
             handValue.aceAsOne += card.sort;
-            handValue.aceAsTen += card.sort;
+            handValue.aceAsEleven += card.sort;
             break;
         }
       });
@@ -384,14 +384,14 @@ export class Table extends Component {
 
           // set busted status
           if (
-            player.handValue.aceAsOne > 21 && player.handValue.aceAsTen > 21
+            player.handValue.aceAsOne > 21 && player.handValue.aceAsEleven > 21
           ) {
             player.status = busted;
           }
 
           // set blackjack status
           if (
-            player.handValue.aceAsOne === 21 || player.handValue.aceAsTen === 21
+            player.handValue.aceAsOne === 21 || player.handValue.aceAsEleven === 21
           ) {
             player.status = blackjack;
           }
