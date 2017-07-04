@@ -83,19 +83,19 @@ export class DeckContainer extends Component {
         {` ($${this.props.player.bank}) `}{" "}
         Hand Value: {this.props.handValue.aceAsOne}
         {this.props.handValue.aceAsOne !== this.props.handValue.aceAsEleven &&
-          " / " + this.props.handValue.aceAsEleven}{" "}
+          " / " + this.props.handValue.aceAsEleven}
+        {" "}
+        <i
+          className="ms-Icon ms-Icon--Info"
+          onClick={this._toggleStatusCallout}
+          ref={calloutTarget => this._statusCalloutTarget = calloutTarget}
+        />
       </span>;
 
     return (
       <div className={style}>
-        <h3 className="ms-font-xl">
+        <h3 className="ms-font-s">
           {titleBar}
-          {this.props.gameStatus > 0 &&
-            <i
-              className="ms-Icon ms-Icon--Info"
-              onClick={this._toggleStatusCallout}
-              ref={calloutTarget => this._statusCalloutTarget = calloutTarget}
-            />}
           {" "}
           {toggleIcon}
         </h3>

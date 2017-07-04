@@ -20,6 +20,7 @@ export class Table extends Component {
       players: [],
       currentPlayer: 0,
       turnCount: 0,
+      round: 0,
       pot: 0,
       minimumBet: 25,
       messageBarDefinition: {
@@ -45,6 +46,7 @@ export class Table extends Component {
     this._deal = this._deal.bind(this);
     this._hit = this._hit.bind(this);
     this._bet = this._bet.bind(this);
+    this._ante = this._ante.bind(this);
     this._stay = this._stay.bind(this);
     this._draw = this._draw.bind(this);
     this._reset = this._reset.bind(this);
@@ -133,6 +135,7 @@ export class Table extends Component {
     players[index].hand = [];
     players[index].handValue = { aceAsOne: 0, aceAsEleven: 0 };
     players[index].status = "ok";
+    players[index].turn = false;
     this.setState({ players });
   }
 
@@ -153,9 +156,11 @@ export class Table extends Component {
         selected: [],
         gameStatus: 0,
         turnCount: 0,
-        currentPlayer: 0
+        currentPlayer: 0,
+        round: this.state.round + 1,
+        pot: 0
       },
-      this._showMessageBar("Game reset", MessageBarType.info)
+      this._showMessageBar("New Round", MessageBarType.info)
     );
   }
 
@@ -380,8 +385,13 @@ export class Table extends Component {
         this._showMessageBar("Hello", MessageBarType.info);
         break;
 
-      case 1: // New Game
+      case 1: // Game in progress
         this._showMessageBar("Game in progress", MessageBarType.info);
+
+        // all players bet the minimum to start
+        if (this.state.turnCount === 0) {
+          this._ante();
+        }
 
         // evaluate hands
         players.forEach(player => {
@@ -470,9 +480,30 @@ export class Table extends Component {
     }
   }
 
-  _bet(ev, target, amount = this.state.minimumBet) {
+  _bet(
+    ev,
+    target,
+    playerIndex = this.state.currentPlayer,
+    amount = this.state.minimumBet
+  ) {
+    let players = this.state.players;
+    players[playerIndex].bank -= amount;
     const pot = this.state.pot + amount;
-    this.setState({ pot });
+    this.setState({ pot, players });
+  }
+
+  _ante(amount = this.state.minimumBet) {
+    let players = this.state.players;
+    let pot = this.state.pot;
+
+    players.forEach(player => {
+      player.bank -= amount;
+      pot += amount;
+    });
+    this.setState(
+      { players, pot },
+      this._showMessageBar(`Ante: ${amount}`, MessageBarType.info)
+    );
   }
 
   render() {
