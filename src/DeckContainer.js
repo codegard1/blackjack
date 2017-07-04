@@ -5,6 +5,8 @@ import CardContainer from "./CardContainer";
 import StatusDisplay from "./StatusDisplay";
 import { Callout } from "office-ui-fabric-react/lib/Callout";
 
+import './DeckContainer.css';
+
 export class DeckContainer extends Component {
   constructor(props) {
     super(props);
@@ -79,8 +81,12 @@ export class DeckContainer extends Component {
           " / " + this.props.handValue.aceAsEleven}
       </span>;
 
+    const style = this.props.player && this.props.player.turn
+      ? "DeckContainer selected"
+      : "DeckContainer";
+
     return (
-      <div className="DeckContainer">
+      <div className={style}>
         <h3 className="ms-font-xl">
           {this.props.title}{" "}
           {this.props.handValue &&
@@ -89,7 +95,7 @@ export class DeckContainer extends Component {
               onClick={this._toggleStatusCallout}
               ref={calloutTarget => this._statusCalloutTarget = calloutTarget}
             />}
-            {' '}
+          {" "}
           {toggleIcon}
         </h3>
         {this.state.isStatusCalloutVisible &&

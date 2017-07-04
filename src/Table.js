@@ -105,7 +105,7 @@ export class Table extends Component {
 
   _newPlayer(title) {
     let players = this.state.players;
-    const newPlayer = {
+    players.push({
       title: title,
       hand: [],
       handValue: { aceAsOne: 0, aceAsEleven: 0 },
@@ -113,8 +113,7 @@ export class Table extends Component {
       turn: false,
       bank: 1000,
       bet: 0
-    };
-    players.push(newPlayer);
+    });
     this.setState({ players });
   }
 
