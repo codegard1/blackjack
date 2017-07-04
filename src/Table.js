@@ -21,6 +21,7 @@ export class Table extends Component {
       currentPlayer: 0,
       turnCount: 0,
       pot: 0,
+      minimumBet: 25,
       messageBarDefinition: {
         type: MessageBarType.info,
         text: "",
@@ -43,6 +44,7 @@ export class Table extends Component {
     // ControlPanel methods
     this._deal = this._deal.bind(this);
     this._hit = this._hit.bind(this);
+    this._bet = this._bet.bind(this);
     this._stay = this._stay.bind(this);
     this._draw = this._draw.bind(this);
     this._reset = this._reset.bind(this);
@@ -68,6 +70,7 @@ export class Table extends Component {
     this.controlPanelMethods = {
       deal: this._deal,
       hit: this._hit,
+      bet: this._bet,
       stay: this._stay,
       draw: this._draw,
       reset: this._reset,
@@ -467,6 +470,11 @@ export class Table extends Component {
     }
   }
 
+  _bet(ev, target, amount = this.state.minimumBet) {
+    const pot = this.state.pot + amount;
+    this.setState({ pot });
+  }
+
   render() {
     const playersArray = this.state.players.map((player, index) => {
       return (
@@ -483,10 +491,12 @@ export class Table extends Component {
             isDrawnVisible: this.state.isDrawnVisible,
             isSelectedVisible: this.state.isSelectedVisible,
             turnCount: this.state.turnCount,
+            minimumBet: this.state.minimumBet,
             hidden: false
           }}
           deckContainerProps={{
             deck: player.hand,
+            pot: this.state.pot,
             title: player.title,
             handValue: player.handValue,
             isSelectable: true,
@@ -511,6 +521,12 @@ export class Table extends Component {
                 >
                   {this.state.messageBarDefinition.text}
                 </MessageBar>}
+            </div>
+          </div>
+
+          <div className="ms-Grid-row">
+            <div className="ms-Grid-col ms-u-s12">
+              <p className="ms-font-xl">${this.state.pot}</p>
             </div>
           </div>
 

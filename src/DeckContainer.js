@@ -5,7 +5,7 @@ import CardContainer from "./CardContainer";
 import StatusDisplay from "./StatusDisplay";
 import { Callout } from "office-ui-fabric-react/lib/Callout";
 
-import './DeckContainer.css';
+import "./DeckContainer.css";
 
 export class DeckContainer extends Component {
   constructor(props) {
@@ -88,8 +88,12 @@ export class DeckContainer extends Component {
     return (
       <div className={style}>
         <h3 className="ms-font-xl">
-          {this.props.title}{" "}
-          {this.props.handValue &&
+          <span>
+            {this.props.title}{" "}
+            {this.props.player && ` ($${this.props.player.bank}) `}
+          </span>
+          {" "}
+          {this.props.gameStatus > 0 &&
             <i
               className="ms-Icon ms-Icon--Info"
               onClick={this._toggleStatusCallout}
@@ -136,6 +140,7 @@ DeckContainer.propTypes = {
   isSelectable: T.bool,
   hidden: T.bool,
   player: T.object,
+  pot: T.number,
   gameStatus: T.number,
   turnCount: T.number
 };

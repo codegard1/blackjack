@@ -132,6 +132,14 @@ export class ControlPanel extends Component {
         onClick: this.props.hit
       },
       {
+        key: "bet",
+        name: `Bet $${this.props.minimumBet}`,
+        ariaLabel: `Bet $${this.props.minimumBet}`,
+        iconProps: { iconName: "Up" },
+        disabled: gameStatusFlag,
+        onClick: this.props.bet
+      },
+      {
         key: "stay",
         name: "Stay",
         ariaLabel: "Stay",
@@ -234,6 +242,8 @@ export class ControlPanel extends Component {
 ControlPanel.propTypes = {
   deal: T.func,
   hit: T.func,
+  bet: T.func,
+  minimumBet: T.number,
   stay: T.func,
   draw: T.func,
   reset: T.func,
