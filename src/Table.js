@@ -67,6 +67,8 @@ export class Table extends Component {
     this._evaluateGame = this._evaluateGame.bind(this);
     this._newPlayer = this._newPlayer.bind(this);
     this._newGame = this._newGame.bind(this);
+    this._getPlayerById = this._getPlayerById.bind(this);
+    this._getHighestHandValue = this._getHighestHandValue.bind(this);
 
     // group methods to pass into Player as props
     this.controlPanelMethods = {
@@ -110,16 +112,29 @@ export class Table extends Component {
 
   _newPlayer(title) {
     let players = this.state.players;
+    const playerId = players.length + 1;
     players.push({
+      id: playerId,
       title: title,
       hand: [],
       handValue: { aceAsOne: 0, aceAsEleven: 0 },
       status: "ok",
       turn: false,
       bank: 1000,
-      bet: 0
+      bet: 0,
+      lastAction: "none",
+      isStaying: false
     });
     this.setState({ players });
+  }
+
+  _getPlayerById(id) {
+    const players = this.state.players;
+    const player = players.filter(player => {
+      return player.id === id;
+    });
+
+    return player;
   }
 
   /**
@@ -291,7 +306,6 @@ export class Table extends Component {
       });
       currentPlayer.hand.splice(index, 1);
     });
-    //currentPlayer.handValue = this._evaluateHand(currentPlayer.hand);
     this.setState({ players });
   }
 
@@ -368,17 +382,32 @@ export class Table extends Component {
     return handValue;
   }
 
+  _getHighestHandValue(playerId) {
+    const player = this._getPlayerById(playerId);
+    const handValue = player.handValue;
+    let higherHandValue = 0;
+
+    if (handValue.aceAsEleven === handValue.aceAsOne) {
+      return handValue.aceAsOne;
+    } else {
+      higherHandValue = handValue.aceAsOne > handValue.aceAsEleven
+        ? handValue.aceAsOne
+        : handValue.aceAsEleven;
+      return higherHandValue;
+    }
+  }
+
   _evaluateGame(
     nextGameStatus = this.state.gameStatus,
     nextPlayer = this.state.currentPlayer
   ) {
     let players = this.state.players;
+    let messageText = "";
 
     const busted = "busted";
     const blackjack = "blackjack";
     const winner = "winner";
-
-    console.log("nextGameStatus", nextGameStatus);
+    const staying = "staying";
 
     switch (nextGameStatus) {
       case 0: //Off
@@ -413,6 +442,30 @@ export class Table extends Component {
           }
         });
 
+        // determine the winner
+        let bustedPlayers = players.filter(player => {
+          return player.status === busted;
+        });
+        let nonBustedPlayers = players.filter(player => {
+          return player.status !== busted;
+        });
+
+        let highestHandValue = 0;
+        let winningPlayerId = 0;
+        let tieFlag = false;
+
+        // determine the player with the highest value hand
+        nonBustedPlayers.forEach(player => {
+          let higherHandValue = this._getHighestHandValue(player.id);
+          if (
+            higherHandValue > highestHandValue &&
+            higherHandValue <= 21
+          ) {
+            highestHandValue = higherHandValue;
+            winningPlayerId = player.id;
+          }
+        });
+
         if (players[this.state.currentPlayer].status === busted) {
           nextGameStatus = 3;
         }
@@ -421,6 +474,9 @@ export class Table extends Component {
         }
         if (players[this.state.currentPlayer].status === blackjack) {
           nextGameStatus: 5;
+        }
+        if (tieFlag) {
+          nextGameStatus = 6;
         }
         break;
 
@@ -437,13 +493,22 @@ export class Table extends Component {
         });
         break;
 
-      case 3: // human player busted
-        this._showMessageBar("Busted!", MessageBarType.warning);
+      case 3: // currentPlayer busted
+        if (bustedPlayers.length === players.length) {
+          // all players busted
+          messageText = `All players busted!`;
+        } else {
+          // only currentPlayer busted
+          messageText = `${this.state.players[this.state.currentPlayer].title} busted!`;
+        }
+
+        this._showMessageBar(messageText, MessageBarType.warning);
         nextGameStatus = 0;
         break;
 
       case 4: // currentPlayer Wins
-        this._showMessageBar("You win!", MessageBarType.success);
+        messageText = `${this.state.players[this.state.currentPlayer].title} wins!`;
+        this._showMessageBar(messageText, MessageBarType.success);
         nextGameStatus = 0;
         break;
 
