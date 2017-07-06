@@ -72,9 +72,17 @@ export class DeckContainer extends Component {
           onClick={this._toggleDeck}
         />;
 
-    const style = this.props.player && this.props.player.turn
-      ? "DeckContainer selected"
-      : "DeckContainer";
+    let style = this.props.player && this.props.player.turn
+      ? "DeckContainer selected "
+      : "DeckContainer ";
+
+    if (
+      this.props.player &&
+      this.props.player.status === "staying" &&
+      !this.props.player.turn
+    ) {
+      style += "staying ";
+    }
 
     const titleBar =
       this.props.player &&

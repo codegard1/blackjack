@@ -1,3 +1,7 @@
 .DeckContainer.selected {
     border: 2px solid blue;
 }
+
+.DeckContainer.staying {
+    border: 2px solid green;
+}

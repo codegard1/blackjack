@@ -134,7 +134,7 @@ export class Table extends Component {
       return player.id === id;
     });
 
-    return player;
+    return player[0];
   }
 
   /**
@@ -401,13 +401,66 @@ export class Table extends Component {
     nextGameStatus = this.state.gameStatus,
     nextPlayer = this.state.currentPlayer
   ) {
+    let pot = this.state.pot;
     let players = this.state.players;
     let messageText = "";
+    let currentPlayerIndex = this.state.currentPlayer;
+    let turnCount = this.state.turnCount;
 
     const busted = "busted";
     const blackjack = "blackjack";
     const winner = "winner";
     const staying = "staying";
+
+    // evaluate hands
+    players.forEach(player => {
+      player.handValue = this._evaluateHand(player.hand);
+
+      // set busted status
+      if (player.handValue.aceAsOne > 21 && player.handValue.aceAsEleven > 21) {
+        player.status = busted;
+      }
+
+      // set blackjack status
+      if (
+        player.handValue.aceAsOne === 21 || player.handValue.aceAsEleven === 21
+      ) {
+        player.status = blackjack;
+      }
+    });
+
+    // STAYING PLAYERS
+    let stayingPlayers = players.filter(player => player.status === staying);
+
+    // BUSTED PLAYERS
+    let bustedPlayers = players.filter(player => player.status === busted);
+
+    // NON-BUSTED PLAYERS
+    let nonBustedPlayers = players.filter(player => player.status !== busted);
+
+    // true if all players are staying
+    let allPlayersStaying = stayingPlayers.length === players.length;
+
+    // true if all players are busted
+    let allPlayersBusted = bustedPlayers.length === players.length;
+
+    // true if all players are not busted
+    let allPlayersNonBusted = nonBustedPlayers.length === players.length;
+
+    // determine the non-busted player with the highest value hand
+    let highestHandValue = 0;
+    let winningPlayerId = 0;
+    let winningPlayerIndex = -1;
+    let tieFlag = false;
+
+    nonBustedPlayers.forEach(player => {
+      let higherHandValue = this._getHighestHandValue(player.id);
+      if (higherHandValue > highestHandValue && higherHandValue <= 21) {
+        highestHandValue = higherHandValue;
+        winningPlayerId = player.id;
+        winningPlayerIndex = players.indexOf(player);
+      }
+    });
 
     switch (nextGameStatus) {
       case 0: //Off
@@ -418,62 +471,28 @@ export class Table extends Component {
         this._showMessageBar("Game in progress", MessageBarType.info);
 
         // all players bet the minimum to start
-        if (this.state.turnCount === 0) {
+        if (turnCount === 0) {
           this._ante();
         }
 
-        // evaluate hands
-        players.forEach(player => {
-          player.handValue = this._evaluateHand(player.hand);
+        // set next game status.
+        // if higher than 2, _exitTrap() will catch it
+        switch (players[this.state.currentPlayer].status) {
+          case busted:
+            nextGameStatus = 3;
+            break;
 
-          // set busted status
-          if (
-            player.handValue.aceAsOne > 21 && player.handValue.aceAsEleven > 21
-          ) {
-            player.status = busted;
-          }
+          case winner:
+            nextGameStatus: 4;
+            break;
 
-          // set blackjack status
-          if (
-            player.handValue.aceAsOne === 21 ||
-            player.handValue.aceAsEleven === 21
-          ) {
-            player.status = blackjack;
-          }
-        });
+          case blackjack:
+            nextGameStatus: 5;
+            break;
 
-        // determine the winner
-        let bustedPlayers = players.filter(player => {
-          return player.status === busted;
-        });
-        let nonBustedPlayers = players.filter(player => {
-          return player.status !== busted;
-        });
-
-        let highestHandValue = 0;
-        let winningPlayerId = 0;
-        let tieFlag = false;
-
-        // determine the player with the highest value hand
-        nonBustedPlayers.forEach(player => {
-          let higherHandValue = this._getHighestHandValue(player.id);
-          if (
-            higherHandValue > highestHandValue &&
-            higherHandValue <= 21
-          ) {
-            highestHandValue = higherHandValue;
-            winningPlayerId = player.id;
-          }
-        });
-
-        if (players[this.state.currentPlayer].status === busted) {
-          nextGameStatus = 3;
-        }
-        if (players[this.state.currentPlayer].status === winner) {
-          nextGameStatus: 4;
-        }
-        if (players[this.state.currentPlayer].status === blackjack) {
-          nextGameStatus: 5;
+          default:
+            //do nothing
+            break;
         }
         if (tieFlag) {
           nextGameStatus = 6;
@@ -481,45 +500,104 @@ export class Table extends Component {
         break;
 
       case 2: // stay (go to next turn)
-        this._showMessageBar("Stayed", MessageBarType.info);
+        this._showMessageBar(
+          `${players[this.state.currentPlayer].title} stayed`,
+          MessageBarType.info
+        );
+
+        // set current player as staying
+        players[currentPlayerIndex].status = staying;
+
+        // get the next player by index
         const nextPlayerIndex = this.state.currentPlayer + 1 === players.length
           ? 0
           : this.state.currentPlayer + 1;
         nextPlayer = nextPlayerIndex;
-        players.forEach(player => {
-          player.turn = players.indexOf(player) === nextPlayerIndex
-            ? true
-            : false;
-        });
+
+        // re-evaluate STAYING PLAYERS
+        stayingPlayers = players.filter(player => player.status === staying);
+        allPlayersStaying = stayingPlayers.length === players.length;
+
+        if (!allPlayersStaying) {
+          players.forEach(player => {
+            // set turn = true for the next player that is not already staying
+            player.turn = players.indexOf(player) === nextPlayerIndex &&
+              player.status !== staying
+              ? true
+              : false;
+          });
+          nextGameStatus = 1;
+        } else {
+          if (winningPlayerIndex === 0) {
+            nextGameStatus = 4;
+          }
+          if (winningPlayerIndex === 0 && players[0].status === blackjack) {
+            nextGameStatus = 5;
+          }
+
+          if (winningPlayerIndex === 1) {
+            nextGameStatus = 7;
+          }
+        }
         break;
 
       case 3: // currentPlayer busted
-        if (bustedPlayers.length === players.length) {
-          // all players busted
-          messageText = `All players busted!`;
-        } else {
-          // only currentPlayer busted
-          messageText = `${this.state.players[this.state.currentPlayer].title} busted!`;
-        }
+        messageText = allPlayersBusted
+          ? `All players busted!`
+          : `${this.state.players[this.state.currentPlayer].title} busted!`;
 
         this._showMessageBar(messageText, MessageBarType.warning);
         nextGameStatus = 0;
+
+        // don't do engame unless all players are staying and not busted
+        if (!allPlayersBusted) {
+          players[winningPlayerIndex].status = winner;
+          players[winningPlayerIndex].bank += pot;
+        }
         break;
 
       case 4: // currentPlayer Wins
         messageText = `${this.state.players[this.state.currentPlayer].title} wins!`;
         this._showMessageBar(messageText, MessageBarType.success);
         nextGameStatus = 0;
+
+        // don't do payout unless all players are staying and not busted
+        if (!allPlayersBusted) {
+          players[winningPlayerIndex].status = winner;
+          players[winningPlayerIndex].bank += pot;
+        }
         break;
 
       case 5: // human player blackjack
         this._showMessageBar("Blackjack!", MessageBarType.success);
         nextGameStatus = 0;
+
+        // don't do payout unless all players are staying and not busted
+        if (!allPlayersBusted) {
+          players[winningPlayerIndex].status = winner;
+          players[winningPlayerIndex].bank += pot;
+        }
         break;
 
       case 6: // tie
         this._showMessageBar("Tie?", MessageBarType.warning);
-        //nextGameStatus = 0;
+        nextGameStatus = 0;
+
+        // don't do payout unless all players are staying and not busted
+        if (!allPlayersBusted) {
+          players[winningPlayerIndex].status = winner;
+          players[winningPlayerIndex].bank += pot;
+        }
+        break;
+
+      case 7: // non-human player wins
+        this._showMessageBar(`${players[1].title} wins!`);
+
+        // don't do payout unless all players are staying and not busted
+        if (!allPlayersBusted) {
+          players[winningPlayerIndex].status = winner;
+          players[winningPlayerIndex].bank += pot;
+        }
         break;
 
       default:
@@ -542,6 +620,9 @@ export class Table extends Component {
   _endGameTrap(statusCode) {
     if (statusCode > 2) {
       this._evaluateGame(statusCode);
+
+      //clear the pot
+      this.setState({ pot: 0 });
     }
   }
 
