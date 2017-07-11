@@ -445,10 +445,12 @@ export class Table extends Component {
     let allPlayersBusted = bustedPlayers.length === players.length;
 
     // true if all players are not busted
+    // eslint-disable-next-line
     let allPlayersNonBusted = nonBustedPlayers.length === players.length;
 
     // determine the non-busted player with the highest value hand
     let highestHandValue = 0;
+    // eslint-disable-next-line
     let winningPlayerId = 0;
     let winningPlayerIndex = -1;
     let tieFlag = false;
@@ -483,11 +485,11 @@ export class Table extends Component {
             break;
 
           case winner:
-            nextGameStatus: 4;
+            nextGameStatus = 4;
             break;
 
           case blackjack:
-            nextGameStatus: 5;
+            nextGameStatus = 5;
             break;
 
           default:

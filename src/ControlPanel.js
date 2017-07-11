@@ -13,10 +13,9 @@ export class ControlPanel extends Component {
   render() {
     let selectedFlag = this.props.selectedCards.length > 0 ? false : true;
     let gameStatus = this.props.gameStatus;
-    let player = this.props.player || undefined;
-
-    const bustedFlag = player.status === "busted";
-    const blackjackflag = player.status === "blackjack";
+    //let player = this.props.player || undefined;
+    //const bustedFlag = player.status === "busted";
+    //const blackjackflag = player.status === "blackjack";
     const gameStatusFlag = gameStatus > 2 || this.props.player.turn === false;
 
     /**
