@@ -6,6 +6,7 @@ import {
   MessageBar,
   MessageBarType
 } from "office-ui-fabric-react/lib/MessageBar";
+import * as D from "./definitions";
 
 const PlayingCard = require("shuffle/lib/playingCard");
 
@@ -23,6 +24,12 @@ export class Table extends Component {
       round: 0,
       pot: 0,
       minimumBet: 25,
+      tieFlag: false,
+      allPlayersStaying: false,
+      allPlayersBusted: false,
+      allPlayersNonBusted: false,
+      winningPlayerId: -1,
+      winningPlayerIndex: -1,
       messageBarDefinition: {
         type: MessageBarType.info,
         text: "",
@@ -69,6 +76,8 @@ export class Table extends Component {
     this._newGame = this._newGame.bind(this);
     this._getPlayerById = this._getPlayerById.bind(this);
     this._getHighestHandValue = this._getHighestHandValue.bind(this);
+    this._payout = this._payout.bind(this);
+    this._evaluatePlayers = this._evaluatePlayers.bind(this);
 
     // group methods to pass into Player as props
     this.controlPanelMethods = {
@@ -382,8 +391,8 @@ export class Table extends Component {
     return handValue;
   }
 
-  _getHighestHandValue(playerId) {
-    const player = this._getPlayerById(playerId);
+  _getHighestHandValue(player) {
+    // const player = this._getPlayerById(playerId);
     const handValue = player.handValue;
     let higherHandValue = 0;
 
@@ -401,68 +410,20 @@ export class Table extends Component {
     nextGameStatus = this.state.gameStatus,
     nextPlayer = this.state.currentPlayer
   ) {
-    let pot = this.state.pot;
-    let players = this.state.players;
+    // set player status, handValue, and other flags
+    this._evaluatePlayers();
+
     let messageText = "";
     let currentPlayerIndex = this.state.currentPlayer;
     let turnCount = this.state.turnCount;
-
-    const busted = "busted";
-    const blackjack = "blackjack";
-    const winner = "winner";
-    const staying = "staying";
-
-    // evaluate hands
-    players.forEach(player => {
-      player.handValue = this._evaluateHand(player.hand);
-
-      // set busted status
-      if (player.handValue.aceAsOne > 21 && player.handValue.aceAsEleven > 21) {
-        player.status = busted;
-      }
-
-      // set blackjack status
-      if (
-        player.handValue.aceAsOne === 21 || player.handValue.aceAsEleven === 21
-      ) {
-        player.status = blackjack;
-      }
-    });
-
-    // STAYING PLAYERS
-    let stayingPlayers = players.filter(player => player.status === staying);
-
-    // BUSTED PLAYERS
-    let bustedPlayers = players.filter(player => player.status === busted);
-
-    // NON-BUSTED PLAYERS
-    let nonBustedPlayers = players.filter(player => player.status !== busted);
-
-    // true if all players are staying
-    let allPlayersStaying = stayingPlayers.length === players.length;
-
-    // true if all players are busted
-    let allPlayersBusted = bustedPlayers.length === players.length;
-
-    // true if all players are not busted
-    // eslint-disable-next-line
-    let allPlayersNonBusted = nonBustedPlayers.length === players.length;
-
-    // determine the non-busted player with the highest value hand
-    let highestHandValue = 0;
-    // eslint-disable-next-line
-    let winningPlayerId = 0;
-    let winningPlayerIndex = -1;
-    let tieFlag = false;
-
-    nonBustedPlayers.forEach(player => {
-      let higherHandValue = this._getHighestHandValue(player.id);
-      if (higherHandValue > highestHandValue && higherHandValue <= 21) {
-        highestHandValue = higherHandValue;
-        winningPlayerId = player.id;
-        winningPlayerIndex = players.indexOf(player);
-      }
-    });
+    let tieFlag = this.state.tieFlag;
+    let allPlayersStaying = this.state.allPlayersStaying;
+    let allPlayersBusted = this.state.allPlayersBusted;
+    let allPlayersNonBusted = this.state.allPlayersNonBusted;
+    let winningPlayerId = this.state.winningPlayerId;
+    let winningPlayerIndex = this.state.winningPlayerIndex;
+    let players = this.state.players;
+    const currentPlayerStatus = players[currentPlayerIndex].status;
 
     switch (nextGameStatus) {
       case 0: //Off
@@ -479,16 +440,16 @@ export class Table extends Component {
 
         // set next game status.
         // if higher than 2, _exitTrap() will catch it
-        switch (players[this.state.currentPlayer].status) {
-          case busted:
+        switch (currentPlayerStatus) {
+          case D.busted:
             nextGameStatus = 3;
             break;
 
-          case winner:
+          case D.winner:
             nextGameStatus = 4;
             break;
 
-          case blackjack:
+          case D.blackjack:
             nextGameStatus = 5;
             break;
 
@@ -499,6 +460,15 @@ export class Table extends Component {
         if (tieFlag) {
           nextGameStatus = 6;
         }
+
+        this.setState(
+          {
+            turnCount: this.state.turnCount + 1,
+            gameStatus: nextGameStatus,
+            currentPlayer: nextPlayer
+          },
+          this._endGameTrap(nextGameStatus)
+        );
         break;
 
       case 2: // stay (go to next turn)
@@ -508,23 +478,26 @@ export class Table extends Component {
         );
 
         // set current player as staying
-        players[currentPlayerIndex].status = staying;
+        players[currentPlayerIndex].status = D.staying;
+        players[currentPlayerIndex].isStaying = true;
 
         // get the next player by index
-        const nextPlayerIndex = this.state.currentPlayer + 1 === players.length
+        const nextPlayerIndex = currentPlayerIndex + 1 === players.length
           ? 0
-          : this.state.currentPlayer + 1;
+          : currentPlayerIndex + 1;
         nextPlayer = nextPlayerIndex;
 
         // re-evaluate STAYING PLAYERS
-        stayingPlayers = players.filter(player => player.status === staying);
+        const stayingPlayers = players.filter(
+          player => player.status === D.staying
+        );
         allPlayersStaying = stayingPlayers.length === players.length;
 
         if (!allPlayersStaying) {
           players.forEach(player => {
             // set turn = true for the next player that is not already staying
             player.turn = players.indexOf(player) === nextPlayerIndex &&
-              player.status !== staying
+              player.status !== D.staying
               ? true
               : false;
           });
@@ -533,14 +506,22 @@ export class Table extends Component {
           if (winningPlayerIndex === 0) {
             nextGameStatus = 4;
           }
-          if (winningPlayerIndex === 0 && players[0].status === blackjack) {
+          if (winningPlayerIndex === 0 && players[0].status === D.blackjack) {
             nextGameStatus = 5;
           }
-
           if (winningPlayerIndex === 1) {
             nextGameStatus = 7;
           }
         }
+
+        this.setState(
+          {
+            turnCount: this.state.turnCount + 1,
+            gameStatus: nextGameStatus,
+            currentPlayer: nextPlayer
+          },
+          this._endGameTrap(nextGameStatus)
+        );
         break;
 
       case 3: // currentPlayer busted
@@ -553,9 +534,16 @@ export class Table extends Component {
 
         // don't do engame unless all players are staying and not busted
         if (!allPlayersBusted) {
-          players[winningPlayerIndex].status = winner;
-          players[winningPlayerIndex].bank += pot;
+          this._payout();
         }
+
+        this.setState(
+          {
+            turnCount: this.state.turnCount + 1,
+            gameStatus: nextGameStatus
+          },
+          this._endGameTrap(nextGameStatus)
+        );
         break;
 
       case 4: // currentPlayer Wins
@@ -565,20 +553,35 @@ export class Table extends Component {
 
         // don't do payout unless all players are staying and not busted
         if (!allPlayersBusted) {
-          players[winningPlayerIndex].status = winner;
-          players[winningPlayerIndex].bank += pot;
+          this._payout();
         }
+
+        this.setState(
+          {
+            turnCount: this.state.turnCount + 1,
+            gameStatus: nextGameStatus
+          },
+          this._endGameTrap(nextGameStatus)
+        );
         break;
 
       case 5: // human player blackjack
         this._showMessageBar("Blackjack!", MessageBarType.success);
-        nextGameStatus = 0;
 
         // don't do payout unless all players are staying and not busted
         if (!allPlayersBusted) {
-          players[winningPlayerIndex].status = winner;
-          players[winningPlayerIndex].bank += pot;
+          this._payout();
         }
+
+        nextGameStatus = 0;
+
+        this.setState(
+          {
+            turnCount: this.state.turnCount + 1,
+            gameStatus: nextGameStatus
+          },
+          this._endGameTrap(nextGameStatus)
+        );
         break;
 
       case 6: // tie
@@ -587,8 +590,7 @@ export class Table extends Component {
 
         // don't do payout unless all players are staying and not busted
         if (!allPlayersBusted) {
-          players[winningPlayerIndex].status = winner;
-          players[winningPlayerIndex].bank += pot;
+          this._payout();
         }
         break;
 
@@ -597,35 +599,97 @@ export class Table extends Component {
 
         // don't do payout unless all players are staying and not busted
         if (!allPlayersBusted) {
-          players[winningPlayerIndex].status = winner;
-          players[winningPlayerIndex].bank += pot;
+          this._payout();
         }
+
+        this.setState(
+          {
+            turnCount: this.state.turnCount + 1,
+            gameStatus: nextGameStatus
+          },
+          this._endGameTrap(nextGameStatus)
+        );
         break;
 
       default:
         // do nothing
         break;
     }
-
-    this.setState(
-      {
-        turnCount: this.state.turnCount + 1,
-        players,
-        gameStatus: nextGameStatus,
-        currentPlayer: nextPlayer
-      },
-      this._endGameTrap(nextGameStatus)
-    );
   }
 
   // immediately evaluate game again if status > 2 (endgame condition)
   _endGameTrap(statusCode) {
     if (statusCode > 2) {
       this._evaluateGame(statusCode);
-
-      //clear the pot
-      this.setState({ pot: 0 });
     }
+  }
+
+  _evaluatePlayers(players = this.state.players) {
+    // evaluate hands
+    players.forEach(player => {
+      player.handValue = this._evaluateHand(player.hand);
+
+      // set busted status
+      if (player.handValue.aceAsOne > 21 && player.handValue.aceAsEleven > 21) {
+        player.status = D.busted;
+      }
+
+      // set blackjack status
+      if (
+        player.handValue.aceAsOne === 21 || player.handValue.aceAsEleven === 21
+      ) {
+        player.status = D.blackjack;
+      }
+    });
+
+    // STAYING PLAYERS
+    const stayingPlayers = players.filter(player => player.isStaying === true);
+
+    // BUSTED PLAYERS
+    const bustedPlayers = players.filter(player => player.status === D.busted);
+
+    // NON-BUSTED PLAYERS
+    const nonBustedPlayers = players.filter(
+      player => player.status !== D.busted
+    );
+
+    // true if all players are staying
+    const allPlayersStaying = stayingPlayers.length === players.length;
+
+    // true if all players are busted
+    const allPlayersBusted = bustedPlayers.length === players.length;
+
+    // true if all players are not busted
+    const allPlayersNonBusted = nonBustedPlayers.length === players.length;
+
+    // determine the non-busted player with the highest value hand
+    let highestHandValue = 0;
+    let winningPlayerId = -1;
+    let winningPlayerIndex = -1;
+    let tieFlag = this.state.tieFlag;
+
+    if (nonBustedPlayers.length === 1) {
+      nonBustedPlayers[0].status = D.winner;
+    } else {
+      nonBustedPlayers.forEach(player => {
+        let higherHandValue = this._getHighestHandValue(player);
+        if (higherHandValue > highestHandValue && higherHandValue <= 21) {
+          highestHandValue = higherHandValue;
+          winningPlayerId = player.id;
+          winningPlayerIndex = players.indexOf(player);
+        }
+      });
+    }
+
+    this.setState({
+      players,
+      tieFlag,
+      allPlayersStaying,
+      allPlayersBusted,
+      allPlayersNonBusted,
+      winningPlayerId,
+      winningPlayerIndex
+    });
   }
 
   _bet(
@@ -640,18 +704,31 @@ export class Table extends Component {
     this.setState({ pot, players });
   }
 
-  _ante(amount = this.state.minimumBet) {
-    let players = this.state.players;
-    let pot = this.state.pot;
-
+  _ante(
+    amount = this.state.minimumBet,
+    players = this.state.players,
+    pot = this.state.pot
+  ) {
     players.forEach(player => {
       player.bank -= amount;
       pot += amount;
     });
+
     this.setState(
       { players, pot },
       this._showMessageBar(`Ante: ${amount}`, MessageBarType.info)
     );
+  }
+
+  _payout(
+    players = this.state.players,
+    index = this.state.winningPlayerIndex,
+    amount = this.state.pot
+  ) {
+    players[index].status = D.winner;
+    players[index].bank += amount;
+
+    this.setState({ players, pot: 0 });
   }
 
   render() {
