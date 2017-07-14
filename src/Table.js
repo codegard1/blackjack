@@ -439,7 +439,7 @@ export class Table extends Component {
         }
 
         // set next game status.
-        // if higher than 2, _exitTrap() will catch it
+        // if higher than 2, _exitTrap() will catch it and re-run _evaluateGame()
         switch (currentPlayerStatus) {
           case D.busted:
             nextGameStatus = 3;
@@ -449,9 +449,9 @@ export class Table extends Component {
             nextGameStatus = 4;
             break;
 
-          case D.blackjack:
-            nextGameStatus = 5;
-            break;
+          // case D.blackjack:
+          //   nextGameStatus = 5;
+          //   break;
 
           default:
             //do nothing
@@ -547,7 +547,8 @@ export class Table extends Component {
         break;
 
       case 4: // currentPlayer Wins
-        messageText = `${this.state.players[this.state.currentPlayer].title} wins!`;
+        const winningPlayerTitle = this.state.players[winningPlayerIndex].title; 
+        messageText = `${winningPlayerTitle} wins!`;
         this._showMessageBar(messageText, MessageBarType.success);
         nextGameStatus = 0;
 
@@ -567,13 +568,12 @@ export class Table extends Component {
 
       case 5: // human player blackjack
         this._showMessageBar("Blackjack!", MessageBarType.success);
+        nextGameStatus = 0;
 
         // don't do payout unless all players are staying and not busted
         if (!allPlayersBusted) {
           this._payout();
         }
-
-        nextGameStatus = 0;
 
         this.setState(
           {
@@ -596,6 +596,8 @@ export class Table extends Component {
 
       case 7: // non-human player wins
         this._showMessageBar(`${players[1].title} wins!`);
+
+        nextGameStatus = 0;
 
         // don't do payout unless all players are staying and not busted
         if (!allPlayersBusted) {
@@ -716,7 +718,7 @@ export class Table extends Component {
 
     this.setState(
       { players, pot },
-      this._showMessageBar(`Ante: ${amount}`, MessageBarType.info)
+      this._showMessageBar(`Ante: $${amount}`, MessageBarType.info)
     );
   }
 
