@@ -5,6 +5,7 @@ import CardContainer from "./CardContainer";
 import StatusDisplay from "./StatusDisplay";
 import { Callout } from "office-ui-fabric-react/lib/Callout";
 
+import { BaseComponent } from "./BaseComponent";
 import "./DeckContainer.css";
 
 export class DeckContainer extends Component {

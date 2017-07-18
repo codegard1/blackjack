@@ -9,6 +9,8 @@ import {
 import * as D from "./definitions";
 import { OptionsPanel } from "./OptionsPanel";
 
+import { BaseComponent } from "./BaseComponent";
+
 const PlayingCard = require("shuffle/lib/playingCard");
 
 export class Table extends Component {

@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import * as T from "prop-types";
 
+import { BaseComponent } from "./BaseComponent";
 import "./CardContainer.css";
 
 export class CardContainer extends Component {

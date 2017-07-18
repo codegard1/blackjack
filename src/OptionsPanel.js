@@ -4,6 +4,8 @@ import { Panel, PanelType } from "office-ui-fabric-react/lib/Panel";
 import { Toggle } from "office-ui-fabric-react/lib/Toggle";
 import { CommandButton, IButtonProps } from "office-ui-fabric-react/lib/Button";
 
+import { BaseComponent } from "./BaseComponent";
+
 export function OptionsPanel(props) {
   return (
     <Panel
