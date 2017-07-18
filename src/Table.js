@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 import Shuffle from "shuffle";
 import DeckContainer from "./DeckContainer";
 import Player from "./Player";
@@ -13,7 +13,7 @@ import { BaseComponent } from "./BaseComponent";
 
 const PlayingCard = require("shuffle/lib/playingCard");
 
-export class Table extends Component {
+export class Table extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = {

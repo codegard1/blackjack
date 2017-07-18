@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 import * as T from "prop-types";
 import Masonry from "react-masonry-component";
 import CardContainer from "./CardContainer";
@@ -8,7 +8,7 @@ import { Callout } from "office-ui-fabric-react/lib/Callout";
 import { BaseComponent } from "./BaseComponent";
 import "./DeckContainer.css";
 
-export class DeckContainer extends Component {
+export class DeckContainer extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = {
