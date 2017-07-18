@@ -3,13 +3,6 @@ import * as T from "prop-types";
 import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
 
 export class ControlPanel extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      commandBarItems: []
-    };
-  }
-
   render() {
     let selectedFlag = this.props.selectedCards.length > 0 ? false : true;
     let gameStatus = this.props.gameStatus;
