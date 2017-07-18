@@ -16,8 +16,8 @@ export class DeckContainer extends BaseComponent {
       isStatusCalloutVisible: false
     };
 
-    this._toggleDeck = this._toggleDeck.bind(this);
-    this._toggleStatusCallout = this._toggleStatusCallout.bind(this);
+    /* bind private methods */
+    this._bind('_toggleDeck','_toggleStatusCallout');
   }
 
   componentWillMount() {

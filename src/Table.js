@@ -58,47 +58,48 @@ export class Table extends BaseComponent {
     };
 
     //Deck Methods
-    this._select = this._select.bind(this);
-    this._deselect = this._deselect.bind(this);
-    this._removeSelectedFromPlayerHand = this._removeSelectedFromPlayerHand.bind(
-      this
+    this._bind(
+      "_select",
+      "_deselect",
+      "_removeSelectedFromPlayerHand",
+      "_removeSelectedFromDrawn"
     );
-    this._removeSelectedFromDrawn = this._removeSelectedFromDrawn.bind(this);
 
     // ControlPanel methods
-    this._deal = this._deal.bind(this);
-    this._hit = this._hit.bind(this);
-    this._bet = this._bet.bind(this);
-    this._ante = this._ante.bind(this);
-    this._stay = this._stay.bind(this);
-    this._draw = this._draw.bind(this);
-    this._reset = this._reset.bind(this);
-    this._shuffle = this._shuffle.bind(this);
-    this._putOnBottomOfDeck = this._putOnBottomOfDeck.bind(this);
-    this._putOnTopOfDeck = this._putOnTopOfDeck.bind(this);
-    this._drawRandom = this._drawRandom.bind(this);
-    this._drawFromBottomOfDeck = this._drawFromBottomOfDeck.bind(this);
-    this._clearHand = this._clearHand.bind(this);
-    this._toggleDeckVisibility = this._toggleDeckVisibility.bind(this);
-    this._toggleDrawnVisibility = this._toggleDrawnVisibility.bind(this);
-    this._toggleSelectedVisibility = this._toggleSelectedVisibility.bind(this);
-    this._showOptionsPanel = this._showOptionsPanel.bind(this);
+    this._bind(
+      "_deal",
+      "_hit",
+      "_bet",
+      "_ante",
+      "_stay",
+      "_draw",
+      "_reset",
+      "_shuffle",
+      "_putOnBottomOfDeck",
+      "_putOnTopOfDeck",
+      "_drawRandom",
+      "_drawFromBottomOfDeck",
+      "_clearHand",
+      "_toggleDeckVisibility",
+      "_toggleDrawnVisibility",
+      "_toggleSelectedVisibility",
+      "_showOptionsPanel"
+    );
 
     //Game State Methods
-    this._showMessageBar = this._showMessageBar.bind(this);
-    this._evaluateHand = this._evaluateHand.bind(this);
-    this._evaluateGame = this._evaluateGame.bind(this);
-    this._newPlayer = this._newPlayer.bind(this);
-    this._newGame = this._newGame.bind(this);
-    this._getPlayerById = this._getPlayerById.bind(this);
-    this._getHighestHandValue = this._getHighestHandValue.bind(this);
-    this._payout = this._payout.bind(this);
-    this._evaluatePlayers = this._evaluatePlayers.bind(this);
-    this._resetGame = this._resetGame.bind(this);
-    this._newRound = this._newRound.bind(this);
-
-    // Ungrouped Methods
-    this._hideOptionsPanel = this._hideOptionsPanel.bind(this);
+    this._bind(
+      "_showMessageBar",
+      "_evaluateHand",
+      "_evaluateGame",
+      "_newPlayer",
+      "_newGame",
+      "_getPlayerById",
+      "_getHighestHandValue",
+      "_payout",
+      "_evaluatePlayers",
+      "_resetGame",
+      "_newRound"
+    );
 
     // group methods to pass into Player as props
     this.controlPanelMethods = {
@@ -130,6 +131,9 @@ export class Table extends BaseComponent {
       hide: this._hideOptionsPanel,
       resetGame: this._resetGame
     };
+
+    // Ungrouped Methods
+    this._bind('_hideOptionsPanel');
   }
 
   componentDidMount() {

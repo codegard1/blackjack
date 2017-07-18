@@ -9,8 +9,8 @@ export class CardContainer extends BaseComponent {
     super(props);
     this.state = { isSelected: false, isBackfacing: false };
 
-    this._toggleSelect = this._toggleSelect.bind(this);
-    this._toggleBackfacing = this._toggleBackfacing.bind(this);
+    /* bind private methods */
+    this._bind('_toggleSelect','_toggleBackfacing');
   }
 
   _toggleBackfacing() {
