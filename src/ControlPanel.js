@@ -18,40 +18,6 @@ export class ControlPanel extends Component {
     //const blackjackflag = player.status === "blackjack";
     const gameStatusFlag = gameStatus > 2 || this.props.player.turn === false;
 
-
-    const optionsItems = [
-      {
-        key: "show-deck",
-        name: "Show Deck",
-        ariaLabel: "Show Deck",
-        iconProps: "",
-        disabled: false,
-        canCheck: true,
-        checked: this.props.isDeckVisible,
-        onClick: this.props.toggleDeckVisibility
-      },
-      {
-        key: "show-drawn",
-        name: "Show Drawn",
-        ariaLabel: "Show Drawn",
-        iconProps: "",
-        disabled: false,
-        canCheck: true,
-        checked: this.props.isDrawnVisible,
-        onClick: this.props.toggleDrawnVisibility
-      },
-      {
-        key: "show-selected",
-        name: "Show Selected",
-        ariaLabel: "Show Selected",
-        iconProps: "",
-        disabled: false,
-        canCheck: true,
-        checked: this.props.isSelectedVisible,
-        onClick: this.props.toggleSelectedVisibility
-      }
-    ];
-
     const drawItems = [
       {
         key: "draw",
@@ -152,6 +118,16 @@ export class ControlPanel extends Component {
       }
     ];
 
+    const optionsButton = [
+      {
+        key: "options",
+        name: "Options",
+        ariaLabel: "Options",
+        iconProps: { iconName: "Options" },
+        onClick: this.props.showOptionsPanel
+      }
+    ];
+
     const commandBarDefinition = {
       defaultItems,
       blackJackItems,
@@ -187,38 +163,14 @@ export class ControlPanel extends Component {
           }
         }
       ],
-      optionsButton: {
-        key: "options",
-        name: "Options",
-        ariaLabel: "Options",
-        iconProps: { iconName: "Options" },
-        onClick: this.props.showOptionsPanel
-      },
-      optionsMenu: [
-        {
-          key: "options-menu",
-          name: "Options",
-          ariaLabel: "Options",
-          iconProps: "",
-          onClick(ev) {
-            ev.preventDefault();
-          },
-          subMenuProps: {
-            items: optionsItems,
-            isSubMenu: true,
-            isBeakVisible: true
-          }
-        }
-      ]
+      optionsButton
     };
 
-    let commandBarItems = this.state.commandBarItems.concat(
-      commandBarDefinition.defaultItems,commandBarDefinition.optionsButton
-    );
+    let commandBarItems = commandBarDefinition.defaultItems;
     if (gameStatus > 0) {
       commandBarItems = [].concat(commandBarDefinition.blackJackItems);
     }
-    const farItems = commandBarDefinition.optionsMenu;
+    const farItems = commandBarDefinition.optionsButton;
     const overFlowItems = selectedFlag
       ? []
       : [].concat(commandBarDefinition.putMenu, commandBarDefinition.drawMenu);
@@ -251,9 +203,6 @@ ControlPanel.propTypes = {
   putOnTopOfDeck: T.func,
   drawRandom: T.func,
   drawFromBottomOfDeck: T.func,
-  toggleDeckVisibility: T.func,
-  toggleSelectedVisibility: T.func,
-  toggleDrawnVisibility: T.func,
   gameStatus: T.number.isRequired,
   currentPlayer: T.number.isRequired,
   selectedCards: T.array,

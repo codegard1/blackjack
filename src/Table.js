@@ -99,9 +99,6 @@ export class Table extends Component {
       putOnTopOfDeck: this._putOnTopOfDeck,
       drawRandom: this._drawRandom,
       drawFromBottomOfDeck: this._drawFromBottomOfDeck,
-      toggleDeckVisibility: this._toggleDeckVisibility,
-      toggleDrawnVisibility: this._toggleDrawnVisibility,
-      toggleSelectedVisibility: this._toggleSelectedVisibility,
       showOptionsPanel: this._showOptionsPanel
     };
     this.deckMethods = {
@@ -110,6 +107,12 @@ export class Table extends Component {
       removeSelectedFromPlayerHand: this._removeSelectedFromPlayerHand,
       removeSelectedFromDrawn: this._removeSelectedFromDrawn,
       clearHand: this._clearHand
+    };
+    this.OptionsPanelMethods = {
+      toggleDeckVisibility: this._toggleDeckVisibility,
+      toggleSelectedVisibility: this._toggleSelectedVisibility,
+      toggleDrawnVisibility: this._toggleDrawnVisibility,
+      hide: this._hideOptionsPanel
     };
   }
 
@@ -347,16 +350,16 @@ export class Table extends Component {
     });
   }
 
-  _toggleDeckVisibility() {
-    this.setState({ isDeckVisible: !this.state.isDeckVisible });
+  _toggleDeckVisibility(bool) {
+    this.setState({ isDeckVisible: bool });
   }
 
-  _toggleDrawnVisibility() {
-    this.setState({ isDrawnVisible: !this.state.isDrawnVisible });
+  _toggleDrawnVisibility(bool) {
+    this.setState({ isDrawnVisible: bool });
   }
 
-  _toggleSelectedVisibility() {
-    this.setState({ isSelectedVisible: !this.state.isSelectedVisible });
+  _toggleSelectedVisibility(bool) {
+    this.setState({ isSelectedVisible: bool });
   }
 
   _evaluateHand(hand) {
@@ -747,7 +750,7 @@ export class Table extends Component {
 
   /* hide the Options Panel */
   _hideOptionsPanel() {
-    this.setState({ isOptionsPanelVisible: true });
+    this.setState({ isOptionsPanelVisible: false });
   }
 
   render() {
@@ -832,7 +835,7 @@ export class Table extends Component {
               {this.state.isDrawnVisible &&
                 <DeckContainer
                   deck={this.state.drawn}
-                  title="Drawn"
+                  title="Drawn Cards"
                   select={this._select}
                   deselect={this._deselect}
                   hidden={false}
@@ -842,7 +845,7 @@ export class Table extends Component {
               {this.state.isSelectedVisible &&
                 <DeckContainer
                   deck={this.state.selected}
-                  title="Selected"
+                  title="Selected Cards"
                   select={this._select}
                   deselect={this._deselect}
                   hidden={false}
@@ -854,7 +857,7 @@ export class Table extends Component {
 
           <OptionsPanel
             isOptionsPanelVisible={this.state.isOptionsPanelVisible}
-            hide={this._hideOptionsPanel}
+            {...this.OptionsPanelMethods}
           />
         </div>
       </div>

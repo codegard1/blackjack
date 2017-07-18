@@ -85,8 +85,9 @@ export class DeckContainer extends Component {
     }
 
     const titleBar =
-      this.props.player &&
-      <span>
+      this.props.player
+      ? 
+      (<span>
         {this.props.player.title}{" "}
         {` ($${this.props.player.bank}) `}{" "}
         Hand Value: {this.props.handValue.aceAsOne}
@@ -98,7 +99,10 @@ export class DeckContainer extends Component {
           onClick={this._toggleStatusCallout}
           ref={calloutTarget => this._statusCalloutTarget = calloutTarget}
         />
-      </span>;
+</span>)
+: (
+  <span>{this.props.title}</span>
+);
 
     return (
       <div className={style}>
