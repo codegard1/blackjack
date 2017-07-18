@@ -18,11 +18,7 @@ export class ControlPanel extends Component {
     //const blackjackflag = player.status === "blackjack";
     const gameStatusFlag = gameStatus > 2 || this.props.player.turn === false;
 
-    /**
-     * optionsItems: Define buttons in CommandBar
-     * @memberof ControlPanel
-     * @property {array} - items for the Options menu
-     */
+
     const optionsItems = [
       {
         key: "show-deck",
@@ -191,6 +187,13 @@ export class ControlPanel extends Component {
           }
         }
       ],
+      optionsButton: {
+        key: "options",
+        name: "Options",
+        ariaLabel: "Options",
+        iconProps: { iconName: "Options" },
+        onClick: this.props.showOptionsPanel
+      },
       optionsMenu: [
         {
           key: "options-menu",
@@ -210,7 +213,7 @@ export class ControlPanel extends Component {
     };
 
     let commandBarItems = this.state.commandBarItems.concat(
-      commandBarDefinition.defaultItems
+      commandBarDefinition.defaultItems,commandBarDefinition.optionsButton
     );
     if (gameStatus > 0) {
       commandBarItems = [].concat(commandBarDefinition.blackJackItems);
@@ -234,10 +237,6 @@ export class ControlPanel extends Component {
   }
 }
 
-/**
- * Defines the propTypes for ControlPanel
- * @memberof ControlPanel
- */
 ControlPanel.propTypes = {
   deal: T.func,
   hit: T.func,
@@ -262,7 +261,8 @@ ControlPanel.propTypes = {
   isDrawnVisible: T.bool,
   isSelectedVisible: T.bool,
   turnCount: T.number,
-  hidden: T.bool
+  hidden: T.bool,
+  showOptionsPanel: T.func
 };
 
 export default ControlPanel;

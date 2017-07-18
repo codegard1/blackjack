@@ -7,6 +7,7 @@ import {
   MessageBarType
 } from "office-ui-fabric-react/lib/MessageBar";
 import * as D from "./definitions";
+import { OptionsPanel } from "./OptionsPanel";
 
 const PlayingCard = require("shuffle/lib/playingCard");
 
@@ -38,7 +39,8 @@ export class Table extends Component {
       isMessageBarVisible: false,
       isDeckVisible: true,
       isDrawnVisible: false,
-      isSelectedVisible: false
+      isSelectedVisible: false,
+      isOptionsPanelVisible: false
     };
 
     //Deck Methods
@@ -67,6 +69,7 @@ export class Table extends Component {
     this._toggleDeckVisibility = this._toggleDeckVisibility.bind(this);
     this._toggleDrawnVisibility = this._toggleDrawnVisibility.bind(this);
     this._toggleSelectedVisibility = this._toggleSelectedVisibility.bind(this);
+    this._showOptionsPanel = this._showOptionsPanel.bind(this);
 
     //Game State Methods
     this._showMessageBar = this._showMessageBar.bind(this);
@@ -78,6 +81,9 @@ export class Table extends Component {
     this._getHighestHandValue = this._getHighestHandValue.bind(this);
     this._payout = this._payout.bind(this);
     this._evaluatePlayers = this._evaluatePlayers.bind(this);
+
+    // Ungrouped Methods
+    this._hideOptionsPanel = this._hideOptionsPanel.bind(this);
 
     // group methods to pass into Player as props
     this.controlPanelMethods = {
@@ -95,7 +101,8 @@ export class Table extends Component {
       drawFromBottomOfDeck: this._drawFromBottomOfDeck,
       toggleDeckVisibility: this._toggleDeckVisibility,
       toggleDrawnVisibility: this._toggleDrawnVisibility,
-      toggleSelectedVisibility: this._toggleSelectedVisibility
+      toggleSelectedVisibility: this._toggleSelectedVisibility,
+      showOptionsPanel: this._showOptionsPanel
     };
     this.deckMethods = {
       select: this._select,
@@ -448,10 +455,10 @@ export class Table extends Component {
           case D.winner:
             nextGameStatus = 4;
             break;
-
           // case D.blackjack:
           //   nextGameStatus = 5;
           //   break;
+
 
           default:
             //do nothing
@@ -547,7 +554,7 @@ export class Table extends Component {
         break;
 
       case 4: // currentPlayer Wins
-        const winningPlayerTitle = this.state.players[winningPlayerIndex].title; 
+        const winningPlayerTitle = this.state.players[winningPlayerIndex].title;
         messageText = `${winningPlayerTitle} wins!`;
         this._showMessageBar(messageText, MessageBarType.success);
         nextGameStatus = 0;
@@ -733,6 +740,16 @@ export class Table extends Component {
     this.setState({ players, pot: 0 });
   }
 
+  /* show the Options Panel */
+  _showOptionsPanel() {
+    this.setState({ isOptionsPanelVisible: true });
+  }
+
+  /* hide the Options Panel */
+  _hideOptionsPanel() {
+    this.setState({ isOptionsPanelVisible: true });
+  }
+
   render() {
     const playersArray = this.state.players.map((player, index) => {
       return (
@@ -835,6 +852,10 @@ export class Table extends Component {
             </div>
           </div>
 
+          <OptionsPanel
+            isOptionsPanelVisible={this.state.isOptionsPanelVisible}
+            hide={this._hideOptionsPanel}
+          />
         </div>
       </div>
     );
