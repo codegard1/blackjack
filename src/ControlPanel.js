@@ -107,7 +107,7 @@ export class ControlPanel extends Component {
         ariaLabel: "New Round",
         iconProps: { iconName: "Refresh" },
         disabled: false,
-        onClick: this.props.resetGame
+        onClick: this.props.newRound
       }
     ];
 
@@ -191,7 +191,6 @@ ControlPanel.propTypes = {
   draw: T.func,
   reset: T.func,
   shuffle: T.func,
-  resetGame: T.func,
   putOnBottomOfDeck: T.func,
   putOnTopOfDeck: T.func,
   drawRandom: T.func,
@@ -204,7 +203,8 @@ ControlPanel.propTypes = {
   isSelectedVisible: T.bool,
   turnCount: T.number,
   hidden: T.bool,
-  showOptionsPanel: T.func
+  showOptionsPanel: T.func,
+  newRound:T.func
 };
 
 export default ControlPanel;

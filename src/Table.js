@@ -40,7 +40,19 @@ export class Table extends Component {
       isDeckVisible: true,
       isDrawnVisible: false,
       isSelectedVisible: false,
-      isOptionsPanelVisible: false
+      isOptionsPanelVisible: false,
+      playerDefaults: {
+        id: 0,
+        title: "",
+        hand: [],
+        handValue: { aceAsOne: 0, aceAsEleven: 0 },
+        status: "ok",
+        turn: false,
+        bank: 1000,
+        bet: 0,
+        lastAction: "none",
+        isStaying: false
+      }
     };
 
     //Deck Methods
@@ -60,7 +72,6 @@ export class Table extends Component {
     this._draw = this._draw.bind(this);
     this._reset = this._reset.bind(this);
     this._shuffle = this._shuffle.bind(this);
-    this._resetGame = this._resetGame.bind(this);
     this._putOnBottomOfDeck = this._putOnBottomOfDeck.bind(this);
     this._putOnTopOfDeck = this._putOnTopOfDeck.bind(this);
     this._drawRandom = this._drawRandom.bind(this);
@@ -81,6 +92,8 @@ export class Table extends Component {
     this._getHighestHandValue = this._getHighestHandValue.bind(this);
     this._payout = this._payout.bind(this);
     this._evaluatePlayers = this._evaluatePlayers.bind(this);
+    this._resetGame = this._resetGame.bind(this);
+    this._newRound = this._newRound.bind(this);
 
     // Ungrouped Methods
     this._hideOptionsPanel = this._hideOptionsPanel.bind(this);
@@ -94,12 +107,12 @@ export class Table extends Component {
       draw: this._draw,
       reset: this._reset,
       shuffle: this._shuffle,
-      resetGame: this._resetGame,
       putOnBottomOfDeck: this._putOnBottomOfDeck,
       putOnTopOfDeck: this._putOnTopOfDeck,
       drawRandom: this._drawRandom,
       drawFromBottomOfDeck: this._drawFromBottomOfDeck,
-      showOptionsPanel: this._showOptionsPanel
+      showOptionsPanel: this._showOptionsPanel,
+      newRound: this._newRound
     };
     this.deckMethods = {
       select: this._select,
@@ -112,7 +125,8 @@ export class Table extends Component {
       toggleDeckVisibility: this._toggleDeckVisibility,
       toggleSelectedVisibility: this._toggleSelectedVisibility,
       toggleDrawnVisibility: this._toggleDrawnVisibility,
-      hide: this._hideOptionsPanel
+      hide: this._hideOptionsPanel,
+      resetGame: this._resetGame
     };
   }
 
@@ -131,18 +145,19 @@ export class Table extends Component {
 
   _newPlayer(title) {
     let players = this.state.players;
+    const playerDefaults = this.state.playerDefaults;
     const playerId = players.length + 1;
     players.push({
       id: playerId,
       title: title,
       hand: [],
       handValue: { aceAsOne: 0, aceAsEleven: 0 },
-      status: "ok",
-      turn: false,
-      bank: 1000,
-      bet: 0,
-      lastAction: "none",
-      isStaying: false
+      status: playerDefaults.status,
+      turn: playerDefaults.turn,
+      bank: playerDefaults.bank,
+      bet: playerDefaults.bet,
+      lastAction: playerDefaults.lastAction,
+      isStaying: playerDefaults.isStaying
     });
     this.setState({ players });
   }
@@ -180,6 +195,30 @@ export class Table extends Component {
   }
 
   _resetGame() {
+    this._newDeck();
+    const players = this.state.players;
+    players.forEach(player => {
+      player.bank = this.state.playerDefaults.bank;
+    });
+    this.state.players.forEach((player, index) => {
+      this._clearHand(index);
+    });
+    this.setState(
+      {
+        players,
+        drawn: [],
+        selected: [],
+        gameStatus: 0,
+        turnCount: 0,
+        currentPlayer: 0,
+        round: 0,
+        pot: 0
+      },
+      this._showMessageBar("Game Reset", MessageBarType.info)
+    );
+  }
+
+  _newRound() {
     this._newDeck();
     this.state.players.forEach((player, index) => {
       this._clearHand(index);

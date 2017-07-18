@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import * as T from "prop-types";
 import { Panel, PanelType } from "office-ui-fabric-react/lib/Panel";
 import { Toggle } from "office-ui-fabric-react/lib/Toggle";
+import { CommandButton, IButtonProps } from "office-ui-fabric-react/lib/Button";
 
 export function OptionsPanel(props) {
   return (
@@ -13,6 +14,15 @@ export function OptionsPanel(props) {
       headerText="Options"
       isLightDismiss
     >
+      <CommandButton
+        iconProps={{ iconName: "Refresh" }}
+        disabled={false}
+        checked={false}
+        onClick={props.resetGame}
+      >
+        Reset Game
+      </CommandButton>
+
       <Toggle
         defaultChecked={true}
         label="Show Deck"
@@ -49,7 +59,8 @@ OptionsPanel.propTypes = {
   hide: T.func.isRequired,
   toggleDeckVisibility: T.func,
   toggleSelectedVisibility: T.func,
-  toggleDrawnVisibility: T.func
+  toggleDrawnVisibility: T.func,
+  resetGame: T.func
 };
 
 export default OptionsPanel;
