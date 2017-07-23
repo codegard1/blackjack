@@ -7,6 +7,7 @@
     "type": "git",
     "url": "git://github.com/codegard1/blackjack"
   },
+  "main": "./src/components.js",
   "private": true,
   "dependencies": {
     "office-ui-fabric-react": "^2.34.2",
