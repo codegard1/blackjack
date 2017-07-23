@@ -5,6 +5,7 @@ import { DeckContainer } from "./DeckContainer";
 import { OptionsPanel } from "./OptionsPanel";
 import { Player } from "./Player";
 import { StatusDisplay } from "./StatusDisplay";
+import { Table } from "./Table";
 
 module.exports = {
   BaseComponent,
@@ -13,7 +14,8 @@ module.exports = {
   DeckContainer,
   OptionsPanel,
   Player,
-  StatusDisplay
+  StatusDisplay,
+  Table
 };
 
 module.exports.printMsg = function() {
