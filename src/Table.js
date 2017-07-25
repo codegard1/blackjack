@@ -1,5 +1,5 @@
 import React from "react";
-import Shuffle from "shuffle";
+import Shuffle, { PlayingCard } from "shuffle";
 import DeckContainer from "./DeckContainer";
 import Player from "./Player";
 import {
@@ -8,10 +8,11 @@ import {
 } from "office-ui-fabric-react/lib/MessageBar";
 import * as D from "./definitions";
 import { OptionsPanel } from "./OptionsPanel";
-
 import { BaseComponent } from "./BaseComponent";
 
-const PlayingCard = require("shuffle/lib/playingCard");
+/* flux */
+import { GameStore } from "./stores/GameStore";
+import { AppActions } from "./actions/AppActions";
 
 export class Table extends BaseComponent {
   constructor(props) {
@@ -98,7 +99,8 @@ export class Table extends BaseComponent {
       "_payout",
       "_evaluatePlayers",
       "_resetGame",
-      "_newRound"
+      "_newRound",
+      "_hideOptionsPanel"
     );
 
     // group methods to pass into Player as props
@@ -131,17 +133,20 @@ export class Table extends BaseComponent {
       hide: this._hideOptionsPanel,
       resetGame: this._resetGame
     };
-
-    // Ungrouped Methods
-    this._bind('_hideOptionsPanel');
   }
 
   componentDidMount() {
     const players = ["Chris", "Dealer"];
+    this._onNewGame(players);
     players.forEach(player => {
       this._newPlayer(player);
     });
     this._newDeck();
+  }
+
+  /* flux helpers */
+  _onNewGame(players) {
+    AppActions.newGame(players);
   }
 
   _newDeck() {

@@ -1,11 +1,11 @@
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
-const AppActions = {
-  deal(data) {
+export const AppActions = {
+  newGame(players) {
     AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_DEAL,
-      data: data
+      actionType: AppConstants.GAME_NEWGAME,
+      players
     });
   }
 };

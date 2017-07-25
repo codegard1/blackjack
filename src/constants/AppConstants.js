@@ -1,5 +1,7 @@
-import keyMirror from 'keymirror';
+import keyMirror from "keymirror";
 
 export default keyMirror({
-    GAME_DEAL: null,
+  GAME_NEWGAME: null,
+  GAME_NEWPLAYER: null,
+  GAME_NEWDECK: null
 });

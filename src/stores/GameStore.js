@@ -2,18 +2,22 @@ import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
+/* "state" variables */
+let _playersList = [];
+
 /* Data, Getter method, Event Notifier */
-let _gameList = [];
 const CHANGE_EVENT = "change";
-let GameStore = Object.assign({}, EventEmitter.prototype, {
-  getAll: () => _gameList,
-  emitChange: () => {
+const GameStore = Object.assign({}, EventEmitter.prototype, {
+  getAllPlayers: function() {
+    return _playersList;
+  },
+  emitChange: function() {
     this.emit(CHANGE_EVENT);
   },
-  addChangeListener: callback => {
+  addChangeListener: function(callback) {
     this.on(CHANGE_EVENT, callback);
   },
-  removeChangeListener: callback => {
+  removeChangeListener: function(callback) {
     this.removeListener(CHANGE_EVENT, callback);
   }
 });
@@ -21,17 +25,19 @@ let GameStore = Object.assign({}, EventEmitter.prototype, {
 /* Responding to Actions */
 AppDispatcher.register(action => {
   switch (action.actionType) {
-    
-    case AppConstants.GAME_DEAL:
-      _deal(action.data);
+    case AppConstants.GAME_NEWGAME:
+      _newGame(action.players);
       GameStore.emitChange();
       break;
 
-    default: 
+    default:
   }
 });
 
 /* Method implementations */
-function _deal() {
-  console.log("dealt");
+function _newGame(players) {
+  players.forEach(player => {
+    _playersList.push(player);
+  });
+  console.log("New Game", _playersList);
 }
