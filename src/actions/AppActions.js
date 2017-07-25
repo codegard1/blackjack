@@ -7,6 +7,12 @@ export const AppActions = {
       actionType: AppConstants.GAME_NEWGAME,
       players
     });
+  },
+  newPlayer(title) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.GAME_NEWPLAYER,
+      title
+    });
   }
 };
 

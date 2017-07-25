@@ -1,9 +1,22 @@
 import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
+import { log } from "../utils";
 
 /* "state" variables */
 let _playersList = [];
+const playerDefaults = {
+  id: 0,
+  title: "No Name",
+  hand: [],
+  handValue: { aceAsOne: 0, aceAsEleven: 0 },
+  status: "ok",
+  turn: false,
+  bank: 1000,
+  bet: 0,
+  lastAction: "none",
+  isStaying: false
+};
 
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "change";
@@ -24,6 +37,10 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
 
 /* Responding to Actions */
 AppDispatcher.register(action => {
+  /* report for debugging */
+  const now = new Date().toTimeString();
+  log(`${action.actionType} was called at ${now}`);
+
   switch (action.actionType) {
     case AppConstants.GAME_NEWGAME:
       _newGame(action.players);
@@ -34,10 +51,30 @@ AppDispatcher.register(action => {
   }
 });
 
+//========================================================
+
 /* Method implementations */
 function _newGame(players) {
-  players.forEach(player => {
-    _playersList.push(player);
+  players.forEach((playerTitle, index) => {
+    _playersList.push(_newPlayer(playerTitle, index));
+    console.log("_playersList", _playersList);
   });
-  console.log("New Game", _playersList);
+}
+
+//
+function _newPlayer(title, index) {
+  return {
+    id: index + 1,
+    title: title || playerDefaults.title,
+    hand: playerDefaults.hand,
+    handValue: playerDefaults.handValue,
+    status: playerDefaults.status,
+    turn: playerDefaults.turn,
+    bank: playerDefaults.bank,
+    bet: playerDefaults.bet,
+    lastAction: playerDefaults.lastAction,
+    isStaying: playerDefaults.isStaying
+  };
+
+  //this.setState({ players });
 }
