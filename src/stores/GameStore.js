@@ -5,6 +5,7 @@ import { log } from "../utils";
 import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 import * as D from "../definitions";
 import Player from "./Player";
+import Counter from "./Counter";
 
 /* "state" variables */
 let allPlayersStaying = false,
@@ -122,9 +123,10 @@ function _newGame(playerTitles) {
 }
 
 function _newPlayer(title, index) {
+  const id = Counter.increment();
   /* Player is an Immutable record */
   return new Player({
-    id: index + 1,
+    id,
     title: title
   });
 }
@@ -427,7 +429,8 @@ function _reset() {
   // _newDeck();
 
   players.forEach((player, index) => {
-    player.remove('bank');
+    player.remove("bank");
+
     // _clearHand(index);
   });
 
