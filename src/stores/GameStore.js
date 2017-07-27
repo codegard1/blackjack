@@ -4,20 +4,9 @@ import AppConstants from "../constants/AppConstants";
 import { log } from "../utils";
 import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 import * as D from "../definitions";
+import Player from "./Player";
 
 /* "state" variables */
-const playerDefaults = {
-  id: 0,
-  title: "No Name",
-  hand: [],
-  handValue: { aceAsOne: 0, aceAsEleven: 0 },
-  status: "ok",
-  turn: false,
-  bank: 1000,
-  bet: 0,
-  lastAction: "none",
-  isStaying: false
-};
 let allPlayersStaying = false,
   allPlayersBusted = false,
   allPlayersNonBusted = false,
@@ -133,19 +122,11 @@ function _newGame(playerTitles) {
 }
 
 function _newPlayer(title, index) {
-  /* return a "player" object with (mostly) default properties */
-  return {
+  /* Player is an Immutable record */
+  return new Player({
     id: index + 1,
-    title: title || playerDefaults.title,
-    hand: playerDefaults.hand,
-    handValue: playerDefaults.handValue,
-    status: playerDefaults.status,
-    turn: playerDefaults.turn,
-    bank: playerDefaults.bank,
-    bet: playerDefaults.bet,
-    lastAction: playerDefaults.lastAction,
-    isStaying: playerDefaults.isStaying
-  };
+    title: title
+  });
 }
 
 function _showMessageBar(text, type) {
@@ -247,7 +228,7 @@ function _evaluateGame(
 
     case 2: // stay (go to next turn)
       _showMessageBar(
-        `${players[this.state.currentPlayer].title} stayed`,
+        `${players[currentPlayerIndex].title} stayed`,
         MessageBarType.info
       );
 
@@ -359,8 +340,7 @@ function _evaluateGame(
       turnCount++;
       gameStatus = nextGameStatus;
 
-      this.//_endGameTrap(nextGameStatus);
-      break;
+      this.break; //_endGameTrap(nextGameStatus);
 
     default:
   }
@@ -447,7 +427,7 @@ function _reset() {
   // _newDeck();
 
   players.forEach((player, index) => {
-    player.bank = playerDefaults.bank;
+    player.remove('bank');
     // _clearHand(index);
   });
 
