@@ -144,10 +144,15 @@ export class Table extends BaseComponent {
     this._newDeck();
   }
 
-  /* flux helpers */
+  /* flux helpers 
+  /* ============= */
   _onNewGame(players) {
     AppActions.newGame(players);
   }
+  _onHideOptionsPanel(){
+    AppActions.hideOptionsPanel();
+  }
+  /* ============= */
 
   _newDeck() {
     const deck = Shuffle.shuffle();
@@ -906,7 +911,7 @@ export class Table extends BaseComponent {
           </div>
 
           <OptionsPanel
-            isOptionsPanelVisible={this.state.isOptionsPanelVisible}
+            isOptionsPanelVisible={GameStore.isOptionsPanelVisible}
             {...this.OptionsPanelMethods}
           />
         </div>

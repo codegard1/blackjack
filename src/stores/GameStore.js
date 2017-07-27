@@ -46,7 +46,7 @@ let allPlayersStaying = false,
 
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "change";
-const GameStore = Object.assign({}, EventEmitter.prototype, {
+export const GameStore = Object.assign({}, EventEmitter.prototype, {
   getAllPlayers: function() {
     return players;
   },
@@ -125,10 +125,10 @@ AppDispatcher.register(action => {
 //========================================================
 
 /* Method implementations */
-function _newGame(players) {
-  players.forEach((playerTitle, index) => {
-    _playersList.push(_newPlayer(playerTitle, index));
-    console.log("_playersList", _playersList);
+function _newGame(playerTitles) {
+  playerTitles.forEach((title, index) => {
+    players.push(_newPlayer(title, index));
+    log(players);
   });
 }
 
@@ -215,7 +215,7 @@ function _evaluateGame(
 
       // all players bet the minimum to start
       if (turnCount === 0) {
-        _ante();
+        //_ante();
       }
 
       // set next game status.
@@ -242,7 +242,7 @@ function _evaluateGame(
       gameStatus = nextGameStatus;
       currentPlayer = nextPlayer;
 
-      _endGameTrap(nextGameStatus);
+      //_endGameTrap(nextGameStatus);
       break;
 
     case 2: // stay (go to next turn)
@@ -292,7 +292,7 @@ function _evaluateGame(
       gameStatus = nextGameStatus;
       currentPlayer = nextPlayer;
 
-      _endGameTrap(nextGameStatus);
+      //_endGameTrap(nextGameStatus);
       break;
 
     case 3: // currentPlayer busted
@@ -309,7 +309,7 @@ function _evaluateGame(
       turnCount++;
       gameStatus = nextGameStatus;
 
-      _endGameTrap(nextGameStatus);
+      //_endGameTrap(nextGameStatus);
       break;
 
     case 4: // currentPlayer Wins
@@ -323,7 +323,7 @@ function _evaluateGame(
       turnCount++;
       gameStatus = nextGameStatus;
 
-      _endGameTrap(nextGameStatus);
+      //_endGameTrap(nextGameStatus);
       break;
 
     case 5: // human player blackjack
@@ -336,7 +336,7 @@ function _evaluateGame(
       turnCount++;
       gameStatus = nextGameStatus;
 
-      _endGameTrap(nextGameStatus);
+      //_endGameTrap(nextGameStatus);
       break;
 
     case 6: // tie
@@ -359,7 +359,7 @@ function _evaluateGame(
       turnCount++;
       gameStatus = nextGameStatus;
 
-      this._endGameTrap(nextGameStatus);
+      this.//_endGameTrap(nextGameStatus);
       break;
 
     default:
@@ -444,11 +444,11 @@ function _evaluatePlayers(players = players) {
 }
 
 function _reset() {
-  _newDeck();
+  // _newDeck();
 
   players.forEach((player, index) => {
     player.bank = playerDefaults.bank;
-    _clearHand(index);
+    // _clearHand(index);
   });
 
   drawn = [];
@@ -463,10 +463,10 @@ function _reset() {
 }
 
 function _newRound() {
-  _newDeck();
+  // _newDeck();
 
   players.forEach((player, index) => {
-    _clearHand(index);
+    // _clearHand(index);
   });
 
   drawn = [];
