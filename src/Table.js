@@ -18,32 +18,30 @@ export class Table extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = {
+      //DeckStore
       deck: [],
       drawn: [],
       selected: [],
+      //GameStore
       gameStatus: 0,
-      players: [],
-      currentPlayer: 0,
-      turnCount: 0,
-      round: 0,
-      pot: 0,
+      isMessageBarVisible: false,
+      isOptionsPanelVisible: false,
       minimumBet: 25,
-      tieFlag: false,
-      allPlayersStaying: false,
-      allPlayersBusted: false,
-      allPlayersNonBusted: false,
-      winningPlayerId: -1,
-      winningPlayerIndex: -1,
       messageBarDefinition: {
         type: MessageBarType.info,
         text: "",
         isMultiLine: false
       },
-      isMessageBarVisible: false,
-      isDeckVisible: true,
-      isDrawnVisible: false,
-      isSelectedVisible: false,
-      isOptionsPanelVisible: false,
+      pot: 0,
+      round: 0,
+      turnCount: 0,
+      tieFlag: false,
+      // Player (also in GameStore)
+      allPlayersStaying: false,
+      allPlayersBusted: false,
+      allPlayersNonBusted: false,
+      currentPlayer: 0,
+      players: [],
       playerDefaults: {
         id: 0,
         title: "",
@@ -55,7 +53,13 @@ export class Table extends BaseComponent {
         bet: 0,
         lastAction: "none",
         isStaying: false
-      }
+      },
+      winningPlayerId: -1,
+      winningPlayerIndex: -1,
+      // ControlPanelStore
+      isDeckVisible: true,
+      isDrawnVisible: false,
+      isSelectedVisible: false
     };
 
     //Deck Methods

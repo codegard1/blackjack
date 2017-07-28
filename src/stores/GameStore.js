@@ -25,6 +25,7 @@ let allPlayersStaying = false,
     text: "",
     isMultiLine: false
   },
+  minimumBet = 25,
   nonBustedPlayers = [],
   tieFlag = false,
   turnCount = 0,
@@ -37,11 +38,32 @@ let allPlayersStaying = false,
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "change";
 export const GameStore = Object.assign({}, EventEmitter.prototype, {
-  getAllPlayers: function() {
+  getPlayers: function() {
     return players;
+  },
+  getPlayer: function(id) {
+    return players.find(player => player.id === id);
   },
   getOptionsPanelVisibility: function() {
     return isOptionsPanelVisible;
+  },
+  getState: function() {
+    return {
+      allPlayersStaying,
+      allPlayersBusted,
+      allPlayersNonBusted,
+      currentPlayer,
+      isOptionsPanelVisible,
+      isMessageBarVisible,
+      messageBarDefinition,
+      minimumBet,
+      pot,
+      round,
+      tieFlag,
+      turnCount,
+      winningPlayerId,
+      winningPlayerIndex,
+    };
   },
   emitChange: function() {
     this.emit(CHANGE_EVENT);
