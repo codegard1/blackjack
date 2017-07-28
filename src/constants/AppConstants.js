@@ -13,5 +13,6 @@ export default keyMirror({
   GAME_EVALUATEPLAYERS: null,
   GAME_RESET: null,
   GAME_NEWROUND: null,
-  GAME_HIDEOPTIONSPANE: null
+  GAME_HIDEOPTIONSPANEL: null,
+  GAME_SHOWOPTIONSPANEL: null
 });

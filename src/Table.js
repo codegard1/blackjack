@@ -103,6 +103,9 @@ export class Table extends BaseComponent {
       "_hideOptionsPanel"
     );
 
+    //Flux helpers
+    this._bind("onChange");
+
     // group methods to pass into Player as props
     this.controlPanelMethods = {
       deal: this._deal,
@@ -136,6 +139,8 @@ export class Table extends BaseComponent {
   }
 
   componentDidMount() {
+    GameStore.addChangeListener(this.onChange);
+
     const players = ["Chris", "Dealer"];
     this._onNewGame(players);
     players.forEach(player => {
@@ -144,13 +149,20 @@ export class Table extends BaseComponent {
     this._newDeck();
   }
 
+  componentWillUnmount() {
+    GameStore.removeChangeListener(this.onChange);
+  }
+
   /* flux helpers 
   /* ============= */
+  onChange() {
+    this.setState({
+      isOptionsPanelVisible: GameStore.getOptionsPanelVisibility()
+    });
+  }
+
   _onNewGame(players) {
     AppActions.newGame(players);
-  }
-  _onHideOptionsPanel(){
-    AppActions.hideOptionsPanel();
   }
   /* ============= */
 
@@ -911,7 +923,7 @@ export class Table extends BaseComponent {
           </div>
 
           <OptionsPanel
-            isOptionsPanelVisible={GameStore.isOptionsPanelVisible}
+            isOptionsPanelVisible={this.state.isOptionsPanelVisible}
             {...this.OptionsPanelMethods}
           />
         </div>

@@ -2,6 +2,9 @@ import React, { Component } from "react";
 import * as T from "prop-types";
 import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
 
+/* Flux */
+import {AppActions} from './actions/AppActions';
+
 export class ControlPanel extends Component {
   render() {
     let selectedFlag = this.props.selectedCards.length > 0 ? false : true;
@@ -117,7 +120,7 @@ export class ControlPanel extends Component {
         name: "Options",
         ariaLabel: "Options",
         iconProps: { iconName: "Options" },
-        onClick: this.props.showOptionsPanel
+        onClick: AppActions.showOptionsPanel
       }
     ];
 

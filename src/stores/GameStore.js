@@ -40,6 +40,9 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
   getAllPlayers: function() {
     return players;
   },
+  getOptionsPanelVisibility: function() {
+    return isOptionsPanelVisible;
+  },
   emitChange: function() {
     this.emit(CHANGE_EVENT);
   },
@@ -103,9 +106,14 @@ AppDispatcher.register(action => {
       GameStore.emitChange();
       break;
 
-    case AppConstants.GAME_HIDEOPTIONSPANE:
+    case AppConstants.GAME_HIDEOPTIONSPANEL:
       _hideOptionsPanel();
-      gameStatus.emitChange();
+      GameStore.emitChange();
+      break;
+
+    case AppConstants.GAME_SHOWOPTIONSPANEL:
+      _showOptionsPanel();
+      GameStore.emitChange();
       break;
 
     default:
@@ -466,3 +474,9 @@ function _newRound() {
 function _hideOptionsPanel() {
   isOptionsPanelVisible = false;
 }
+
+function _showOptionsPanel() {
+  isOptionsPanelVisible = true;
+}
+
+export default GameStore;

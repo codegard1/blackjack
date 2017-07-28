@@ -72,7 +72,12 @@ export const AppActions = {
   },
   hideOptionsPanel() {
     AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_HIDEOPTIONSPANE
+      actionType: AppConstants.GAME_HIDEOPTIONSPANEL
+    });
+  },
+  showOptionsPanel() {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.GAME_SHOWOPTIONSPANEL
     });
   }
 };

@@ -4,12 +4,15 @@ import { Panel, PanelType } from "office-ui-fabric-react/lib/Panel";
 import { Toggle } from "office-ui-fabric-react/lib/Toggle";
 import { CommandButton, IButtonProps } from "office-ui-fabric-react/lib/Button";
 
+/* Flux */
+import { AppActions } from "./actions/AppActions";
+
 export function OptionsPanel(props) {
   return (
     <Panel
       id="OptionsPanel"
       isOpen={props.isOptionsPanelVisible}
-      onDismiss={props.hide}
+      onDismiss={AppActions.hideOptionsPanel}
       type={PanelType.smallFixedNear}
       headerText="Options"
       isLightDismiss
