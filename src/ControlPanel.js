@@ -3,7 +3,7 @@ import * as T from "prop-types";
 import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
 
 /* Flux */
-import {AppActions} from './actions/AppActions';
+import { AppActions } from "./actions/AppActions";
 
 export class ControlPanel extends Component {
   render() {
@@ -198,8 +198,8 @@ ControlPanel.propTypes = {
   putOnTopOfDeck: T.func,
   drawRandom: T.func,
   drawFromBottomOfDeck: T.func,
-  gameStatus: T.number.isRequired,
-  currentPlayer: T.number.isRequired,
+  gameStatus: T.number,
+  currentPlayer: T.number,
   selectedCards: T.array,
   isDeckVisible: T.bool,
   isDrawnVisible: T.bool,
@@ -207,7 +207,7 @@ ControlPanel.propTypes = {
   turnCount: T.number,
   hidden: T.bool,
   showOptionsPanel: T.func,
-  newRound:T.func
+  newRound: T.func
 };
 
 export default ControlPanel;

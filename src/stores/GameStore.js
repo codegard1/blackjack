@@ -7,6 +7,14 @@ import * as D from "../definitions";
 import Player from "./Player";
 import Counter from "./Counter";
 
+/* Get from DeckStore */
+//  let deck = DeckStore.getDeck(),
+//  drawn = DeckStore.getDrawn(),
+//  selected = DedckStore.getSelected();
+
+/* temporary */
+let drawn = [], selected = [];
+
 /* "state" variables */
 let allPlayersStaying = false,
   allPlayersBusted = false,
@@ -14,8 +22,6 @@ let allPlayersStaying = false,
   bustedPlayers = [],
   currentPlayer,
   currentPlayerIndex,
-  drawn = [],
-  selected = [],
   gameStatus = 0,
   highestHandValue = 0,
   isMessageBarVisible = false,
@@ -48,21 +54,30 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
     return isOptionsPanelVisible;
   },
   getState: function() {
+    // log("getState() called from GameStore");
     return {
       allPlayersStaying,
       allPlayersBusted,
       allPlayersNonBusted,
+      bustedPlayers,
       currentPlayer,
-      isOptionsPanelVisible,
+      currentPlayerIndex,
+      // drawn,
+      // selected,
+      gameStatus,
+      highestHandValue,
       isMessageBarVisible,
+      isOptionsPanelVisible,
       messageBarDefinition,
       minimumBet,
-      pot,
-      round,
+      nonBustedPlayers,
       tieFlag,
       turnCount,
+      players,
+      pot,
+      round,
       winningPlayerId,
-      winningPlayerIndex,
+      winningPlayerIndex
     };
   },
   emitChange: function() {
@@ -139,6 +154,7 @@ AppDispatcher.register(action => {
       break;
 
     default:
+      break;
   }
 });
 
@@ -146,19 +162,15 @@ AppDispatcher.register(action => {
 
 /* Method implementations */
 function _newGame(playerTitles) {
-  playerTitles.forEach((title, index) => {
-    players.push(_newPlayer(title, index));
-    log(players);
+  playerTitles.forEach(title => {
+    players.push(_newPlayer(title));
   });
 }
 
-function _newPlayer(title, index) {
+function _newPlayer(title) {
   const id = Counter.increment();
   /* Player is an Immutable record */
-  return new Player({
-    id,
-    title: title
-  });
+  return new Player({ id, title });
 }
 
 function _showMessageBar(text, type) {
@@ -372,9 +384,11 @@ function _evaluateGame(
       turnCount++;
       gameStatus = nextGameStatus;
 
-      this.break; //_endGameTrap(nextGameStatus);
+      // this._endGameTrap(nextGameStatus);
+      break;
 
     default:
+      break;
   }
 }
 
@@ -448,7 +462,7 @@ function _evaluatePlayers(players = players) {
       let higherHandValue = _getHighestHandValue(player);
       if (higherHandValue > highestHandValue && higherHandValue <= 21) {
         highestHandValue = higherHandValue;
-        winningPlayerId = player.id;
+        // winningPlayerId = player.id;
         winningPlayerIndex = players.indexOf(player);
       }
     });

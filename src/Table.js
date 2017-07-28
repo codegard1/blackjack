@@ -144,7 +144,7 @@ export class Table extends BaseComponent {
     GameStore.addChangeListener(this.onChange);
 
     const players = ["Chris", "Dealer"];
-    this._onNewGame(players);
+    AppActions.newGame(players);
     players.forEach(player => {
       this._newPlayer(player);
     });
@@ -155,18 +155,10 @@ export class Table extends BaseComponent {
     GameStore.removeChangeListener(this.onChange);
   }
 
-  /* flux helpers 
-  /* ============= */
+  /* flux helper */
   onChange() {
-    this.setState({
-      isOptionsPanelVisible: GameStore.getOptionsPanelVisibility()
-    });
+    this.setState(GameStore.getState());
   }
-
-  _onNewGame(players) {
-    AppActions.newGame(players);
-  }
-  /* ============= */
 
   _newDeck() {
     const deck = Shuffle.shuffle();
@@ -498,8 +490,8 @@ export class Table extends BaseComponent {
     let tieFlag = this.state.tieFlag;
     let allPlayersStaying = this.state.allPlayersStaying;
     let allPlayersBusted = this.state.allPlayersBusted;
-    let allPlayersNonBusted = this.state.allPlayersNonBusted;
-    let winningPlayerId = this.state.winningPlayerId;
+    // let allPlayersNonBusted = this.state.allPlayersNonBusted;
+    // let winningPlayerId = this.state.winningPlayerId;
     let winningPlayerIndex = this.state.winningPlayerIndex;
     let players = this.state.players;
     const currentPlayerStatus = players[currentPlayerIndex].status;
