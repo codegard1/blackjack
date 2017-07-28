@@ -1,8 +1,8 @@
-import React, { Component } from "react";
+import React from "react";
 import * as T from "prop-types";
 import { Panel, PanelType } from "office-ui-fabric-react/lib/Panel";
 import { Toggle } from "office-ui-fabric-react/lib/Toggle";
-import { CommandButton, IButtonProps } from "office-ui-fabric-react/lib/Button";
+import { CommandButton } from "office-ui-fabric-react/lib/Button";
 
 /* Flux */
 import { AppActions } from "./actions/AppActions";
@@ -58,8 +58,7 @@ export function OptionsPanel(props) {
 }
 
 OptionsPanel.propTypes = {
-  isOptionsPanelVisible: T.bool.isRequired,
-  hide: T.func.isRequired,
+  isOptionsPanelVisible: T.bool.isRequired, 
   toggleDeckVisibility: T.func,
   toggleSelectedVisibility: T.func,
   toggleDrawnVisibility: T.func,

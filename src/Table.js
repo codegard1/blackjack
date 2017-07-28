@@ -103,8 +103,7 @@ export class Table extends BaseComponent {
       "_payout",
       "_evaluatePlayers",
       "_resetGame",
-      "_newRound",
-      "_hideOptionsPanel"
+      "_newRound"
     );
 
     //Flux helpers
@@ -137,7 +136,6 @@ export class Table extends BaseComponent {
       toggleDeckVisibility: this._toggleDeckVisibility,
       toggleSelectedVisibility: this._toggleSelectedVisibility,
       toggleDrawnVisibility: this._toggleDrawnVisibility,
-      hide: this._hideOptionsPanel,
       resetGame: this._resetGame
     };
   }
@@ -817,11 +815,6 @@ export class Table extends BaseComponent {
   /* show the Options Panel */
   _showOptionsPanel() {
     this.setState({ isOptionsPanelVisible: true });
-  }
-
-  /* hide the Options Panel */
-  _hideOptionsPanel() {
-    this.setState({ isOptionsPanelVisible: false });
   }
 
   render() {
