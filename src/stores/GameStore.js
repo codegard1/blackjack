@@ -524,4 +524,11 @@ function _ante(amount = minimumBet) {
   _showMessageBar(`Ante: $${amount}`, MessageBarType.info);
 }
 
+// immediately evaluate game again if status > 2 (endgame condition)
+function _endGameTrap(statusCode) {
+  if (statusCode > 2) {
+    _evaluateGame(statusCode);
+  }
+}
+
 export default GameStore;
