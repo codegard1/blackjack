@@ -14,7 +14,7 @@ import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 //  selected = DedckStore.getSelected();
 
 /* temporary */
-let drawn = [], selected = [];
+let drawn = [], selected = [], deck = [];
 
 /* "state" variables */
 let allPlayersStaying = false,
@@ -471,7 +471,7 @@ function _evaluatePlayers(players = players) {
 }
 
 function _reset() {
-  // _newDeck();
+  _newDeck();
 
   players.forEach((player, index) => {
     player.remove("bank");
@@ -491,7 +491,7 @@ function _reset() {
 }
 
 function _newRound() {
-  // _newDeck();
+  _newDeck();
 
   players.forEach((player, index) => {
     // _clearHand(index);
@@ -529,6 +529,11 @@ function _endGameTrap(statusCode) {
   if (statusCode > 2) {
     _evaluateGame(statusCode);
   }
+}
+
+/* this should move to DeckStore */
+function _newDeck() {
+  deck = Shuffle.shuffle();
 }
 
 export default GameStore;
