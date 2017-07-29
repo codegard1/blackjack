@@ -6,6 +6,7 @@ import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 import * as D from "../definitions";
 import Player from "./Player";
 import Counter from "./Counter";
+import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 
 /* Get from DeckStore */
 //  let deck = DeckStore.getDeck(),
@@ -173,7 +174,7 @@ function _newPlayer(title) {
   return new Player({ id, title });
 }
 
-function _showMessageBar(text, type) {
+function _showMessageBar(text, type = MessageBarType.info) {
   messageBarDefinition = {
     text,
     type,
@@ -397,8 +398,8 @@ function _getPlayerById(id) {
   return player[0];
 }
 
-function _getHighestHandValue(player) {
-  // const player = this._getPlayerById(playerId);
+function _getHighestHandValue(playerId) {
+  const player = GameStore.getPlayer(playerId);
   const handValue = player.handValue;
   let higherHandValue = 0;
 
@@ -513,6 +514,14 @@ function _hideOptionsPanel() {
 
 function _showOptionsPanel() {
   isOptionsPanelVisible = true;
+}
+
+function _ante(amount = minimumBet) {
+  players.forEach(player => {
+    player.bank -= amount;
+    pot += amount;
+  });
+  _showMessageBar(`Ante: $${amount}`, MessageBarType.info);
 }
 
 export default GameStore;
