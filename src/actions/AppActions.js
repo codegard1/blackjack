@@ -79,6 +79,11 @@ export const AppActions = {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_SHOWOPTIONSPANEL
     });
+  },
+  newDeck() {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_NEWDECK
+    });
   }
 };
 

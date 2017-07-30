@@ -1,26 +1,19 @@
 import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
+import { DeckStore } from "./DeckStore";
 import { log } from "../utils";
 import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 import * as D from "../definitions";
 import Player from "./Player";
 import Counter from "./Counter";
-import Shuffle, { PlayingCard } from "shuffle";
-
-/* Get from DeckStore */
-/*    let deck = DeckStore.getDeck(),  */
-/*    drawn = DeckStore.getDrawn(),  */
-/*    selected = DedckStore.getSelected();  */
-
-/* temporary */
-let drawn = [], selected = [], deck = [];
 
 /* "state" variables */
 let allPlayersStaying = false,
   allPlayersBusted = false,
   allPlayersNonBusted = false,
   bustedPlayers = [],
+  stayingPlayers=[],
   currentPlayer,
   currentPlayerIndex,
   gameStatus = 0,
@@ -63,8 +56,6 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
       bustedPlayers,
       currentPlayer,
       currentPlayerIndex,
-      //   drawn,
-      //   selected,
       gameStatus,
       highestHandValue,
       isMessageBarVisible,
@@ -161,7 +152,7 @@ AppDispatcher.register(action => {
 
 /*  ========================================================  */
 
-/* Method implementations */
+/* method definitions */
 function _newGame(playerTitles) {
   playerTitles.forEach(title => {
     players.push(_newPlayer(title));
@@ -288,7 +279,7 @@ function _evaluateGame(
       nextPlayer = nextPlayerIndex;
 
       /*   re-evaluate STAYING PLAYERS  */
-      const stayingPlayers = players.filter(
+      stayingPlayers = players.filter(
         player => player.status === D.staying
       );
       allPlayersStaying = stayingPlayers.length === players.length;
@@ -438,7 +429,7 @@ function _evaluatePlayers(players = players) {
   });
 
   /*   STAYING PLAYERS  */
-  const stayingPlayers = players.filter(player => player.isStaying === true);
+  stayingPlayers = players.filter(player => player.isStaying === true);
 
   /*   BUSTED PLAYERS  */
   bustedPlayers = players.filter(player => player.status === D.busted);
@@ -471,15 +462,15 @@ function _evaluatePlayers(players = players) {
 }
 
 function _reset() {
-  _newDeck();
+  DeckStore.newDeck();
 
   players.forEach(player => {
     player.remove("bank");
     _clearHand(player.id);
   });
 
-  drawn = [];
-  selected = [];
+  //drawn = [];
+  //selected = [];
   gameStatus = 0;
   turnCount = 0;
   currentPlayer = 0;
@@ -490,7 +481,7 @@ function _reset() {
 }
 
 function _newRound() {
-  _newDeck();
+  DeckStore.newDeck();
 
   players.forEach(player => {
     _clearHand(player.id);
@@ -530,11 +521,6 @@ function _endGameTrap(statusCode) {
   if (statusCode > 2) {
     _evaluateGame(statusCode);
   }
-}
-
-/* this should move to DeckStore */
-function _newDeck() {
-  deck = Shuffle.shuffle();
 }
 
 function _clearHand(id) {

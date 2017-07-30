@@ -14,5 +14,6 @@ export default keyMirror({
   GAME_RESET: null,
   GAME_NEWROUND: null,
   GAME_HIDEOPTIONSPANEL: null,
-  GAME_SHOWOPTIONSPANEL: null
+  GAME_SHOWOPTIONSPANEL: null,
+  DECK_NEWDECK:null
 });
