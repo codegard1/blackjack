@@ -346,8 +346,9 @@ function _evaluateGame(
   }
 }
 
+/* this function is redundant with GameStore.getPlayer */
 function _getPlayerById(id) {
-  const player = players.filter(player => player.id === id);
+  const player = players.find(player => player.id === id);
   return player[0];
 }
 

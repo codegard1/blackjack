@@ -24,6 +24,8 @@ export default keyMirror({
   DECK_PUTONBOTTOMOFDECK: null,
   DECK_PUTONTOPOFDECK: null,
   DECK_REMOVESELECTEDFROMDRAWN: null,
+  DECK_SELECT: null,
+  DECK_DESELECT: null,
 
   /* ControlPanel */
   CONTROLPANEL_HIDEOPTIONSPANEL: null,

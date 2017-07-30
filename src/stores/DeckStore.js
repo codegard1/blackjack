@@ -88,6 +88,16 @@ AppDispatcher.register(action => {
       _removeSelectedFromDrawn(action.cards);
       DeckStore.emitChange();
 
+    case AppConstants.DECK_SELECT:
+      _select(action.cardAttributes);
+      DeckStore.emitChange();
+      break;
+
+    case AppConstants.DECK_DESELECT:
+      _deselect(action.cardAttributes);
+      DeckStore.emitChange();
+      break;
+
     default:
       /* do nothing */
       break;
@@ -123,7 +133,6 @@ function _putOnTopOfDeck(cards = selected) {
 
 function _putOnBottomOfDeck(cards = selected) {
   deck.putOnBottomOfDeck(cards);
-  //   this._removeSelectedFromPlayerHand();
   _removeSelectedFromDrawn();
   _clearSelected();
 }
@@ -132,7 +141,7 @@ function _reset() {
   deck.reset(); /* sets the deck back to a full 52-card deck, unshuffled */
 }
 
-function _draw(num=1) {
+function _draw(num) {
   const ret = deck.draw(num);
   drawn.push(ret);
 }
@@ -152,6 +161,23 @@ function _removeSelectedFromDrawn(cards = selected) {
     });
     drawn.splice(index, 1);
   });
+}
+
+function _select(cardAttributes) {
+  const selectedCard = new PlayingCard(
+    cardAttributes.suit,
+    cardAttributes.description,
+    cardAttributes.sort
+  );
+  selected.push(selectedCard);
+}
+
+function _deselect(cardAttributes) {
+  const toDelete = selected.filter(card => 
+      card.suit === cardAttributes.suit && card.sort === cardAttributes.sort
+  );
+  const index = selected.indexOf(toDelete);
+  selected.splice(index, 1);
 }
 
 export default DeckStore;

@@ -1,6 +1,8 @@
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
+import Shuffle, { PlayingCard } from "shuffle";
+
 export const AppActions = {
   newGame(players) {
     AppDispatcher.dispatch({
@@ -133,17 +135,29 @@ export const AppActions = {
       cards
     });
   },
-  _removeSelectedFromPlayerHand(playerIndex, cards) {
+  removeSelectedFromPlayerHand(playerIndex, cards) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_REMOVESELECTEDFROMPLAYERHAND,
       playerIndex,
       cards
     });
   },
-  _removeSelectedFromDrawn(cards) {
+  removeSelectedFromDrawn(cards) {
     AppDispatcher.dispatch({
       actionType: AppConstants.DECK_REMOVESELECTEDFROMDRAWN,
       cards
+    });
+  },
+  select(cardAttributes) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_SELECT,
+      cardAttributes
+    });
+  },
+  deselect(cardAttributes) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_DESELECT,
+      cardAttributes
     });
   }
 };

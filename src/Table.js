@@ -100,7 +100,6 @@ export class Table extends BaseComponent {
       "_evaluateHand",
       "_evaluateGame",
       "_newGame",
-      "_getPlayerById",
       "_getHighestHandValue",
       "_payout",
       "_evaluatePlayers",
@@ -207,15 +206,6 @@ export class Table extends BaseComponent {
     });
   }
 
-  _getPlayerById(id) {
-    const players = this.state.players;
-    const player = players.filter(player => {
-      return player.id === id;
-    });
-
-    return player[0];
-  }
-
   /**
  * @todo use this to instantiate Players and Deck, instead of doing it in componentWillMount
  */
@@ -234,9 +224,7 @@ export class Table extends BaseComponent {
   }
 
   _shuffle() {
-    const deck = this.state.deck;
-    deck.shuffle();
-    this.setState({ deck });
+    AppActions.shuffle();
   }
 
   _resetGame() {
@@ -259,7 +247,7 @@ export class Table extends BaseComponent {
         round: 0,
         pot: 0
       },
-      this._showMessageBar("Game Reset", MessageBarType.info)
+      AppActions.showMessageBar("Game Reset")
     );
   }
 
@@ -282,19 +270,12 @@ export class Table extends BaseComponent {
     );
   }
 
-
   _reset() {
-    const deck = this.state.deck;
-    deck.reset(); //sets the deck back to a full 52-card deck, unshuffled
-    this.setState({ deck });
+    AppActions.reset();
   }
 
   _draw(num) {
-    const deck = this.state.deck;
-    const drawn = this.state.drawn;
-    const ret = deck.draw(1);
-    drawn.push(ret);
-    this.setState({ deck, drawn });
+    AppActions.draw(num);
   }
 
   _deal() {
@@ -331,95 +312,37 @@ export class Table extends BaseComponent {
   }
 
   _drawFromBottomOfDeck(num) {
-    const deck = this.state.deck;
-    const drawn = this.state.drawn;
-    const ret = deck.drawFromBottomOfDeck(num);
-    drawn.push(ret);
-    console.log("drawFromBottomOfDeck:", ret);
-    this.setState({ deck, drawn });
+    AppActions.drawFromBottomOfDeck(num);
   }
 
   _drawRandom(num) {
-    const deck = this.state.deck;
-    const drawn = this.state.drawn;
-    const ret = deck.drawRandom(num);
-    drawn.push(ret);
-    console.log("drawRandom:", ret);
-    this.setState({ deck, drawn });
+    AppActions.drawRandom(num);
   }
 
   _putOnTopOfDeck(cards) {
-    const deck = this.state.deck;
-    deck.putOnTopOfDeck(this.state.selected);
-    this.setState({ deck });
-    this._removeSelectedFromPlayerHand();
-    this._removeSelectedFromDrawn();
-    this._clearSelected();
+    AppActions.putOnTopOfDeck(cards);
+    AppActions.removeSelectedFromPlayerHand(cards);
   }
 
   _putOnBottomOfDeck(cards) {
-    const deck = this.state.deck;
-    deck.putOnBottomOfDeck(this.state.selected);
-    this.setState({ deck });
-    this._removeSelectedFromPlayerHand();
-    this._removeSelectedFromDrawn();
-    this._clearSelected();
+    AppActions.putOnBottomOfDeck(cards);
+    AppActions.removeSelectedFromPlayerHand(cards);
   }
 
-  /**
- * @todo use PlayingCard object per se instead of cardAttributes
- * @param {Object} cardAttributes - the suit, description, and sort values to assign to the selected card 
- */
   _select(cardAttributes) {
-    const selected = this.state.selected;
-    const selectedCard = new PlayingCard(
-      cardAttributes.suit,
-      cardAttributes.description,
-      cardAttributes.sort
-    );
-    selected.push(selectedCard);
-    this.setState({ selected });
+    AppActions.select(cardAttributes);
   }
 
   _deselect(cardAttributes) {
-    const selected = this.state.selected;
-    const toDelete = selected.filter(function(card) {
-      return (
-        card.suit === cardAttributes.suit && card.sort === cardAttributes.sort
-      );
-    });
-    const index = selected.indexOf(toDelete);
-    selected.splice(index, 1);
-    this.setState({ selected });
-  }
-
-  _clearSelected() {
-    this.setState({ selected: [] });
+    AppActions.deselect(cardAttributes);
   }
 
   _removeSelectedFromPlayerHand(playerIndex = this.state.currentPlayer, cards) {
-    const players = this.state.players;
-    let currentPlayer = players[playerIndex];
-    const selected = this.state.selected;
-    selected.forEach(card => {
-      const index = currentPlayer.hand.findIndex(element => {
-        return element.suit === card.suit && card.sort === card.sort;
-      });
-      currentPlayer.hand.splice(index, 1);
-    });
-    this.setState({ players });
+    AppActions.removeSelectedFromPlayerHand(playerIndex, cards);
   }
 
   _removeSelectedFromDrawn(cards) {
-    const drawn = this.state.drawn;
-    const selected = this.state.selected;
-    selected.forEach(card => {
-      const index = drawn.findIndex(element => {
-        return element.suit === card.suit && card.sort === card.sort;
-      });
-      drawn.splice(index, 1);
-    });
-    this.setState({ drawn });
+    AppActions.removeSelectedFromDrawn(cards);
   }
 
   _showMessageBar(text, type) {
@@ -442,46 +365,10 @@ export class Table extends BaseComponent {
   }
 
   _evaluateHand(hand) {
-    let handValue = {
-      aceAsOne: 0,
-      aceAsEleven: 0
-    };
-    // Do not evaluate if the hand is empty!
-    if (hand.length > 0) {
-      hand.forEach(card => {
-        switch (card.sort) {
-          case 14:
-            handValue.aceAsOne += 1;
-            handValue.aceAsEleven += 11;
-            break;
-
-          case 13:
-            handValue.aceAsOne += 10;
-            handValue.aceAsEleven += 10;
-            break;
-
-          case 12:
-            handValue.aceAsOne += 10;
-            handValue.aceAsEleven += 10;
-            break;
-
-          case 11:
-            handValue.aceAsOne += 10;
-            handValue.aceAsEleven += 10;
-            break;
-
-          default:
-            handValue.aceAsOne += card.sort;
-            handValue.aceAsEleven += card.sort;
-            break;
-        }
-      });
-    }
-    return handValue;
+    return AppActions.evaluateHand(hand);
   }
 
   _getHighestHandValue(player) {
-    // const player = this._getPlayerById(playerId);
     const handValue = player.handValue;
     let higherHandValue = 0;
 
