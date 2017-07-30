@@ -16,7 +16,7 @@ export const AppActions = {
   },
   showMessageBar(text, type) {
     AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_SHOWMESSAGEBAR,
+      actionType: AppConstants.CONTROLPANEL_SHOWMESSAGEBAR,
       text,
       type
     });
@@ -72,17 +72,35 @@ export const AppActions = {
   },
   hideOptionsPanel() {
     AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_HIDEOPTIONSPANEL
+      actionType: AppConstants.CONTROLPANEL_HIDEOPTIONSPANEL
     });
   },
   showOptionsPanel() {
     AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_SHOWOPTIONSPANEL
+      actionType: AppConstants.CONTROLPANEL_SHOWOPTIONSPANEL
     });
   },
   newDeck() {
     AppDispatcher.dispatch({
       actionType: AppConstants.DECK_NEWDECK
+    });
+  },
+  toggleDeckVisibility(bool) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.CONTROLPANEL_TOGGLEDECKVISIBILITY,
+      bool
+    });
+  },
+  toggleDrawnVisibility(bool) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.CONTROLPANEL_TOGGLEDRAWNVISIBILITY,
+      bool
+    });
+  },
+  toggleSelectedVisibility(bool) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.CONTROLPANEL_TOGGLESELECTEDVISIBLITY,
+      bool
     });
   }
 };

@@ -10,9 +10,11 @@ import * as D from "./definitions";
 import { OptionsPanel } from "./OptionsPanel";
 import { BaseComponent } from "./BaseComponent";
 import { log } from "./utils";
+
 /* flux */
 import { GameStore } from "./stores/GameStore";
 import { DeckStore } from "./stores/DeckStore";
+import { ControlPanelStore } from "./stores/ControlPanelStore";
 import { AppActions } from "./actions/AppActions";
 
 export class Table extends BaseComponent {
@@ -25,8 +27,6 @@ export class Table extends BaseComponent {
       selected: [],
       //GameStore
       gameStatus: 0,
-      isMessageBarVisible: false,
-      isOptionsPanelVisible: false,
       minimumBet: 25,
       messageBarDefinition: {
         type: MessageBarType.info,
@@ -60,7 +60,9 @@ export class Table extends BaseComponent {
       // ControlPanelStore
       isDeckVisible: true,
       isDrawnVisible: false,
-      isSelectedVisible: false
+      isSelectedVisible: false,
+      isMessageBarVisible: false,
+      isOptionsPanelVisible: false
     };
 
     //Deck Methods
@@ -107,8 +109,7 @@ export class Table extends BaseComponent {
     );
 
     //Flux helpers
-    this._bind("onChangeGame");
-    this._bind("onChangeDeck");
+    this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame");
 
     // group methods to pass into Player as props
     this.controlPanelMethods = {
@@ -145,6 +146,7 @@ export class Table extends BaseComponent {
     /* callback when a change emits from GameStore*/
     GameStore.addChangeListener(this.onChangeGame);
     DeckStore.addChangeListener(this.onChangeDeck);
+    ControlPanelStore.addChangeListener(this.onChangeControlPanel);
 
     const players = ["Chris", "Dealer"];
     AppActions.newGame(players);
@@ -152,15 +154,36 @@ export class Table extends BaseComponent {
   }
 
   componentWillUnmount() {
+    /* remove change listeners */
+    /* this is redundant because Table never unmounts */
     GameStore.removeChangeListener(this.onChangeGame);
     DeckStore.removeChangeListener(this.onChangeDeck);
+    ControlPanelStore.addChangeListener(this.onChangeControlPanel);
   }
 
-  /* flux helper */
+  /* flux helpers */
   onChangeGame() {
     const newState = GameStore.getState();
-    log(newState);
-    this.setState(newState);
+    log(`onChangeGame: ${newState}`);
+    this.setState({
+      allPlayersStaying: newState.allPlayersStaying,
+      allPlayersBusted: newState.allPlayersBusted,
+      allPlayersNonBusted: newState.allPlayersNonBusted,
+      bustedPlayers: newState.bustedPlayers,
+      currentPlayer: newState.currentPlayer,
+      currentPlayerIndex: newState.currentPlayerIndex,
+      gameStatus: newState.gameStatus,
+      highestHandValue: newState.highestHandValue,
+      minimumBet: newState.minimumBet,
+      nonBustedPlayers: newState.nonBustedPlayers,
+      tieFlag: newState.tieFlag,
+      turnCount: newState.turnCount,
+      players: newState.players,
+      pot: newState.pot,
+      round: newState.round,
+      winningPlayerId: newState.winningPlayerId,
+      winningPlayerIndex: newState.winningPlayerIndex
+    });
   }
   onChangeDeck() {
     const newState = DeckStore.getState();
@@ -169,6 +192,18 @@ export class Table extends BaseComponent {
       deck: newState.deck,
       selected: newState.selected,
       draw: newState.drawn
+    });
+  }
+  onChangeControlPanel() {
+    const newState = ControlPanelStore.getState();
+    log(`onChangeControlPanel: ${JSON.stringify(newState)}`);
+    this.setState({
+      isDeckVisible: newState.isDeckVisible,
+      isDrawnVisible: newState.isDrawnVisible,
+      isSelectedVisible: newState.isSelectedVisible,
+      isOptionsPanelVisible: newState.isOptionsPanelVisible,
+      isMessageBarVisible: newState.isMessageBarVisible,
+      messageBarDefinition: newState.messageBarDefinition
     });
   }
 
@@ -390,25 +425,22 @@ export class Table extends BaseComponent {
   }
 
   _showMessageBar(text, type) {
-    this.setState({
-      messageBarDefinition: {
-        text: text,
-        type: type
-      },
-      isMessageBarVisible: true
-    });
+    AppActions.showMessageBar(text, type);
   }
 
   _toggleDeckVisibility(bool) {
-    this.setState({ isDeckVisible: bool });
+    // this.setState({ isDeckVisible: bool });
+    AppActions.toggleDeckVisibility(bool);
   }
 
   _toggleDrawnVisibility(bool) {
-    this.setState({ isDrawnVisible: bool });
+    // this.setState({ isDrawnVisible: bool });
+    AppActions.toggleDrawnVisibility(bool);
   }
 
   _toggleSelectedVisibility(bool) {
-    this.setState({ isSelectedVisible: bool });
+    // this.setState({ isSelectedVisible: bool });
+    AppActions.toggleSelectedVisibility(bool);
   }
 
   _evaluateHand(hand) {

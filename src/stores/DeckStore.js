@@ -37,7 +37,7 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
 });
 
 /*  ========================================================  */
-/* register method */
+/* register methods */
 AppDispatcher.register(action => {
   /* report for debugging */
   const now = new Date().toTimeString();
