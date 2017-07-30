@@ -60,7 +60,8 @@ AppDispatcher.register(action => {
 /* method definitions */
 function _newDeck() {
   deck = Shuffle.shuffle();
-  DeckStore.emitChange();
+  selected = [];
+  drawn = [];
 }
 
 export default DeckStore;

@@ -9,9 +9,10 @@ import {
 import * as D from "./definitions";
 import { OptionsPanel } from "./OptionsPanel";
 import { BaseComponent } from "./BaseComponent";
-
+import { log } from "./utils";
 /* flux */
 import { GameStore } from "./stores/GameStore";
+import { DeckStore } from "./stores/DeckStore";
 import { AppActions } from "./actions/AppActions";
 
 export class Table extends BaseComponent {
@@ -107,7 +108,8 @@ export class Table extends BaseComponent {
     );
 
     //Flux helpers
-    this._bind("onChange");
+    this._bind("onChangeGame");
+    this._bind("onChangeDeck");
 
     // group methods to pass into Player as props
     this.controlPanelMethods = {
@@ -141,30 +143,41 @@ export class Table extends BaseComponent {
   }
 
   componentDidMount() {
-    GameStore.addChangeListener(this.onChange);
+    /* callback when a change emits from GameStore*/
+    GameStore.addChangeListener(this.onChangeGame);
+    DeckStore.addChangeListener(this.onChangeDeck);
 
     const players = ["Chris", "Dealer"];
     AppActions.newGame(players);
-    players.forEach(player => {
-      this._newPlayer(player);
-    });
-    this._newDeck();
+    AppActions.newDeck();
   }
 
   componentWillUnmount() {
-    GameStore.removeChangeListener(this.onChange);
+    GameStore.removeChangeListener(this.onChangeGame);
+    DeckStore.removeChangeListener(this.onChangeDeck);
   }
 
   /* flux helper */
-  onChange() {
-    this.setState(GameStore.getState());
+  onChangeGame() {
+    const newState = GameStore.getState();
+    log(newState);
+    this.setState(newState);
+  }
+  onChangeDeck() {
+    const newState = DeckStore.getState();
+    log(newState);
+    this.setState({
+      deck: newState.deck,
+      selected: newState.selected,
+      draw: newState.drawn
+    });
   }
 
   _newDeck() {
-    const deck = Shuffle.shuffle();
-    this.setState({ deck });
+    AppActions.newDeck();
   }
 
+  /* deprecated. use AppActions._newGame instead */
   _newPlayer(title) {
     let players = this.state.players;
     const playerDefaults = this.state.playerDefaults;

@@ -8,11 +8,21 @@ function functionName(fun) {
 }
 
 export function log(thingToLog, ...etc) {
-  if (typeof thingToLog === "string") {
-    console.log(`- ${thingToLog}`);
-  } else if (typeof thingToLog === "function") {
-    console.log(functionName(thingToLog), thingToLog);
-  } else {
-    console.log(thingToLog.toString(), thingToLog);
+  switch (typeof thingToLog) {
+    case "string":
+      console.log(`- ${thingToLog}`);
+      break;
+
+    case "function":
+      console.log(functionName(thingToLog), thingToLog);
+      break;
+
+    case "object":
+      console.log(`${thingToLog}: ${JSON.stringify(thingToLog)}`);
+      break;
+
+    default:
+      console.log(thingToLog.toString(), thingToLog);
+      break;
   }
 }

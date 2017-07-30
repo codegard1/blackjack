@@ -488,8 +488,8 @@ function _newRound() {
   });
 
   /* DeckStore */
-  drawn = [];
-  selected = [];
+  // drawn = [];
+  // selected = [];
 
   gameStatus = 0;
   turnCount = 0;
