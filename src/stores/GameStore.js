@@ -116,6 +116,11 @@ AppDispatcher.register(action => {
       GameStore.emitChange();
       break;
 
+    case AppConstants.GAME_REMOVESELECTEDFROMPLAYERHAND:
+      _removeSelectedFromPlayerHand(action.playerIndex, action.cards);
+      GameStore.emitChange();
+      break;
+
     default:
       break;
   }
@@ -479,6 +484,16 @@ function _clearHand(id) {
   GameStore.getPlayer(id).status = "ok";
   GameStore.getPlayer(id).turn = false;
   log(`_clearHand(${id}): ${GameStore.getPlayer(id)}`);
+}
+
+function _removeSelectedFromPlayerHand(playerIndex = currentPlayer, cards) {
+  // const id = players[playerIndex].id;
+  cards.forEach(card => {
+    const index = players[playerIndex].hand.findIndex(element => {
+      return element.suit === card.suit && card.sort === card.sort;
+    });
+    players[playerIndex].hand.splice(index, 1);
+  });
 }
 
 export default GameStore;

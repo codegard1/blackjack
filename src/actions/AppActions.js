@@ -80,11 +80,6 @@ export const AppActions = {
       actionType: AppConstants.CONTROLPANEL_SHOWOPTIONSPANEL
     });
   },
-  newDeck() {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_NEWDECK
-    });
-  },
   toggleDeckVisibility(bool) {
     AppDispatcher.dispatch({
       actionType: AppConstants.CONTROLPANEL_TOGGLEDECKVISIBILITY,
@@ -101,6 +96,54 @@ export const AppActions = {
     AppDispatcher.dispatch({
       actionType: AppConstants.CONTROLPANEL_TOGGLESELECTEDVISIBLITY,
       bool
+    });
+  },
+  newDeck() {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_NEWDECK
+    });
+  },
+  draw(num) {
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_DRAW, num });
+  },
+  drawRandom(num) {
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_DRAWRANDOM, num });
+  },
+  drawFromBottomOfDeck(num) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_DRAWFROMBOTTOMOFDECK,
+      num
+    });
+  },
+  reset() {
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_RESET });
+  },
+  shuffle() {
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_SHUFFLE });
+  },
+  putOnTopOfDeck(cards) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_PUTONBOTTOMOFDECK,
+      cards
+    });
+  },
+  putOnBottomOfDeck(cards) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_PUTONTOPOFDECK,
+      cards
+    });
+  },
+  _removeSelectedFromPlayerHand(playerIndex, cards) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.GAME_REMOVESELECTEDFROMPLAYERHAND,
+      playerIndex,
+      cards
+    });
+  },
+  _removeSelectedFromDrawn(cards) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_REMOVESELECTEDFROMDRAWN,
+      cards
     });
   }
 };

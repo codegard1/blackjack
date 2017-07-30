@@ -282,9 +282,7 @@ export class Table extends BaseComponent {
     );
   }
 
-  /**
-   * @todo rename to _resetHand
-   */
+
   _reset() {
     const deck = this.state.deck;
     deck.reset(); //sets the deck back to a full 52-card deck, unshuffled

@@ -49,6 +49,45 @@ AppDispatcher.register(action => {
       DeckStore.emitChange();
       break;
 
+    case AppConstants.DECK_DRAW:
+      _draw(action.num);
+      DeckStore.emitChange();
+      break;
+
+    case AppConstants.DECK_DRAWRANDOM:
+      _drawRandom(action.num);
+      DeckStore.emitChange();
+      break;
+
+    case AppConstants.DECK_DRAWFROMBOTTOMOFDECK:
+      _drawFromBottomOfDeck(action.num);
+      DeckStore.emitChange();
+      break;
+
+    case AppConstants.DECK_RESET:
+      _reset();
+      DeckStore.emitChange();
+      break;
+
+    case AppConstants.DECK_SHUFFLE:
+      _shuffle();
+      DeckStore.emitChange();
+      break;
+
+    case AppConstants.DECK_PUTONBOTTOMOFDECK:
+      _putOnBottomOfDeck(action.cards);
+      DeckStore.emitChange();
+      break;
+
+    case AppConstants.DECK_PUTONTOPOFDECK:
+      _putOnTopOfDeck(action.cards);
+      DeckStore.emitChange();
+      break;
+
+    case AppConstants.DECK_REMOVESELECTEDFROMDRAWN:
+      _removeSelectedFromDrawn(action.cards);
+      DeckStore.emitChange();
+
     default:
       /* do nothing */
       break;
@@ -62,6 +101,57 @@ function _newDeck() {
   deck = Shuffle.shuffle();
   selected = [];
   drawn = [];
+}
+
+function _drawFromBottomOfDeck(num) {
+  const ret = deck.drawFromBottomOfDeck(num);
+  drawn.push(ret);
+  log(`drawFromBottomOfDeck: ${ret}`);
+}
+
+function _drawRandom(num) {
+  const ret = deck.drawRandom(num);
+  drawn.push(ret);
+  console.log("drawRandom:", ret);
+}
+
+function _putOnTopOfDeck(cards = selected) {
+  deck.putOnTopOfDeck(cards);
+  _removeSelectedFromDrawn(cards);
+  _clearSelected();
+}
+
+function _putOnBottomOfDeck(cards = selected) {
+  deck.putOnBottomOfDeck(cards);
+  //   this._removeSelectedFromPlayerHand();
+  _removeSelectedFromDrawn();
+  _clearSelected();
+}
+
+function _reset() {
+  deck.reset(); /* sets the deck back to a full 52-card deck, unshuffled */
+}
+
+function _draw(num=1) {
+  const ret = deck.draw(num);
+  drawn.push(ret);
+}
+
+function _shuffle() {
+  deck.shuffle();
+}
+
+function _clearSelected() {
+  selected = [];
+}
+
+function _removeSelectedFromDrawn(cards = selected) {
+  cards.forEach(card => {
+    const index = drawn.findIndex(element => {
+      return element.suit === card.suit && card.sort === card.sort;
+    });
+    drawn.splice(index, 1);
+  });
 }
 
 export default DeckStore;
