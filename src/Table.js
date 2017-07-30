@@ -97,7 +97,6 @@ export class Table extends BaseComponent {
       "_showMessageBar",
       "_evaluateHand",
       "_evaluateGame",
-      "_newPlayer",
       "_newGame",
       "_getPlayerById",
       "_getHighestHandValue",
@@ -173,30 +172,6 @@ export class Table extends BaseComponent {
     });
   }
 
-  _newDeck() {
-    AppActions.newDeck();
-  }
-
-  /* deprecated. use AppActions._newGame instead */
-  _newPlayer(title) {
-    let players = this.state.players;
-    const playerDefaults = this.state.playerDefaults;
-    const playerId = players.length + 1;
-    players.push({
-      id: playerId,
-      title: title,
-      hand: [],
-      handValue: { aceAsOne: 0, aceAsEleven: 0 },
-      status: playerDefaults.status,
-      turn: playerDefaults.turn,
-      bank: playerDefaults.bank,
-      bet: playerDefaults.bet,
-      lastAction: playerDefaults.lastAction,
-      isStaying: playerDefaults.isStaying
-    });
-    this.setState({ players });
-  }
-
   _getPlayerById(id) {
     const players = this.state.players;
     const player = players.filter(player => {
@@ -230,7 +205,7 @@ export class Table extends BaseComponent {
   }
 
   _resetGame() {
-    this._newDeck();
+    AppActions.newDeck();
     const players = this.state.players;
     players.forEach(player => {
       player.bank = this.state.playerDefaults.bank;
@@ -254,7 +229,7 @@ export class Table extends BaseComponent {
   }
 
   _newRound() {
-    this._newDeck();
+    AppActions.newDeck();
     this.state.players.forEach((player, index) => {
       this._clearHand(index);
     });
