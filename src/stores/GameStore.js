@@ -6,12 +6,12 @@ import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 import * as D from "../definitions";
 import Player from "./Player";
 import Counter from "./Counter";
-import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
+import Shuffle, { PlayingCard } from "shuffle";
 
 /* Get from DeckStore */
-//  let deck = DeckStore.getDeck(),
-//  drawn = DeckStore.getDrawn(),
-//  selected = DedckStore.getSelected();
+/*    let deck = DeckStore.getDeck(),  */
+/*    drawn = DeckStore.getDrawn(),  */
+/*    selected = DedckStore.getSelected();  */
 
 /* temporary */
 let drawn = [], selected = [], deck = [];
@@ -55,7 +55,7 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
     return isOptionsPanelVisible;
   },
   getState: function() {
-    // log("getState() called from GameStore");
+    /*   log("getState() called from GameStore");  */
     return {
       allPlayersStaying,
       allPlayersBusted,
@@ -63,8 +63,8 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
       bustedPlayers,
       currentPlayer,
       currentPlayerIndex,
-      // drawn,
-      // selected,
+      //   drawn,
+      //   selected,
       gameStatus,
       highestHandValue,
       isMessageBarVisible,
@@ -159,7 +159,7 @@ AppDispatcher.register(action => {
   }
 });
 
-//========================================================
+/*  ========================================================  */
 
 /* Method implementations */
 function _newGame(playerTitles) {
@@ -188,7 +188,7 @@ function _evaluateHand(hand) {
     aceAsOne: 0,
     aceAsEleven: 0
   };
-  // Do not evaluate if the hand is empty!
+  /*   Do not evaluate if the hand is empty!  */
   if (hand.length > 0) {
     hand.forEach(card => {
       switch (card.sort) {
@@ -226,26 +226,26 @@ function _evaluateGame(
   nextGameStatus = gameStatus,
   nextPlayer = currentPlayer
 ) {
-  // set player status, handValue, and other flags
+  /*   set player status, handValue, and other flags  */
   _evaluatePlayers();
 
   const currentPlayerStatus = players[currentPlayerIndex].status;
 
   switch (nextGameStatus) {
-    case 0: //Off
+    case 0 /*  Off  */:
       _showMessageBar("Hello", MessageBarType.info);
       break;
 
-    case 1: // Game in progress
+    case 1 /*   Game in progress  */:
       _showMessageBar("Game in progress", MessageBarType.info);
 
-      // all players bet the minimum to start
+      /*   all players bet the minimum to start  */
       if (turnCount === 0) {
-        //_ante();
+        _ante();
       }
 
-      // set next game status.
-      // if higher than 2, _exitTrap() will catch it and re-run _evaluateGame()
+      /*   set next game status.  */
+      /*   if higher than 2, _exitTrap() will catch it and re-run _evaluateGame()  */
       switch (currentPlayerStatus) {
         case D.busted:
           nextGameStatus = 3;
@@ -256,7 +256,7 @@ function _evaluateGame(
           break;
 
         default:
-          //do nothing
+          /*  do nothing  */
           break;
       }
 
@@ -268,26 +268,26 @@ function _evaluateGame(
       gameStatus = nextGameStatus;
       currentPlayer = nextPlayer;
 
-      //_endGameTrap(nextGameStatus);
+      _endGameTrap(nextGameStatus);
       break;
 
-    case 2: // stay (go to next turn)
+    case 2 /*   stay (go to next turn)  */:
       _showMessageBar(
         `${players[currentPlayerIndex].title} stayed`,
         MessageBarType.info
       );
 
-      // set current player as staying
+      /*   set current player as staying  */
       players[currentPlayerIndex].status = D.staying;
       players[currentPlayerIndex].isStaying = true;
 
-      // get the next player by index
+      /*   get the next player by index  */
       const nextPlayerIndex = currentPlayerIndex + 1 === players.length
         ? 0
         : currentPlayerIndex + 1;
       nextPlayer = nextPlayerIndex;
 
-      // re-evaluate STAYING PLAYERS
+      /*   re-evaluate STAYING PLAYERS  */
       const stayingPlayers = players.filter(
         player => player.status === D.staying
       );
@@ -295,7 +295,7 @@ function _evaluateGame(
 
       if (!allPlayersStaying) {
         players.forEach(player => {
-          // set turn = true for the next player that is not already staying
+          /*   set turn = true for the next player that is not already staying  */
           player.turn = players.indexOf(player) === nextPlayerIndex &&
             player.status !== D.staying
             ? true
@@ -318,10 +318,10 @@ function _evaluateGame(
       gameStatus = nextGameStatus;
       currentPlayer = nextPlayer;
 
-      //_endGameTrap(nextGameStatus);
+      _endGameTrap(nextGameStatus);
       break;
 
-    case 3: // currentPlayer busted
+    case 3 /*   currentPlayer busted  */:
       let messageText = allPlayersBusted
         ? `All players busted!`
         : `${this.state.players[this.state.currentPlayer].title} busted!`;
@@ -329,63 +329,63 @@ function _evaluateGame(
       _showMessageBar(messageText, MessageBarType.warning);
       nextGameStatus = 0;
 
-      // don't do engame unless all players are staying and not busted
+      /*   don't do engame unless all players are staying and not busted  */
       if (!allPlayersBusted) _payout();
 
       turnCount++;
       gameStatus = nextGameStatus;
 
-      //_endGameTrap(nextGameStatus);
+      _endGameTrap(nextGameStatus);
       break;
 
-    case 4: // currentPlayer Wins
+    case 4 /*   currentPlayer Wins  */:
       const winningPlayerTitle = players[winningPlayerIndex].title;
       _showMessageBar(`${winningPlayerTitle} wins!`, MessageBarType.success);
       nextGameStatus = 0;
 
-      // don't do payout unless all players are staying and not busted
+      /*   don't do payout unless all players are staying and not busted  */
       if (!allPlayersBusted) _payout();
 
       turnCount++;
       gameStatus = nextGameStatus;
 
-      //_endGameTrap(nextGameStatus);
+      _endGameTrap(nextGameStatus);
       break;
 
-    case 5: // human player blackjack
+    case 5 /*   human player blackjack  */:
       _showMessageBar("Blackjack!", MessageBarType.success);
       nextGameStatus = 0;
 
-      // don't do payout unless all players are staying and not busted
+      /*   don't do payout unless all players are staying and not busted  */
       if (!allPlayersBusted) _payout();
 
       turnCount++;
       gameStatus = nextGameStatus;
 
-      //_endGameTrap(nextGameStatus);
+      _endGameTrap(nextGameStatus);
       break;
 
-    case 6: // tie
+    case 6 /*   tie  */:
       _showMessageBar("Tie?", MessageBarType.warning);
       nextGameStatus = 0;
 
-      // don't do payout unless all players are staying and not busted
+      /*   don't do payout unless all players are staying and not busted  */
       if (!allPlayersBusted) _payout();
 
       break;
 
-    case 7: // non-human player wins
+    case 7 /*   non-human player wins  */:
       _showMessageBar(`${players[1].title} wins!`);
 
       nextGameStatus = 0;
 
-      // don't do payout unless all players are staying and not busted
+      /* don't do payout unless all players are staying and not busted */
       if (!allPlayersBusted) this._payout();
 
       turnCount++;
       gameStatus = nextGameStatus;
 
-      // this._endGameTrap(nextGameStatus);
+      this._endGameTrap(nextGameStatus);
       break;
 
     default:
@@ -420,16 +420,16 @@ function _payout(players = players, index = winningPlayerIndex, amount = pot) {
 }
 
 function _evaluatePlayers(players = players) {
-  // evaluate hands
+  /*   evaluate hands  */
   players.forEach(player => {
     player.handValue = _evaluateHand(player.hand);
 
-    // set busted status
+    /*   set busted status  */
     if (player.handValue.aceAsOne > 21 && player.handValue.aceAsEleven > 21) {
       player.status = D.busted;
     }
 
-    // set blackjack status
+    /*   set blackjack status  */
     if (
       player.handValue.aceAsOne === 21 || player.handValue.aceAsEleven === 21
     ) {
@@ -437,25 +437,25 @@ function _evaluatePlayers(players = players) {
     }
   });
 
-  // STAYING PLAYERS
+  /*   STAYING PLAYERS  */
   const stayingPlayers = players.filter(player => player.isStaying === true);
 
-  // BUSTED PLAYERS
+  /*   BUSTED PLAYERS  */
   bustedPlayers = players.filter(player => player.status === D.busted);
 
-  // NON-BUSTED PLAYERS
+  /*   NON-BUSTED PLAYERS  */
   nonBustedPlayers = players.filter(player => player.status !== D.busted);
 
-  // true if all players are staying
+  /*   true if all players are staying  */
   allPlayersStaying = stayingPlayers.length === players.length;
 
-  // true if all players are busted
+  /*   true if all players are busted  */
   allPlayersBusted = bustedPlayers.length === players.length;
 
-  // true if all players are not busted
+  /*   true if all players are not busted  */
   allPlayersNonBusted = nonBustedPlayers.length === players.length;
 
-  // determine the non-busted player with the highest value hand
+  /*   determine the non-busted player with the highest value hand  */
   if (nonBustedPlayers.length === 1) {
     nonBustedPlayers[0].status = D.winner;
   } else {
@@ -463,7 +463,7 @@ function _evaluatePlayers(players = players) {
       let higherHandValue = _getHighestHandValue(player);
       if (higherHandValue > highestHandValue && higherHandValue <= 21) {
         highestHandValue = higherHandValue;
-        // winningPlayerId = player.id;
+        /*   winningPlayerId = player.id;  */
         winningPlayerIndex = players.indexOf(player);
       }
     });
@@ -473,10 +473,9 @@ function _evaluatePlayers(players = players) {
 function _reset() {
   _newDeck();
 
-  players.forEach((player, index) => {
+  players.forEach(player => {
     player.remove("bank");
-
-    // _clearHand(index);
+    _clearHand(player.id);
   });
 
   drawn = [];
@@ -493,12 +492,14 @@ function _reset() {
 function _newRound() {
   _newDeck();
 
-  players.forEach((player, index) => {
-    // _clearHand(index);
+  players.forEach(player => {
+    _clearHand(player.id);
   });
 
+  /* DeckStore */
   drawn = [];
   selected = [];
+
   gameStatus = 0;
   turnCount = 0;
   currentPlayer = 0;
@@ -524,7 +525,7 @@ function _ante(amount = minimumBet) {
   _showMessageBar(`Ante: $${amount}`, MessageBarType.info);
 }
 
-// immediately evaluate game again if status > 2 (endgame condition)
+/*   immediately evaluate game again if status > 2 (endgame condition)  */
 function _endGameTrap(statusCode) {
   if (statusCode > 2) {
     _evaluateGame(statusCode);
@@ -534,6 +535,14 @@ function _endGameTrap(statusCode) {
 /* this should move to DeckStore */
 function _newDeck() {
   deck = Shuffle.shuffle();
+}
+
+function _clearHand(id) {
+  GameStore.getPlayer(id).hand = [];
+  GameStore.getPlayer(id).handValue = { aceAsOne: 0, aceAsEleven: 0 };
+  GameStore.getPlayer(id).status = "ok";
+  GameStore.getPlayer(id).turn = false;
+  log(`_clearHand(${id}): ${GameStore.getPlayer(id)}`);
 }
 
 export default GameStore;
