@@ -160,7 +160,7 @@ export const AppActions = {
       cardAttributes
     });
   },
-  clearHand(playerIndex){
+  clearHand(playerIndex) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_CLEARHAND,
       playerIndex
@@ -170,8 +170,14 @@ export const AppActions = {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_DEAL
     });
+  },
+  hit(ev, target, index) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.GAME_HIT,
+      ev, target, index
+    })
   }
-  
+
 };
 
 export default AppActions;

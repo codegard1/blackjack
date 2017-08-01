@@ -9,6 +9,7 @@ export default keyMirror({
   GAME_EVALUATEPLAYERS: null,
   GAME_GETHIGHESTHANDVALUE: null,
   GAME_GETPLAYERBYID: null,
+  GAME_HIT: null,
   GAME_NEWGAME: null,
   GAME_NEWPLAYER: null,
   GAME_NEWROUND: null,

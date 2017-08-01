@@ -31,13 +31,13 @@ let allPlayersStaying = false,
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "change";
 export const GameStore = Object.assign({}, EventEmitter.prototype, {
-  getPlayers: function() {
+  getPlayers: function () {
     return players;
   },
-  getPlayer: function(id) {
+  getPlayer: function (id) {
     return players.find(player => player.id === id);
   },
-  getState: function() {
+  getState: function () {
     return {
       allPlayersStaying,
       allPlayersBusted,
@@ -58,13 +58,13 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
       winningPlayerIndex
     };
   },
-  emitChange: function() {
+  emitChange: function () {
     this.emit(CHANGE_EVENT);
   },
-  addChangeListener: function(callback) {
+  addChangeListener: function (callback) {
     this.on(CHANGE_EVENT, callback);
   },
-  removeChangeListener: function(callback) {
+  removeChangeListener: function (callback) {
     this.removeListener(CHANGE_EVENT, callback);
   }
 });
@@ -128,6 +128,11 @@ AppDispatcher.register(action => {
 
     case AppConstants.GAME_DEAL:
       _deal();
+      GameStore.emitChange();
+      break;
+
+    case AppConstants.GAME_HIT:
+      _hit(action.ev, action.target, action.index);
       GameStore.emitChange();
       break;
 
@@ -477,7 +482,7 @@ function _endGameTrap(statusCode) {
 
 /* clearHand is only called by other functions in GameStore */
 function _clearHand(playerIndex) {
-  players[playerIndex].remove("hand","handValue","status","turn");
+  players[playerIndex].remove("hand", "handValue", "status", "turn");
   log(`_clearHand(${playerIndex}): ${players[playerIndex]}`);
 }
 
@@ -498,6 +503,14 @@ function _deal() {
     player.hand = cards;
   });
   players[currentPlayer].turn = true;
+
+  _evaluateGame(1);
+}
+
+function _hit(ev, target, index = currentPlayer) {
+  /* todo: fix this so that the call goes directly to DeckStore from Table */
+  const ret = DeckStore.draw(1);
+  players[index].hand.push(ret);
 
   _evaluateGame(1);
 }

@@ -246,16 +246,8 @@ export class Table extends BaseComponent {
     AppActions.deal();
   }
 
-  _hit(ev, target, index = this.state.currentPlayer) {
-    let deck = this.state.deck;
-    let drawn = this.state.drawn;
-    let players = this.state.players;
-    let currentPlayer = players[index];
-    const ret = deck.draw(1);
-    drawn.push(ret);
-    currentPlayer.hand.push(ret);
-
-    this.setState({ deck, drawn, players }, this._evaluateGame(1));
+  _hit(ev, target, index) {
+    AppActions.hit(ev, target, index);
   }
 
   _stay() {
