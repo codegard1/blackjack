@@ -181,6 +181,12 @@ export const AppActions = {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_STAY
     });
+  },
+  bet(ev, target, playerIndex, amount) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.GAME_BET,
+      ev, target, playerIndex, amount
+    })
   }
 
 };

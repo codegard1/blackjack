@@ -141,6 +141,11 @@ AppDispatcher.register(action => {
       GameStore.emitChange();
       break;
 
+    case AppConstants.GAME_BET:
+      _bet(ev, target, playerIndex, amount);
+      GameStore.emitChange();
+      break;
+
     default:
       break;
   }
@@ -436,7 +441,7 @@ function _evaluatePlayers(players = players) {
       let higherHandValue = _getHighestHandValue(index);
       if (higherHandValue > highestHandValue && higherHandValue <= 21) {
         highestHandValue = higherHandValue;
-        /*   winningPlayerId = player.id;  */
+        winningPlayerId = player.id;
         winningPlayerIndex = players.indexOf(player);
       }
     });
@@ -521,6 +526,17 @@ function _hit(ev, target, index = currentPlayer) {
 
 function _stay() {
   _evaluateGame(2);
+}
+
+function _bet(
+  ev,
+  target,
+  playerIndex = currentPlayer,
+  amount = minimumBet
+) {
+  ev.preventDefault();
+  players[playerIndex].bank -= amount;
+  pot += amount;
 }
 
 export default GameStore;

@@ -318,84 +318,20 @@ export class Table extends BaseComponent {
     AppActions.evaluateGame(nextGameStatus, nextPlayer);
   }
 
-  _evaluatePlayers(players = this.state.players) {
-    // evaluate hands
-    players.forEach(player => {
-      player.handValue = this._evaluateHand(player.hand);
-
-      // set busted status
-      if (player.handValue.aceAsOne > 21 && player.handValue.aceAsEleven > 21) {
-        player.status = D.busted;
-      }
-
-      // set blackjack status
-      if (
-        player.handValue.aceAsOne === 21 || player.handValue.aceAsEleven === 21
-      ) {
-        player.status = D.blackjack;
-      }
-    });
-
-    // STAYING PLAYERS
-    const stayingPlayers = players.filter(player => player.isStaying === true);
-
-    // BUSTED PLAYERS
-    const bustedPlayers = players.filter(player => player.status === D.busted);
-
-    // NON-BUSTED PLAYERS
-    const nonBustedPlayers = players.filter(
-      player => player.status !== D.busted
-    );
-
-    // true if all players are staying
-    const allPlayersStaying = stayingPlayers.length === players.length;
-
-    // true if all players are busted
-    const allPlayersBusted = bustedPlayers.length === players.length;
-
-    // true if all players are not busted
-    const allPlayersNonBusted = nonBustedPlayers.length === players.length;
-
-    // determine the non-busted player with the highest value hand
-    let highestHandValue = 0;
-    let winningPlayerId = -1;
-    let winningPlayerIndex = -1;
-    let tieFlag = this.state.tieFlag;
-
-    if (nonBustedPlayers.length === 1) {
-      nonBustedPlayers[0].status = D.winner;
-    } else {
-      nonBustedPlayers.forEach(player => {
-        let higherHandValue = this._getHighestHandValue(player);
-        if (higherHandValue > highestHandValue && higherHandValue <= 21) {
-          highestHandValue = higherHandValue;
-          winningPlayerId = player.id;
-          winningPlayerIndex = players.indexOf(player);
-        }
-      });
-    }
-
-    this.setState({
-      players,
-      tieFlag,
-      allPlayersStaying,
-      allPlayersBusted,
-      allPlayersNonBusted,
-      winningPlayerId,
-      winningPlayerIndex
-    });
+  _evaluatePlayers(players) {
+    AppActions.evaluatePlayers(players);
   }
 
   _bet(
     ev,
     target,
-    playerIndex = this.state.currentPlayer,
-    amount = this.state.minimumBet
+    playerIndex,
+    amount
   ) {
-    let players = this.state.players;
-    players[playerIndex].bank -= amount;
-    const pot = this.state.pot + amount;
-    this.setState({ pot, players });
+    AppActions.bet(ev,
+      target,
+      playerIndex,
+      amount);
   }
 
   _ante(
