@@ -206,14 +206,6 @@ export class Table extends BaseComponent {
     });
   }
 
-  /**
- * @todo use this to instantiate Players and Deck, instead of doing it in componentWillMount
- */
-  _newGame() {
-    // game Initialization
-    this._evaluateGame(1);
-  }
-
   _clearHand(playerIndex) {
     AppActions.clearHand(playerIndex);
   }

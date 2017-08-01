@@ -158,6 +158,7 @@ function _newGame(playerTitles) {
   playerTitles.forEach(title => {
     players.push(_newPlayer(title));
   });
+  _evaluateGame(1);
 }
 
 function _newPlayer(title) {
