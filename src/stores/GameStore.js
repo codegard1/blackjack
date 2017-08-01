@@ -430,7 +430,7 @@ function _evaluatePlayers(players = players) {
 }
 
 function _reset() {
-  players.forEach(player, index => {
+  players.forEach((player, index) => {
     player.remove("bank");
     _clearHand(index);
   });
@@ -443,8 +443,8 @@ function _reset() {
 }
 
 function _newRound() {
-  players.forEach(player => {
-    _clearHand(player.id);
+  players.forEach((player, index) => {
+    _clearHand(index);
   });
 
   gameStatus = 0;

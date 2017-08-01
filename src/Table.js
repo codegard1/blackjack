@@ -230,21 +230,8 @@ export class Table extends BaseComponent {
 
   _newRound() {
     AppActions.newDeck();
-    this.state.players.forEach((player, index) => {
-      this._clearHand(index);
-    });
-    this.setState(
-      {
-        drawn: [],
-        selected: [],
-        gameStatus: 0,
-        turnCount: 0,
-        currentPlayer: 0,
-        round: this.state.round + 1,
-        pot: 0
-      },
-      this._showMessageBar("New Round", MessageBarType.info)
-    );
+    AppActions.newRound();
+    AppActions.showMessageBar("New Round", MessageBarType.info);
   }
 
   _reset() {
