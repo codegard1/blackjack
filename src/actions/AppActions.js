@@ -159,7 +159,14 @@ export const AppActions = {
       actionType: AppConstants.DECK_DESELECT,
       cardAttributes
     });
-  }
+  },
+  clearHand(playerIndex){
+    AppDispatcher.dispatch({
+      actionType: AppConstants.GAME_CLEARHAND,
+      playerIndex
+    });
+  },
+  
 };
 
 export default AppActions;

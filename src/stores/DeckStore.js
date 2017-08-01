@@ -164,16 +164,20 @@ function _removeSelectedFromDrawn(cards = selected) {
 }
 
 function _select(cardAttributes) {
+  log(cardAttributes);
+
   const selectedCard = new PlayingCard(
     cardAttributes.suit,
     cardAttributes.description,
     cardAttributes.sort
   );
+
   selected.push(selectedCard);
 }
 
 function _deselect(cardAttributes) {
-  const toDelete = selected.filter(card => 
+  const toDelete = selected.filter(
+    card =>
       card.suit === cardAttributes.suit && card.sort === cardAttributes.sort
   );
   const index = selected.indexOf(toDelete);

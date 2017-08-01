@@ -67,44 +67,44 @@ export class Table extends BaseComponent {
 
     //Deck Methods
     this._bind(
-      "_select",
       "_deselect",
+      "_removeSelectedFromDrawn",
       "_removeSelectedFromPlayerHand",
-      "_removeSelectedFromDrawn"
+      "_select"
     );
 
     // ControlPanel methods
     this._bind(
-      "_deal",
-      "_hit",
-      "_bet",
       "_ante",
-      "_stay",
+      "_bet",
+      "_clearHand",
+      "_deal",
       "_draw",
-      "_reset",
-      "_shuffle",
+      "_drawFromBottomOfDeck",
+      "_drawRandom",
+      "_hit",
       "_putOnBottomOfDeck",
       "_putOnTopOfDeck",
-      "_drawRandom",
-      "_drawFromBottomOfDeck",
-      "_clearHand",
+      "_reset",
+      "_showMessageBar",
+      "_showOptionsPanel",
+      "_shuffle",
+      "_stay",
       "_toggleDeckVisibility",
       "_toggleDrawnVisibility",
       "_toggleSelectedVisibility",
-      "_showOptionsPanel"
     );
 
     //Game State Methods
     this._bind(
-      "_showMessageBar",
-      "_evaluateHand",
       "_evaluateGame",
-      "_newGame",
-      "_getHighestHandValue",
-      "_payout",
+      "_evaluateHand",
       "_evaluatePlayers",
+      "_getHighestHandValue",
+      "_newGame",
+      "_newRound",
+      "_payout",
       "_resetGame",
-      "_newRound"
     );
 
     //Flux helpers
@@ -165,9 +165,9 @@ export class Table extends BaseComponent {
     const newState = GameStore.getState();
     log(`onChangeGame: ${newState}`);
     this.setState({
-      allPlayersStaying: newState.allPlayersStaying,
       allPlayersBusted: newState.allPlayersBusted,
       allPlayersNonBusted: newState.allPlayersNonBusted,
+      allPlayersStaying: newState.allPlayersStaying,
       bustedPlayers: newState.bustedPlayers,
       currentPlayer: newState.currentPlayer,
       currentPlayerIndex: newState.currentPlayerIndex,
@@ -175,11 +175,11 @@ export class Table extends BaseComponent {
       highestHandValue: newState.highestHandValue,
       minimumBet: newState.minimumBet,
       nonBustedPlayers: newState.nonBustedPlayers,
-      tieFlag: newState.tieFlag,
-      turnCount: newState.turnCount,
       players: newState.players,
       pot: newState.pot,
       round: newState.round,
+      tieFlag: newState.tieFlag,
+      turnCount: newState.turnCount,
       winningPlayerId: newState.winningPlayerId,
       winningPlayerIndex: newState.winningPlayerIndex
     });
@@ -199,9 +199,9 @@ export class Table extends BaseComponent {
     this.setState({
       isDeckVisible: newState.isDeckVisible,
       isDrawnVisible: newState.isDrawnVisible,
-      isSelectedVisible: newState.isSelectedVisible,
-      isOptionsPanelVisible: newState.isOptionsPanelVisible,
       isMessageBarVisible: newState.isMessageBarVisible,
+      isOptionsPanelVisible: newState.isOptionsPanelVisible,
+      isSelectedVisible: newState.isSelectedVisible,
       messageBarDefinition: newState.messageBarDefinition
     });
   }
@@ -214,13 +214,8 @@ export class Table extends BaseComponent {
     this._evaluateGame(1);
   }
 
-  _clearHand(index) {
-    const players = this.state.players;
-    players[index].hand = [];
-    players[index].handValue = { aceAsOne: 0, aceAsEleven: 0 };
-    players[index].status = "ok";
-    players[index].turn = false;
-    this.setState({ players });
+  _clearHand(playerIndex) {
+    AppActions.clearHand(playerIndex);
   }
 
   _shuffle() {
@@ -711,7 +706,7 @@ export class Table extends BaseComponent {
 
   /* show the Options Panel */
   _showOptionsPanel() {
-    this.setState({ isOptionsPanelVisible: true });
+    AppActions.showOptionsPanel();
   }
 
   render() {

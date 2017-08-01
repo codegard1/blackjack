@@ -121,6 +121,11 @@ AppDispatcher.register(action => {
       GameStore.emitChange();
       break;
 
+      case AppConstants.GAME_CLEARHAND:
+      _clearHand(action.playerIndex);
+      GameStore.emitChange();
+      break;
+
     default:
       break;
   }
@@ -479,12 +484,9 @@ function _endGameTrap(statusCode) {
   }
 }
 
-function _clearHand(id) {
-  GameStore.getPlayer(id).hand = [];
-  GameStore.getPlayer(id).handValue = { aceAsOne: 0, aceAsEleven: 0 };
-  GameStore.getPlayer(id).status = "ok";
-  GameStore.getPlayer(id).turn = false;
-  log(`_clearHand(${id}): ${GameStore.getPlayer(id)}`);
+function _clearHand(playerIndex) {
+  players[playerIndex].remove("hand","handValue","status","turn");
+  log(`_clearHand(${playerIndex}): ${players[playerIndex]}`);
 }
 
 function _removeSelectedFromPlayerHand(playerIndex = currentPlayer, cards) {
