@@ -339,15 +339,8 @@ export class Table extends BaseComponent {
     players = this.state.players,
     pot = this.state.pot
   ) {
-    players.forEach(player => {
-      player.bank -= amount;
-      pot += amount;
-    });
-
-    this.setState(
-      { players, pot },
-      this._showMessageBar(`Ante: $${amount}`, MessageBarType.info)
-    );
+    AppActions.ante(amount, players, pot);
+    AppActions.showMessageBar(`Ante: $${amount}`, MessageBarType.info)
   }
 
   _payout(

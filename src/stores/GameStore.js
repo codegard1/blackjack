@@ -529,14 +529,18 @@ function _stay() {
 }
 
 function _bet(
-  ev,
-  target,
-  playerIndex = currentPlayer,
-  amount = minimumBet
+  ev, target, playerIndex = currentPlayer, amount = minimumBet
 ) {
   ev.preventDefault();
   players[playerIndex].bank -= amount;
   pot += amount;
+}
+
+function _ante(amount = minimumBet, players = players, pot = pot) {
+  players.forEach(player => {
+    player.bank -= amount;
+    pot += amount;
+  });
 }
 
 export default GameStore;
