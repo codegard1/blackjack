@@ -318,13 +318,6 @@ export class Table extends BaseComponent {
     AppActions.evaluateGame(nextGameStatus, nextPlayer);
   }
 
-  // immediately evaluate game again if status > 2 (endgame condition)
-  _endGameTrap(statusCode) {
-    if (statusCode > 2) {
-      this._evaluateGame(statusCode);
-    }
-  }
-
   _evaluatePlayers(players = this.state.players) {
     // evaluate hands
     players.forEach(player => {

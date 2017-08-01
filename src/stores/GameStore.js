@@ -358,7 +358,7 @@ function _evaluateGame(
       turnCount++;
       gameStatus = nextGameStatus;
 
-      this._endGameTrap(nextGameStatus);
+      _endGameTrap(nextGameStatus);
       break;
 
     default:
