@@ -372,9 +372,8 @@ function _getPlayerById(id) {
   return player[0];
 }
 
-function _getHighestHandValue(playerId) {
-  const player = GameStore.getPlayer(playerId);
-  const handValue = player.handValue;
+function _getHighestHandValue(playerIndex) {
+  const handValue = players[playerIndex].handValue;
   let higherHandValue = 0;
 
   if (handValue.aceAsEleven === handValue.aceAsOne) {
@@ -433,8 +432,8 @@ function _evaluatePlayers(players = players) {
   if (nonBustedPlayers.length === 1) {
     nonBustedPlayers[0].status = D.winner;
   } else {
-    nonBustedPlayers.forEach(player => {
-      let higherHandValue = _getHighestHandValue(player);
+    nonBustedPlayers.forEach((player, index) => {
+      let higherHandValue = _getHighestHandValue(index);
       if (higherHandValue > highestHandValue && higherHandValue <= 21) {
         highestHandValue = higherHandValue;
         /*   winningPlayerId = player.id;  */

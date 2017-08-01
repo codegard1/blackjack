@@ -311,20 +311,6 @@ export class Table extends BaseComponent {
     return AppActions.evaluateHand(hand);
   }
 
-  _getHighestHandValue(player) {
-    const handValue = player.handValue;
-    let higherHandValue = 0;
-
-    if (handValue.aceAsEleven === handValue.aceAsOne) {
-      return handValue.aceAsOne;
-    } else {
-      higherHandValue = handValue.aceAsOne > handValue.aceAsEleven
-        ? handValue.aceAsOne
-        : handValue.aceAsEleven;
-      return higherHandValue;
-    }
-  }
-
   _evaluateGame(
     nextGameStatus = this.state.gameStatus,
     nextPlayer = this.state.currentPlayer
