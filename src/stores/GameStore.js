@@ -136,6 +136,11 @@ AppDispatcher.register(action => {
       GameStore.emitChange();
       break;
 
+    case AppConstants.GAME_STAY:
+      _stay();
+      GameStore.emitChange();
+      break;
+
     default:
       break;
   }
@@ -513,6 +518,10 @@ function _hit(ev, target, index = currentPlayer) {
   players[index].hand.push(ret);
 
   _evaluateGame(1);
+}
+
+function _stay() {
+  _evaluateGame(2);
 }
 
 export default GameStore;

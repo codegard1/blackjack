@@ -176,6 +176,11 @@ export const AppActions = {
       actionType: AppConstants.GAME_HIT,
       ev, target, index
     })
+  },
+  stay() {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.GAME_STAY
+    });
   }
 
 };

@@ -251,7 +251,7 @@ export class Table extends BaseComponent {
   }
 
   _stay() {
-    this._evaluateGame(2);
+    AppActions.stay();
   }
 
   _drawFromBottomOfDeck(num) {

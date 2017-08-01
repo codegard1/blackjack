@@ -16,6 +16,7 @@ export default keyMirror({
   GAME_PAYOUT: null,
   GAME_REMOVESELECTEDFROMPLAYERHAND: null,
   GAME_RESET: null,
+  GAME_STAY: null,
 
   /* Deck */
   DECK_DESELECT: null,
