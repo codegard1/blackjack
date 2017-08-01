@@ -430,34 +430,22 @@ function _evaluatePlayers(players = players) {
 }
 
 function _reset() {
-  DeckStore.newDeck();
-
-  players.forEach(player => {
+  players.forEach(player, index => {
     player.remove("bank");
-    _clearHand(player.id);
+    _clearHand(index);
   });
 
-  //drawn = [];
-  //selected = [];
   gameStatus = 0;
   turnCount = 0;
   currentPlayer = 0;
   round = 0;
   pot = 0;
-
-  // _showMessageBar("Game Reset", MessageBarType.info);
 }
 
 function _newRound() {
-  DeckStore.newDeck();
-
   players.forEach(player => {
     _clearHand(player.id);
   });
-
-  /* DeckStore */
-  // drawn = [];
-  // selected = [];
 
   gameStatus = 0;
   turnCount = 0;
@@ -484,6 +472,7 @@ function _endGameTrap(statusCode) {
   }
 }
 
+/* clearHand is only called by other functions in GameStore */
 function _clearHand(playerIndex) {
   players[playerIndex].remove("hand","handValue","status","turn");
   log(`_clearHand(${playerIndex}): ${players[playerIndex]}`);

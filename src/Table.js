@@ -224,26 +224,8 @@ export class Table extends BaseComponent {
 
   _resetGame() {
     AppActions.newDeck();
-    const players = this.state.players;
-    players.forEach(player => {
-      player.bank = this.state.playerDefaults.bank;
-    });
-    this.state.players.forEach((player, index) => {
-      this._clearHand(index);
-    });
-    this.setState(
-      {
-        players,
-        drawn: [],
-        selected: [],
-        gameStatus: 0,
-        turnCount: 0,
-        currentPlayer: 0,
-        round: 0,
-        pot: 0
-      },
-      AppActions.showMessageBar("Game Reset")
-    );
+    AppActions.reset();
+    AppActions.showMessageBar("Game Reset");
   }
 
   _newRound() {
