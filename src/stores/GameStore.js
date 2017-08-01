@@ -142,7 +142,7 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.GAME_BET:
-      _bet(ev, target, playerIndex, amount);
+      _bet(action.ev, action.target, action.playerIndex, action.amount);
       GameStore.emitChange();
       break;
 

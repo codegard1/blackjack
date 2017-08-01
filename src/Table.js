@@ -311,10 +311,7 @@ export class Table extends BaseComponent {
     return AppActions.evaluateHand(hand);
   }
 
-  _evaluateGame(
-    nextGameStatus,
-    nextPlayer,
-  ) {
+  _evaluateGame(nextGameStatus, nextPlayer) {
     AppActions.evaluateGame(nextGameStatus, nextPlayer);
   }
 
@@ -322,12 +319,7 @@ export class Table extends BaseComponent {
     AppActions.evaluatePlayers(players);
   }
 
-  _bet(
-    ev,
-    target,
-    playerIndex,
-    amount
-  ) {
+  _bet(ev, target, playerIndex, amount) {
     AppActions.bet(ev,
       target,
       playerIndex,
@@ -343,15 +335,8 @@ export class Table extends BaseComponent {
     AppActions.showMessageBar(`Ante: $${amount}`, MessageBarType.info)
   }
 
-  _payout(
-    players = this.state.players,
-    index = this.state.winningPlayerIndex,
-    amount = this.state.pot
-  ) {
-    players[index].status = D.winner;
-    players[index].bank += amount;
-
-    this.setState({ players, pot: 0 });
+  _payout(players, index, amount) {
+    AppActions.payout(players, index, amount);
   }
 
   /* show the Options Panel */
