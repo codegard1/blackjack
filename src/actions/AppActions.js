@@ -166,6 +166,11 @@ export const AppActions = {
       playerIndex
     });
   },
+  deal() {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.GAME_DEAL
+    });
+  }
   
 };
 

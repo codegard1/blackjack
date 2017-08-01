@@ -2,7 +2,8 @@ import keyMirror from "keymirror";
 
 export default keyMirror({
   /* Game */
-  GAME_CLEARHAND:null,
+  GAME_CLEARHAND: null,
+  GAME_DEAL: null,
   GAME_EVALUATEGAME: null,
   GAME_EVALUATEHAND: null,
   GAME_EVALUATEPLAYERS: null,

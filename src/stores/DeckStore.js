@@ -123,6 +123,7 @@ function _drawRandom(num) {
   const ret = deck.drawRandom(num);
   drawn.push(ret);
   console.log("drawRandom:", ret);
+  return ret;
 }
 
 function _putOnTopOfDeck(cards = selected) {
@@ -144,6 +145,7 @@ function _reset() {
 function _draw(num) {
   const ret = deck.draw(num);
   drawn.push(ret);
+  return ret;
 }
 
 function _shuffle() {

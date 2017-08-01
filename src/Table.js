@@ -243,20 +243,7 @@ export class Table extends BaseComponent {
   }
 
   _deal() {
-    const deck = this.state.deck;
-    let players = this.state.players;
-    players.forEach(player => {
-      player.hand = deck.draw(2);
-    });
-    players[this.state.currentPlayer].turn = true;
-
-    this.setState(
-      {
-        deck,
-        players
-      },
-      this._evaluateGame(1)
-    );
+    AppActions.deal();
   }
 
   _hit(ev, target, index = this.state.currentPlayer) {

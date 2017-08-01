@@ -121,8 +121,13 @@ AppDispatcher.register(action => {
       GameStore.emitChange();
       break;
 
-      case AppConstants.GAME_CLEARHAND:
+    case AppConstants.GAME_CLEARHAND:
       _clearHand(action.playerIndex);
+      GameStore.emitChange();
+      break;
+
+    case AppConstants.GAME_DEAL:
+      _deal();
       GameStore.emitChange();
       break;
 
@@ -452,8 +457,6 @@ function _newRound() {
   currentPlayer = 0;
   round += 1;
   pot = 0;
-
-  // _showMessageBar("New Round", MessageBarType.info);
 }
 
 function _ante(amount = minimumBet) {
@@ -486,6 +489,17 @@ function _removeSelectedFromPlayerHand(playerIndex = currentPlayer, cards) {
     });
     players[playerIndex].hand.splice(index, 1);
   });
+}
+
+function _deal() {
+  players.forEach(player => {
+    /* todo: fix this so that the call goes directly to DeckStore from Table */
+    const cards = DeckStore.draw(2);
+    player.hand = cards;
+  });
+  players[currentPlayer].turn = true;
+
+  _evaluateGame(1);
 }
 
 export default GameStore;
