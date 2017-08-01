@@ -3,7 +3,7 @@ import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 import { DeckStore } from "./DeckStore";
 import { log } from "../utils";
-import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
+// import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 import * as D from "../definitions";
 import Player from "./Player";
 import Counter from "./Counter";
@@ -14,8 +14,8 @@ let allPlayersStaying = false,
   allPlayersNonBusted = false,
   bustedPlayers = [],
   stayingPlayers = [],
-  currentPlayer,
-  currentPlayerIndex,
+  currentPlayer = 0,
+  currentPlayerIndex = 0,
   gameStatus = 0,
   highestHandValue = 0,
   minimumBet = 25,
@@ -301,9 +301,9 @@ function _evaluateGame(
       break;
 
     case 3 /*   currentPlayer busted  */:
-      let messageText = allPlayersBusted
-        ? `All players busted!`
-        : `${this.state.players[this.state.currentPlayer].title} busted!`;
+      // let messageText = allPlayersBusted
+      //   ? `All players busted!`
+      //   : `${this.state.players[this.state.currentPlayer].title} busted!`;
 
       // _showMessageBar(messageText, MessageBarType.warning);
       nextGameStatus = 0;
@@ -318,7 +318,7 @@ function _evaluateGame(
       break;
 
     case 4 /*   currentPlayer Wins  */:
-      const winningPlayerTitle = players[winningPlayerIndex].title;
+      // const winningPlayerTitle = players[winningPlayerIndex].title;
       // _showMessageBar(`${winningPlayerTitle} wins!`, MessageBarType.success);
       nextGameStatus = 0;
 
@@ -359,7 +359,7 @@ function _evaluateGame(
       nextGameStatus = 0;
 
       /* don't do payout unless all players are staying and not busted */
-      if (!allPlayersBusted) this._payout();
+      if (!allPlayersBusted) _payout();
 
       turnCount++;
       gameStatus = nextGameStatus;
@@ -392,60 +392,62 @@ function _getHighestHandValue(playerIndex) {
   }
 }
 
-function _payout(players = players, index = winningPlayerIndex, amount = pot) {
+function _payout(players, index = winningPlayerIndex, amount = pot) {
   players[index].status = D.winner;
   players[index].bank += amount;
   pot = 0;
 }
 
-function _evaluatePlayers(players = players) {
+function _evaluatePlayers(players) {
   /*   evaluate hands  */
-  players.forEach(player => {
-    player.handValue = _evaluateHand(player.hand);
+  if (players && players.length > 0) {
+    players.forEach(player => {
+      player.handValue = _evaluateHand(player.hand);
 
-    /*   set busted status  */
-    if (player.handValue.aceAsOne > 21 && player.handValue.aceAsEleven > 21) {
-      player.status = D.busted;
-    }
+      /*   set busted status  */
+      if (player.handValue.aceAsOne > 21 && player.handValue.aceAsEleven > 21) {
+        player.status = D.busted;
+      }
 
-    /*   set blackjack status  */
-    if (
-      player.handValue.aceAsOne === 21 || player.handValue.aceAsEleven === 21
-    ) {
-      player.status = D.blackjack;
-    }
-  });
-
-  /*   STAYING PLAYERS  */
-  stayingPlayers = players.filter(player => player.isStaying === true);
-
-  /*   BUSTED PLAYERS  */
-  bustedPlayers = players.filter(player => player.status === D.busted);
-
-  /*   NON-BUSTED PLAYERS  */
-  nonBustedPlayers = players.filter(player => player.status !== D.busted);
-
-  /*   true if all players are staying  */
-  allPlayersStaying = stayingPlayers.length === players.length;
-
-  /*   true if all players are busted  */
-  allPlayersBusted = bustedPlayers.length === players.length;
-
-  /*   true if all players are not busted  */
-  allPlayersNonBusted = nonBustedPlayers.length === players.length;
-
-  /*   determine the non-busted player with the highest value hand  */
-  if (nonBustedPlayers.length === 1) {
-    nonBustedPlayers[0].status = D.winner;
-  } else {
-    nonBustedPlayers.forEach((player, index) => {
-      let higherHandValue = _getHighestHandValue(index);
-      if (higherHandValue > highestHandValue && higherHandValue <= 21) {
-        highestHandValue = higherHandValue;
-        winningPlayerId = player.id;
-        winningPlayerIndex = players.indexOf(player);
+      /*   set blackjack status  */
+      if (
+        player.handValue.aceAsOne === 21 || player.handValue.aceAsEleven === 21
+      ) {
+        player.status = D.blackjack;
       }
     });
+
+    /*   STAYING PLAYERS  */
+    stayingPlayers = players.filter(player => player.isStaying === true);
+
+    /*   BUSTED PLAYERS  */
+    bustedPlayers = players.filter(player => player.status === D.busted);
+
+    /*   NON-BUSTED PLAYERS  */
+    nonBustedPlayers = players.filter(player => player.status !== D.busted);
+
+    /*   true if all players are staying  */
+    allPlayersStaying = stayingPlayers.length === players.length;
+
+    /*   true if all players are busted  */
+    allPlayersBusted = bustedPlayers.length === players.length;
+
+    /*   true if all players are not busted  */
+    allPlayersNonBusted = nonBustedPlayers.length === players.length;
+
+    /*   determine the non-busted player with the highest value hand  */
+    if (nonBustedPlayers.length === 1) {
+      nonBustedPlayers[0].status = D.winner;
+    } else {
+      nonBustedPlayers.forEach((player, index) => {
+        let higherHandValue = _getHighestHandValue(index);
+        if (higherHandValue > highestHandValue && higherHandValue <= 21) {
+          highestHandValue = higherHandValue;
+          winningPlayerId = player.id;
+          winningPlayerIndex = players.indexOf(player);
+        }
+      });
+    }
   }
 }
 
@@ -475,11 +477,12 @@ function _newRound() {
 }
 
 function _ante(amount = minimumBet) {
-  players.forEach(player => {
-    player.bank -= amount;
-    pot += amount;
-  });
-
+  if (players && players.length > 0) {
+    players.forEach(player => {
+      player.bank = player.bank + amount;
+      pot += amount;
+    });
+  }
   // _showMessageBar(`Ante: $${amount}`, MessageBarType.info);
 }
 
@@ -493,7 +496,6 @@ function _endGameTrap(statusCode) {
 /* clearHand is only called by other functions in GameStore */
 function _clearHand(playerIndex) {
   players[playerIndex].remove("hand", "handValue", "status", "turn");
-  log(`_clearHand(${playerIndex}): ${players[playerIndex]}`);
 }
 
 function _removeSelectedFromPlayerHand(playerIndex = currentPlayer, cards) {
@@ -535,13 +537,6 @@ function _bet(
   ev.preventDefault();
   players[playerIndex].bank -= amount;
   pot += amount;
-}
-
-function _ante(amount = minimumBet, players = players, pot = pot) {
-  players.forEach(player => {
-    player.bank -= amount;
-    pot += amount;
-  });
 }
 
 export default GameStore;

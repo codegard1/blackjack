@@ -13,25 +13,25 @@ let drawn = [], selected = [], deck = [];
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "deck";
 export const DeckStore = Object.assign({}, EventEmitter.prototype, {
-  getDeck: function() {
+  getDeck: function () {
     return deck;
   },
-  getSelected: function() {
+  getSelected: function () {
     return selected;
   },
-  getDrawn: function() {
+  getDrawn: function () {
     return drawn;
   },
-  getState: function() {
+  getState: function () {
     return { deck, selected, drawn };
   },
-  emitChange: function() {
+  emitChange: function () {
     this.emit(CHANGE_EVENT);
   },
-  addChangeListener: function(callback) {
+  addChangeListener: function (callback) {
     this.on(CHANGE_EVENT, callback);
   },
-  removeChangeListener: function(callback) {
+  removeChangeListener: function (callback) {
     this.removeListener(CHANGE_EVENT, callback);
   }
 });
@@ -87,6 +87,7 @@ AppDispatcher.register(action => {
     case AppConstants.DECK_REMOVESELECTEDFROMDRAWN:
       _removeSelectedFromDrawn(action.cards);
       DeckStore.emitChange();
+      break;
 
     case AppConstants.DECK_SELECT:
       _select(action.cardAttributes);
@@ -116,13 +117,13 @@ function _newDeck() {
 function _drawFromBottomOfDeck(num) {
   const ret = deck.drawFromBottomOfDeck(num);
   drawn.push(ret);
-  log(`drawFromBottomOfDeck: ${ret}`);
+  // log(`drawFromBottomOfDeck: ${ret}`);
 }
 
 function _drawRandom(num) {
   const ret = deck.drawRandom(num);
   drawn.push(ret);
-  console.log("drawRandom:", ret);
+  // log(`drawRandom: ${ret}`);
   return ret;
 }
 
@@ -166,7 +167,7 @@ function _removeSelectedFromDrawn(cards = selected) {
 }
 
 function _select(cardAttributes) {
-  log(cardAttributes);
+  // log(cardAttributes);
 
   const selectedCard = new PlayingCard(
     cardAttributes.suit,

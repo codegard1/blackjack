@@ -1,12 +1,10 @@
 import React from "react";
-import Shuffle, { PlayingCard } from "shuffle";
 import DeckContainer from "./DeckContainer";
 import Player from "./Player";
 import {
   MessageBar,
   MessageBarType
 } from "office-ui-fabric-react/lib/MessageBar";
-import * as D from "./definitions";
 import { OptionsPanel } from "./OptionsPanel";
 import { BaseComponent } from "./BaseComponent";
 import { log } from "./utils";
@@ -100,8 +98,6 @@ export class Table extends BaseComponent {
       "_evaluateGame",
       "_evaluateHand",
       "_evaluatePlayers",
-      "_getHighestHandValue",
-      "_newGame",
       "_newRound",
       "_payout",
       "_resetGame",
@@ -148,8 +144,8 @@ export class Table extends BaseComponent {
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
 
     const players = ["Chris", "Dealer"];
-    AppActions.newGame(players);
     AppActions.newDeck();
+    AppActions.newGame(players);
   }
 
   componentWillUnmount() {

@@ -1,8 +1,6 @@
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
-import Shuffle, { PlayingCard } from "shuffle";
-
 export const AppActions = {
   newGame(players) {
     AppDispatcher.dispatch({
@@ -116,9 +114,6 @@ export const AppActions = {
       actionType: AppConstants.DECK_DRAWFROMBOTTOMOFDECK,
       num
     });
-  },
-  reset() {
-    AppDispatcher.dispatch({ actionType: AppConstants.DECK_RESET });
   },
   shuffle() {
     AppDispatcher.dispatch({ actionType: AppConstants.DECK_SHUFFLE });
