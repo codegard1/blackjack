@@ -7,7 +7,7 @@ import { log } from "../utils";
 import { PlayerHand } from './PlayerHand';
 
 /* state variables */
-let drawn = [], selected = [], deck = [], playerHands = {};
+let drawn = [], selected = [], deck = [], playerHands = [];
 /*  ========================================================  */
 
 /* Data, Getter method, Event Notifier */
@@ -17,19 +17,19 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
     return deck;
   },
   getSelected: function (playerId) {
-    return selected[playerId];
+    return selected.find(item => item.id === playerId);
   },
   getDrawn: function (playerId) {
-    return drawn[playerId];
+    return drawn.find(item => item.id === playerId);
   },
   getHand: function (playerId) {
-    return playerHands[playerId];
+    return playerHands.find(item => item.id === playerId);
   },
   getHands: function () {
     return playerHands;
   },
   getState: function () {
-    return { deck, selected, drawn };
+    return { deck, selected, drawn, playerHands };
   },
   emitChange: function () {
     this.emit(CHANGE_EVENT);
