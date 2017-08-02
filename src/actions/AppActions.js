@@ -26,12 +26,6 @@ export const AppActions = {
       type
     });
   },
-  evaluateHand(hand) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_EVALUATEHAND,
-      hand
-    });
-  },
   getPlayerById(id) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_GETPLAYERBYID,

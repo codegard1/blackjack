@@ -6,7 +6,6 @@ export default keyMirror({
   GAME_BET: null,
   GAME_CLEARHAND: null,
   GAME_DEAL: null,
-  GAME_EVALUATEHAND: null,
   GAME_GETHIGHESTHANDVALUE: null,
   GAME_GETPLAYERBYID: null,
   GAME_HIT: null,

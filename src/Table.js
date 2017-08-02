@@ -96,7 +96,6 @@ export class Table extends BaseComponent {
     //Game State Methods
     this._bind(
       "_evaluateGame",
-      "_evaluateHand",
       "_evaluatePlayers",
       "_newRound",
       "_payout",
@@ -291,10 +290,6 @@ export class Table extends BaseComponent {
   _toggleSelectedVisibility(bool) {
     // this.setState({ isSelectedVisible: bool });
     AppActions.toggleSelectedVisibility(bool);
-  }
-
-  _evaluateHand(hand) {
-    return AppActions.evaluateHand(hand);
   }
 
   _evaluateGame(nextGameStatus, nextPlayer) {

@@ -80,11 +80,6 @@ AppDispatcher.register(action => {
       GameStore.emitChange();
       break;
 
-    case AppConstants.GAME_EVALUATEHAND:
-      _evaluateHand(action.hand);
-      GameStore.emitChange();
-      break;
-
     case AppConstants.GAME_GETPLAYERBYID:
       _getPlayerById(action.id);
       GameStore.emitChange();
@@ -148,45 +143,6 @@ function _newGame(items) {
     players.push(new Player(item.id, item.title));
   });
   _evaluateGame(1);
-}
-
-function _evaluateHand(hand) {
-  let handValue = {
-    aceAsOne: 0,
-    aceAsEleven: 0
-  };
-  /*   Do not evaluate if the hand is empty!  */
-  if (hand.length > 0) {
-    hand.forEach(card => {
-      switch (card.sort) {
-        case 14:
-          handValue.aceAsOne += 1;
-          handValue.aceAsEleven += 11;
-          break;
-
-        case 13:
-          handValue.aceAsOne += 10;
-          handValue.aceAsEleven += 10;
-          break;
-
-        case 12:
-          handValue.aceAsOne += 10;
-          handValue.aceAsEleven += 10;
-          break;
-
-        case 11:
-          handValue.aceAsOne += 10;
-          handValue.aceAsEleven += 10;
-          break;
-
-        default:
-          handValue.aceAsOne += card.sort;
-          handValue.aceAsEleven += card.sort;
-          break;
-      }
-    });
-  }
-  return handValue;
 }
 
 function _evaluateGame(
@@ -387,7 +343,7 @@ function _evaluatePlayers() {
   /*   evaluate hands  */
   if (players && players.length > 0) {
     players.forEach(player => {
-      player.handValue = _evaluateHand(player.hand);
+      player.handValue = DeckStore.getHandValue(player.id);
 
       /*   set busted status  */
       if (player.handValue.aceAsOne > 21 && player.handValue.aceAsEleven > 21) {

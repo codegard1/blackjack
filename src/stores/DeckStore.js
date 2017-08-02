@@ -28,6 +28,15 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
   getHands: function () {
     return playerHands;
   },
+  getHandValue: function (playerId) {
+    if (playerHands.length > 0) {
+      let index = playerHands.indexOf(playerHands.find(player => player.id === playerId));
+      console.log(playerHands[index]);
+      return playerHands[index].evaluate();
+    } else {
+      return { aceAsOne: 0, AceAsEvelen: 0 }
+    }
+  },
   getState: function () {
     return { deck, selected, drawn, playerHands };
   },
