@@ -163,7 +163,6 @@ function _newGame(playerTitles) {
 
 function _newPlayer(title) {
   const id = Counter.increment();
-  /* Player is an Immutable record */
   return new Player({ id, title });
 }
 
