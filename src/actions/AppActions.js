@@ -151,6 +151,9 @@ export const AppActions = {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_DEAL
     });
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_DEAL
+    });
   },
   hit(ev, target, index) {
     AppDispatcher.dispatch({

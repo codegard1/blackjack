@@ -429,13 +429,7 @@ function _endGameTrap(statusCode) {
 }
 
 function _deal() {
-  players.forEach(player => {
-    /* todo: fix this so that the call goes directly to DeckStore from Table */
-    const cards = DeckStore.draw(2);
-    player.hand = cards;
-  });
   players[currentPlayer].turn = true;
-
   _evaluateGame(1);
 }
 

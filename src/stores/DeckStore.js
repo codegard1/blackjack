@@ -129,6 +129,11 @@ AppDispatcher.register(action => {
       DeckStore.emitChange();
       break;
 
+    case AppConstants.DECK_DEAL:
+      _deal();
+      DeckStore.emitChange();
+      break;
+
     default:
       /* do nothing */
       break;
@@ -235,6 +240,12 @@ function _removeSelectedFromPlayerHand(playerId, cards) {
       return element.suit === card.suit && card.sort === card.sort;
     });
     playerHands[index].splice(index, 1);
+  });
+}
+
+function _deal() {
+  playerHands.forEach(player => {
+    player.hand = _draw(2);
   });
 }
 

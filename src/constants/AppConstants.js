@@ -17,6 +17,7 @@ export default keyMirror({
 
   /* Deck */
   DECK_CLEARHANDS: null,
+  DECK_DEAL: null,
   DECK_DESELECT: null,
   DECK_DRAW: null,
   DECK_DRAWFROMBOTTOMOFDECK: null,
