@@ -26,3 +26,10 @@ export function log(thingToLog, ...etc) {
       break;
   }
 }
+
+let _counter = 1;
+export const Counter = {
+  increment() {
+    return "id-" + String(_counter++);
+  }
+};
