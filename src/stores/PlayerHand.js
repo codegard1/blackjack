@@ -1,4 +1,4 @@
-class PlayerHand {
+export class PlayerHand {
     constructor(playerId) {
         return {
             id: playerId,

@@ -6,7 +6,6 @@ import { log } from "../utils";
 // import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 import * as D from "../definitions";
 import Player from "./Player";
-import Counter from "./Counter";
 
 /* "state" variables */
 let allPlayersStaying = false,
@@ -107,7 +106,7 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.GAME_EVALUATEPLAYERS:
-      _evaluatePlayers(action.players);
+      _evaluatePlayers();
       GameStore.emitChange();
       break;
 
@@ -154,9 +153,9 @@ AppDispatcher.register(action => {
 /*  ========================================================  */
 
 /* method definitions */
-function _newGame(players) {
-  players.forEach(item => {
-    players.push(new Player(...item));
+function _newGame(items) {
+  items.forEach(item => {
+    players.push(new Player(item.id, item.title));
   });
   _evaluateGame(1);
 }
@@ -207,7 +206,9 @@ function _evaluateGame(
   /*   set player status, handValue, and other flags  */
   _evaluatePlayers();
 
-  const currentPlayerStatus = players[currentPlayerIndex].status;
+  const currentPlayerStatus = players && players.length > 0
+    ? players[currentPlayerIndex].status
+    : '';
 
   switch (nextGameStatus) {
     case 0 /*  Off  */:
@@ -392,7 +393,7 @@ function _payout(players, index = winningPlayerIndex, amount = pot) {
   pot = 0;
 }
 
-function _evaluatePlayers(players) {
+function _evaluatePlayers() {
   /*   evaluate hands  */
   if (players && players.length > 0) {
     players.forEach(player => {
