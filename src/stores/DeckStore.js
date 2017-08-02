@@ -119,11 +119,6 @@ AppDispatcher.register(action => {
       DeckStore.emitChange();
       break;
 
-    case AppConstants.DECK_CLEARHAND:
-      _clearHand(action.playerId);
-      DeckStore.emitChange();
-      break;
-
     case AppConstants.DECK_CLEARHANDS:
       _clearHands();
       DeckStore.emitChange();
@@ -224,11 +219,6 @@ function _deselect(cardAttributes) {
 
 function _newPlayerHand(playerId) {
   playerHands.push(new PlayerHand(playerId));
-}
-
-function _clearHand(playerId) {
-  const index = playerHands.indexOf(playerHands.find(player => player.id === playerId));
-  playerHands[index].clear();
 }
 
 function _clearHands() {

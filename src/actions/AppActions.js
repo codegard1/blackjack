@@ -147,12 +147,6 @@ export const AppActions = {
       cardAttributes
     });
   },
-  clearHand(playerId) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_CLEARHAND,
-      playerId
-    });
-  },
   deal() {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_DEAL

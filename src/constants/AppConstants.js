@@ -16,7 +16,6 @@ export default keyMirror({
   GAME_STAY: null,
 
   /* Deck */
-  DECK_CLEARHAND: null,
   DECK_CLEARHANDS: null,
   DECK_DESELECT: null,
   DECK_DRAW: null,

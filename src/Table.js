@@ -74,7 +74,6 @@ export class Table extends BaseComponent {
     this._bind(
       "_ante",
       "_bet",
-      "_clearHand",
       "_deal",
       "_draw",
       "_drawFromBottomOfDeck",
@@ -125,7 +124,6 @@ export class Table extends BaseComponent {
       deselect: this._deselect,
       removeSelectedFromPlayerHand: this._removeSelectedFromPlayerHand,
       removeSelectedFromDrawn: this._removeSelectedFromDrawn,
-      clearHand: this._clearHand
     };
     this.OptionsPanelMethods = {
       toggleDeckVisibility: this._toggleDeckVisibility,
@@ -196,10 +194,6 @@ export class Table extends BaseComponent {
       isSelectedVisible: newState.isSelectedVisible,
       messageBarDefinition: newState.messageBarDefinition
     });
-  }
-
-  _clearHand(playerIndex) {
-    AppActions.clearHand(playerIndex);
   }
 
   _shuffle() {
