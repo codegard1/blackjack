@@ -85,11 +85,6 @@ AppDispatcher.register(action => {
       GameStore.emitChange();
       break;
 
-    case AppConstants.GAME_EVALUATEGAME:
-      _evaluateGame(action.nextGameStatus, action.nextPlayer);
-      GameStore.emitChange();
-      break;
-
     case AppConstants.GAME_GETPLAYERBYID:
       _getPlayerById(action.id);
       GameStore.emitChange();
@@ -102,11 +97,6 @@ AppDispatcher.register(action => {
 
     case AppConstants.GAME_PAYOUT:
       _payout(action.players, action.index, action.amount);
-      GameStore.emitChange();
-      break;
-
-    case AppConstants.GAME_EVALUATEPLAYERS:
-      _evaluatePlayers();
       GameStore.emitChange();
       break;
 

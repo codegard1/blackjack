@@ -7,7 +7,6 @@ import {
 } from "office-ui-fabric-react/lib/MessageBar";
 import { OptionsPanel } from "./OptionsPanel";
 import { BaseComponent } from "./BaseComponent";
-import { log } from "./utils";
 
 /* flux */
 import { GameStore } from "./stores/GameStore";
