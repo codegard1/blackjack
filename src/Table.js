@@ -23,6 +23,7 @@ export class Table extends BaseComponent {
       deck: [],
       drawn: [],
       selected: [],
+      playerHands: [],
       //GameStore
       gameStatus: 0,
       minimumBet: 25,
@@ -90,7 +91,7 @@ export class Table extends BaseComponent {
       "_stay",
       "_toggleDeckVisibility",
       "_toggleDrawnVisibility",
-      "_toggleSelectedVisibility",
+      "_toggleSelectedVisibility"
     );
 
     //Game State Methods
@@ -100,7 +101,7 @@ export class Table extends BaseComponent {
       "_evaluatePlayers",
       "_newRound",
       "_payout",
-      "_resetGame",
+      "_resetGame"
     );
 
     //Flux helpers
@@ -143,7 +144,7 @@ export class Table extends BaseComponent {
     DeckStore.addChangeListener(this.onChangeDeck);
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
 
-    const players = ["Chris", "Dealer"];
+    const players = [{ id: 1, title: "Chris" }, { id: 2, title: "Dealer" }];
     AppActions.newDeck();
     AppActions.newGame(players);
   }
@@ -159,7 +160,6 @@ export class Table extends BaseComponent {
   /* flux helpers */
   onChangeGame() {
     const newState = GameStore.getState();
-    log(`onChangeGame: ${newState}`);
     this.setState({
       allPlayersBusted: newState.allPlayersBusted,
       allPlayersNonBusted: newState.allPlayersNonBusted,
@@ -182,16 +182,15 @@ export class Table extends BaseComponent {
   }
   onChangeDeck() {
     const newState = DeckStore.getState();
-    log(newState);
     this.setState({
       deck: newState.deck,
       selected: newState.selected,
-      draw: newState.drawn
+      drawn: newState.drawn,
+      playerHands: newState.playerHands
     });
   }
   onChangeControlPanel() {
     const newState = ControlPanelStore.getState();
-    log(`onChangeControlPanel: ${JSON.stringify(newState)}`);
     this.setState({
       isDeckVisible: newState.isDeckVisible,
       isDrawnVisible: newState.isDrawnVisible,
@@ -308,10 +307,7 @@ export class Table extends BaseComponent {
   }
 
   _bet(ev, target, playerIndex, amount) {
-    AppActions.bet(ev,
-      target,
-      playerIndex,
-      amount);
+    AppActions.bet(ev, target, playerIndex, amount);
   }
 
   _ante(
@@ -320,7 +316,7 @@ export class Table extends BaseComponent {
     pot = this.state.pot
   ) {
     AppActions.ante(amount, players, pot);
-    AppActions.showMessageBar(`Ante: $${amount}`, MessageBarType.info)
+    AppActions.showMessageBar(`Ante: $${amount}`, MessageBarType.info);
   }
 
   _payout(players, index, amount) {
@@ -366,7 +362,6 @@ export class Table extends BaseComponent {
     return (
       <div id="Table">
         <div className="ms-Grid">
-
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-sm12">
               {this.state.isMessageBarVisible &&
@@ -383,7 +378,9 @@ export class Table extends BaseComponent {
 
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-s12">
-              <p className="ms-font-xl">${this.state.pot}</p>
+              <p className="ms-font-xl">
+                ${this.state.pot}
+              </p>
             </div>
           </div>
 
@@ -395,12 +392,10 @@ export class Table extends BaseComponent {
             <div className="ms-Grid-col ms-u-sm6">
               {playersArray[1]}
             </div>
-
           </div>
 
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-sm12">
-
               {this.state.isDeckVisible &&
                 <DeckContainer
                   deck={this.state.deck.cards}
@@ -430,7 +425,6 @@ export class Table extends BaseComponent {
                   hidden={false}
                   isSelectable={false}
                 />}
-
             </div>
           </div>
 

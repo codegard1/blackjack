@@ -106,7 +106,7 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.DECK_NEWPLAYERHAND:
-      _newPlayerHand(action.playerId);
+      _newPlayerHand(action.id);
       DeckStore.emitChange();
       break;
 

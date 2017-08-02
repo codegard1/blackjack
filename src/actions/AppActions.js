@@ -8,10 +8,15 @@ export const AppActions = {
       players
     });
   },
-  newPlayer(title) {
+  newPlayer(id, title) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_NEWPLAYER,
+      id,
       title
+    });
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_NEWPLAYERHAND,
+      id
     });
   },
   showMessageBar(text, type) {
@@ -187,12 +192,6 @@ export const AppActions = {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_ANTE,
       amount, players, pot
-    });
-  },
-  newHand(playerId) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_NEWPLAYERHAND,
-      playerId
     });
   }
 

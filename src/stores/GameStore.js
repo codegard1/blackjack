@@ -154,16 +154,11 @@ AppDispatcher.register(action => {
 /*  ========================================================  */
 
 /* method definitions */
-function _newGame(playerTitles) {
-  playerTitles.forEach(title => {
-    players.push(_newPlayer(title));
+function _newGame(players) {
+  players.forEach(item => {
+    players.push(new Player(...item));
   });
   _evaluateGame(1);
-}
-
-function _newPlayer(title) {
-  const id = Counter.increment();
-  return new Player({ id, title });
 }
 
 function _evaluateHand(hand) {

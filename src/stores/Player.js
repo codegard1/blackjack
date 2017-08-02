@@ -1,6 +1,6 @@
 class Player {
-  constructor(title) {
-    this.id = "";
+  constructor(id, title) {
+    this.id = id;
     this.title = title;
     this.hand = [];
     this.handValue = { aceAsOne: 0, aceAsEleven: 0 };
