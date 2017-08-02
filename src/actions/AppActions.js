@@ -50,10 +50,16 @@ export const AppActions = {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_RESET
     });
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_CLEARHANDS
+    });
   },
   newRound() {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_NEWROUND
+    });
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_CLEARHANDS
     });
   },
   hideOptionsPanel() {
@@ -141,10 +147,10 @@ export const AppActions = {
       cardAttributes
     });
   },
-  clearHand(playerIndex) {
+  clearHand(playerId) {
     AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_CLEARHAND,
-      playerIndex
+      actionType: AppConstants.DECK_CLEARHAND,
+      playerId
     });
   },
   deal() {

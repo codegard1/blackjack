@@ -37,6 +37,11 @@ export class PlayerHand {
         }
         return this.handValue;
     }
+
+    clear() {
+        this.handValue = { aceAsOne: 0, aceAsEleven: 0 };
+        this.cards = [];
+    }
 }
 
 export default PlayerHand;

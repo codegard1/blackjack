@@ -4,7 +4,6 @@ export default keyMirror({
   /* Game */
   GAME_ANTE: null,
   GAME_BET: null,
-  GAME_CLEARHAND: null,
   GAME_DEAL: null,
   GAME_GETHIGHESTHANDVALUE: null,
   GAME_GETPLAYERBYID: null,
@@ -18,6 +17,8 @@ export default keyMirror({
   GAME_STAY: null,
 
   /* Deck */
+  DECK_CLEARHAND: null,
+  DECK_CLEARHANDS: null,
   DECK_DESELECT: null,
   DECK_DRAW: null,
   DECK_DRAWFROMBOTTOMOFDECK: null,

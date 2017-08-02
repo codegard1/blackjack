@@ -105,11 +105,6 @@ AppDispatcher.register(action => {
       GameStore.emitChange();
       break;
 
-    case AppConstants.GAME_CLEARHAND:
-      _clearHand(action.playerIndex);
-      GameStore.emitChange();
-      break;
-
     case AppConstants.GAME_DEAL:
       _deal();
       GameStore.emitChange();
@@ -127,6 +122,11 @@ AppDispatcher.register(action => {
 
     case AppConstants.GAME_BET:
       _bet(action.ev, action.target, action.playerIndex, action.amount);
+      GameStore.emitChange();
+      break;
+
+    case AppConstants.GAME_NEWROUND:
+      _newRound();
       GameStore.emitChange();
       break;
 
@@ -394,8 +394,7 @@ function _evaluatePlayers() {
 
 function _reset() {
   players.forEach((player, index) => {
-    player.remove("bank");
-    _clearHand(index);
+    player.remove("bank", "status", "turn");
   });
 
   gameStatus = 0;
@@ -407,7 +406,7 @@ function _reset() {
 
 function _newRound() {
   players.forEach((player, index) => {
-    _clearHand(index);
+    player.reset("status", "turn");
   });
 
   gameStatus = 0;
@@ -432,11 +431,6 @@ function _endGameTrap(statusCode) {
   if (statusCode > 2) {
     _evaluateGame(statusCode);
   }
-}
-
-/* clearHand is only called by other functions in GameStore */
-function _clearHand(playerIndex) {
-  players[playerIndex].remove("hand", "handValue", "status", "turn");
 }
 
 function _removeSelectedFromPlayerHand(playerIndex = currentPlayer, cards) {
