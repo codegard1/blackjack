@@ -129,6 +129,11 @@ AppDispatcher.register(action => {
       DeckStore.emitChange();
       break;
 
+    case AppConstants.DECK_REMOVESELECTEDFROMPLAYERHAND:
+      _removeSelectedFromPlayerHand(action.playerId, action.cards);
+      DeckStore.emitChange();
+      break;
+
     default:
       /* do nothing */
       break;
@@ -229,6 +234,17 @@ function _clearHand(playerId) {
 function _clearHands() {
   playerHands.forEach(hand => {
     hand.clear();
+  });
+}
+
+function _removeSelectedFromPlayerHand(playerId, cards) {
+  cards.forEach(card => {
+    const index = playerHands.indexOf(playerHands.find(player => player.id === playerId));
+
+    playerHands[index].findIndex(element => {
+      return element.suit === card.suit && card.sort === card.sort;
+    });
+    playerHands[index].splice(index, 1);
   });
 }
 

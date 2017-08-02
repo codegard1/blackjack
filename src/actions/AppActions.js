@@ -112,20 +112,20 @@ export const AppActions = {
   },
   putOnTopOfDeck(cards) {
     AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_PUTONBOTTOMOFDECK,
+      actionType: AppConstants.DECK_PUTONTOPOFDECK,
       cards
     });
   },
   putOnBottomOfDeck(cards) {
     AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_PUTONTOPOFDECK,
+      actionType: AppConstants.DECK_PUTONBOTTOMOFDECK,
       cards
     });
   },
-  removeSelectedFromPlayerHand(playerIndex, cards) {
+  removeSelectedFromPlayerHand(playerId, cards) {
     AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_REMOVESELECTEDFROMPLAYERHAND,
-      playerIndex,
+      actionType: AppConstants.DECK_REMOVESELECTEDFROMPLAYERHAND,
+      playerId,
       cards
     });
   },

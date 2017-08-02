@@ -12,7 +12,6 @@ export default keyMirror({
   GAME_NEWPLAYER: null,
   GAME_NEWROUND: null,
   GAME_PAYOUT: null,
-  GAME_REMOVESELECTEDFROMPLAYERHAND: null,
   GAME_RESET: null,
   GAME_STAY: null,
 
@@ -28,6 +27,7 @@ export default keyMirror({
   DECK_PUTONBOTTOMOFDECK: null,
   DECK_PUTONTOPOFDECK: null,
   DECK_REMOVESELECTEDFROMDRAWN: null,
+  DECK_REMOVESELECTEDFROMPLAYERHAND: null,
   DECK_RESET: null,
   DECK_SELECT: null,
   DECK_SHUFFLE: null,

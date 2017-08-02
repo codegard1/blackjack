@@ -67,7 +67,6 @@ export class Table extends BaseComponent {
     this._bind(
       "_deselect",
       "_removeSelectedFromDrawn",
-      "_removeSelectedFromPlayerHand",
       "_select"
     );
 
@@ -263,10 +262,6 @@ export class Table extends BaseComponent {
 
   _deselect(cardAttributes) {
     AppActions.deselect(cardAttributes);
-  }
-
-  _removeSelectedFromPlayerHand(playerIndex = this.state.currentPlayer, cards) {
-    AppActions.removeSelectedFromPlayerHand(playerIndex, cards);
   }
 
   _removeSelectedFromDrawn(cards) {

@@ -100,11 +100,6 @@ AppDispatcher.register(action => {
       GameStore.emitChange();
       break;
 
-    case AppConstants.GAME_REMOVESELECTEDFROMPLAYERHAND:
-      _removeSelectedFromPlayerHand(action.playerIndex, action.cards);
-      GameStore.emitChange();
-      break;
-
     case AppConstants.GAME_DEAL:
       _deal();
       GameStore.emitChange();
@@ -431,16 +426,6 @@ function _endGameTrap(statusCode) {
   if (statusCode > 2) {
     _evaluateGame(statusCode);
   }
-}
-
-function _removeSelectedFromPlayerHand(playerIndex = currentPlayer, cards) {
-  // const id = players[playerIndex].id;
-  cards.forEach(card => {
-    const index = players[playerIndex].hand.findIndex(element => {
-      return element.suit === card.suit && card.sort === card.sort;
-    });
-    players[playerIndex].hand.splice(index, 1);
-  });
 }
 
 function _deal() {
