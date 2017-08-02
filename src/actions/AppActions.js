@@ -170,7 +170,7 @@ export const AppActions = {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_HIT,
       ev, target, index
-    })
+    });
   },
   stay() {
     AppDispatcher.dispatch({
@@ -181,13 +181,19 @@ export const AppActions = {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_BET,
       ev, target, playerIndex, amount
-    })
+    });
   },
   ante(amount, players, pot) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_ANTE,
       amount, players, pot
-    })
+    });
+  },
+  newHand(playerId) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_NEWPLAYERHAND,
+      playerId
+    });
   }
 
 };

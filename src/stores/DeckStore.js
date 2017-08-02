@@ -4,10 +4,10 @@ import AppConstants from "../constants/AppConstants";
 
 import Shuffle, { PlayingCard } from "shuffle";
 import { log } from "../utils";
+import { PlayerHand } from './PlayerHand';
 
 /* state variables */
-let drawn = [], selected = [], deck = [];
-
+let drawn = [], selected = [], deck = [], playerHands = {};
 /*  ========================================================  */
 
 /* Data, Getter method, Event Notifier */
@@ -16,11 +16,17 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
   getDeck: function () {
     return deck;
   },
-  getSelected: function () {
-    return selected;
+  getSelected: function (playerId) {
+    return selected[playerId];
   },
-  getDrawn: function () {
-    return drawn;
+  getDrawn: function (playerId) {
+    return drawn[playerId];
+  },
+  getHand: function (playerId) {
+    return playerHands[playerId];
+  },
+  getHands: function () {
+    return playerHands;
   },
   getState: function () {
     return { deck, selected, drawn };
@@ -96,6 +102,11 @@ AppDispatcher.register(action => {
 
     case AppConstants.DECK_DESELECT:
       _deselect(action.cardAttributes);
+      DeckStore.emitChange();
+      break;
+
+    case AppConstants.DECK_NEWPLAYERHAND:
+      _newPlayerHand(action.playerId);
       DeckStore.emitChange();
       break;
 
@@ -185,6 +196,10 @@ function _deselect(cardAttributes) {
   );
   const index = selected.indexOf(toDelete);
   selected.splice(index, 1);
+}
+
+function _newPlayerHand(playerId) {
+  playerHands.push(new PlayerHand(playerId));
 }
 
 export default DeckStore;
