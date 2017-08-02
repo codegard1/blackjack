@@ -59,12 +59,6 @@ export const AppActions = {
       amount
     });
   },
-  evaluatePlayers(players) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_EVALUATEPLAYERS,
-      players
-    });
-  },
   reset() {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_RESET
