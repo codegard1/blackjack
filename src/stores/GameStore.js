@@ -175,9 +175,7 @@ function _evaluateGame(
           break;
       }
 
-      if (tieFlag) {
-        nextGameStatus = 6;
-      }
+      if (tieFlag) nextGameStatus = 6;
 
       turnCount++;
       gameStatus = nextGameStatus;
@@ -361,7 +359,7 @@ function _evaluatePlayers() {
 
 function _reset() {
   players.forEach(player => {
-    player.remove("bank", "status", "turn");
+    player.reset("bank", "status", "turn");
   });
 
   gameStatus = 0;
@@ -372,7 +370,7 @@ function _reset() {
 }
 
 function _newRound() {
-  players.forEach((player, index) => {
+  players.forEach(player => {
     player.reset("status", "turn");
   });
 
@@ -386,7 +384,7 @@ function _newRound() {
 function _ante(amount = minimumBet) {
   if (players && players.length > 0) {
     players.forEach(player => {
-      player.bank = player.bank - amount;
+      player.ante(amount);
       pot += amount;
     });
   }

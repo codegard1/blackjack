@@ -55,6 +55,9 @@ class Player {
       return higherHandValue;
     }
   }
+  ante(amount) {
+    this.bank -= amount;
+  }
 }
 
 export default Player;
