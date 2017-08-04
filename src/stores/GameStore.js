@@ -85,11 +85,6 @@ AppDispatcher.register(action => {
       GameStore.emitChange();
       break;
 
-    case AppConstants.GAME_GETHIGHESTHANDVALUE:
-      _getHighestHandValue(action.player);
-      GameStore.emitChange();
-      break;
-
     case AppConstants.GAME_PAYOUT:
       _payout(action.players, action.index, action.amount);
       GameStore.emitChange();
@@ -314,20 +309,6 @@ function _getPlayerById(id) {
   return player[0];
 }
 
-function _getHighestHandValue(playerIndex) {
-  const handValue = players[playerIndex].handValue;
-  let higherHandValue = 0;
-
-  if (handValue.aceAsEleven === handValue.aceAsOne) {
-    return handValue.aceAsOne;
-  } else {
-    higherHandValue = handValue.aceAsOne > handValue.aceAsEleven
-      ? handValue.aceAsOne
-      : handValue.aceAsEleven;
-    return higherHandValue;
-  }
-}
-
 function _payout(players, index = winningPlayerIndex, amount = pot) {
   players[index].status = D.winner;
   players[index].bank += amount;
@@ -339,24 +320,14 @@ function _evaluatePlayers() {
   if (players && players.length > 0) {
     players.forEach(player => {
       player.handValue = DeckStore.getHandValue(player.id);
-
-      /*   set busted status  */
-      if (player.handValue.aceAsOne > 21 && player.handValue.aceAsEleven > 21) {
-        player.status = D.busted;
-      }
-
-      /*   set blackjack status  */
-      if (
-        player.handValue.aceAsOne === 21 || player.handValue.aceAsEleven === 21
-      ) {
-        player.status = D.blackjack;
-      }
+      player.getHighestHandValue();
+      player.setStatus();
     });
 
     /*   STAYING PLAYERS  */
     stayingPlayers = players.filter(player => player.isStaying === true);
 
-    /*   BUSTED PLAYERS  */
+    /*   BUSTED PLAYERS   */
     bustedPlayers = players.filter(player => player.status === D.busted);
 
     /*   NON-BUSTED PLAYERS  */
@@ -375,8 +346,8 @@ function _evaluatePlayers() {
     if (nonBustedPlayers.length === 1) {
       nonBustedPlayers[0].status = D.winner;
     } else {
-      nonBustedPlayers.forEach((player, index) => {
-        let higherHandValue = _getHighestHandValue(index);
+      nonBustedPlayers.forEach(player => {
+        let higherHandValue = player.getHighestHandValue();
         if (higherHandValue > highestHandValue && higherHandValue <= 21) {
           highestHandValue = higherHandValue;
           winningPlayerId = player.id;
@@ -387,8 +358,9 @@ function _evaluatePlayers() {
   }
 }
 
+
 function _reset() {
-  players.forEach((player, index) => {
+  players.forEach(player => {
     player.remove("bank", "status", "turn");
   });
 
@@ -414,7 +386,7 @@ function _newRound() {
 function _ante(amount = minimumBet) {
   if (players && players.length > 0) {
     players.forEach(player => {
-      player.bank = player.bank + amount;
+      player.bank = player.bank - amount;
       pot += amount;
     });
   }

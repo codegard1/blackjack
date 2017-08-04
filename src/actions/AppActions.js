@@ -32,12 +32,6 @@ export const AppActions = {
       id
     });
   },
-  getHighestHandValue(player) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_GETHIGHESTHANDVALUE,
-      player
-    });
-  },
   payout(players, index, amount) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_PAYOUT,
