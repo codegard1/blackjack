@@ -160,8 +160,8 @@ export class Table extends BaseComponent {
     const newState = GameStore.getState();
     newState.players.forEach(player => {
       player.hand = DeckStore.getHand(player.id);
-      // console.log(`getHand: ${player.id} ${JSON.stringify(DeckStore.getHand(player.id))}`);
-      console.log(`player state update: ${player.id} - ${player.title}: ${JSON.stringify(player.hand)}`);
+      console.log(`getHand: ${player.id} ${JSON.stringify(DeckStore.getHand(player.id))}`);
+      // console.log(`player state update: ${player.id} - ${player.title}: ${JSON.stringify(player.hand)}`);
     });
     this.setState({
       allPlayersBusted: newState.allPlayersBusted,
@@ -322,7 +322,7 @@ export class Table extends BaseComponent {
 
   render() {
     const playersArray = this.state.players.map((player, index) => {
-      console.log(`Table Render()  player.hand: ${JSON.stringify(player.hand)}`);
+      // console.log(`Table Render()  player.hand: ${JSON.stringify(player.hand)}`);
 
       /* if player.hand is undefined then set it to [] */
       player.hand = player.hand ? player.hand : [];

@@ -323,9 +323,11 @@ function _getPlayerById(id) {
 }
 
 function _payout(players, index = winningPlayerIndex, amount = pot) {
-  players[index].status = D.winner;
-  players[index].bank += amount;
-  pot = 0;
+  if (players && players.length > 0) {
+    players[index].status = D.winner;
+    players[index].bank += amount;
+    pot = 0;
+  }
 }
 
 function _evaluatePlayers() {

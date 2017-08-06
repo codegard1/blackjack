@@ -6,6 +6,7 @@ export class PlayerHand {
     }
     evaluate() {
         if (this.hand.length > 0) {
+            this.handValue = { aceAsOne: 0, aceAsEleven: 0 };
             this.hand.forEach(card => {
                 switch (card.sort) {
                     case 14: /* Ace */

@@ -225,7 +225,7 @@ function _deselect(cardAttributes) {
 
 function _newPlayerHand(playerId) {
   const p = new PlayerHand(playerId);
-  console.log(`DeckStore::newPlayerHand ${JSON.stringify(p)}`);
+  // console.log(`DeckStore::newPlayerHand ${JSON.stringify(p)}`);
   playerHands.push(new PlayerHand(playerId));
 }
 
@@ -250,7 +250,7 @@ function _deal() {
   playerHands.forEach(player => {
     player.hand = _draw(2);
     player.evaluate();
-    console.log(`DeckStore::Deal  player ${player.id}'s hand: ${JSON.stringify(player.hand)}`);
+    // console.log(`DeckStore::Deal  player ${player.id}'s hand: ${JSON.stringify(player.hand)}`);
   });
 }
 
