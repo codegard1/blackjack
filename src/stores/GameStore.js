@@ -6,6 +6,7 @@ import { log } from "../utils";
 // import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 import * as D from "../definitions";
 import Player from "./Player";
+import { Counter } from '../utils';
 
 /* "state" variables */
 let allPlayersStaying = false,
@@ -80,6 +81,11 @@ AppDispatcher.register(action => {
       GameStore.emitChange();
       break;
 
+    case AppConstants.GAME_NEWPLAYER:
+      _newPlayer(action.id, action.title)
+      GameStore.emitChange();
+      break;
+
     case AppConstants.GAME_GETPLAYERBYID:
       _getPlayerById(action.id);
       GameStore.emitChange();
@@ -130,9 +136,15 @@ AppDispatcher.register(action => {
 /* method definitions */
 function _newGame(items) {
   items.forEach(item => {
-    players.push(new Player(item.id, item.title));
+    _newPlayer(item.id, item.title);
   });
-  _evaluateGame(1);
+  // _evaluateGame(1);
+}
+
+function _newPlayer(id, title) {
+  players.push(
+    new Player(id, title)
+  );
 }
 
 function _evaluateGame(

@@ -9,11 +9,13 @@ export const AppActions = {
     });
   },
   newPlayer(id, title) {
+    /* add a new Player to the players array */
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_NEWPLAYER,
       id,
       title
     });
+    /* create a deck for the new player */
     AppDispatcher.dispatch({
       actionType: AppConstants.DECK_NEWPLAYERHAND,
       id
@@ -143,10 +145,10 @@ export const AppActions = {
   },
   deal() {
     AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_DEAL
+      actionType: AppConstants.DECK_DEAL
     });
     AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_DEAL
+      actionType: AppConstants.GAME_DEAL
     });
   },
   hit(ev, target, index) {

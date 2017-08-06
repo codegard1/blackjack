@@ -139,9 +139,14 @@ export class Table extends BaseComponent {
     DeckStore.addChangeListener(this.onChangeDeck);
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
 
+    /* start a new game with these players */
     const players = [{ id: 1, title: "Chris" }, { id: 2, title: "Dealer" }];
     AppActions.newDeck();
-    AppActions.newGame(players);
+    players.forEach(player => {
+      AppActions.newPlayer(player.id, player.title);
+    });
+
+    // AppActions.newGame(players);
   }
 
   componentWillUnmount() {
