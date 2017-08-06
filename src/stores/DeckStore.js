@@ -23,7 +23,8 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
     return drawn.find(item => item.id === playerId);
   },
   getHand: function (playerId) {
-    return playerHands.find(item => item.id === playerId);
+    const ret = playerHands.find(item => item.id === playerId);
+    return ret.hand;
   },
   getHands: function () {
     return playerHands;
@@ -31,7 +32,7 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
   getHandValue: function (playerId) {
     if (playerHands.length > 0) {
       let index = playerHands.indexOf(playerHands.find(player => player.id === playerId));
-      console.log(playerHands[index]);
+      // console.log(`getHandValue: playerHands[index]`);
       return playerHands[index].evaluate();
     } else {
       return { aceAsOne: 0, AceAsEvelen: 0 }
@@ -180,7 +181,7 @@ function _reset() {
 
 function _draw(num) {
   const ret = deck.draw(num);
-  drawn.push(ret);
+  ret.forEach(item => drawn.push(item));
   return ret;
 }
 
@@ -223,6 +224,8 @@ function _deselect(cardAttributes) {
 }
 
 function _newPlayerHand(playerId) {
+  const p = new PlayerHand(playerId);
+  console.log(`DeckStore::newPlayerHand ${JSON.stringify(p)}`);
   playerHands.push(new PlayerHand(playerId));
 }
 
@@ -246,6 +249,8 @@ function _removeSelectedFromPlayerHand(playerId, cards) {
 function _deal() {
   playerHands.forEach(player => {
     player.hand = _draw(2);
+    player.evaluate();
+    console.log(`DeckStore::Deal  player ${player.id}'s hand: ${JSON.stringify(player.hand)}`);
   });
 }
 

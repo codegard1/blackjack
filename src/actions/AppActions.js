@@ -9,16 +9,16 @@ export const AppActions = {
     });
   },
   newPlayer(id, title) {
+    /* create a deck for the new player */
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_NEWPLAYERHAND,
+      id
+    });
     /* add a new Player to the players array */
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_NEWPLAYER,
       id,
       title
-    });
-    /* create a deck for the new player */
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_NEWPLAYERHAND,
-      id
     });
   },
   showMessageBar(text, type) {

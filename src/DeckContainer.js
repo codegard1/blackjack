@@ -17,7 +17,7 @@ export class DeckContainer extends BaseComponent {
     };
 
     /* bind private methods */
-    this._bind('_toggleDeck','_toggleStatusCallout');
+    this._bind('_toggleDeck', '_toggleStatusCallout');
   }
 
   componentWillMount() {
@@ -46,32 +46,32 @@ export class DeckContainer extends BaseComponent {
     };
 
     // Create CardContainers to display cards
-    const childElements = this.props.deck
+    const childElements = this.props.deck && this.props.deck.length > 0
       ? this.props.deck.map(card => {
-          return (
-            <CardContainer
-              key={card.suit + "-" + card.description}
-              {...card}
-              select={this.props.select}
-              deselect={this.props.deselect}
-              isSelectable={this.props.isSelectable}
-            />
-          );
-        })
+        return (
+          <CardContainer
+            key={card.suit + "-" + card.description}
+            {...card}
+            select={this.props.select}
+            deselect={this.props.deselect}
+            isSelectable={this.props.isSelectable}
+          />
+        );
+      })
       : undefined;
 
     // Set toggle icon for Deck titles
     const toggleIcon = this.state.deckIsVisible
       ? <i
-          className="ms-Icon ms-Icon--ChevronDown"
-          aria-hidden="true"
-          onClick={this._toggleDeck}
-        />
+        className="ms-Icon ms-Icon--ChevronDown"
+        aria-hidden="true"
+        onClick={this._toggleDeck}
+      />
       : <i
-          className="ms-Icon ms-Icon--ChevronUp"
-          aria-hidden="true"
-          onClick={this._toggleDeck}
-        />;
+        className="ms-Icon ms-Icon--ChevronUp"
+        aria-hidden="true"
+        onClick={this._toggleDeck}
+      />;
 
     let style = this.props.player && this.props.player.turn
       ? "DeckContainer selected "
@@ -87,23 +87,23 @@ export class DeckContainer extends BaseComponent {
 
     const titleBar =
       this.props.player
-      ? 
-      (<span>
-        {this.props.player.title}{" "}
-        {` ($${this.props.player.bank}) `}{" "}
-        Hand Value: {this.props.handValue.aceAsOne}
-        {this.props.handValue.aceAsOne !== this.props.handValue.aceAsEleven &&
-          " / " + this.props.handValue.aceAsEleven}
-        {" "}
-        <i
-          className="ms-Icon ms-Icon--Info"
-          onClick={this._toggleStatusCallout}
-          ref={calloutTarget => this._statusCalloutTarget = calloutTarget}
-        />
-</span>)
-: (
-  <span>{this.props.title}</span>
-);
+        ?
+        (<span>
+          {this.props.player.title}{" "}
+          {` ($${this.props.player.bank}) `}{" "}
+          Hand Value: {this.props.handValue.aceAsOne}
+          {this.props.handValue.aceAsOne !== this.props.handValue.aceAsEleven &&
+            " / " + this.props.handValue.aceAsEleven}
+          {" "}
+          <i
+            className="ms-Icon ms-Icon--Info"
+            onClick={this._toggleStatusCallout}
+            ref={calloutTarget => this._statusCalloutTarget = calloutTarget}
+          />
+        </span>)
+        : (
+          <span>{this.props.title}</span>
+        );
 
     return (
       <div className={style}>

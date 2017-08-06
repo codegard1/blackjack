@@ -142,9 +142,12 @@ function _newGame(items) {
 }
 
 function _newPlayer(id, title) {
+  const p = new Player(id, title);
+  // console.log(`new Player: ${JSON.stringify(p)}`);
   players.push(
     new Player(id, title)
   );
+  // console.log(`players after push: ${players}`);
 }
 
 function _evaluateGame(
