@@ -10,6 +10,7 @@ export const AppActions = {
   },
   newPlayer(id, title) {
     /* create a deck for the new player */
+    /* this must happen first, because GAME_NEWPLAYER depends on a playerHand being available */
     AppDispatcher.dispatch({
       actionType: AppConstants.DECK_NEWPLAYERHAND,
       id
@@ -151,10 +152,10 @@ export const AppActions = {
       actionType: AppConstants.GAME_DEAL
     });
   },
-  hit(ev, target, index) {
+  hit(ev, target) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_HIT,
-      ev, target, index
+      ev, target
     });
   },
   stay() {

@@ -233,8 +233,9 @@ export class Table extends BaseComponent {
     AppActions.deal();
   }
 
-  _hit(ev, target, index) {
-    AppActions.hit(ev, target, index);
+  _hit(ev, target) {
+    console.log(ev, target);
+    AppActions.hit(ev, target);
   }
 
   _stay() {

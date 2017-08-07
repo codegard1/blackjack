@@ -6,7 +6,7 @@ import { log } from "../utils";
 // import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 import * as D from "../definitions";
 import Player from "./Player";
-import { Counter } from '../utils';
+// import { Counter } from '../utils';
 
 /* "state" variables */
 let allPlayersStaying = false,
@@ -107,7 +107,7 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.GAME_HIT:
-      _hit(action.ev, action.target, action.index);
+      _hit(action.ev, action.target);
       GameStore.emitChange();
       break;
 
@@ -142,12 +142,9 @@ function _newGame(items) {
 }
 
 function _newPlayer(id, title) {
-  const p = new Player(id, title);
-  // console.log(`new Player: ${JSON.stringify(p)}`);
   players.push(
     new Player(id, title)
   );
-  // console.log(`players after push: ${players}`);
 }
 
 function _evaluateGame(
@@ -422,7 +419,7 @@ function _deal() {
 
 function _hit(ev, target, index = currentPlayer) {
   /* todo: fix this so that the call goes directly to DeckStore from Table */
-  const ret = DeckStore.draw(1);
+  const ret = DeckStore.draw(1, players[index].id);
   players[index].hand.push(ret);
 
   _evaluateGame(1);

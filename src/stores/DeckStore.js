@@ -29,6 +29,13 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
   getHands: function () {
     return playerHands;
   },
+  /* this is a cheat so that I can draw cards from GameStore */
+  draw: function (num, id) {
+    const index = playerHands.indexOf(playerHands.filter(player => player.id === id));
+    const ret = _draw(num);
+    if (playerHands[index]) { playerHands[index].push(ret) }
+    return ret;
+  },
   getHandValue: function (playerId) {
     if (playerHands.length > 0) {
       let index = playerHands.indexOf(playerHands.find(player => player.id === playerId));
@@ -181,7 +188,11 @@ function _reset() {
 
 function _draw(num) {
   const ret = deck.draw(num);
-  ret.forEach(item => drawn.push(item));
+  if (ret.length) {
+    ret.forEach(item => drawn.push(item));
+  } else {
+    drawn.push(ret);
+  }
   return ret;
 }
 
