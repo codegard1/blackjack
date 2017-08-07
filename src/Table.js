@@ -110,7 +110,7 @@ export class Table extends BaseComponent {
       bet: this._bet,
       stay: this._stay,
       draw: this._draw,
-      reset: this._reset,
+      reset: AppActions.reset,
       shuffle: this._shuffle,
       putOnBottomOfDeck: this._putOnBottomOfDeck,
       putOnTopOfDeck: this._putOnTopOfDeck,
@@ -159,7 +159,8 @@ export class Table extends BaseComponent {
   onChangeGame() {
     const newState = GameStore.getState();
     newState.players.forEach(player => {
-      player.hand = DeckStore.getHand(player.id);
+      const newHand = DeckStore.getHand(player.id);
+      player.hand = newHand;
       console.log(`getHand: ${player.id} ${JSON.stringify(DeckStore.getHand(player.id))}`);
       // console.log(`player state update: ${player.id} - ${player.title}: ${JSON.stringify(player.hand)}`);
     });

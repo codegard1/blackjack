@@ -45,10 +45,10 @@ export const AppActions = {
   },
   reset() {
     AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_RESET
+      actionType: AppConstants.DECK_CLEARHANDS
     });
     AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_CLEARHANDS
+      actionType: AppConstants.GAME_RESET
     });
   },
   newRound() {
