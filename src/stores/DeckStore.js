@@ -2,9 +2,10 @@ import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
-import Shuffle, { PlayingCard } from "shuffle";
+import Shuffle from "shuffle";
 import { log } from "../utils";
 import { PlayerHand } from './PlayerHand';
+import {PlayingCard} from './PlayingCard';
 
 /* state variables */
 let drawn = [], selected = [], deck = [], playerHands = [];
@@ -214,7 +215,7 @@ function _removeSelectedFromDrawn(cards = selected) {
 }
 
 function _select(cardAttributes) {
-  // log(cardAttributes);
+   log(cardAttributes);
 
   const selectedCard = new PlayingCard(
     cardAttributes.suit,
@@ -222,7 +223,7 @@ function _select(cardAttributes) {
     cardAttributes.sort
   );
 
-  selected.push(selectedCard);
+  //selected.push(selectedCard);
 }
 
 function _deselect(cardAttributes) {
