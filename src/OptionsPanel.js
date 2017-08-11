@@ -27,16 +27,17 @@ export function OptionsPanel(props) {
       </CommandButton>
 
       <Toggle
-        defaultChecked={true}
+        checked={props.isDeckVisible}
         label="Show Deck"
         onAriaLabel="The deck is visible. Pres to hide it."
         offAriaLabel="The deck is not visible. Press to show it."
         onText="On"
         offText="Off"
         onChanged={checked => props.toggleDeckVisibility(checked)}
+        value
       />
       <Toggle
-        defaultChecked={false}
+        checked={props.isDrawnVisible}
         label="Show Drawn"
         onAriaLabel="The Drawn cards are visible. Pres to hide it."
         offAriaLabel="The Drawn cards are not visible. Press to show it."
@@ -45,7 +46,7 @@ export function OptionsPanel(props) {
         onChanged={checked => props.toggleDrawnVisibility(checked)}
       />
       <Toggle
-        defaultChecked={false}
+        checked={props.isSelectedVisible}
         label="Show Selected"
         onAriaLabel="The Selected cards are visible. Pres to hide it."
         offAriaLabel="The Selected cards are not visible. Press to show it."
@@ -58,7 +59,10 @@ export function OptionsPanel(props) {
 }
 
 OptionsPanel.propTypes = {
-  isOptionsPanelVisible: T.bool.isRequired, 
+  isOptionsPanelVisible: T.bool.isRequired,
+  isDeckVisible: T.bool.isRequired,
+  isDrawnVisible: T.bool.isRequired,
+  isSelectedVisible: T.bool.isRequired,
   toggleDeckVisibility: T.func,
   toggleSelectedVisibility: T.func,
   toggleDrawnVisibility: T.func,

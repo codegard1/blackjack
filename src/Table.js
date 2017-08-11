@@ -57,8 +57,8 @@ export class Table extends BaseComponent {
       winningPlayerIndex: -1,
       // ControlPanelStore
       isDeckVisible: true,
-      isDrawnVisible: false,
-      isSelectedVisible: false,
+      isDrawnVisible: true,
+      isSelectedVisible: true,
       isMessageBarVisible: false,
       isOptionsPanelVisible: false
     };
@@ -429,6 +429,9 @@ export class Table extends BaseComponent {
 
           <OptionsPanel
             isOptionsPanelVisible={this.state.isOptionsPanelVisible}
+            isDeckVisible={this.state.isDeckVisible}
+            isDrawnVisible={this.state.isDrawnVisible}
+            isSelectedVisible={this.state.isSelectedVisible}
             {...this.OptionsPanelMethods}
           />
         </div>
