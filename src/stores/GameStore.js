@@ -2,11 +2,12 @@ import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 import { DeckStore } from "./DeckStore";
+import { ControlPanelStore } from './ControlPanelStore';
 import { log } from "../utils";
-// import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
+import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 import * as D from "../definitions";
 import Player from "./Player";
-// import { Counter } from '../utils';
+
 
 /* "state" variables */
 let allPlayersStaying = false,
@@ -160,11 +161,11 @@ function _evaluateGame(
 
   switch (nextGameStatus) {
     case 0 /*  Off  */:
-      // _showMessageBar("Hello", MessageBarType.info);
+      ControlPanelStore.setMessageBar("Hello");
       break;
 
     case 1 /*   Game in progress  */:
-      // _showMessageBar("Game in progress", MessageBarType.info);
+      ControlPanelStore.setMessageBar("Game in progress");
 
       /*   all players bet the minimum to start  */
       if (turnCount === 0) {
@@ -197,7 +198,7 @@ function _evaluateGame(
       break;
 
     case 2 /*   stay (go to next turn)  */:
-      // _showMessageBar(`${players[currentPlayerIndex].title} stayed`);
+      ControlPanelStore.setMessageBar(`${players[currentPlayerIndex].title} stayed`);
 
       /*   set current player as staying  */
       players[currentPlayerIndex].status = D.staying;
@@ -242,11 +243,11 @@ function _evaluateGame(
       break;
 
     case 3 /*   currentPlayer busted  */:
-      // let messageText = allPlayersBusted
-      //   ? `All players busted!`
-      //   : `${this.state.players[this.state.currentPlayer].title} busted!`;
+      let messageText = allPlayersBusted
+        ? `All players busted!`
+        : `${players[currentPlayer].title} busted!`;
 
-      // _showMessageBar(messageText, MessageBarType.warning);
+      ControlPanelStore.setMessageBar(messageText, MessageBarType.warning);
       nextGameStatus = 0;
 
       /*   don't do engame unless all players are staying and not busted  */
@@ -259,8 +260,8 @@ function _evaluateGame(
       break;
 
     case 4 /*   currentPlayer Wins  */:
-      // const winningPlayerTitle = players[winningPlayerIndex].title;
-      // _showMessageBar(`${winningPlayerTitle} wins!`, MessageBarType.success);
+      const winningPlayerTitle = players[winningPlayerIndex].title;
+      ControlPanelStore.setMessageBar(`${winningPlayerTitle} wins!`, MessageBarType.success);
       nextGameStatus = 0;
 
       /*   don't do payout unless all players are staying and not busted  */
@@ -273,7 +274,7 @@ function _evaluateGame(
       break;
 
     case 5 /*   human player blackjack  */:
-      // _showMessageBar("Blackjack!", MessageBarType.success);
+      ControlPanelStore.setMessageBar("Blackjack!", MessageBarType.success);
       nextGameStatus = 0;
 
       /*   don't do payout unless all players are staying and not busted  */
@@ -286,7 +287,7 @@ function _evaluateGame(
       break;
 
     case 6 /*   tie  */:
-      // _showMessageBar("Tie?", MessageBarType.warning);
+      ControlPanelStore.setMessageBar("Tie?", MessageBarType.warning);
       nextGameStatus = 0;
 
       /*   don't do payout unless all players are staying and not busted  */
@@ -295,7 +296,7 @@ function _evaluateGame(
       break;
 
     case 7 /*   non-human player wins  */:
-      // _showMessageBar(`${players[1].title} wins!`);
+      ControlPanelStore.setMessageBar(`${players[1].title} wins!`);
 
       nextGameStatus = 0;
 
@@ -402,7 +403,7 @@ function _ante(amount = minimumBet) {
       pot += amount;
     });
   }
-  // _showMessageBar(`Ante: $${amount}`, MessageBarType.info);
+  ControlPanelStore.setMessageBar(`Ante: $${amount}`);
 }
 
 /*   immediately evaluate game again if status > 2 (endgame condition)  */

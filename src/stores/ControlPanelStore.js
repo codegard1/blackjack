@@ -25,16 +25,21 @@ let state = {
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "controlPanel";
 export const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
-  getState: function() {
+  getState: function () {
     return state;
   },
-  emitChange: function() {
+  /* This is redundant with AppActions.showMessageBar */
+  setMessageBar: function (text, type) {
+    _showMessageBar(text, type);
+    this.emitChange(CHANGE_EVENT);
+  },
+  emitChange: function () {
     this.emit(CHANGE_EVENT);
   },
-  addChangeListener: function(callback) {
+  addChangeListener: function (callback) {
     this.on(CHANGE_EVENT, callback);
   },
-  removeChangeListener: function(callback) {
+  removeChangeListener: function (callback) {
     this.removeListener(CHANGE_EVENT, callback);
   }
 });
@@ -58,7 +63,7 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.CONTROLPANEL_SHOWMESSAGEBAR:
-      _showMessageBar(action.title, action.type);
+      _showMessageBar(action.text, action.type);
       ControlPanelStore.emitChange();
       break;
 

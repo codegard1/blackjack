@@ -82,7 +82,6 @@ export class Table extends BaseComponent {
       "_putOnBottomOfDeck",
       "_putOnTopOfDeck",
       "_reset",
-      "_showMessageBar",
       "_showOptionsPanel",
       "_shuffle",
       "_stay",
@@ -161,7 +160,7 @@ export class Table extends BaseComponent {
     newState.players.forEach(player => {
       const newHand = DeckStore.getHand(player.id);
       player.hand = newHand;
-      console.log(`getHand: ${player.id} ${JSON.stringify(DeckStore.getHand(player.id))}`);
+      // console.log(`getHand: ${player.id} ${JSON.stringify(DeckStore.getHand(player.id))}`);
       // console.log(`player state update: ${player.id} - ${player.title}: ${JSON.stringify(player.hand)}`);
     });
     this.setState({
@@ -271,10 +270,6 @@ export class Table extends BaseComponent {
 
   _removeSelectedFromDrawn(cards) {
     AppActions.removeSelectedFromDrawn(cards);
-  }
-
-  _showMessageBar(text, type) {
-    AppActions.showMessageBar(text, type);
   }
 
   _toggleDeckVisibility(bool) {
