@@ -217,13 +217,12 @@ function _removeSelectedFromDrawn(cards = selected) {
 function _select(cardAttributes) {
    log(cardAttributes);
 
-  const selectedCard = new PlayingCard(
+  selected.push(
+    new PlayingCard(
     cardAttributes.suit,
     cardAttributes.description,
     cardAttributes.sort
-  );
-
-  //selected.push(selectedCard);
+  ));
 }
 
 function _deselect(cardAttributes) {

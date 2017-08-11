@@ -35,7 +35,7 @@ export class CardContainer extends BaseComponent {
   }
 
   render() {
-    const short = this.props.toString();
+    const short = this.props.description + " of " + this.props.suit + "s";
     let cardTitle = "";
     switch (this.props.sort) {
       case 14:
