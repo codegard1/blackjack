@@ -13,7 +13,7 @@ class Player {
     this.lastAction = "none";
     this.isStaying = false;
   }
-  remove(key) {
+  remove(...keys) {
     const defaults = {
       id: "",
       title: "",
@@ -26,11 +26,9 @@ class Player {
       lastAction: "none",
       isStaying: false
     };
-    this[key] = defaults[key];
+    keys.forEach(key => { this[key] = defaults[key]; });
   }
-  reset(key) {
-    this.remove(key);
-  }
+  reset(...keys) { this.remove(...keys); }
   setStatus() {
     /*   set busted status  */
     if (this.handValue.aceAsOne > 21 && this.handValue.aceAsEleven > 21) {
