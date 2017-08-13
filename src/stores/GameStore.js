@@ -15,7 +15,6 @@ let allPlayersStaying = false,
   allPlayersNonBusted = false,
   bustedPlayers = [],
   stayingPlayers = [],
-  currentPlayer = 0, /* redundant with currentPlayerIndex */
   currentPlayerIndex = 0,
   gameStatus = 0,
   highestHandValue = 0,
