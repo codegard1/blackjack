@@ -87,11 +87,6 @@ AppDispatcher.register(action => {
       GameStore.emitChange();
       break;
 
-    case AppConstants.GAME_PAYOUT:
-      _payout(action.players, action.index, action.amount);
-      GameStore.emitChange();
-      break;
-
     case AppConstants.GAME_RESET:
       _reset();
       GameStore.emitChange();

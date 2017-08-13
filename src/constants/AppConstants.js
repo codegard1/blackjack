@@ -9,7 +9,6 @@ export default keyMirror({
   GAME_NEWGAME: null,
   GAME_NEWPLAYER: null,
   GAME_NEWROUND: null,
-  GAME_PAYOUT: null,
   GAME_RESET: null,
   GAME_STAY: null,
 
