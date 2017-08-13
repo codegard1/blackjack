@@ -2,10 +2,10 @@ import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
-import Shuffle from "shuffle";
+import { Shuffle } from "shuffle";
 import { log } from "../utils";
 import { PlayerHand } from './PlayerHand';
-import {PlayingCard} from './PlayingCard';
+import { PlayingCard } from 'shuffle/lib/playingCard';
 
 /* state variables */
 let drawn = [], selected = [], deck = [], playerHands = [];
@@ -153,7 +153,8 @@ AppDispatcher.register(action => {
 
 /* method definitions */
 function _newDeck() {
-  deck = Shuffle.shuffle();
+  /* returns a new Deck populated with PlayingCards */
+  deck = new Shuffle();
   selected = [];
   drawn = [];
 }
@@ -215,14 +216,14 @@ function _removeSelectedFromDrawn(cards = selected) {
 }
 
 function _select(cardAttributes) {
-   log(cardAttributes);
+  log(cardAttributes);
 
   selected.push(
     new PlayingCard(
-    cardAttributes.suit,
-    cardAttributes.description,
-    cardAttributes.sort
-  ));
+      cardAttributes.suit,
+      cardAttributes.description,
+      cardAttributes.sort
+    ));
 }
 
 function _deselect(cardAttributes) {
@@ -235,8 +236,6 @@ function _deselect(cardAttributes) {
 }
 
 function _newPlayerHand(playerId) {
-  const p = new PlayerHand(playerId);
-  // console.log(`DeckStore::newPlayerHand ${JSON.stringify(p)}`);
   playerHands.push(new PlayerHand(playerId));
 }
 
