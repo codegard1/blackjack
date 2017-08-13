@@ -95,7 +95,6 @@ export class Table extends BaseComponent {
       "_evaluateGame",
       "_evaluatePlayers",
       "_newRound",
-      "_payout",
       "_resetGame"
     );
 
@@ -306,10 +305,6 @@ export class Table extends BaseComponent {
   ) {
     AppActions.ante(amount, players, pot);
     AppActions.showMessageBar(`Ante: $${amount}`, MessageBarType.info);
-  }
-
-  _payout(players, index, amount) {
-    AppActions.payout(players, index, amount);
   }
 
   /* show the Options Panel */
