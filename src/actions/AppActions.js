@@ -29,14 +29,6 @@ export const AppActions = {
       type
     });
   },
-  payout(players, index, amount) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_PAYOUT,
-      players,
-      index,
-      amount
-    });
-  },
   reset() {
     AppDispatcher.dispatch({
       actionType: AppConstants.DECK_CLEARHANDS
