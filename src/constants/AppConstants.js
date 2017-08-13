@@ -5,7 +5,6 @@ export default keyMirror({
   GAME_ANTE: null,
   GAME_BET: null,
   GAME_DEAL: null,
-  GAME_GETPLAYERBYID: null,
   GAME_HIT: null,
   GAME_NEWGAME: null,
   GAME_NEWPLAYER: null,

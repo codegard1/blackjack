@@ -7,6 +7,7 @@ import { log } from "../utils";
 import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 import * as D from "../definitions";
 import Player from "./Player";
+// import Players from './Players';
 
 
 /* "state" variables */
@@ -83,11 +84,6 @@ AppDispatcher.register(action => {
 
     case AppConstants.GAME_NEWPLAYER:
       _newPlayer(action.id, action.title)
-      GameStore.emitChange();
-      break;
-
-    case AppConstants.GAME_GETPLAYERBYID:
-      _getPlayerById(action.id);
       GameStore.emitChange();
       break;
 
@@ -313,12 +309,6 @@ function _evaluateGame(
     default:
       break;
   }
-}
-
-/* this function is redundant with GameStore.getPlayer */
-function _getPlayerById(id) {
-  const player = players.find(player => player.id === id);
-  return player[0];
 }
 
 function _payout(players, index = winningPlayerIndex, amount = pot) {

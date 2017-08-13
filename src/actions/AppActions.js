@@ -29,12 +29,6 @@ export const AppActions = {
       type
     });
   },
-  getPlayerById(id) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_GETPLAYERBYID,
-      id
-    });
-  },
   payout(players, index, amount) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_PAYOUT,
