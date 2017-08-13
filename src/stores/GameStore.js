@@ -15,7 +15,7 @@ let allPlayersStaying = false,
   allPlayersNonBusted = false,
   bustedPlayers = [],
   stayingPlayers = [],
-  currentPlayer = 0,
+  currentPlayer = 0, /* redundant with currentPlayerIndex */
   currentPlayerIndex = 0,
   gameStatus = 0,
   highestHandValue = 0,
@@ -44,7 +44,7 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
       allPlayersBusted,
       allPlayersNonBusted,
       bustedPlayers,
-      currentPlayer,
+      currentPlayer: currentPlayerIndex,
       currentPlayerIndex,
       gameStatus,
       highestHandValue,
@@ -150,7 +150,7 @@ function _newPlayer(id, title) {
 
 function _evaluateGame(
   nextGameStatus = gameStatus,
-  nextPlayer = currentPlayer
+  nextPlayer = currentPlayerIndex
 ) {
   /*   set player status, handValue, and other flags  */
   _evaluatePlayers();
@@ -192,7 +192,7 @@ function _evaluateGame(
 
       turnCount++;
       gameStatus = nextGameStatus;
-      currentPlayer = nextPlayer;
+      currentPlayerIndex = nextPlayer;
 
       _endGameTrap(nextGameStatus);
       break;
@@ -203,6 +203,7 @@ function _evaluateGame(
       /*   set current player as staying  */
       players[currentPlayerIndex].status = D.staying;
       players[currentPlayerIndex].isStaying = true;
+      players[currentPlayerIndex].turn = false;
 
       /*   get the next player by index  */
       const nextPlayerIndex = currentPlayerIndex + 1 === players.length
@@ -237,7 +238,8 @@ function _evaluateGame(
 
       turnCount++;
       gameStatus = nextGameStatus;
-      currentPlayer = nextPlayer;
+      //currentPlayer = nextPlayer;
+      currentPlayerIndex = nextPlayer;
 
       _endGameTrap(nextGameStatus);
       break;
@@ -245,7 +247,7 @@ function _evaluateGame(
     case 3 /*   currentPlayer busted  */:
       let messageText = allPlayersBusted
         ? `All players busted!`
-        : `${players[currentPlayer].title} busted!`;
+        : `${players[currentPlayerIndex].title} busted!`;
 
       ControlPanelStore.setMessageBar(messageText, MessageBarType.warning);
       nextGameStatus = 0;
@@ -379,7 +381,7 @@ function _reset() {
 
   gameStatus = 0;
   turnCount = 0;
-  currentPlayer = 0;
+  currentPlayerIndex = 0;
   round = 0;
   pot = 0;
 }
@@ -391,7 +393,7 @@ function _newRound() {
 
   gameStatus = 0;
   turnCount = 0;
-  currentPlayer = 0;
+  currentPlayerIndex = 0;
   round += 1;
   pot = 0;
 }
@@ -414,11 +416,11 @@ function _endGameTrap(statusCode) {
 }
 
 function _deal() {
-  players[currentPlayer].turn = true;
+  players[currentPlayerIndex].turn = true;
   _evaluateGame(1);
 }
 
-function _hit(ev, target, index = currentPlayer) {
+function _hit(ev, target, index = currentPlayerIndex) {
   /* todo: fix this so that the call goes directly to DeckStore from Table */
   const ret = DeckStore.draw(1, players[index].id);
   players[index].hand.push(ret);
@@ -431,7 +433,7 @@ function _stay() {
 }
 
 function _bet(
-  ev, target, playerIndex = currentPlayer, amount = minimumBet
+  ev, target, playerIndex = currentPlayerIndex, amount = minimumBet
 ) {
   ev.preventDefault();
   players[playerIndex].bank -= amount;
