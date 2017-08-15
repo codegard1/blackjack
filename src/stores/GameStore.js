@@ -7,7 +7,7 @@ import { log } from "../utils";
 import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 import * as D from "../definitions";
 import Player from "./Player";
-// import Players from './Players';
+import Players from './Players';
 
 
 /* "state" variables */
