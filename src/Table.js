@@ -72,7 +72,6 @@ export class Table extends BaseComponent {
 
     // ControlPanel methods
     this._bind(
-      "_ante",
       "_bet",
       "_deal",
       "_draw",
@@ -293,15 +292,6 @@ export class Table extends BaseComponent {
 
   _bet(ev, target, playerIndex, amount) {
     AppActions.bet(ev, target, playerIndex, amount);
-  }
-
-  _ante(
-    amount = this.state.minimumBet,
-    players = this.state.players,
-    pot = this.state.pot
-  ) {
-    AppActions.ante(amount, players, pot);
-    AppActions.showMessageBar(`Ante: $${amount}`, MessageBarType.info);
   }
 
   /* show the Options Panel */

@@ -2,7 +2,6 @@ import keyMirror from "keymirror";
 
 export default keyMirror({
   /* Game */
-  GAME_ANTE: null,
   GAME_BET: null,
   GAME_DEAL: null,
   GAME_HIT: null,

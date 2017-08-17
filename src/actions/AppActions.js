@@ -155,12 +155,6 @@ export const AppActions = {
       actionType: AppConstants.GAME_BET,
       ev, target, playerIndex, amount
     });
-  },
-  ante(amount, players, pot) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_ANTE,
-      amount, players, pot
-    });
   }
 
 };
