@@ -1,18 +1,20 @@
 import React from "react";
-import DeckContainer from "./DeckContainer";
-import Player from "./Player";
 import {
   MessageBar,
   MessageBarType
 } from "office-ui-fabric-react/lib/MessageBar";
+
+/* custom stuff */
+import Player from "./Player";
+import DeckContainer from "./DeckContainer";
 import { BaseComponent } from "./BaseComponent";
+import { OptionsPanel } from "./OptionsPanel";
 
 /* flux */
 import { GameStore } from "./stores/GameStore";
 import { DeckStore } from "./stores/DeckStore";
 import { ControlPanelStore } from "./stores/ControlPanelStore";
 import { AppActions } from "./actions/AppActions";
-import { OptionsPanel } from "./OptionsPanel";
 
 export class Table extends BaseComponent {
   constructor() {
@@ -63,13 +65,6 @@ export class Table extends BaseComponent {
       isOptionsPanelVisible: false
     };
 
-    // ControlPanel methods
-    this._bind(
-      "_toggleDeckVisibility",
-      "_toggleDrawnVisibility",
-      "_toggleSelectedVisibility"
-    );
-
     //Flux helpers
     this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame");
 
@@ -112,9 +107,9 @@ export class Table extends BaseComponent {
       },
     };
     this.OptionsPanelMethods = {
-      toggleDeckVisibility: this._toggleDeckVisibility,
-      toggleSelectedVisibility: this._toggleSelectedVisibility,
-      toggleDrawnVisibility: this._toggleDrawnVisibility,
+      toggleDeckVisibility: (bool) => { AppActions.toggleDeckVisibility(bool) },
+      toggleSelectedVisibility: (bool) => { AppActions.toggleSelectedVisibility(bool) },
+      toggleDrawnVisibility: (bool) => { AppActions.toggleDrawnVisibility(bool) },
       resetGame: () => {
         AppActions.newDeck();
         AppActions.reset();
@@ -191,18 +186,6 @@ export class Table extends BaseComponent {
       isSelectedVisible: newState.isSelectedVisible,
       messageBarDefinition: newState.messageBarDefinition
     });
-  }
-
-  _toggleDeckVisibility(bool) {
-    AppActions.toggleDeckVisibility(bool);
-  }
-
-  _toggleDrawnVisibility(bool) {
-    AppActions.toggleDrawnVisibility(bool);
-  }
-
-  _toggleSelectedVisibility(bool) {
-    AppActions.toggleSelectedVisibility(bool);
   }
 
   render() {
