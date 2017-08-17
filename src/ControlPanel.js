@@ -9,7 +9,6 @@ import { DeckStore } from './stores/DeckStore';
 export class ControlPanel extends Component {
   render() {
     let selectedFlag = DeckStore.getSelected(this.props.player.id);
-    console.log(`DeckStore.getSelected(${this.props.player.id}): ${DeckStore.getSelected(this.props.player.id)}`);
     let gameStatus = this.props.gameStatus;
     //let player = this.props.player || undefined;
     //const bustedFlag = player.status === "busted";
@@ -77,7 +76,7 @@ export class ControlPanel extends Component {
         ariaLabel: "Shuffle",
         iconProps: { iconName: "Sync" },
         disabled: false,
-        onClick: this.props.shuffle
+        onClick: AppActions.shuffle
       }
     ];
 
@@ -195,7 +194,6 @@ ControlPanel.propTypes = {
   stay: T.func,
   draw: T.func,
   reset: T.func,
-  shuffle: T.func,
   putOnBottomOfDeck: T.func,
   putOnTopOfDeck: T.func,
   drawRandom: T.func,

@@ -82,7 +82,6 @@ export class Table extends BaseComponent {
       "_putOnTopOfDeck",
       "_reset",
       "_showOptionsPanel",
-      "_shuffle",
       "_stay",
       "_toggleDeckVisibility",
       "_toggleDrawnVisibility",
@@ -106,7 +105,6 @@ export class Table extends BaseComponent {
       stay: this._stay,
       draw: this._draw,
       reset: AppActions.reset,
-      shuffle: this._shuffle,
       putOnBottomOfDeck: this._putOnBottomOfDeck,
       putOnTopOfDeck: this._putOnTopOfDeck,
       drawRandom: this._drawRandom,
@@ -196,10 +194,6 @@ export class Table extends BaseComponent {
       isSelectedVisible: newState.isSelectedVisible,
       messageBarDefinition: newState.messageBarDefinition
     });
-  }
-
-  _shuffle() {
-    AppActions.shuffle();
   }
 
   _resetGame() {

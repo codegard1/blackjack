@@ -42,7 +42,6 @@ ControlPanel.propTypes = {
   drawFromBottomOfDeck: T.func,
   draw: T.func,
   reset: T.func,
-  shuffle: T.func,
   deal: T.func,
   hit: T.func,
   stay: T.func,
