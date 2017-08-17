@@ -1,6 +1,6 @@
 import { Player } from './Player';
 import { DeckStore } from './DeckStore';
-import D from '../definitions';
+import * as D from '../definitions';
 
 export class Players {
     constructor() {

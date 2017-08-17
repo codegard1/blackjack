@@ -3,23 +3,24 @@ import AppConstants from "../constants/AppConstants";
 
 export const AppActions = {
   newGame(players) {
+    /* create a new deck */
     AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_NEWGAME,
-      players
+      actionType: AppConstants.DECK_NEWDECK
     });
-  },
-  newPlayer(id, title) {
-    /* create a deck for the new player */
-    /* this must happen first, because GAME_NEWPLAYER depends on a playerHand being available */
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_NEWPLAYERHAND,
-      id
-    });
-    /* add a new Player to the players array */
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_NEWPLAYER,
-      id,
-      title
+
+    /* GAME_NEWPLAYER depends on a playerHand being available */
+    players.forEach(player => {
+      AppDispatcher.dispatch({
+        actionType: AppConstants.DECK_NEWPLAYERHAND,
+        id: player.id
+      });
+
+      /* add a new Player to the players array */
+      AppDispatcher.dispatch({
+        actionType: AppConstants.GAME_NEWPLAYER,
+        id: player.id,
+        title: player.title
+      });
     });
   },
   showMessageBar(text, type) {

@@ -1,6 +1,6 @@
 import * as D from '../definitions';
 
-class Player {
+export class Player {
   constructor(id, title) {
     this.id = id;
     this.title = title;

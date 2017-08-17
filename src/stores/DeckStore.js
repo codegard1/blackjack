@@ -209,7 +209,7 @@ function _clearSelected() {
 function _removeSelectedFromDrawn(cards = selected) {
   cards.forEach(card => {
     const index = drawn.findIndex(element => {
-      return element.suit === card.suit && card.sort === card.sort;
+      return element.suit === card.suit && element.sort === card.sort;
     });
     drawn.splice(index, 1);
   });
@@ -250,7 +250,7 @@ function _removeSelectedFromPlayerHand(playerId, cards) {
     const index = playerHands.indexOf(playerHands.find(player => player.id === playerId));
 
     playerHands[index].findIndex(element => {
-      return element.suit === card.suit && card.sort === card.sort;
+      return element.suit === card.suit && element.sort === card.sort;
     });
     playerHands[index].splice(index, 1);
   });
