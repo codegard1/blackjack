@@ -5,7 +5,6 @@ import {
   MessageBar,
   MessageBarType
 } from "office-ui-fabric-react/lib/MessageBar";
-import { OptionsPanel } from "./OptionsPanel";
 import { BaseComponent } from "./BaseComponent";
 
 /* flux */
@@ -13,10 +12,11 @@ import { GameStore } from "./stores/GameStore";
 import { DeckStore } from "./stores/DeckStore";
 import { ControlPanelStore } from "./stores/ControlPanelStore";
 import { AppActions } from "./actions/AppActions";
+import { OptionsPanel } from "./OptionsPanel";
 
 export class Table extends BaseComponent {
-  constructor(props) {
-    super(props);
+  constructor() {
+    super();
     this.state = {
       //DeckStore
       deck: [],
@@ -91,8 +91,6 @@ export class Table extends BaseComponent {
 
     //Game State Methods
     this._bind(
-      "_evaluateGame",
-      "_evaluatePlayers",
       "_newRound",
       "_resetGame"
     );
@@ -228,9 +226,8 @@ export class Table extends BaseComponent {
     AppActions.deal();
   }
 
-  _hit(ev, target) {
-    console.log(ev, target);
-    AppActions.hit(ev, target);
+  _hit(playerId) {
+    AppActions.hit(playerId);
   }
 
   _stay() {
@@ -268,26 +265,15 @@ export class Table extends BaseComponent {
   }
 
   _toggleDeckVisibility(bool) {
-    // this.setState({ isDeckVisible: bool });
     AppActions.toggleDeckVisibility(bool);
   }
 
   _toggleDrawnVisibility(bool) {
-    // this.setState({ isDrawnVisible: bool });
     AppActions.toggleDrawnVisibility(bool);
   }
 
   _toggleSelectedVisibility(bool) {
-    // this.setState({ isSelectedVisible: bool });
     AppActions.toggleSelectedVisibility(bool);
-  }
-
-  _evaluateGame(nextGameStatus, nextPlayer) {
-    AppActions.evaluateGame(nextGameStatus, nextPlayer);
-  }
-
-  _evaluatePlayers(players) {
-    AppActions.evaluatePlayers(players);
   }
 
   _bet(ev, target, playerIndex, amount) {

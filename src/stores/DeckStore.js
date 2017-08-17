@@ -8,7 +8,7 @@ import { PlayerHand } from './PlayerHand';
 import { PlayingCard } from 'shuffle/lib/playingCard';
 
 /* state variables */
-let drawn = [], selected = [], deck = [], playerHands = [];
+let deck = [], drawn = [], selected = [], playerHands = [];
 /*  ========================================================  */
 
 /* Data, Getter method, Event Notifier */
@@ -29,13 +29,6 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
   },
   getHands: function () {
     return playerHands;
-  },
-  /* this is a cheat so that I can draw cards from GameStore */
-  draw: function (num, id) {
-    const index = playerHands.indexOf(playerHands.filter(player => player.id === id));
-    const ret = _draw(num);
-    if (playerHands[index]) { playerHands[index].push(ret) }
-    return ret;
   },
   getHandValue: function (playerId) {
     if (playerHands.length > 0) {
@@ -143,6 +136,11 @@ AppDispatcher.register(action => {
       DeckStore.emitChange();
       break;
 
+    case AppConstants.DECK_HIT:
+      _hit(action.playerId);
+      DeckStore.emitChange();
+      break;
+
     default:
       /* do nothing */
       break;
@@ -190,7 +188,7 @@ function _reset() {
 
 function _draw(num) {
   const ret = deck.draw(num);
-  if (ret.length) {
+  if (num > 1) {
     ret.forEach(item => drawn.push(item));
   } else {
     drawn.push(ret);
@@ -262,6 +260,13 @@ function _deal() {
     player.evaluate();
     // console.log(`DeckStore::Deal  player ${player.id}'s hand: ${JSON.stringify(player.hand)}`);
   });
+}
+
+function _hit(id) {
+  const index = playerHands.findIndex(hand => hand.id === id);
+  const ret = _draw(1);
+  playerHands[index].hand.push(ret);
+  return ret;
 }
 
 export default DeckStore;

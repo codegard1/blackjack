@@ -77,13 +77,8 @@ AppDispatcher.register(action => {
   log(`${action.actionType} was called at ${now}`);
 
   switch (action.actionType) {
-    case AppConstants.GAME_NEWGAME:
-      _newGame(action.players);
-      GameStore.emitChange();
-      break;
-
     case AppConstants.GAME_NEWPLAYER:
-      _newPlayer(action.id, action.title)
+      _newPlayer(action.id, action.title);
       GameStore.emitChange();
       break;
 
@@ -98,7 +93,7 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.GAME_HIT:
-      _hit(action.ev, action.target);
+      _hit();
       GameStore.emitChange();
       break;
 
@@ -125,13 +120,6 @@ AppDispatcher.register(action => {
 /*  ========================================================  */
 
 /* method definitions */
-function _newGame(items) {
-  items.forEach(item => {
-    _newPlayer(item.id, item.title);
-  });
-  // _evaluateGame(1);
-}
-
 function _newPlayer(id, title) {
   players.push(
     new Player(id, title)
@@ -404,11 +392,7 @@ function _deal() {
   _evaluateGame(1);
 }
 
-function _hit(ev, target, index = currentPlayerIndex) {
-  /* todo: fix this so that the call goes directly to DeckStore from Table */
-  const ret = DeckStore.draw(1, players[index].id);
-  players[index].hand.push(ret);
-
+function _hit() {
   _evaluateGame(1);
 }
 

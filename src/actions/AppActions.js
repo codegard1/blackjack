@@ -8,7 +8,6 @@ export const AppActions = {
       actionType: AppConstants.DECK_NEWDECK
     });
 
-    /* GAME_NEWPLAYER depends on a playerHand being available */
     players.forEach(player => {
       AppDispatcher.dispatch({
         actionType: AppConstants.DECK_NEWPLAYERHAND,
@@ -40,10 +39,10 @@ export const AppActions = {
   },
   newRound() {
     AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_NEWROUND
+      actionType: AppConstants.DECK_CLEARHANDS
     });
     AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_CLEARHANDS
+      actionType: AppConstants.GAME_NEWROUND
     });
   },
   hideOptionsPanel() {
@@ -139,10 +138,13 @@ export const AppActions = {
       actionType: AppConstants.GAME_DEAL
     });
   },
-  hit(ev, target) {
+  hit(playerId) {
     AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_HIT,
-      ev, target
+      actionType: AppConstants.DECK_HIT,
+      playerId
+    });
+    AppDispatcher.dispatch({
+      actionType: AppConstants.GAME_HIT
     });
   },
   stay() {

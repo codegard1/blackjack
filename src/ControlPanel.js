@@ -86,7 +86,7 @@ export class ControlPanel extends Component {
         ariaLabel: "Hit",
         iconProps: { iconName: "Add" },
         disabled: gameStatusFlag,
-        onClick: this.props.hit
+        onClick: () => { this.props.hit(this.props.player.id); }
       },
       {
         key: "bet",

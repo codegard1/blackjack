@@ -4,7 +4,7 @@ export class Player {
   constructor(id, title) {
     this.id = id;
     this.title = title;
-    this.hand = [];
+    // this.hand = [];
     this.handValue = { aceAsOne: 0, aceAsEleven: 0 };
     this.status = "ok";
     this.turn = false;
@@ -12,12 +12,14 @@ export class Player {
     this.bet = 0;
     this.lastAction = "none";
     this.isStaying = false;
+    this.isBusted = false;
+    this.isFinished = false;
   }
   remove(...keys) {
     const defaults = {
       id: "",
       title: "",
-      hand: [],
+      // hand: [],
       handValue: { aceAsOne: 0, aceAsEleven: 0 },
       status: "ok",
       turn: false,
