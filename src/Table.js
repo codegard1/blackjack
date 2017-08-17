@@ -63,17 +63,8 @@ export class Table extends BaseComponent {
       isOptionsPanelVisible: false
     };
 
-    //Deck Methods
-    this._bind(
-      "_deselect",
-      "_removeSelectedFromDrawn",
-      "_select"
-    );
-
     // ControlPanel methods
     this._bind(
-      "_drawRandom",
-      "_reset",
       "_toggleDeckVisibility",
       "_toggleDrawnVisibility",
       "_toggleSelectedVisibility"
@@ -110,10 +101,15 @@ export class Table extends BaseComponent {
       stay: AppActions.stay,
     };
     this.deckMethods = {
-      select: this._select,
-      deselect: this._deselect,
-      removeSelectedFromPlayerHand: this._removeSelectedFromPlayerHand,
-      removeSelectedFromDrawn: this._removeSelectedFromDrawn,
+      select: (cardAttributes) => {
+        AppActions.select(cardAttributes);
+      },
+      deselect: (cardAttributes) => {
+        AppActions.deselect(cardAttributes);
+      },
+      removeSelectedFromDrawn: (cards) => {
+        AppActions.removeSelectedFromPlayerHand(cards);
+      },
     };
     this.OptionsPanelMethods = {
       toggleDeckVisibility: this._toggleDeckVisibility,
@@ -195,22 +191,6 @@ export class Table extends BaseComponent {
       isSelectedVisible: newState.isSelectedVisible,
       messageBarDefinition: newState.messageBarDefinition
     });
-  }
-
-  _reset() {
-    AppActions.reset();
-  }
-
-  _select(cardAttributes) {
-    AppActions.select(cardAttributes);
-  }
-
-  _deselect(cardAttributes) {
-    AppActions.deselect(cardAttributes);
-  }
-
-  _removeSelectedFromDrawn(cards) {
-    AppActions.removeSelectedFromDrawn(cards);
   }
 
   _toggleDeckVisibility(bool) {
@@ -302,8 +282,8 @@ export class Table extends BaseComponent {
                 <DeckContainer
                   deck={this.state.deck.cards}
                   title="Deck"
-                  select={this._select}
-                  deselect={this._deselect}
+                  select={this.deckMethods._select}
+                  deselect={this.deckMethods._deselect}
                   hidden={false}
                   isSelectable={false}
                 />}
@@ -312,8 +292,8 @@ export class Table extends BaseComponent {
                 <DeckContainer
                   deck={this.state.drawn}
                   title="Drawn Cards"
-                  select={this._select}
-                  deselect={this._deselect}
+                  select={this.deckMethods._select}
+                  deselect={this.deckMethods._deselect}
                   hidden={false}
                   isSelectable={false}
                 />}
@@ -322,8 +302,8 @@ export class Table extends BaseComponent {
                 <DeckContainer
                   deck={this.state.selected}
                   title="Selected Cards"
-                  select={this._select}
-                  deselect={this._deselect}
+                  select={this.deckMethods._select}
+                  deselect={this.deckMethods._deselect}
                   hidden={false}
                   isSelectable={false}
                 />}
