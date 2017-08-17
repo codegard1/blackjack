@@ -18,7 +18,21 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
     return deck;
   },
   getSelected: function (playerId) {
-    return selected.find(item => item.id === playerId);
+    if (selected.length > 0) {
+      let foundMatch = false;
+      let foundCards = [];
+      /* check each card in selected to see if it's in the current player's hand */
+      selected.forEach(card => {
+        const index = playerHands.findIndex(hand => hand.id === playerId);
+        if (playerHands[index].hand.includes(card)) {
+          foundMatch = true;
+          foundCards.push(card);
+        };
+      });
+      return (foundMatch && foundCards.length > 0) ? true : false;
+    } else {
+      return false;
+    }
   },
   getDrawn: function (playerId) {
     return drawn.find(item => item.id === playerId);
@@ -214,8 +228,6 @@ function _removeSelectedFromDrawn(cards = selected) {
 }
 
 function _select(cardAttributes) {
-  log(cardAttributes);
-
   selected.push(
     new PlayingCard(
       cardAttributes.suit,

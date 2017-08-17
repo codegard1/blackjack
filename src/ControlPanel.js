@@ -4,10 +4,12 @@ import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
 
 /* Flux */
 import { AppActions } from "./actions/AppActions";
+import { DeckStore } from './stores/DeckStore';
 
 export class ControlPanel extends Component {
   render() {
-    let selectedFlag = this.props.selectedCards.length > 0 ? false : true;
+    let selectedFlag = DeckStore.getSelected(this.props.player.id);
+    console.log(`DeckStore.getSelected(${this.props.player.id}): ${DeckStore.getSelected(this.props.player.id)}`);
     let gameStatus = this.props.gameStatus;
     //let player = this.props.player || undefined;
     //const bustedFlag = player.status === "busted";
