@@ -90,8 +90,7 @@ export class Table extends BaseComponent {
 
     //Game State Methods
     this._bind(
-      "_newRound",
-      "_resetGame"
+      "_newRound"
     );
 
     //Flux helpers
@@ -122,7 +121,11 @@ export class Table extends BaseComponent {
       toggleDeckVisibility: this._toggleDeckVisibility,
       toggleSelectedVisibility: this._toggleSelectedVisibility,
       toggleDrawnVisibility: this._toggleDrawnVisibility,
-      resetGame: this._resetGame
+      resetGame: () => {
+        AppActions.newDeck();
+        AppActions.reset();
+        AppActions.showMessageBar("Game Reset");
+      }
     };
   }
 
@@ -194,12 +197,6 @@ export class Table extends BaseComponent {
       isSelectedVisible: newState.isSelectedVisible,
       messageBarDefinition: newState.messageBarDefinition
     });
-  }
-
-  _resetGame() {
-    AppActions.newDeck();
-    AppActions.reset();
-    AppActions.showMessageBar("Game Reset");
   }
 
   _newRound() {
