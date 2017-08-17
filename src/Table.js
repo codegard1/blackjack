@@ -72,25 +72,11 @@ export class Table extends BaseComponent {
 
     // ControlPanel methods
     this._bind(
-      "_bet",
-      "_deal",
-      "_draw",
-      "_drawFromBottomOfDeck",
       "_drawRandom",
-      "_hit",
-      "_putOnBottomOfDeck",
-      "_putOnTopOfDeck",
       "_reset",
-      "_showOptionsPanel",
-      "_stay",
       "_toggleDeckVisibility",
       "_toggleDrawnVisibility",
       "_toggleSelectedVisibility"
-    );
-
-    //Game State Methods
-    this._bind(
-      "_newRound"
     );
 
     //Flux helpers
@@ -98,18 +84,30 @@ export class Table extends BaseComponent {
 
     // group methods to pass into Player as props
     this.controlPanelMethods = {
-      deal: this._deal,
-      hit: this._hit,
-      bet: this._bet,
-      stay: this._stay,
-      draw: this._draw,
+      hit: (playerId) => { AppActions.hit(playerId) },
+      bet: (ev, target, playerIndex, amount) => {
+        ev.preventDefault(); AppActions.bet(playerIndex, amount);
+      },
+      deal: AppActions.deal,
+      draw: (num) => { AppActions.draw(num) },
+      drawRandom: (num) => { AppActions.drawRandom(num) },
       reset: AppActions.reset,
-      putOnBottomOfDeck: this._putOnBottomOfDeck,
-      putOnTopOfDeck: this._putOnTopOfDeck,
-      drawRandom: this._drawRandom,
-      drawFromBottomOfDeck: this._drawFromBottomOfDeck,
-      showOptionsPanel: this._showOptionsPanel,
-      newRound: this._newRound
+      putOnBottomOfDeck: (cards) => {
+        AppActions.putOnBottomOfDeck(cards);
+        AppActions.removeSelectedFromPlayerHand(cards);
+      },
+      putOnTopOfDeck: (cards) => {
+        AppActions.putOnTopOfDeck(cards);
+        AppActions.removeSelectedFromPlayerHand(cards);
+      },
+      drawFromBottomOfDeck: (num) => { AppActions.drawFromBottomOfDeck(num) },
+      newRound: () => {
+        AppActions.newDeck();
+        AppActions.newRound();
+        AppActions.showMessageBar("New Round", MessageBarType.info);
+      },
+      showOptionsPanel: AppActions.showOptionsPanel,
+      stay: AppActions.stay,
     };
     this.deckMethods = {
       select: this._select,
@@ -199,48 +197,8 @@ export class Table extends BaseComponent {
     });
   }
 
-  _newRound() {
-    AppActions.newDeck();
-    AppActions.newRound();
-    AppActions.showMessageBar("New Round", MessageBarType.info);
-  }
-
   _reset() {
     AppActions.reset();
-  }
-
-  _draw(num) {
-    AppActions.draw(num);
-  }
-
-  _deal() {
-    AppActions.deal();
-  }
-
-  _hit(playerId) {
-    AppActions.hit(playerId);
-  }
-
-  _stay() {
-    AppActions.stay();
-  }
-
-  _drawFromBottomOfDeck(num) {
-    AppActions.drawFromBottomOfDeck(num);
-  }
-
-  _drawRandom(num) {
-    AppActions.drawRandom(num);
-  }
-
-  _putOnTopOfDeck(cards) {
-    AppActions.putOnTopOfDeck(cards);
-    AppActions.removeSelectedFromPlayerHand(cards);
-  }
-
-  _putOnBottomOfDeck(cards) {
-    AppActions.putOnBottomOfDeck(cards);
-    AppActions.removeSelectedFromPlayerHand(cards);
   }
 
   _select(cardAttributes) {
@@ -265,15 +223,6 @@ export class Table extends BaseComponent {
 
   _toggleSelectedVisibility(bool) {
     AppActions.toggleSelectedVisibility(bool);
-  }
-
-  _bet(ev, target, playerIndex, amount) {
-    AppActions.bet(ev, target, playerIndex, amount);
-  }
-
-  /* show the Options Panel */
-  _showOptionsPanel() {
-    AppActions.showOptionsPanel();
   }
 
   render() {

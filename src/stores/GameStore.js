@@ -401,9 +401,8 @@ function _stay() {
 }
 
 function _bet(
-  ev, target, playerIndex = currentPlayerIndex, amount = minimumBet
+  playerIndex = currentPlayerIndex, amount = minimumBet
 ) {
-  ev.preventDefault();
   players[playerIndex].bank -= amount;
   pot += amount;
 }
