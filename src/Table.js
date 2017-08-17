@@ -106,16 +106,6 @@ export class Table extends BaseComponent {
         AppActions.removeSelectedFromPlayerHand(cards);
       },
     };
-    this.OptionsPanelMethods = {
-      toggleDeckVisibility: (bool) => { AppActions.toggleDeckVisibility(bool) },
-      toggleSelectedVisibility: (bool) => { AppActions.toggleSelectedVisibility(bool) },
-      toggleDrawnVisibility: (bool) => { AppActions.toggleDrawnVisibility(bool) },
-      resetGame: () => {
-        AppActions.newDeck();
-        AppActions.reset();
-        AppActions.showMessageBar("Game Reset");
-      }
-    };
   }
 
   componentDidMount() {
@@ -298,7 +288,6 @@ export class Table extends BaseComponent {
             isDeckVisible={this.state.isDeckVisible}
             isDrawnVisible={this.state.isDrawnVisible}
             isSelectedVisible={this.state.isSelectedVisible}
-            {...this.OptionsPanelMethods}
           />
         </div>
       </div>

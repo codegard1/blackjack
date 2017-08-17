@@ -8,6 +8,12 @@ import { CommandButton } from "office-ui-fabric-react/lib/Button";
 import { AppActions } from "./actions/AppActions";
 
 export function OptionsPanel(props) {
+  const resetGame = () => {
+    AppActions.newDeck();
+    AppActions.reset();
+    AppActions.showMessageBar("Game Reset");
+  }
+
   return (
     <Panel
       id="OptionsPanel"
@@ -21,7 +27,7 @@ export function OptionsPanel(props) {
         iconProps={{ iconName: "Refresh" }}
         disabled={false}
         checked={false}
-        onClick={props.resetGame}
+        onClick={resetGame}
       >
         Reset Game
       </CommandButton>
@@ -33,7 +39,7 @@ export function OptionsPanel(props) {
         offAriaLabel="The deck is not visible. Press to show it."
         onText="On"
         offText="Off"
-        onChanged={checked => props.toggleDeckVisibility(checked)}
+        onChanged={checked => AppActions.toggleDeckVisibility(checked)}
         value
       />
       <Toggle
@@ -43,7 +49,7 @@ export function OptionsPanel(props) {
         offAriaLabel="The Drawn cards are not visible. Press to show it."
         onText="On"
         offText="Off"
-        onChanged={checked => props.toggleDrawnVisibility(checked)}
+        onChanged={checked => AppActions.toggleDrawnVisibility(checked)}
       />
       <Toggle
         checked={props.isSelectedVisible}
@@ -52,7 +58,7 @@ export function OptionsPanel(props) {
         offAriaLabel="The Selected cards are not visible. Press to show it."
         onText="On"
         offText="Off"
-        onChanged={checked => props.toggleSelectedVisibility(checked)}
+        onChanged={checked => AppActions.toggleSelectedVisibility(checked)}
       />
     </Panel>
   );
@@ -63,9 +69,6 @@ OptionsPanel.propTypes = {
   isDeckVisible: T.bool.isRequired,
   isDrawnVisible: T.bool.isRequired,
   isSelectedVisible: T.bool.isRequired,
-  toggleDeckVisibility: T.func,
-  toggleSelectedVisibility: T.func,
-  toggleDrawnVisibility: T.func,
   resetGame: T.func
 };
 
