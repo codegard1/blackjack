@@ -5,8 +5,8 @@ import {
 } from "office-ui-fabric-react/lib/MessageBar";
 
 /* custom stuff */
-import Player from "./Player";
-import DeckContainer from "./DeckContainer";
+import { PlayerContainer } from "./PlayerContainer";
+import { DeckContainer } from "./DeckContainer";
 import { BaseComponent } from "./BaseComponent";
 import { OptionsPanel } from "./OptionsPanel";
 
@@ -175,7 +175,7 @@ export class Table extends BaseComponent {
       player.hand = player.hand ? player.hand : [];
 
       return (
-        <Player
+        <PlayerContainer
           key={index}
           player={player}
           controlPanelMethods={this.controlPanelMethods}

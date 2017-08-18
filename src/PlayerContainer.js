@@ -3,7 +3,7 @@ import * as T from "prop-types";
 import DeckContainer from "./DeckContainer";
 import ControlPanel from "./ControlPanel";
 
-export class Player extends Component {
+export class PlayerContainer extends Component {
     render() {
         return (
             <div className="playerContainer">
@@ -24,11 +24,11 @@ export class Player extends Component {
     }
 }
 
-Player.propTypes = {
+PlayerContainer.propTypes = {
     player: T.object.isRequired,
     controlPanelProps: T.object,
     deckContainerProps: T.object,
     controlPanelMethods: T.object,
 };
 
-export default Player;
+export default PlayerContainer;
