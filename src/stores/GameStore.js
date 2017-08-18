@@ -60,6 +60,7 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
     };
   },
   getStatus: function () {
+    console.log('getStatus: ', gameStatus);
     return gameStatus;
   },
   emitChange: function () {
@@ -106,7 +107,7 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.GAME_BET:
-      _bet(action.ev, action.target, action.playerIndex, action.amount);
+      _bet(action.playerId, action.amount);
       GameStore.emitChange();
       break;
 
@@ -404,9 +405,10 @@ function _stay() {
 }
 
 function _bet(
-  playerIndex = currentPlayerIndex, amount = minimumBet
+  playerId, amount = minimumBet
 ) {
-  players[playerIndex].bank -= amount;
+  const index = players.findIndex(player => player.id === playerId);
+  players[index].bank -= amount;
   pot += amount;
 }
 

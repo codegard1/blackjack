@@ -9,6 +9,7 @@ import { BaseComponent } from "./BaseComponent";
 import "./DeckContainer.css";
 
 import { AppActions } from './actions/AppActions';
+import { GameStore } from './stores/GameStore';
 
 export class DeckContainer extends BaseComponent {
   constructor(props) {
@@ -123,7 +124,7 @@ export class DeckContainer extends BaseComponent {
           >
             <StatusDisplay
               player={this.props.player}
-              gameStatus={this.props.gameStatus}
+              gameStatus={GameStore.getStatus()}
               turnCount={this.props.turnCount}
             />
           </Callout>}
@@ -150,7 +151,6 @@ DeckContainer.propTypes = {
   isSelectable: T.bool,
   hidden: T.bool,
   player: T.object,
-  gameStatus: T.number,
   turnCount: T.number
 };
 

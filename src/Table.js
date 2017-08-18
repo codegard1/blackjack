@@ -67,34 +67,6 @@ export class Table extends BaseComponent {
 
     //Flux helpers
     this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame");
-
-    // group methods to pass into Player as props
-    this.controlPanelMethods = {
-      hit: (playerId) => { AppActions.hit(playerId) },
-      bet: (ev, target, playerIndex, amount) => {
-        ev.preventDefault(); AppActions.bet(playerIndex, amount);
-      },
-      deal: AppActions.deal,
-      draw: (num) => { AppActions.draw(num) },
-      drawRandom: (num) => { AppActions.drawRandom(num) },
-      reset: AppActions.reset,
-      putOnBottomOfDeck: (cards) => {
-        AppActions.putOnBottomOfDeck(cards);
-        AppActions.removeSelectedFromPlayerHand(cards);
-      },
-      putOnTopOfDeck: (cards) => {
-        AppActions.putOnTopOfDeck(cards);
-        AppActions.removeSelectedFromPlayerHand(cards);
-      },
-      drawFromBottomOfDeck: (num) => { AppActions.drawFromBottomOfDeck(num) },
-      newRound: () => {
-        AppActions.newDeck();
-        AppActions.newRound();
-        AppActions.showMessageBar("New Round", MessageBarType.info);
-      },
-      showOptionsPanel: AppActions.showOptionsPanel,
-      stay: AppActions.stay,
-    };
   }
 
   componentDidMount() {
@@ -178,7 +150,6 @@ export class Table extends BaseComponent {
         <PlayerContainer
           key={index}
           player={player}
-          controlPanelMethods={this.controlPanelMethods}
           controlPanelProps={{
             gameStatus: this.state.gameStatus,
             currentPlayer: this.state.currentPlayer,
@@ -192,7 +163,6 @@ export class Table extends BaseComponent {
           }}
           deckContainerProps={{
             deck: player.hand,
-            pot: this.state.pot,
             title: player.title,
             handValue: player.handValue,
             isSelectable: true,
