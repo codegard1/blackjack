@@ -43,3 +43,7 @@ div#StatusPanel {
 .ms-Grid-col {
     /*border:1px solid lightgreen;*/
 }
+
+#PotDisplay {
+    margin: 0 1em;
+}

@@ -131,14 +131,13 @@ export class Table extends BaseComponent {
 
   render() {
     const playersArray = this.state.players.map((player, index) => {
-      // console.log(`Table Render()  player.hand: ${JSON.stringify(player.hand)}`);
 
       /* if player.hand is undefined then set it to [] */
       player.hand = player.hand ? player.hand : [];
 
       return (
         <PlayerContainer
-          key={index}
+          key={`Player-${player.id}`}
           player={player}
           controlPanelProps={{
             gameStatus: this.state.gameStatus,
@@ -181,8 +180,8 @@ export class Table extends BaseComponent {
 
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-s12">
-              <p className="ms-font-xl">
-                ${this.state.pot}
+              <p className="ms-font-xl" id="PotDisplay">
+                Pot: ${this.state.pot}
               </p>
             </div>
           </div>
