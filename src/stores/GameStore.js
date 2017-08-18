@@ -59,6 +59,9 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
       winningPlayerIndex
     };
   },
+  getStatus: function () {
+    return gameStatus;
+  },
   emitChange: function () {
     this.emit(CHANGE_EVENT);
   },
