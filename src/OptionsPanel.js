@@ -9,8 +9,8 @@ import { AppActions } from "./actions/AppActions";
 
 export function OptionsPanel(props) {
   const resetGame = () => {
-    AppActions.newDeck();
     AppActions.reset();
+    AppActions.newDeck();
     AppActions.showMessageBar("Game Reset");
   }
 
@@ -69,7 +69,6 @@ OptionsPanel.propTypes = {
   isDeckVisible: T.bool.isRequired,
   isDrawnVisible: T.bool.isRequired,
   isSelectedVisible: T.bool.isRequired,
-  resetGame: T.func
 };
 
 export default OptionsPanel;

@@ -95,17 +95,6 @@ export class Table extends BaseComponent {
       showOptionsPanel: AppActions.showOptionsPanel,
       stay: AppActions.stay,
     };
-    this.deckMethods = {
-      select: (cardAttributes) => {
-        AppActions.select(cardAttributes);
-      },
-      deselect: (cardAttributes) => {
-        AppActions.deselect(cardAttributes);
-      },
-      removeSelectedFromDrawn: (cards) => {
-        AppActions.removeSelectedFromPlayerHand(cards);
-      },
-    };
   }
 
   componentDidMount() {
@@ -190,7 +179,6 @@ export class Table extends BaseComponent {
           key={index}
           player={player}
           controlPanelMethods={this.controlPanelMethods}
-          deckMethods={this.deckMethods}
           controlPanelProps={{
             gameStatus: this.state.gameStatus,
             currentPlayer: this.state.currentPlayer,
@@ -255,8 +243,6 @@ export class Table extends BaseComponent {
                 <DeckContainer
                   deck={this.state.deck.cards}
                   title="Deck"
-                  select={this.deckMethods._select}
-                  deselect={this.deckMethods._deselect}
                   hidden={false}
                   isSelectable={false}
                 />}
@@ -265,8 +251,6 @@ export class Table extends BaseComponent {
                 <DeckContainer
                   deck={this.state.drawn}
                   title="Drawn Cards"
-                  select={this.deckMethods._select}
-                  deselect={this.deckMethods._deselect}
                   hidden={false}
                   isSelectable={false}
                 />}
@@ -275,8 +259,6 @@ export class Table extends BaseComponent {
                 <DeckContainer
                   deck={this.state.selected}
                   title="Selected Cards"
-                  select={this.deckMethods._select}
-                  deselect={this.deckMethods._deselect}
                   hidden={false}
                   isSelectable={false}
                 />}

@@ -15,7 +15,6 @@ export class Player extends Component {
                 {this.props.controlPanelProps.gameStatus >= 0 &&
                     <DeckContainer
                         {...this.props.deckContainerProps}
-                        {...this.props.deckMethods}
                         player={this.props.player}
                         gameStatus={this.props.gameStatus}
                         turnCount={this.props.turnCount}
@@ -30,7 +29,6 @@ Player.propTypes = {
     controlPanelProps: T.object,
     deckContainerProps: T.object,
     controlPanelMethods: T.object,
-    deckMethods: T.object,
 };
 
 export default Player;

@@ -8,6 +8,8 @@ import { Callout } from "office-ui-fabric-react/lib/Callout";
 import { BaseComponent } from "./BaseComponent";
 import "./DeckContainer.css";
 
+import { AppActions } from './actions/AppActions';
+
 export class DeckContainer extends BaseComponent {
   constructor(props) {
     super(props);
@@ -52,8 +54,8 @@ export class DeckContainer extends BaseComponent {
           <CardContainer
             key={card.suit + "-" + card.description}
             {...card}
-            select={this.props.select}
-            deselect={this.props.deselect}
+            select={cardAttributes => AppActions.select(cardAttributes)}
+            deselect={cardAttributes => AppActions.deselect(cardAttributes)}
             isSelectable={this.props.isSelectable}
           />
         );
@@ -142,15 +144,12 @@ export class DeckContainer extends BaseComponent {
 }
 
 DeckContainer.propTypes = {
-  select: T.func,
-  deselect: T.func,
   deck: T.array,
   title: T.string,
   handValue: T.object,
   isSelectable: T.bool,
   hidden: T.bool,
   player: T.object,
-  pot: T.number,
   gameStatus: T.number,
   turnCount: T.number
 };

@@ -255,6 +255,7 @@ function _clearHands() {
   });
 }
 
+/* orphaned */
 function _removeSelectedFromPlayerHand(playerId, cards) {
   cards.forEach(card => {
     const index = playerHands.indexOf(playerHands.find(player => player.id === playerId));
