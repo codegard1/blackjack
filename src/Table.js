@@ -26,43 +26,34 @@ export class Table extends BaseComponent {
       selected: [],
       playerHands: [],
       //GameStore
+      allPlayersBusted: false,
+      allPlayersNonBusted: true,
+      allPlayersStaying: false,
+      bustedPlayers: [],
+      // currentPlayer: 0, /* deprecated */
+      currentPlayerIndex: -1,
       gameStatus: 0,
-      minimumBet: 25,
+      highestHandValue: -1,
+      minimumBet: null,
+      nonBustedPlayers: null,
+      players: [],
+      pot: 0,
+      round: 0,
+      tieFlag: false,
+      turnCount: 0,
+      winningPlayerId: -1,
+      winningPlayerIndex: -1,
+      // ControlPanelStore
+      isDeckVisible: true,
+      isDrawnVisible: false,
+      isMessageBarVisible: false,
+      isOptionsPanelVisible: false,
+      isSelectedVisible: false,
       messageBarDefinition: {
         type: MessageBarType.info,
         text: "",
         isMultiLine: false
       },
-      pot: 0,
-      round: 0,
-      turnCount: 0,
-      tieFlag: false,
-      // Player (also in GameStore)
-      allPlayersStaying: false,
-      allPlayersBusted: false,
-      allPlayersNonBusted: false,
-      currentPlayer: 0,
-      players: [],
-      playerDefaults: {
-        id: 0,
-        title: "",
-        hand: [],
-        handValue: { aceAsOne: 0, aceAsEleven: 0 },
-        status: "ok",
-        turn: false,
-        bank: 1000,
-        bet: 0,
-        lastAction: "none",
-        isStaying: false
-      },
-      winningPlayerId: -1,
-      winningPlayerIndex: -1,
-      // ControlPanelStore
-      isDeckVisible: true,
-      isDrawnVisible: true,
-      isSelectedVisible: true,
-      isMessageBarVisible: false,
-      isOptionsPanelVisible: false
     };
 
     //Flux helpers
@@ -82,7 +73,6 @@ export class Table extends BaseComponent {
 
   componentWillUnmount() {
     /* remove change listeners */
-    /* this is redundant because Table never unmounts */
     GameStore.removeChangeListener(this.onChangeGame);
     DeckStore.removeChangeListener(this.onChangeDeck);
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
@@ -102,7 +92,7 @@ export class Table extends BaseComponent {
       allPlayersNonBusted: newState.allPlayersNonBusted,
       allPlayersStaying: newState.allPlayersStaying,
       bustedPlayers: newState.bustedPlayers,
-      currentPlayer: newState.currentPlayer,
+      // currentPlayer: newState.currentPlayerIndex,
       currentPlayerIndex: newState.currentPlayerIndex,
       gameStatus: newState.gameStatus,
       highestHandValue: newState.highestHandValue,
@@ -152,7 +142,7 @@ export class Table extends BaseComponent {
           player={player}
           controlPanelProps={{
             gameStatus: this.state.gameStatus,
-            currentPlayer: this.state.currentPlayer,
+            currentPlayer: this.state.currentPlayerIndex,
             selectedCards: this.state.selected,
             isDeckVisible: this.state.isDeckVisible,
             isDrawnVisible: this.state.isDrawnVisible,
