@@ -1,23 +1,16 @@
 import React, { Component } from "react";
 import * as T from "prop-types";
 import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
-import {
-  MessageBarType
-} from "office-ui-fabric-react/lib/MessageBar";
+import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 
 /* Flux */
 import { AppActions } from "./actions/AppActions";
-import { GameStore } from "./stores/GameStore";
-import { DeckStore } from './stores/DeckStore';
 
 export class ControlPanel extends Component {
   render() {
-    let selectedFlag = DeckStore.getSelected(this.props.player.id);
-    let gameStatus = GameStore.getStatus();
-    //let player = this.props.player || undefined;
-    //const bustedFlag = player.status === "busted";
-    //const blackjackflag = player.status === "blackjack";
-    const gameStatusFlag = gameStatus > 2 || this.props.player.turn === false;
+    let selectedFlag = this.props.selectedFlag;
+    const gameStatusFlag =
+      this.props.gameStatus > 2 || this.props.player.turn === false;
 
     const drawItems = [
       {
@@ -53,7 +46,7 @@ export class ControlPanel extends Component {
         ariaLabel: "Put on Top of Deck",
         iconProps: "",
         disabled: false,
-        onClick: (cards) => {
+        onClick: cards => {
           AppActions.putOnTopOfDeck(cards);
           AppActions.removeSelectedFromPlayerHand(cards);
         }
@@ -64,7 +57,7 @@ export class ControlPanel extends Component {
         ariaLabel: "Put on Bottom of Deck",
         iconProps: "",
         disabled: false,
-        onClick: (cards) => {
+        onClick: cards => {
           AppActions.putOnBottomOfDeck(cards);
           AppActions.removeSelectedFromPlayerHand(cards);
         }
@@ -78,7 +71,9 @@ export class ControlPanel extends Component {
         ariaLabel: "Deal",
         iconProps: { iconName: "StackIndicator" },
         disabled: false,
-        onClick: () => { AppActions.deal() }
+        onClick: () => {
+          AppActions.deal();
+        }
       },
       {
         key: "shuffle",
@@ -97,7 +92,9 @@ export class ControlPanel extends Component {
         ariaLabel: "Hit",
         iconProps: { iconName: "Add" },
         disabled: gameStatusFlag,
-        onClick: () => { AppActions.hit(this.props.player.id); }
+        onClick: () => {
+          AppActions.hit(this.props.playerId);
+        }
       },
       {
         key: "bet",
@@ -106,9 +103,8 @@ export class ControlPanel extends Component {
         iconProps: { iconName: "Up" },
         disabled: gameStatusFlag,
         onClick: (ev, target, playerIndex, amount) => {
-          console.log(`AppActions.bet(${this.props.player.id}, ${amount})`);
           ev.preventDefault();
-          AppActions.bet(this.props.player.id, amount)
+          AppActions.bet(this.props.playerId, amount);
         }
       },
       {
@@ -182,7 +178,7 @@ export class ControlPanel extends Component {
     };
 
     let commandBarItems = commandBarDefinition.defaultItems;
-    if (gameStatus > 0) {
+    if (this.props.gameStatus > 0) {
       commandBarItems = [].concat(commandBarDefinition.blackJackItems);
     }
     const farItems = commandBarDefinition.optionsButton;
@@ -205,15 +201,11 @@ export class ControlPanel extends Component {
 }
 
 ControlPanel.propTypes = {
-  minimumBet: T.number,
-  gameStatus: T.number,
-  currentPlayer: T.number,
-  selectedCards: T.array,
-  isDeckVisible: T.bool,
-  isDrawnVisible: T.bool,
-  isSelectedVisible: T.bool,
-  turnCount: T.number,
-  hidden: T.bool,
+  playerId: T.number.isRequired,
+  gameStatus: T.number.isRequired,
+  minimumBet: T.number.isRequired,
+  hidden: T.bool.isRequired,
+  selectedFlag: T.bool.isRequired
 };
 
 export default ControlPanel;

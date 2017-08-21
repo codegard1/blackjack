@@ -53,7 +53,7 @@ export class Table extends BaseComponent {
         type: MessageBarType.info,
         text: "",
         isMultiLine: false
-      },
+      }
     };
 
     //Flux helpers
@@ -84,8 +84,6 @@ export class Table extends BaseComponent {
     newState.players.forEach(player => {
       const newHand = DeckStore.getHand(player.id);
       player.hand = newHand;
-      // console.log(`getHand: ${player.id} ${JSON.stringify(DeckStore.getHand(player.id))}`);
-      // console.log(`player state update: ${player.id} - ${player.title}: ${JSON.stringify(player.hand)}`);
     });
     this.setState({
       allPlayersBusted: newState.allPlayersBusted,
@@ -114,7 +112,7 @@ export class Table extends BaseComponent {
       deck: newState.deck,
       selected: newState.selected,
       drawn: newState.drawn,
-      playerHands: newState.playerHands,
+      playerHands: newState.playerHands
     });
   }
   onChangeControlPanel() {
@@ -130,36 +128,9 @@ export class Table extends BaseComponent {
   }
 
   render() {
-    const playersArray = this.state.players.map((player, index) => {
-
-      /* if player.hand is undefined then set it to [] */
-      player.hand = player.hand ? player.hand : [];
-
-      return (
-        <PlayerContainer
-          key={`Player-${player.id}`}
-          player={player}
-          controlPanelProps={{
-            gameStatus: this.state.gameStatus,
-            currentPlayer: this.state.currentPlayerIndex,
-            selectedCards: this.state.selected,
-            isDeckVisible: this.state.isDeckVisible,
-            isDrawnVisible: this.state.isDrawnVisible,
-            isSelectedVisible: this.state.isSelectedVisible,
-            turnCount: this.state.turnCount,
-            minimumBet: this.state.minimumBet,
-            hidden: false
-          }}
-          deckContainerProps={{
-            deck: player.hand,
-            title: player.title,
-            handValue: player.handValue,
-            isSelectable: true,
-            hidden: false
-          }}
-        />
-      );
-    });
+    const playersArray = this.state.players.map(player =>
+      <PlayerContainer key={`Player-${player.id}`} playerId={player.id} />
+    );
 
     return (
       <div id="Table">

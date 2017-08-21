@@ -9,8 +9,8 @@ import { log } from "../utils";
 /* state variables */
 let state = {
   isDeckVisible: true,
-  isDrawnVisible: true,
-  isSelectedVisible: true,
+  isDrawnVisible: false,
+  isSelectedVisible: false,
   isOptionsPanelVisible: false,
   isMessageBarVisible: false,
   messageBarDefinition: {
