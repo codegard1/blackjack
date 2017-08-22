@@ -5,6 +5,7 @@ import * as T from "prop-types";
 import { BaseComponent } from "./BaseComponent";
 import { DeckContainer } from "./DeckContainer";
 import { ControlPanel } from "./ControlPanel";
+import './PlayerContainer.css';
 
 /* flux */
 import { GameStore } from "./stores/GameStore";
@@ -14,21 +15,6 @@ export class PlayerContainer extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = {
-      // bank: 1000,
-      // bet: 0,
-      // gameStatus: 0,
-      // hand: [],
-      // handValue: { aceAsOne: 0, aceAsEleven: 0 },
-      // id: -1,
-      // isBusted: false,
-      // isFinished: false,
-      // isStaying: false,
-      // lastAction: "none",
-      // status: "ok",
-      // title: "",
-      // turn: false,
-
-      // Use these only for now
       deck: [],
       gameStatus: 0,
       handValue: { aceAsEleven: 0, aceAsOne: 0 },
@@ -84,7 +70,7 @@ export class PlayerContainer extends BaseComponent {
 
   render() {
     return (
-      <div className="playerContainer">
+      <div className="PlayerContainer">
         <ControlPanel
           playerId={this.state.id}
           gameStatus={this.state.gameStatus}
