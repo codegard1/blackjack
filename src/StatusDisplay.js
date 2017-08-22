@@ -1,7 +1,7 @@
 import React from "react";
 import * as T from "prop-types";
 
-export const StatusDisplay = props => {
+const StatusDisplay = props => {
     return (
         <div id="StatusPanel" className="ms-font-s">
             <span>Player: {props.player.title || ''}</span><br />

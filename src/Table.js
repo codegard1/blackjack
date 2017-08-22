@@ -5,18 +5,18 @@ import {
 } from "office-ui-fabric-react/lib/MessageBar";
 
 /* custom stuff */
-import { PlayerContainer } from "./PlayerContainer";
-import { DeckContainer } from "./DeckContainer";
-import { BaseComponent } from "./BaseComponent";
-import { OptionsPanel } from "./OptionsPanel";
+import PlayerContainer from "./PlayerContainer";
+import DeckContainer from "./DeckContainer";
+import BaseComponent from "./BaseComponent";
+import OptionsPanel from "./OptionsPanel";
 
 /* flux */
 import { GameStore } from "./stores/GameStore";
 import { DeckStore } from "./stores/DeckStore";
 import { ControlPanelStore } from "./stores/ControlPanelStore";
-import { AppActions } from "./actions/AppActions";
+import AppActions from "./actions/AppActions";
 
-export class Table extends BaseComponent {
+class Table extends BaseComponent {
   constructor() {
     super();
     this.state = {
@@ -92,7 +92,7 @@ export class Table extends BaseComponent {
     this.setState({
       deck: newState.deck,
       selected: newState.selected,
-      drawn: newState.drawn,
+      drawn: newState.drawn
     });
   }
   onChangeControlPanel() {

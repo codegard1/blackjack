@@ -1,6 +1,6 @@
 import { Component } from "react";
 
-export class BaseComponent extends Component {
+class BaseComponent extends Component {
   _bind(...methods) {
     methods.forEach(method => {
       if (this[method]) { this[method] = this[method].bind(this); }

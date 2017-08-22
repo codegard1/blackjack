@@ -3,14 +3,14 @@ import * as T from "prop-types";
 import Masonry from "react-masonry-component";
 
 /* custom stuff */
-import { BaseComponent } from "./BaseComponent";
+import BaseComponent from "./BaseComponent";
 import "./DeckContainer.css";
-import { CardContainer } from "./CardContainer";
+import CardContainer from "./CardContainer";
 
 /* flux */
-import { AppActions } from "./actions/AppActions";
+import AppActions from "./actions/AppActions";
 
-export class DeckContainer extends BaseComponent {
+class DeckContainer extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = {

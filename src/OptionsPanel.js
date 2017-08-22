@@ -5,9 +5,9 @@ import { Toggle } from "office-ui-fabric-react/lib/Toggle";
 import { CommandButton } from "office-ui-fabric-react/lib/Button";
 
 /* Flux */
-import { AppActions } from "./actions/AppActions";
+import AppActions from "./actions/AppActions";
 
-export function OptionsPanel(props) {
+const OptionsPanel = (props) => {
   const resetGame = () => {
     AppActions.reset();
     AppActions.newDeck();

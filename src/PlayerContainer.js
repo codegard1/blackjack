@@ -3,11 +3,11 @@ import * as T from "prop-types";
 import { Callout } from "office-ui-fabric-react/lib/Callout";
 
 /* custom stuff */
-import { BaseComponent } from "./BaseComponent";
-import { DeckContainer } from "./DeckContainer";
-import { ControlPanel } from "./ControlPanel";
+import BaseComponent from "./BaseComponent";
+import DeckContainer from "./DeckContainer";
+import ControlPanel from "./ControlPanel";
+import StatusDisplay from "./StatusDisplay";
 import "./PlayerContainer.css";
-import { StatusDisplay } from "./StatusDisplay";
 
 /* flux */
 import { GameStore } from "./stores/GameStore";
@@ -33,6 +33,7 @@ export class PlayerContainer extends BaseComponent {
   }
 
   componentWillMount() {
+    /* everything else depends on this value being set initially */
     this.setState({ id: this.props.playerId });
   }
 

@@ -1,7 +1,7 @@
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
-export const AppActions = {
+const AppActions = {
   newGame(players) {
     /* create a new deck */
     AppDispatcher.dispatch({

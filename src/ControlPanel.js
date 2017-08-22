@@ -4,9 +4,9 @@ import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
 import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 
 /* Flux */
-import { AppActions } from "./actions/AppActions";
+import AppActions from "./actions/AppActions";
 
-export class ControlPanel extends Component {
+class ControlPanel extends Component {
   render() {
     let selectedFlag = this.props.selectedFlag;
     const gameStatusFlag =

@@ -1,10 +1,10 @@
 import React from "react";
 import * as T from "prop-types";
 
-import { BaseComponent } from "./BaseComponent";
+import BaseComponent from "./BaseComponent";
 import "./CardContainer.css";
 
-export class CardContainer extends BaseComponent {
+class CardContainer extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = { isSelected: false, isBackfacing: false };
