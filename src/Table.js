@@ -85,34 +85,14 @@ export class Table extends BaseComponent {
       const newHand = DeckStore.getHand(player.id);
       player.hand = newHand;
     });
-    this.setState({
-      allPlayersBusted: newState.allPlayersBusted,
-      allPlayersNonBusted: newState.allPlayersNonBusted,
-      allPlayersStaying: newState.allPlayersStaying,
-      bustedPlayers: newState.bustedPlayers,
-      // currentPlayer: newState.currentPlayerIndex,
-      currentPlayerIndex: newState.currentPlayerIndex,
-      gameStatus: newState.gameStatus,
-      highestHandValue: newState.highestHandValue,
-      minimumBet: newState.minimumBet,
-      nonBustedPlayers: newState.nonBustedPlayers,
-      players: newState.players,
-      pot: newState.pot,
-      round: newState.round,
-      tieFlag: newState.tieFlag,
-      turnCount: newState.turnCount,
-      winningPlayerId: newState.winningPlayerId,
-      winningPlayerIndex: newState.winningPlayerIndex
-    });
+    this.setState(newState);
   }
   onChangeDeck() {
     const newState = DeckStore.getState();
-    // console.log(`onChangeDeck: ${newState}`);
     this.setState({
       deck: newState.deck,
       selected: newState.selected,
       drawn: newState.drawn,
-      playerHands: newState.playerHands
     });
   }
   onChangeControlPanel() {
