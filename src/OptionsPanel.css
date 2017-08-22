@@ -1,0 +1,7 @@
+/* arrange buttons in the Options Panel to be in a column */
+div#ButtonColumn {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  /* border: 2px solid orange; */
+}
