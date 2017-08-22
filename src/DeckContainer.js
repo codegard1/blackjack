@@ -56,22 +56,14 @@ class DeckContainer extends BaseComponent {
 
     // Set toggle icon for Deck titles
     const toggleIcon = this.state.isDeckVisible
-      ? <i
-          className="ms-Icon ms-Icon--ChevronDown"
-          aria-hidden="true"
-          onClick={this._toggleDeck}
-        />
-      : <i
-          className="ms-Icon ms-Icon--ChevronUp"
-          aria-hidden="true"
-          onClick={this._toggleDeck}
-        />;
+      ? <i className="ms-Icon ms-Icon--ChevronDown" aria-hidden="true" />
+      : <i className="ms-Icon ms-Icon--ChevronUp" aria-hidden="true" />;
 
+    /* style the DeckContainer conditionally */
     let style =
       this.props.player && this.props.player.turn
         ? "DeckContainer selected "
         : "DeckContainer ";
-
     if (
       this.props.player &&
       this.props.player.status === "staying" &&
@@ -80,9 +72,18 @@ class DeckContainer extends BaseComponent {
       style += "staying ";
     }
 
+    const deckTitleString = `${this.props.title} (${this.props.deck &&
+      this.props.deck.length})`;
+
     return (
       <div className={style}>
-        {!this.props.player && toggleIcon}{" "}
+        <span
+          data-title={deckTitleString}
+          className="ms-font-m"
+          onClick={this._toggleDeck}
+        >
+          {!this.props.player && toggleIcon}
+        </span>
         {this.state.isDeckVisible &&
           <Masonry
             className={"deck"}
@@ -100,7 +101,7 @@ class DeckContainer extends BaseComponent {
 
 /* These props were verified on 8/21/17 */
 DeckContainer.propTypes = {
-  deck: T.array.isRequired, // DeckStore
+  deck: T.array, // DeckStore
   handValue: T.object, // DeckStore
   gameStatus: T.number, // GameStore
   player: T.object, // GameStore

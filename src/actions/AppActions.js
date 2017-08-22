@@ -155,10 +155,10 @@ const AppActions = {
   bet(playerId, amount) {
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_BET,
-      playerId, amount
+      playerId,
+      amount
     });
   }
-
 };
 
 export default AppActions;

@@ -24,16 +24,29 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
     if (selected.length > 0) {
       let foundMatch = false;
       let foundCards = [];
-      /* check each card in selected to see if it's in the current player's hand */
-      selected.forEach(card => {
-        const index = playerHands.findIndex(hand => hand.id === playerId);
-        if (playerHands[index].hand.includes(card)) {
-          foundMatch = true;
-          foundCards.push(card);
-        }
+      let playerHand = this.getHand(playerId);
+
+      /* check each card in selected to see if it's in the specified player's hand */
+      selected.forEach(selectedCard => {
+        playerHand.forEach(playerCard => {
+          // console.log(`comparing ${selectedCard} to ${playerCard}`);
+          if (playerCard.suit === selectedCard.suit && playerCard.sort === selectedCard.sort) {
+            console.log(`Found Match: ${selectedCard}`);
+            foundMatch = true;
+            foundCards.push(selectedCard);
+          }
+        });
       });
-      return foundMatch && foundCards.length > 0 ? true : false;
+
+      if (foundMatch && foundCards.length > 0) {
+        console.log(`selected cards for id ${playerId}`, foundCards);
+        return foundCards;
+      } else {
+        console.log(`no cards are selected by player (${playerId}).`);
+        return false;
+      }
     } else {
+      console.log("no cards are selected.");
       return false;
     }
   },
@@ -247,12 +260,11 @@ function _select(cardAttributes) {
 }
 
 function _deselect(cardAttributes) {
-  const toDelete = selected.filter(
+  const toDeselect = selected.findIndex(
     card =>
       card.suit === cardAttributes.suit && card.sort === cardAttributes.sort
   );
-  const index = selected.indexOf(toDelete);
-  selected.splice(index, 1);
+  selected.splice(toDeselect, 1);
 }
 
 function _newPlayerHand(playerId) {

@@ -1,7 +1,17 @@
+.DeckContainer {
+  cursor: default;
+  margin-top: 1em;
+}
+
+  .DeckContainer > span::after {
+      content: attr(data-title);
+      padding-left: 0.5em;
+  }
+
 .DeckContainer.selected {
-    border: 2px solid blue;
+  border: 2px solid blue;
 }
 
 .DeckContainer.staying {
-    border: 2px solid green;
+  border: 2px solid green;
 }

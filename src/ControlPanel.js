@@ -12,9 +12,8 @@ class ControlPanel extends Component {
     const gameStatusFlag =
       this.props.gameStatus > 2 || this.props.player.turn === false;
 
-      /* currently there are no defaults (8.22.12) */
+    /* currently there are no defaults (8.22.12) */
     const defaultItems = [];
-
     const drawItems = [
       {
         key: "draw",
@@ -41,7 +40,6 @@ class ControlPanel extends Component {
         onClick: AppActions.drawRandom
       }
     ];
-
     const putItems = [
       {
         key: "put-on-top-of-deck",
@@ -66,7 +64,6 @@ class ControlPanel extends Component {
         }
       }
     ];
-
     const blackJackItems = [
       {
         key: "hit",
@@ -110,51 +107,52 @@ class ControlPanel extends Component {
         }
       }
     ];
-
-    const commandBarDefinition = {
-      blackJackItems,
-      drawMenu: [
-        {
-          key: "deck-menu",
-          name: "Draw",
-          ariaLabel: "Draw",
-          iconProps: "",
-          onClick(ev) {
-            ev.preventDefault();
-          },
-          subMenuProps: {
-            items: drawItems,
-            isSubMenu: true,
-            isBeakVisible: true
-          }
+    const drawMenu = [
+      {
+        key: "deck-menu",
+        name: "Draw",
+        ariaLabel: "Draw",
+        iconProps: "",
+        onClick(ev) {
+          ev.preventDefault();
+        },
+        subMenuProps: {
+          items: drawItems,
+          isSubMenu: true,
+          isBeakVisible: true
         }
-      ],
-      putMenu: [
-        {
-          key: "put-menu",
-          name: "Put",
-          ariaLabel: "Put",
-          iconProps: "",
-          onClick(ev) {
-            ev.preventDefault();
-          },
-          subMenuProps: {
-            items: putItems,
-            isSubMenu: true,
-            isBeakVisible: true
-          }
+      }
+    ];
+    const putMenu = [
+      {
+        key: "put-menu",
+        name: "Put",
+        ariaLabel: "Put",
+        iconProps: "",
+        onClick(ev) {
+          ev.preventDefault();
+        },
+        subMenuProps: {
+          items: putItems,
+          isSubMenu: true,
+          isBeakVisible: true
         }
-      ]
-    };
+      }
+    ];
 
-    let commandBarItems = defaultItems;
-    if (this.props.gameStatus > 0) {
-      commandBarItems = [].concat(commandBarDefinition.blackJackItems);
-    }
-    const farItems = commandBarDefinition.optionsButton;
-    const overFlowItems = selectedFlag
-      ? []
-      : [].concat(commandBarDefinition.putMenu, commandBarDefinition.drawMenu);
+    /* configure which items appear in the CommandBar */
+    const commandBarItems =
+      this.props.gameStatus > 0 ? defaultItems : blackJackItems;
+
+    const farItems = [
+      // {
+      //   key: "test",
+      //   name: `selectedFlag: ${selectedFlag}`,
+      //   iconProps: "",
+      //   disabled: true
+      // }
+    ];
+    const overFlowItems = selectedFlag ? [].concat(putMenu, drawMenu) : [];
 
     return (
       <div id="ControlPanel">

@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 import * as T from "prop-types";
 import { Callout } from "office-ui-fabric-react/lib/Callout";
 
@@ -57,6 +57,7 @@ export class PlayerContainer extends BaseComponent {
     );
 
     this.setState({
+      bank: thisPlayer.bank,
       gameStatus: newState.gameStatus,
       minimumBet: newState.minimumBet,
       player: thisPlayer,
@@ -65,10 +66,12 @@ export class PlayerContainer extends BaseComponent {
     });
   }
   onChangeDeck() {
+    const selectedFlag = !!DeckStore.getSelected(this.state.id);
+    console.log(`selectedFlag: ${selectedFlag}`);
     this.setState({
       deck: DeckStore.getHand(this.state.id),
       handValue: DeckStore.getHandValue(this.state.id),
-      selectedFlag: DeckStore.getSelected(this.state.id)
+      selectedFlag
     });
   }
 
@@ -126,7 +129,8 @@ export class PlayerContainer extends BaseComponent {
           player={this.state.player}
         />
 
-        {this.state.gameStatus >= 0 &&
+        {this.state.gameStatus > 0 &&
+          this.state.deck &&
           <DeckContainer
             deck={this.state.deck}
             gameStatus={this.state.gameStatus}
