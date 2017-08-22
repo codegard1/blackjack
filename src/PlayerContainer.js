@@ -14,19 +14,30 @@ export class PlayerContainer extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = {
-      bank: 1000,
-      bet: 0,
+      // bank: 1000,
+      // bet: 0,
+      // gameStatus: 0,
+      // hand: [],
+      // handValue: { aceAsOne: 0, aceAsEleven: 0 },
+      // id: -1,
+      // isBusted: false,
+      // isFinished: false,
+      // isStaying: false,
+      // lastAction: "none",
+      // status: "ok",
+      // title: "",
+      // turn: false,
+
+      // Use these only for now
+      deck: [],
       gameStatus: 0,
-      hand: [],
-      handValue: { aceAsOne: 0, aceAsEleven: 0 },
+      handValue: { aceAsEleven: 0, aceAsOne: 0 },
       id: -1,
-      isBusted: false,
-      isFinished: false,
-      isStaying: false,
-      lastAction: "none",
-      status: "ok",
+      minimumBet: 0,
+      player: {},
+      selectedFlag: false,
       title: "",
-      turn: false
+      turnCount: 0
     };
 
     this._bind("onChangeGame", "onChangeDeck");
@@ -51,42 +62,48 @@ export class PlayerContainer extends BaseComponent {
   /* flux helpers */
   onChangeGame() {
     const newState = GameStore.getState();
-    this.setState({
+    const thisPlayer = newState.players.find(
+      player => player.id === this.state.id
+    );
 
+    this.setState({
+      gameStatus: newState.gameStatus,
+      minimumBet: newState.minimumBet,
+      player: thisPlayer,
+      title: thisPlayer.title,
+      turnCount: newState.turnCount
     });
   }
   onChangeDeck() {
-    const newState = DeckStore.getState();
     this.setState({
-      deck: newState.deck,
-      selected: newState.selected,
-      drawn: newState.drawn,
-      playerHands: newState.playerHands
+      deck: DeckStore.getHand(this.state.id),
+      handValue: DeckStore.getHandValue(this.state.id),
+      selectedFlag: DeckStore.getSelected(this.state.id)
     });
   }
 
   render() {
-
     return (
       <div className="playerContainer">
-        <ControlPanel 
-        playerId={this.props.playerId}
-        gameStatus={}
-        minimumBet={}
-        hidden={false}
-        selectedFlag={}
+        <ControlPanel
+          playerId={this.state.id}
+          gameStatus={this.state.gameStatus}
+          minimumBet={this.state.minimumBet}
+          hidden={false}
+          selectedFlag={this.state.selectedFlag}
+          player={this.state.player}
         />
 
         {this.state.gameStatus >= 0 &&
           <DeckContainer
-            deck={}
-            gameStatus={}
-            handValue={}
+            deck={this.state.deck}
+            gameStatus={this.state.gameStatus}
+            handValue={this.state.handValue}
             hidden={false}
             isSelectable={true}
-            player={}
-            title={}
-            turnCount={}
+            player={this.state.player}
+            title={this.state.title}
+            turnCount={this.state.turnCount}
           />}
       </div>
     );
@@ -94,8 +111,7 @@ export class PlayerContainer extends BaseComponent {
 }
 
 PlayerContainer.propTypes = {
-  playerId: T.object.isRequired,
-  gameStatus: T.bool.isRequired
+  playerId: T.number.isRequired
 };
 
 export default PlayerContainer;

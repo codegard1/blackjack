@@ -41,11 +41,13 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
     return drawn.find(item => item.id === playerId);
   },
   getHand: function(playerId) {
-    const ret = playerHands.find(item => item.id === playerId);
-    if (ret) {
-      return ret.hand;
-    } else {
-      return [];
+    if (playerHands.length > 0) {
+      const ret = playerHands.find(item => item.id === playerId);
+      if (ret) {
+        return ret.hand;
+      } else {
+        return [];
+      }
     }
   },
   getHands: function() {
@@ -53,9 +55,7 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
   },
   getHandValue: function(playerId) {
     if (playerHands.length > 0) {
-      let index = playerHands.indexOf(
-        playerHands.find(player => player.id === playerId)
-      );
+      let index = playerHands.findIndex(player => player.id === playerId);
       // console.log(`getHandValue: playerHands[index]`);
       return playerHands[index].evaluate();
     } else {

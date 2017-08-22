@@ -18,7 +18,6 @@ export class DeckContainer extends BaseComponent {
     this.state = {
       deckIsVisible: true,
       isStatusCalloutVisible: false,
-      cards: []
     };
 
     /* bind private methods */
@@ -142,14 +141,14 @@ export class DeckContainer extends BaseComponent {
 
 /* These props were verified on 8/21/17 */
 DeckContainer.propTypes = {
-  deck: T.array.isRequired,
-  gameStatus: T.number.isRequired,
-  handValue: T.object,
-  hidden: T.bool.isRequired,
-  isSelectable: T.bool.isRequired,
-  player: T.object,
-  title: T.string.isRequired,
-  turnCount: T.number
+  deck: T.array.isRequired,           // DeckStore
+  handValue: T.object,                // DeckStore
+  gameStatus: T.number,               // GameStore
+  player: T.object,                   // GameStore
+  turnCount: T.number,                // GameStore
+  isSelectable: T.bool.isRequired,    // props
+  hidden: T.bool.isRequired,          // props
+  title: T.string.isRequired,         // props 
 };
 
 export default DeckContainer;
