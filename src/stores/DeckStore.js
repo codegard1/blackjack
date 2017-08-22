@@ -30,8 +30,11 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
       selected.forEach(selectedCard => {
         playerHand.forEach(playerCard => {
           // console.log(`comparing ${selectedCard} to ${playerCard}`);
-          if (playerCard.suit === selectedCard.suit && playerCard.sort === selectedCard.sort) {
-            console.log(`Found Match: ${selectedCard}`);
+          if (
+            playerCard.suit === selectedCard.suit &&
+            playerCard.sort === selectedCard.sort
+          ) {
+            // console.log(`Found Match: ${selectedCard}`);
             foundMatch = true;
             foundCards.push(selectedCard);
           }
@@ -39,14 +42,14 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
       });
 
       if (foundMatch && foundCards.length > 0) {
-        console.log(`selected cards for id ${playerId}`, foundCards);
+        // console.log(`selected cards for id ${playerId}`, foundCards);
         return foundCards;
       } else {
-        console.log(`no cards are selected by player (${playerId}).`);
+        // console.log(`no cards are selected by player (${playerId}).`);
         return false;
       }
     } else {
-      console.log("no cards are selected.");
+      // console.log("no cards are selected.");
       return false;
     }
   },
@@ -208,7 +211,7 @@ function _drawRandom(num) {
 
 function _putOnTopOfDeck(cards = selected) {
   deck.putOnTopOfDeck(cards);
-  _removeSelectedFromDrawn(cards);
+  _removeSelectedFromDrawn();
   _clearSelected();
 }
 
@@ -240,8 +243,8 @@ function _clearSelected() {
   selected = [];
 }
 
-function _removeSelectedFromDrawn(cards = selected) {
-  cards.forEach(card => {
+function _removeSelectedFromDrawn() {
+  selected.forEach(card => {
     const index = drawn.findIndex(element => {
       return element.suit === card.suit && element.sort === card.sort;
     });
@@ -277,12 +280,9 @@ function _clearHands() {
   });
 }
 
-/* orphaned */
 function _removeSelectedFromPlayerHand(playerId, cards) {
   cards.forEach(card => {
-    const index = playerHands.indexOf(
-      playerHands.find(player => player.id === playerId)
-    );
+    const index = playerHands.findIndex(player => player.id === playerId);
 
     playerHands[index].findIndex(element => {
       return element.suit === card.suit && element.sort === card.sort;

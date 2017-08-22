@@ -66,8 +66,8 @@ export class PlayerContainer extends BaseComponent {
     });
   }
   onChangeDeck() {
+    /* selectedFlag is true if getSelected() returns an array */
     const selectedFlag = !!DeckStore.getSelected(this.state.id);
-    console.log(`selectedFlag: ${selectedFlag}`);
     this.setState({
       deck: DeckStore.getHand(this.state.id),
       handValue: DeckStore.getHandValue(this.state.id),

@@ -5,10 +5,12 @@ import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 
 /* Flux */
 import AppActions from "./actions/AppActions";
+import {DeckStore} from './stores/DeckStore';
 
 class ControlPanel extends Component {
   render() {
     let selectedFlag = this.props.selectedFlag;
+    let selectedCards = DeckStore.getSelected(this.props.playerId);
     const gameStatusFlag =
       this.props.gameStatus > 2 || this.props.player.turn === false;
 
@@ -47,9 +49,10 @@ class ControlPanel extends Component {
         ariaLabel: "Put on Top of Deck",
         iconProps: "",
         disabled: false,
-        onClick: cards => {
-          AppActions.putOnTopOfDeck(cards);
-          AppActions.removeSelectedFromPlayerHand(cards);
+        onClick: ev => {
+          ev.preventDefault();
+          AppActions.putOnTopOfDeck(this.props.playerId, selectedCards);
+          AppActions.removeSelectedFromPlayerHand(selectedCards);
         }
       },
       {
