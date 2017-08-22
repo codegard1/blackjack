@@ -3,6 +3,7 @@ import {
   MessageBar,
   MessageBarType
 } from "office-ui-fabric-react/lib/MessageBar";
+import { CommandButton } from "office-ui-fabric-react/lib/Button";
 
 /* custom stuff */
 import PlayerContainer from "./PlayerContainer";
@@ -180,7 +181,18 @@ class Table extends BaseComponent {
             isDeckVisible={this.state.isDeckVisible}
             isDrawnVisible={this.state.isDrawnVisible}
             isSelectedVisible={this.state.isSelectedVisible}
+            gameStatus={this.state.gameStatus}
           />
+          <div id="OptionsButtonContainer">
+            <CommandButton
+              iconProps={{ iconName: "StackIndicator" }}
+              disabled={false}
+              checked={false}
+              onClick={AppActions.showOptionsPanel}
+            >
+              Options
+            </CommandButton>
+          </div>
         </div>
       </div>
     );

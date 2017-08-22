@@ -12,6 +12,9 @@ class ControlPanel extends Component {
     const gameStatusFlag =
       this.props.gameStatus > 2 || this.props.player.turn === false;
 
+      /* currently there are no defaults (8.22.12) */
+    const defaultItems = [];
+
     const drawItems = [
       {
         key: "draw",
@@ -64,27 +67,6 @@ class ControlPanel extends Component {
       }
     ];
 
-    const defaultItems = [
-      {
-        key: "deal",
-        name: "Deal",
-        ariaLabel: "Deal",
-        iconProps: { iconName: "StackIndicator" },
-        disabled: false,
-        onClick: () => {
-          AppActions.deal();
-        }
-      },
-      {
-        key: "shuffle",
-        name: "Shuffle",
-        ariaLabel: "Shuffle",
-        iconProps: { iconName: "Sync" },
-        disabled: false,
-        onClick: AppActions.shuffle
-      }
-    ];
-
     const blackJackItems = [
       {
         key: "hit",
@@ -129,18 +111,7 @@ class ControlPanel extends Component {
       }
     ];
 
-    const optionsButton = [
-      {
-        key: "options",
-        name: "Options",
-        ariaLabel: "Options",
-        iconProps: { iconName: "Options" },
-        onClick: AppActions.showOptionsPanel
-      }
-    ];
-
     const commandBarDefinition = {
-      defaultItems,
       blackJackItems,
       drawMenu: [
         {
@@ -173,11 +144,10 @@ class ControlPanel extends Component {
             isBeakVisible: true
           }
         }
-      ],
-      optionsButton
+      ]
     };
 
-    let commandBarItems = commandBarDefinition.defaultItems;
+    let commandBarItems = defaultItems;
     if (this.props.gameStatus > 0) {
       commandBarItems = [].concat(commandBarDefinition.blackJackItems);
     }

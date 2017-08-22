@@ -15,7 +15,13 @@ const OptionsPanel = props => {
     AppActions.reset();
     AppActions.newDeck();
     AppActions.showMessageBar("Game Reset");
+    AppActions.hideOptionsPanel();
   };
+
+  const newDeal = () => {
+    AppActions.deal();
+    AppActions.hideOptionsPanel();
+  }
 
   return (
     <Panel
@@ -28,6 +34,15 @@ const OptionsPanel = props => {
     >
       <div id="ButtonColumn">
         <CommandButton
+          iconProps={{ iconName: "StackIndicator" }}
+          disabled={false}
+          checked={false}
+          onClick={newDeal}
+        >
+          Deal
+        </CommandButton>
+
+        <CommandButton
           iconProps={{ iconName: "Refresh" }}
           disabled={false}
           checked={false}
@@ -35,14 +50,14 @@ const OptionsPanel = props => {
         >
           Reset Game
         </CommandButton>
-
+        
         <CommandButton
-          iconProps={{ iconName: "StackIndicator" }}
+          iconProps={{ iconName: "Sync" }}
           disabled={false}
           checked={false}
-          onClick={AppActions.deal}
+          onClick={AppActions.shuffle}
         >
-          Deal
+          Shuffle Deck
         </CommandButton>
 
         <Toggle

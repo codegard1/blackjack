@@ -1,49 +1,60 @@
 div#App {
-    width: 100vw;
-    padding: 0;
-    margin: 0;
+  width: 100vw;
+  padding: 50px 0px;
+  margin: 0;
 }
 
 div#Table {
-    width: 100%;
-    /*height: 100%;*/
-    padding: 0;
-    margin: 0;
-    /*border:2px solid salmon;*/
+  width: 100%;
+  /*height: 100%;*/
+  padding: 0;
+  margin: 0;
+  /*border:2px solid salmon;*/
 }
 
 .DeckContainer {
-    margin: auto 0;
-    display: block;
-    padding: 0 2em 2em 2em;
-    /*width: 100%;*/
-    /*border: 3px solid blueviolet;*/
+  margin: auto 0;
+  display: block;
+  padding: 0 2em 2em 2em;
+  /*width: 100%;*/
+  /*border: 3px solid blueviolet;*/
 }
 
 .deck {
-    /*border: 2px dotted gold;*/
-    /*width: 100%;*/
+  /*border: 2px dotted gold;*/
+  /*width: 100%;*/
 }
 
 #ControlPanel {
-    padding: 1em;
-    /*border: 1px solid green;*/
+  padding: 1em;
+  /*border: 1px solid green;*/
 }
 
 .handValue {
-    float: left;
-    margin-left: 10px;
-    margin-right: 10px;
+  float: left;
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
 div#StatusPanel {
-    padding: 1em;
+  padding: 1em;
 }
 
 .ms-Grid-col {
-    /*border:1px solid lightgreen;*/
+  /*border:1px solid lightgreen;*/
 }
 
 #PotDisplay {
-    margin: 0 1em;
+  margin: 0 1em;
+}
+
+/* container for a button that shows OptionsPanel */
+div#OptionsButtonContainer {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  background-color: whitesmoke;
+  border: 1px solid rgba(25,25,25,0.25);
 }
