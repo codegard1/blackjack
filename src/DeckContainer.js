@@ -1,12 +1,10 @@
 import React from "react";
 import * as T from "prop-types";
 import Masonry from "react-masonry-component";
-import { Callout } from "office-ui-fabric-react/lib/Callout";
 
 /* custom stuff */
 import { BaseComponent } from "./BaseComponent";
 import "./DeckContainer.css";
-import { StatusDisplay } from "./StatusDisplay";
 import { CardContainer } from "./CardContainer";
 
 /* flux */
@@ -16,28 +14,21 @@ export class DeckContainer extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = {
-      deckIsVisible: true,
-      isStatusCalloutVisible: false,
+      isDeckVisible: true
     };
 
     /* bind private methods */
-    this._bind("_toggleDeck", "_toggleStatusCallout");
+    this._bind("_toggleDeck");
   }
 
   componentWillMount() {
     if (this.props.hidden === true) {
-      this.setState({ deckIsVisible: false });
+      this.setState({ isDeckVisible: false });
     }
   }
 
-  _toggleStatusCallout() {
-    this.setState({
-      isStatusCalloutVisible: !this.state.isStatusCalloutVisible
-    });
-  }
-
   _toggleDeck() {
-    this.setState({ deckIsVisible: !this.state.deckIsVisible });
+    this.setState({ isDeckVisible: !this.state.isDeckVisible });
   }
 
   render() {
@@ -64,7 +55,7 @@ export class DeckContainer extends BaseComponent {
         : [];
 
     // Set toggle icon for Deck titles
-    const toggleIcon = this.state.deckIsVisible
+    const toggleIcon = this.state.isDeckVisible
       ? <i
           className="ms-Icon ms-Icon--ChevronDown"
           aria-hidden="true"
@@ -89,42 +80,10 @@ export class DeckContainer extends BaseComponent {
       style += "staying ";
     }
 
-    const titleBar = this.props.player
-      ? <span>
-          {this.props.player.title} {` ($${this.props.player.bank}) `} Hand
-          Value: {this.props.handValue.aceAsOne}
-          {this.props.handValue.aceAsOne !== this.props.handValue.aceAsEleven &&
-            " / " + this.props.handValue.aceAsEleven}{" "}
-          <i
-            className="ms-Icon ms-Icon--Info"
-            onClick={this._toggleStatusCallout}
-            ref={calloutTarget => (this._statusCalloutTarget = calloutTarget)}
-          />
-        </span>
-      : <span>
-          {this.props.title}
-        </span>;
-
     return (
       <div className={style}>
-        <h3 className="ms-font-s">
-          {titleBar} {toggleIcon}
-        </h3>
-        {this.state.isStatusCalloutVisible &&
-          <Callout
-            gapSpace={1}
-            targetElement={this._statusCalloutTarget}
-            onDismiss={this._toggleStatusCallout}
-            setInitialFocus={false}
-          >
-            <StatusDisplay
-              player={this.props.player}
-              gameStatus={this.props.gameStatus}
-              turnCount={this.props.turnCount}
-            />
-          </Callout>}
-
-        {this.state.deckIsVisible &&
+        {!this.props.player && toggleIcon}{" "}
+        {this.state.isDeckVisible &&
           <Masonry
             className={"deck"}
             elementType={"div"}
@@ -141,14 +100,14 @@ export class DeckContainer extends BaseComponent {
 
 /* These props were verified on 8/21/17 */
 DeckContainer.propTypes = {
-  deck: T.array.isRequired,           // DeckStore
-  handValue: T.object,                // DeckStore
-  gameStatus: T.number,               // GameStore
-  player: T.object,                   // GameStore
-  turnCount: T.number,                // GameStore
-  isSelectable: T.bool.isRequired,    // props
-  hidden: T.bool.isRequired,          // props
-  title: T.string.isRequired,         // props 
+  deck: T.array.isRequired, // DeckStore
+  handValue: T.object, // DeckStore
+  gameStatus: T.number, // GameStore
+  player: T.object, // GameStore
+  turnCount: T.number, // GameStore
+  isSelectable: T.bool.isRequired, // props
+  hidden: T.bool.isRequired, // props
+  title: T.string.isRequired // props
 };
 
 export default DeckContainer;
