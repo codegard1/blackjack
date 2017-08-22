@@ -2,7 +2,12 @@ import { Component } from "react";
 
 export class BaseComponent extends Component {
   _bind(...methods) {
-    methods.forEach(method => this[method] = this[method].bind(this));
+    methods.forEach(method => {
+      if (this[method]) { this[method] = this[method].bind(this); }
+      else {
+        console.log(`Error: method ${method} was not found`);
+      }
+    });
   }
 }
 

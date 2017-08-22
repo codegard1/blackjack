@@ -2,7 +2,7 @@
   "name": "blackjack",
   "description": "Chris's own blackjack game, made for fun",
   "author": "Chris Odegard <c.odegard@gmail.com>",
-  "version": "0.3.6",
+  "version": "0.3.8",
   "repository": {
     "type": "git",
     "url": "git://github.com/codegard1/blackjack"
@@ -10,6 +10,9 @@
   "main": "./src/components.js",
   "private": true,
   "dependencies": {
+    "flux": "^3.1.2",
+    "immutable": "^3.8.1",
+    "keymirror": "^0.1.1",
     "office-ui-fabric-react": "^2.34.2",
     "prop-types": "^15.5.10",
     "react": "^15.5.4",

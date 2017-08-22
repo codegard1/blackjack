@@ -3,8 +3,5 @@
     "files.associations": {
         "*.js": "javascriptreact"
     },
-    // "editor.formatOnSave": true,
-    "flow.useNPMPackagedFlow": true,
-    "javascript.validate.enable": false,
-    "javascript.format.enable": false
+    "eslint.enable": true
 }
