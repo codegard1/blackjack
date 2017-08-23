@@ -6,7 +6,6 @@ import { Callout } from "office-ui-fabric-react/lib/Callout";
 import BaseComponent from "./BaseComponent";
 import DeckContainer from "./DeckContainer";
 import ControlPanel from "./ControlPanel";
-import StatusDisplay from "./StatusDisplay";
 import "./PlayerContainer.css";
 
 /* flux */
@@ -88,18 +87,18 @@ export class PlayerContainer extends BaseComponent {
 
     const titleBar = !this.state.player.empty
       ? <span>
-          {title} {` ($${bank}) `} Hand Value: {handValue.aceAsOne}
-          {handValue.aceAsOne !== handValue.aceAsEleven &&
-            " / " + handValue.aceAsEleven}{" "}
-          <i
-            className="ms-Icon ms-Icon--Info"
-            onClick={this._toggleStatusCallout}
-            ref={calloutTarget => (this._statusCalloutTarget = calloutTarget)}
-          />
-        </span>
+        {title} {` ($${bank}) `} Hand Value: {handValue.aceAsOne}
+        {handValue.aceAsOne !== handValue.aceAsEleven &&
+          " / " + handValue.aceAsEleven}{" "}
+        <i
+          className="ms-Icon ms-Icon--Info"
+          onClick={this._toggleStatusCallout}
+          ref={calloutTarget => (this._statusCalloutTarget = calloutTarget)}
+        />
+      </span>
       : <span>
-          {title}
-        </span>;
+        {title}
+      </span>;
 
     return (
       <div className="PlayerContainer">
@@ -151,3 +150,23 @@ PlayerContainer.propTypes = {
 };
 
 export default PlayerContainer;
+
+
+const StatusDisplay = props => {
+  return (
+    <div id="StatusPanel" className="ms-font-s">
+      <span>Player: {props.player.title || ''}</span><br />
+      <span>Status: {props.player.status || ''}</span><br />
+      <span>Hand Value: {`${props.player.handValue.aceAsEleven} / ${props.player.handValue.aceAsOne}`}</span><br />
+      <span>Turn: {`${props.player.turn}`}</span><br />
+      <span>Game Status: {props.gameStatus || 0}</span><br />
+      <span>Turn Count: {props.turnCount || 0}</span><br />
+    </div>
+  );
+};
+
+StatusDisplay.propTypes = {
+  gameStatus: T.number.isRequired,
+  turnCount: T.number.isRequired,
+  player: T.object.isRequired
+};
