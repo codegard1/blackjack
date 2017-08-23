@@ -17,9 +17,11 @@ export class PlayerContainer extends BaseComponent {
     super(props);
     this.state = {
       deck: [],
+      deckCalloutText: "I'm Deck Callout!",
       gameStatus: 0,
       handValue: { aceAsEleven: 0, aceAsOne: 0 },
       id: -1,
+      isDeckCalloutVisible: false,
       isStatusCalloutVisible: false,
       minimumBet: 0,
       player: { empty: true },
@@ -28,7 +30,15 @@ export class PlayerContainer extends BaseComponent {
       turnCount: 0
     };
 
-    this._bind("onChangeGame", "onChangeDeck", "_toggleStatusCallout");
+    this._bind(
+      "_hideDeckCallout",
+      "_setDeckCalloutText",
+      "_showDeckCallout",
+      "_toggleStatusCallout",
+      "onChangeDeck",
+      "onChangeGame",
+      "_toggleDeckCallout"
+    );
   }
 
   componentWillMount() {
@@ -80,6 +90,26 @@ export class PlayerContainer extends BaseComponent {
     });
   }
 
+  _toggleDeckCallout() {
+    this.setState({
+      isDeckCalloutVisible: !this.state.isDeckCalloutVisible
+    });
+  }
+
+  _showDeckCallout() {
+    this.setState({ isDeckCalloutVisible: true });
+  }
+
+  _hideDeckCallout() {
+    this.setState({
+      isDeckCalloutVisible: false,
+    });
+  }
+
+  _setDeckCalloutText(text) {
+    this.setState({ deckCalloutText: text });
+  }
+
   render() {
     const handValue = this.state.handValue;
     const bank = this.state.bank;
@@ -102,7 +132,7 @@ export class PlayerContainer extends BaseComponent {
 
     return (
       <div className="PlayerContainer">
-        <h3 className="ms-font-s">
+        <h3 className="ms-font-s" ref={calloutTarget => this._deckCalloutTarget = calloutTarget}>
           {titleBar}
         </h3>
         {this.state.isStatusCalloutVisible &&
@@ -118,6 +148,16 @@ export class PlayerContainer extends BaseComponent {
               turnCount={this.state.turnCount}
             />
           </Callout>}
+        {this.state.isDeckCalloutVisible &&
+          <Callout
+            className="DeckCallout"
+            gapSpace={1}
+            targetElement={this._deckCalloutTarget}
+            onDismiss={this._hideDeckCallout}
+            setInitialFocus={false}
+          >
+            <span className="ms-font-xl">{this.state.deckCalloutText}</span>
+          </Callout>}
 
         <ControlPanel
           playerId={this.state.id}
@@ -126,6 +166,7 @@ export class PlayerContainer extends BaseComponent {
           hidden={false}
           selectedFlag={this.state.selectedFlag}
           player={this.state.player}
+          showDeckCallout={this._showDeckCallout}
         />
 
         {this.state.gameStatus > 0 &&
@@ -140,6 +181,7 @@ export class PlayerContainer extends BaseComponent {
             title={this.state.title}
             turnCount={this.state.turnCount}
           />}
+        <button onClick={this._toggleDeckCallout}>Info</button>
       </div>
     );
   }
@@ -166,7 +208,7 @@ const StatusDisplay = props => {
 };
 
 StatusDisplay.propTypes = {
-  gameStatus: T.number.isRequired,
-  turnCount: T.number.isRequired,
-  player: T.object.isRequired
+  // gameStatus: T.number.isRequired,
+  // turnCount: T.number.isRequired,
+  // player: T.object.isRequired
 };

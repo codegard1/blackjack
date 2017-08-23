@@ -5,12 +5,17 @@ import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 
 /* Flux */
 import AppActions from "./actions/AppActions";
-import {DeckStore} from './stores/DeckStore';
+import { DeckStore } from './stores/DeckStore';
 
 class ControlPanel extends Component {
   render() {
+    /* (selectedFlag === true) means that the player has selected cards in his hand */
     let selectedFlag = this.props.selectedFlag;
-    let selectedCards = DeckStore.getSelected(this.props.playerId);
+    let selectedCards = selectedFlag
+      ? DeckStore.getSelected(this.props.playerId)
+      : [];
+
+    /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
     const gameStatusFlag =
       this.props.gameStatus > 2 || this.props.player.turn === false;
 
@@ -75,6 +80,7 @@ class ControlPanel extends Component {
         iconProps: { iconName: "Add" },
         disabled: gameStatusFlag,
         onClick: () => {
+          this.props.showDeckCallout;
           AppActions.hit(this.props.playerId);
         }
       },
@@ -145,15 +151,16 @@ class ControlPanel extends Component {
 
     /* configure which items appear in the CommandBar */
     const commandBarItems =
-      this.props.gameStatus > 0 ? defaultItems : blackJackItems;
+      blackJackItems;
+    // this.props.gameStatus > 0 ? defaultItems : blackJackItems;
 
     const farItems = [
-      // {
-      //   key: "test",
-      //   name: `selectedFlag: ${selectedFlag}`,
-      //   iconProps: "",
-      //   disabled: true
-      // }
+      {
+        key: "test",
+        name: `selectedFlag: ${selectedFlag}`,
+        iconProps: "",
+        disabled: true
+      }
     ];
     const overFlowItems = selectedFlag ? [].concat(putMenu, drawMenu) : [];
 
@@ -176,7 +183,7 @@ ControlPanel.propTypes = {
   gameStatus: T.number.isRequired,
   minimumBet: T.number.isRequired,
   hidden: T.bool.isRequired,
-  selectedFlag: T.bool.isRequired
+  selectedFlag: T.bool.isRequired,
 };
 
 export default ControlPanel;
