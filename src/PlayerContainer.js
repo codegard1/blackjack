@@ -1,6 +1,6 @@
 import React from "react";
 import * as T from "prop-types";
-import { Callout } from "office-ui-fabric-react/lib/Callout";
+import { Callout, DirectionalHint } from "office-ui-fabric-react/lib/Callout";
 
 /* custom stuff */
 import BaseComponent from "./BaseComponent";
@@ -22,12 +22,14 @@ export class PlayerContainer extends BaseComponent {
       handValue: { aceAsEleven: 0, aceAsOne: 0 },
       id: -1,
       isDeckCalloutVisible: false,
+      isDeckCalloutEnabled: true,
       isStatusCalloutVisible: false,
       minimumBet: 0,
       player: { empty: true },
       selectedFlag: false,
       title: "",
-      turnCount: 0
+      turnCount: 0,
+      gameStatusFlag: false
     };
 
     this._bind(
@@ -65,14 +67,22 @@ export class PlayerContainer extends BaseComponent {
       player => player.id === this.state.id
     );
 
+    /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
+    const gameStatusFlag =
+    newState.gameStatus === 0 ||
+    newState.gameStatus > 2 ||
+    thisPlayer.turn === false;
+
     this.setState({
       bank: thisPlayer.bank,
       gameStatus: newState.gameStatus,
       minimumBet: newState.minimumBet,
       player: thisPlayer,
       title: thisPlayer.title,
-      turnCount: newState.turnCount
+      turnCount: newState.turnCount,
+      gameStatusFlag
     });
+
   }
   onChangeDeck() {
     /* selectedFlag is true if getSelected() returns an array */
@@ -97,12 +107,14 @@ export class PlayerContainer extends BaseComponent {
   }
 
   _showDeckCallout() {
-    this.setState({ isDeckCalloutVisible: true });
+    if (!this.state.isDeckCalloutVisible) {
+      this.setState({ isDeckCalloutVisible: true });
+    }
   }
 
   _hideDeckCallout() {
     this.setState({
-      isDeckCalloutVisible: false,
+      isDeckCalloutVisible: false
     });
   }
 
@@ -117,22 +129,22 @@ export class PlayerContainer extends BaseComponent {
 
     const titleBar = !this.state.player.empty
       ? <span>
-        {title} {` ($${bank}) `} Hand Value: {handValue.aceAsOne}
-        {handValue.aceAsOne !== handValue.aceAsEleven &&
-          " / " + handValue.aceAsEleven}{" "}
-        <i
-          className="ms-Icon ms-Icon--Info"
-          onClick={this._toggleStatusCallout}
-          ref={calloutTarget => (this._statusCalloutTarget = calloutTarget)}
-        />
-      </span>
+          {title} {` ($${bank}) `} Hand Value: {handValue.aceAsOne}
+          {handValue.aceAsOne !== handValue.aceAsEleven &&
+            " / " + handValue.aceAsEleven}{" "}
+          <i
+            className="ms-Icon ms-Icon--Info"
+            onClick={this._toggleStatusCallout}
+            ref={calloutTarget => (this._statusCalloutTarget = calloutTarget)}
+          />
+        </span>
       : <span>
-        {title}
-      </span>;
+          {title}
+        </span>;
 
     return (
       <div className="PlayerContainer">
-        <h3 className="ms-font-s" ref={calloutTarget => this._deckCalloutTarget = calloutTarget}>
+        <h3 className="ms-font-s">
           {titleBar}
         </h3>
         {this.state.isStatusCalloutVisible &&
@@ -148,15 +160,19 @@ export class PlayerContainer extends BaseComponent {
               turnCount={this.state.turnCount}
             />
           </Callout>}
-        {this.state.isDeckCalloutVisible &&
+        {this.state.isDeckCalloutEnabled &&
+          this.state.isDeckCalloutVisible &&
           <Callout
             className="DeckCallout"
             gapSpace={1}
             targetElement={this._deckCalloutTarget}
             onDismiss={this._hideDeckCallout}
             setInitialFocus={false}
+            directionalHint={DirectionalHint.bottomCenter}
           >
-            <span className="ms-font-xl">{this.state.deckCalloutText}</span>
+            <span className="ms-font-xl">
+              {this.state.deckCalloutText}
+            </span>
           </Callout>}
 
         <ControlPanel
@@ -167,13 +183,14 @@ export class PlayerContainer extends BaseComponent {
           selectedFlag={this.state.selectedFlag}
           player={this.state.player}
           showDeckCallout={this._showDeckCallout}
+          gameStatusFlag={this.state.gameStatusFlag}
         />
 
-        {this.state.gameStatus > 0 &&
-          this.state.deck &&
+        {this.state.deck.length > 0 &&
           <DeckContainer
             deck={this.state.deck}
             gameStatus={this.state.gameStatus}
+            gameStatusFlag={this.gameStatusFlag}
             handValue={this.state.handValue}
             hidden={false}
             isSelectable={true}
@@ -181,7 +198,10 @@ export class PlayerContainer extends BaseComponent {
             title={this.state.title}
             turnCount={this.state.turnCount}
           />}
-        <button onClick={this._toggleDeckCallout}>Info</button>
+        <div
+          id="deckCalloutTarget"
+          ref={callout => (this._deckCalloutTarget = callout)}
+        />
       </div>
     );
   }
@@ -193,16 +213,35 @@ PlayerContainer.propTypes = {
 
 export default PlayerContainer;
 
-
 const StatusDisplay = props => {
   return (
     <div id="StatusPanel" className="ms-font-s">
-      <span>Player: {props.player.title || ''}</span><br />
-      <span>Status: {props.player.status || ''}</span><br />
-      <span>Hand Value: {`${props.player.handValue.aceAsEleven} / ${props.player.handValue.aceAsOne}`}</span><br />
-      <span>Turn: {`${props.player.turn}`}</span><br />
-      <span>Game Status: {props.gameStatus || 0}</span><br />
-      <span>Turn Count: {props.turnCount || 0}</span><br />
+      <span>
+        Player: {props.player.title || ""}
+      </span>
+      <br />
+      <span>
+        Status: {props.player.status || ""}
+      </span>
+      <br />
+      <span>
+        Hand Value:{" "}
+        {`${props.player.handValue.aceAsEleven} / ${props.player.handValue
+          .aceAsOne}`}
+      </span>
+      <br />
+      <span>
+        Turn: {`${props.player.turn}`}
+      </span>
+      <br />
+      <span>
+        Game Status: {props.gameStatus || 0}
+      </span>
+      <br />
+      <span>
+        Turn Count: {props.turnCount || 0}
+      </span>
+      <br />
     </div>
   );
 };
