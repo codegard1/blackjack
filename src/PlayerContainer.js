@@ -22,7 +22,7 @@ export class PlayerContainer extends BaseComponent {
       handValue: { aceAsEleven: 0, aceAsOne: 0 },
       id: -1,
       isDeckCalloutVisible: false,
-      isDeckCalloutEnabled: true,
+      isDeckCalloutEnabled: false,
       isStatusCalloutVisible: false,
       minimumBet: 0,
       player: { empty: true },
@@ -69,9 +69,9 @@ export class PlayerContainer extends BaseComponent {
 
     /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
     const gameStatusFlag =
-    newState.gameStatus === 0 ||
-    newState.gameStatus > 2 ||
-    thisPlayer.turn === false;
+      newState.gameStatus === 0 ||
+      newState.gameStatus > 2 ||
+      thisPlayer.turn === false;
 
     this.setState({
       bank: thisPlayer.bank,
@@ -129,18 +129,18 @@ export class PlayerContainer extends BaseComponent {
 
     const titleBar = !this.state.player.empty
       ? <span>
-          {title} {` ($${bank}) `} Hand Value: {handValue.aceAsOne}
-          {handValue.aceAsOne !== handValue.aceAsEleven &&
-            " / " + handValue.aceAsEleven}{" "}
-          <i
-            className="ms-Icon ms-Icon--Info"
-            onClick={this._toggleStatusCallout}
-            ref={calloutTarget => (this._statusCalloutTarget = calloutTarget)}
-          />
-        </span>
+        {title} {` ($${bank}) `} Hand Value: {handValue.aceAsOne}
+        {handValue.aceAsOne !== handValue.aceAsEleven &&
+          " / " + handValue.aceAsEleven}{" "}
+        <i
+          className="ms-Icon ms-Icon--Info"
+          onClick={this._toggleStatusCallout}
+          ref={calloutTarget => (this._statusCalloutTarget = calloutTarget)}
+        />
+      </span>
       : <span>
-          {title}
-        </span>;
+        {title}
+      </span>;
 
     return (
       <div className="PlayerContainer">
