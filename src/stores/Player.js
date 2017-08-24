@@ -26,21 +26,42 @@ export class Player {
       bank: 1000,
       bet: 0,
       lastAction: "none",
-      isStaying: false
+      isStaying: false,
+      isBusted: false,
+      isFinished: false
     };
     keys.forEach(key => { this[key] = defaults[key]; });
   }
-  reset(...keys) { this.remove(...keys); }
+  resetStatus() {
+    /* AKA NewRound; resets properties that are bound to a single round of play */
+    this.remove(['status',
+      'turn',
+      'bet',
+      'lastAction',
+      'isStaying',
+      'isBusted',
+      'isFinished']);
+  }
+  resetAll() {
+    this.remove(['handValue',
+      'status',
+      'turn',
+      'bank',
+      'bet',
+      'lastAction',
+      'isStaying'])
+  }
   setStatus() {
     /*   set busted status  */
     if (this.handValue.aceAsOne > 21 && this.handValue.aceAsEleven > 21) {
-      this.status = D.busted;
+      this.busted();
+      this.finish();
     }
     /*   set blackjack status  */
     if (
       this.handValue.aceAsOne === 21 || this.handValue.aceAsEleven === 21
     ) {
-      this.status = D.blackjack;
+      this.blackjack();
     }
   }
   getHighestHandValue() {
@@ -57,6 +78,18 @@ export class Player {
   }
   ante(amount) {
     this.bank -= amount;
+  }
+  busted() {
+    this.isBusted = true;
+  }
+  stay() {
+    this.isStaying = true;
+  }
+  finish() {
+    this.isFinished = true;
+  }
+  blackjack() {
+    this.status = D.blackjack;
   }
 }
 
