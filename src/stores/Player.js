@@ -84,15 +84,21 @@ export class Player {
   }
   ante(amount) {
     this.bank -= amount;
+    this.lastAction = 'ante';
+  }
+  hit() {
+    this.lastAction = 'hit';
   }
   busted() {
     this.isBusted = true;
   }
   stay() {
     this.isStaying = true;
+    this.lastAction = 'stay';
   }
   finish() {
     this.isFinished = true;
+    // this.lastAction ='finish';
   }
   blackjack() {
     this.hasBlackjack = true;

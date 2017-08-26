@@ -73,14 +73,31 @@ export class PlayerContainer extends BaseComponent {
       newState.gameStatus > 2 ||
       thisPlayer.turn === false;
 
+    /* if the player is staying, display callout */
+    let text = '';
+    if (thisPlayer.isStaying) {
+      text = `${thisPlayer.title} stayed`;
+    }
+    if (thisPlayer.hasBlackJack) {
+      text = `${thisPlayer.title} has blackjack`;
+    }
+    if (thisPlayer.isBusted) {
+      text = `${thisPlayer.title} is busted`;
+    }
+    if (thisPlayer.isFinished) {
+      text = `${thisPlayer.title} is finished`;
+    }
+
+
     this.setState({
       bank: thisPlayer.bank,
+      deckCalloutText: text,
       gameStatus: newState.gameStatus,
+      gameStatusFlag,
       minimumBet: newState.minimumBet,
       player: thisPlayer,
       title: thisPlayer.title,
       turnCount: newState.turnCount,
-      gameStatusFlag
     });
 
   }
@@ -162,6 +179,7 @@ export class PlayerContainer extends BaseComponent {
           </Callout>}
         {this.state.isDeckCalloutEnabled &&
           this.state.isDeckCalloutVisible &&
+          this.state.deckCalloutText !== '' &&
           <Callout
             className="DeckCallout"
             gapSpace={1}

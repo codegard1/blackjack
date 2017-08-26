@@ -200,10 +200,8 @@ function _evaluateGame(
       break;
 
     case 2 /*   stay (go to next turn)  */:
-      ControlPanelStore.setMessageBar(`${state.players[state.currentPlayerIndex].title} stayed`);
-
       /*   set current player as staying  */
-      state.players[state.currentPlayerIndex].isStaying = true;
+      state.players[state.currentPlayerIndex].stay()
       state.players[state.currentPlayerIndex].turn = false;
 
       /*   get the next player by index  */
@@ -395,6 +393,15 @@ function _reset() {
 function _newRound() {
   state.players.forEach(player => {
     player.resetStatus();
+    console.log(`player.title: ${player.title}
+    player.status: ${player.status}
+    player.turn: ${player.turn}
+    player.bet: ${player.bet}
+    player.lastAction: ${player.lastAction}
+    player.isStaying: ${player.isStaying}
+    player.isBusted: ${player.isBusted}
+    player.isFinished: ${player.isFinished}
+    player.hasBlackjack: ${player.hasBlackjack}`);
   });
 
   state.currentPlayerIndex = 0;
@@ -434,6 +441,7 @@ function _deal() {
 
 /* draw another card from the deck. A corresponding method in DeckStore actually adds a new card to the Player's hand */
 function _hit() {
+  state.players[state.currentPlayerIndex].hit();
   _evaluateGame(1);
 }
 
@@ -442,7 +450,7 @@ function _hit() {
 the current player is the only one staying */
 function _stay() {
   state.players[state.currentPlayerIndex].stay();
-  console.log(`_stay(): state.players[state.currentPlayerIndex].isStaying: ${state.players[state.currentPlayerIndex].stay()}`);
+  console.log(`_stay(): state.players[state.currentPlayerIndex].isStaying: ${state.players[state.currentPlayerIndex].isStaying}`);
   _evaluateGame(2);
 }
 
