@@ -389,7 +389,9 @@ function _reset() {
   state.turnCount = 0;
 }
 
-/* Start a new round */
+/** Start a new round 
+ * This method is called after DECK_CLEARHANDS & DECK_DEAL
+ */
 function _newRound() {
   state.players.forEach(player => {
     player.resetStatus();
@@ -400,6 +402,9 @@ function _newRound() {
   state.pot = 0;
   state.round += 1;
   state.turnCount = 0;
+
+  /* calls evaluateGame(1) */
+  _deal();
 }
 
 /* pay a specified amount into the pot */
@@ -422,6 +427,7 @@ function _endGameTrap(statusCode) {
 
 /* Start a new round with a new deck */
 function _deal() {
+  /* start the player's turn */
   state.players[state.currentPlayerIndex].turn = true;
   _evaluateGame(1);
 }

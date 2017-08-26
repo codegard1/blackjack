@@ -42,6 +42,9 @@ const AppActions = {
       actionType: AppConstants.DECK_CLEARHANDS
     });
     AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_DEAL
+    });
+    AppDispatcher.dispatch({
       actionType: AppConstants.GAME_NEWROUND
     });
   },
