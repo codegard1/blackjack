@@ -22,7 +22,7 @@ export class PlayerContainer extends BaseComponent {
       handValue: { aceAsEleven: 0, aceAsOne: 0 },
       id: -1,
       isDeckCalloutVisible: false,
-      isDeckCalloutEnabled: false,
+      isDeckCalloutEnabled: true,
       isStatusCalloutVisible: false,
       minimumBet: 0,
       player: { empty: true },
