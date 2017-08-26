@@ -29,7 +29,7 @@ export class PlayerContainer extends BaseComponent {
       selectedFlag: false,
       title: "",
       turnCount: 0,
-      gameStatusFlag: false
+      gameStatusFlag: true,
     };
 
     this._bind(
@@ -60,7 +60,7 @@ export class PlayerContainer extends BaseComponent {
     DeckStore.removeChangeListener(this.onChangeDeck);
   }
 
-  /* flux helpers */
+  /* flux helpegameStatusrs */
   onChangeGame() {
     const newState = GameStore.getState();
     const thisPlayer = newState.players.find(
@@ -84,9 +84,9 @@ export class PlayerContainer extends BaseComponent {
     if (thisPlayer.isBusted) {
       text = `${thisPlayer.title} is busted`;
     }
-    if (thisPlayer.isFinished) {
-      text = `${thisPlayer.title} is finished`;
-    }
+    // if (thisPlayer.isFinished) {
+    //   text = `${thisPlayer.title} is finished`;
+    // }
 
 
     this.setState({
@@ -143,6 +143,8 @@ export class PlayerContainer extends BaseComponent {
     const handValue = this.state.handValue;
     const bank = this.state.bank;
     const title = this.state.title;
+
+    console.log(`GameStatus: ${this.state.gameStatus}`);
 
     const titleBar = !this.state.player.empty
       ? <span>

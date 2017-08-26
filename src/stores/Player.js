@@ -1,66 +1,67 @@
-export class Player {
+class Player {
   constructor(id, title) {
-    this.id = id;
-    this.title = title;
-    // this.hand = [];
-    this.handValue = { aceAsOne: 0, aceAsEleven: 0 };
-    this.status = "ok";
-    this.turn = false;
     this.bank = 1000;
     this.bet = 0;
-    this.lastAction = "none"; /* unused */
-    this.isStaying = false;
+    this.handValue = { aceAsOne: 0, aceAsEleven: 0 };
+    this.hasBlackjack = false;
+    this.id = id;
     this.isBusted = false;
     this.isFinished = false;
-    this.hasBlackjack = false;
+    this.isStaying = false;
+    this.lastAction = "none"; /* unused */
+    this.status = "ok";
+    this.title = title;
+    this.turn = false;
   }
   remove(...keys) {
     const defaults = {
-      id: "",
-      title: "",
-      handValue: { aceAsOne: 0, aceAsEleven: 0 },
-      status: "ok", /* deprecated */
-      turn: false,
       bank: 1000,
       bet: 0,
-      lastAction: "none", /* unused, deprecated */
-      isStaying: false,
+      handValue: { aceAsOne: 0, aceAsEleven: 0 },
+      hasBlackjack: false,
+      id: "",
       isBusted: false,
-      isFinished: false
+      isFinished: false,
+      isStaying: false,
+      lastAction: "none", /* unused, deprecated */
+      status: "ok", /* deprecated */
+      title: "",
+      turn: false,
     };
     keys.forEach(key => { this[key] = defaults[key]; });
-  }
-  bet(amount) {
-    this.pot -= amount;
-    this.bet = amount;
-    this.lastAction = 'bet';
   }
   resetStatus() {
     /* AKA NewRound; resets properties that are bound to a single round of play */
     this.remove([
-      'status',
-      'turn',
       'bet',
-      'lastAction',
-      'isStaying',
+      'handValue',
+      'hasBlackjack',
       'isBusted',
       'isFinished',
-      'hasBlackjack'
+      'isStaying',
+      'lastAction',
+      'status',
+      'turn',
     ]);
   }
   resetAll() {
-    this.remove(['handValue',
-      'status',
-      'turn',
+    this.remove([
       'bank',
       'bet',
+      'handValue',
+      'hasBlackjack',
+      'isBusted',
+      'isFinished',
+      'isStaying',
       'lastAction',
-      'isStaying'])
+      'status',
+      'turn',
+    ])
   }
   setStatus() {
     /*   set busted status  */
     if (this.handValue.aceAsOne > 21 && this.handValue.aceAsEleven > 21) {
-      this.busted();
+      this.bust();
       this.finish();
     }
     /*   set blackjack status  */
@@ -82,26 +83,42 @@ export class Player {
       return higherHandValue;
     }
   }
+  bet(amount) {
+    this.pot -= amount;
+    this.bet = amount;
+    this.lastAction = 'bet';
+  }
   ante(amount) {
     this.bank -= amount;
     this.lastAction = 'ante';
   }
   hit() {
+    /* Deckstore adds a card to this player's hand */
     this.lastAction = 'hit';
   }
-  busted() {
+  bust() {
     this.isBusted = true;
+    this.finish();
   }
   stay() {
     this.isStaying = true;
     this.lastAction = 'stay';
   }
+  /* the player can not perform any more actions */
   finish() {
+    this.endTurn();
     this.isFinished = true;
-    // this.lastAction ='finish';
   }
   blackjack() {
     this.hasBlackjack = true;
+  }
+  startTurn() {
+    this.turn = true;
+    this.isFinished = false;
+  }
+  endTurn() {
+    this.turn = false;
+    this.lastAction = 'endTurn';
   }
 }
 
