@@ -23,8 +23,8 @@ class Player {
       isBusted: false,
       isFinished: false,
       isStaying: false,
-      lastAction: "none", /* unused, deprecated */
-      status: "ok", /* deprecated */
+      lastAction: "none",
+      status: "ok",
       title: "",
       turn: false,
     };
@@ -63,9 +63,8 @@ class Player {
     if (this.handValue.aceAsOne > 21 && this.handValue.aceAsEleven > 21) {
       this.bust();
       this.finish();
-    }
-    /*   set blackjack status  */
-    if (
+    } else if (
+      /*   set blackjack status  */
       this.handValue.aceAsOne === 21 || this.handValue.aceAsEleven === 21
     ) {
       this.blackjack();

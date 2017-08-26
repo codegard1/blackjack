@@ -19,17 +19,18 @@ export class PlayerContainer extends BaseComponent {
       deck: [],
       deckCalloutText: "I'm Deck Callout!",
       gameStatus: 0,
+      gameStatusFlag: true,
       handValue: { aceAsEleven: 0, aceAsOne: 0 },
       id: -1,
-      isDeckCalloutVisible: false,
       isDeckCalloutEnabled: true,
+      isDeckCalloutVisible: false,
       isStatusCalloutVisible: false,
       minimumBet: 0,
       player: { empty: true },
+      playerStatusFlag: true,
       selectedFlag: false,
       title: "",
       turnCount: 0,
-      gameStatusFlag: true,
     };
 
     this._bind(
@@ -67,11 +68,16 @@ export class PlayerContainer extends BaseComponent {
       player => player.id === this.state.id
     );
 
+    /* playerStatusFlag is TRUE when the player cannot play. */
+    const playerStatusFlag =
+      thisPlayer.isBusted ||
+      thisPlayer.isFinished ||
+      thisPlayer.isStaying ||
+      !thisPlayer.turn;
     /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
     const gameStatusFlag =
       newState.gameStatus === 0 ||
-      newState.gameStatus > 2 ||
-      thisPlayer.turn === false;
+      newState.gameStatus > 2;
 
     /* if the player is staying, display callout */
     let text = '';
@@ -84,10 +90,6 @@ export class PlayerContainer extends BaseComponent {
     if (thisPlayer.isBusted) {
       text = `${thisPlayer.title} is busted`;
     }
-    // if (thisPlayer.isFinished) {
-    //   text = `${thisPlayer.title} is finished`;
-    // }
-
 
     this.setState({
       bank: thisPlayer.bank,
@@ -96,6 +98,7 @@ export class PlayerContainer extends BaseComponent {
       gameStatusFlag,
       minimumBet: newState.minimumBet,
       player: thisPlayer,
+      playerStatusFlag,
       title: thisPlayer.title,
       turnCount: newState.turnCount,
     });
@@ -143,9 +146,6 @@ export class PlayerContainer extends BaseComponent {
     const handValue = this.state.handValue;
     const bank = this.state.bank;
     const title = this.state.title;
-
-    console.log(`GameStatus: ${this.state.gameStatus}`);
-
     const titleBar = !this.state.player.empty
       ? <span>
         {title} {` ($${bank}) `} Hand Value: {handValue.aceAsOne}
@@ -196,17 +196,19 @@ export class PlayerContainer extends BaseComponent {
           </Callout>}
 
         <ControlPanel
-          playerId={this.state.id}
           gameStatus={this.state.gameStatus}
-          minimumBet={this.state.minimumBet}
-          hidden={false}
-          selectedFlag={this.state.selectedFlag}
-          player={this.state.player}
-          showDeckCallout={this._showDeckCallout}
           gameStatusFlag={this.state.gameStatusFlag}
+          hidden={false}
+          minimumBet={this.state.minimumBet}
+          player={this.state.player}
+          playerId={this.state.id}
+          playerStatusFlag={this.state.playerStatusFlag}
+          selectedFlag={this.state.selectedFlag}
+          showDeckCallout={this._showDeckCallout}
         />
 
-        {this.state.deck.length > 0 &&
+        {
+          this.state.deck.length > 0 &&
           <DeckContainer
             deck={this.state.deck}
             gameStatus={this.state.gameStatus}
@@ -217,12 +219,15 @@ export class PlayerContainer extends BaseComponent {
             player={this.state.player}
             title={this.state.title}
             turnCount={this.state.turnCount}
-          />}
+          />
+        }
         <div
           id="deckCalloutTarget"
           ref={callout => (this._deckCalloutTarget = callout)}
-        />
-      </div>
+          className="ms-font-m"
+        >
+        </div>
+      </div >
     );
   }
 }

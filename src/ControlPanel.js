@@ -12,10 +12,11 @@ class ControlPanel extends Component {
     /* selectedFlag is true when the player has selected cards in his hand */
     let selectedFlag = this.props.selectedFlag;
     let selectedCards = selectedFlag
-    ? DeckStore.getSelected(this.props.playerId)
-    : [];
+      ? DeckStore.getSelected(this.props.playerId)
+      : [];
     /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
-    const gameStatusFlag = this.props.gameStatusFlag
+    const gameStatusFlag = this.props.gameStatusFlag;
+    const playerStatusFlag = this.props.playerStatusFlag;
 
 
     const drawItems = [
@@ -75,7 +76,7 @@ class ControlPanel extends Component {
         name: "Hit",
         ariaLabel: "Hit",
         iconProps: { iconName: "Add" },
-        disabled: gameStatusFlag,
+        disabled: (gameStatusFlag || playerStatusFlag),
         onClick: ev => {
           ev.preventDefault();
           this.props.showDeckCallout();
@@ -87,7 +88,7 @@ class ControlPanel extends Component {
         name: `Bet $${this.props.minimumBet}`,
         ariaLabel: `Bet $${this.props.minimumBet}`,
         iconProps: { iconName: "Up" },
-        disabled: gameStatusFlag,
+        disabled: (gameStatusFlag || playerStatusFlag),
         onClick: (ev, target, playerIndex, amount) => {
           ev.preventDefault();
           AppActions.bet(this.props.playerId, amount);
@@ -98,7 +99,7 @@ class ControlPanel extends Component {
         name: "Stay",
         ariaLabel: "Stay",
         iconProps: { iconName: "Forward" },
-        disabled: gameStatusFlag,
+        disabled: (gameStatusFlag || playerStatusFlag),
         onClick: AppActions.stay
       },
       {
@@ -149,15 +150,7 @@ class ControlPanel extends Component {
 
     /* configure which items appear in the CommandBar */
     const commandBarItems = blackJackItems;
-
-    const farItems = [
-      // {
-      //   key: "test",
-      //   name: `selectedFlag: ${selectedFlag}`,
-      //   iconProps: "",
-      //   disabled: true
-      // }
-    ];
+    const farItems = [];
     const overFlowItems = selectedFlag ? [].concat(putMenu, drawMenu) : [];
 
     return (
@@ -178,6 +171,7 @@ ControlPanel.propTypes = {
   playerId: T.number.isRequired,
   gameStatus: T.number.isRequired,
   gameStatusFlag: T.bool.isRequired,
+  playerStatusFlag: T.bool.isRequired,
   minimumBet: T.number.isRequired,
   hidden: T.bool.isRequired,
   selectedFlag: T.bool.isRequired
