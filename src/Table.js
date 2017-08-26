@@ -45,7 +45,7 @@ class Table extends BaseComponent {
       winningPlayerId: -1,
       winningPlayerIndex: -1,
       // ControlPanelStore
-      isDeckVisible: true,
+      isDeckVisible: false,
       isDrawnVisible: false,
       isMessageBarVisible: false,
       isOptionsPanelVisible: false,

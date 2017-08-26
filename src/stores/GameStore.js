@@ -66,8 +66,8 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
 /* Responding to Actions */
 AppDispatcher.register(action => {
   /* report for debugging */
-  const now = new Date().toTimeString();
-  log(`${action.actionType} was called at ${now}`);
+  // const now = new Date().toTimeString();
+  // log(`${action.actionType} was called at ${now}`);
 
   switch (action.actionType) {
     case AppConstants.GAME_NEWPLAYER:
@@ -135,11 +135,19 @@ function _setWinner(playerId) {
 }
 
 function _evaluateGame(
-  nextGameStatus = state.gameStatus,
+  nextGameStatus,
   nextPlayer = state.currentPlayerIndex
 ) {
-  /*   set player status, handValue, and other flags  */
-  _evaluatePlayers();
+  /* perform checks on each Player to help determine the next game state */
+  if (state.players.length > 0) {
+    /* evaluate each player's hand and set status flags */
+    state.players.forEach(player => {
+      player.handValue = DeckStore.getHandValue(player.id);
+      player.setStatus();
+    });
+    /* 2. Sort players into arrays based on status flags  */
+    _filterPlayers();
+  }
 
   switch (nextGameStatus) {
     case 1 /*   Game in progress; first play  */:
@@ -161,6 +169,7 @@ function _evaluateGame(
             if (index === 0) nextGameStatus = 4; /* human player wins */
             if (index === 1) nextGameStatus = 7; /* non-human player wins */
           }
+          /* sets turn = false && isFinished = true for all players */
           _allPlayersFinish();
         }
       } else {
@@ -297,11 +306,9 @@ function _payout(
   players = state.players,
   index = state.winningPlayerIndex,
   amount = state.pot) {
-  if (players && players.length > 0) {
-    players[index].status = D.winner;
-    players[index].bank += amount;
-    state.pot = 0;
-  }
+  players[index].status = D.winner;
+  players[index].bank += amount;
+  state.pot = 0;
 }
 
 /* sort players into arrays based on status flags */
@@ -325,54 +332,6 @@ function _filterPlayers() {
   /*   true if all players are finished */
   state.allPlayersFinished = state.finishedPlayers.length === state.players.length;
 }
-
-/* evaluate each player's hand (in deckStore) and set status flags */
-function _evaluatePlayerHands() {
-  state.players.forEach(player => {
-    player.handValue = DeckStore.getHandValue(player.id);
-    player.getHigherHandValue();
-    player.setStatus();
-  });
-}
-
-/* determine the non-busted player with the highest value hand  */
-/* this does not end the game */
-function _determineWinner() {
-  if (state.nonBustedPlayers.length === 1) {
-    _setWinner(state.nonBustedPlayers[0].id);
-  } else {
-    let winningHandValue = 0;
-    let playerId;
-    /* cycle through non-busted players' hand values and end up with the highest value one */
-    state.nonBustedPlayers.forEach(player => {
-      let handValue = player.getHigherHandValue();
-      if (handValue > winningHandValue && handValue <= 21) {
-        winningHandValue = handValue;
-        playerId = player.id;
-      }
-    });
-    /** Finally, update the highestHandValue and set the winning player
-     * if a player gets the highest hand value just before busting out, 
-     * then his hand should not be considered when determining a winner. 
-     * Hence it is probably not necessary store this value in state (8/25/2017)
-     */
-    state.highestHandValue = winningHandValue;
-    _setWinner(playerId);
-  }
-}
-
-/* perform checks on each Player to help determine the next game state */
-function _evaluatePlayers() {
-  if (state.players.length > 0) {
-    /* 1. Get handValues for each player */
-    _evaluatePlayerHands();
-    /* 2. Sort players into arrays based on status flags  */
-    _filterPlayers();
-    /* 3. determine which player is in the lead */
-    _determineWinner();
-  }
-}
-
 
 /* Reset the Game */
 function _reset() {
@@ -416,13 +375,11 @@ function _newRound() {
 
 /* pay a specified amount into the pot */
 function _ante(amount = state.minimumBet) {
-  if (state.players && state.players.length > 0) {
-    state.players.forEach(player => {
-      player.ante(amount);
-      state.pot += amount;
-    });
-  }
   ControlPanelStore.setMessageBar(`Ante: $${amount}`);
+  state.players.forEach(player => {
+    player.ante(amount);
+    state.pot += amount;
+  });
 }
 
 /*   immediately evaluate game again if status > 2 (endgame condition)  */
@@ -463,3 +420,11 @@ function _bet(
 }
 
 export default GameStore;
+
+
+class Resolver {
+  constructor(playersArray) {
+    this.players = playersArray;
+  }
+
+}
