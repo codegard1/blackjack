@@ -1,5 +1,3 @@
-import * as D from '../definitions';
-
 export class Player {
   constructor(id, title) {
     this.id = id;
@@ -10,37 +8,45 @@ export class Player {
     this.turn = false;
     this.bank = 1000;
     this.bet = 0;
-    this.lastAction = "none";
+    this.lastAction = "none"; /* unused */
     this.isStaying = false;
     this.isBusted = false;
     this.isFinished = false;
+    this.hasBlackjack = false;
   }
   remove(...keys) {
     const defaults = {
       id: "",
       title: "",
-      // hand: [],
       handValue: { aceAsOne: 0, aceAsEleven: 0 },
-      status: "ok",
+      status: "ok", /* deprecated */
       turn: false,
       bank: 1000,
       bet: 0,
-      lastAction: "none",
+      lastAction: "none", /* unused, deprecated */
       isStaying: false,
       isBusted: false,
       isFinished: false
     };
     keys.forEach(key => { this[key] = defaults[key]; });
   }
+  bet(amount) {
+    this.pot -= amount;
+    this.bet = amount;
+    this.lastAction = 'bet';
+  }
   resetStatus() {
     /* AKA NewRound; resets properties that are bound to a single round of play */
-    this.remove(['status',
+    this.remove([
+      'status',
       'turn',
       'bet',
       'lastAction',
       'isStaying',
       'isBusted',
-      'isFinished']);
+      'isFinished',
+      'hasBlackjack'
+    ]);
   }
   resetAll() {
     this.remove(['handValue',
@@ -64,7 +70,7 @@ export class Player {
       this.blackjack();
     }
   }
-  getHighestHandValue() {
+  getHigherHandValue() {
     let higherHandValue = 0;
 
     if (this.handValue.aceAsEleven === this.handValue.aceAsOne) {
@@ -89,7 +95,7 @@ export class Player {
     this.isFinished = true;
   }
   blackjack() {
-    this.status = D.blackjack;
+    this.hasBlackjack = true;
   }
 }
 
