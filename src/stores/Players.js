@@ -116,12 +116,17 @@ class Players {
         this.filterPlayers();
         return this.stayingPlayers;
     }
+    /* return an array of Players that have Blackjack */
     getBlackjackPlayers() {
         this.filterPlayers();
         return this.blackjackPlayers;
     }
     getIndex(id) {
         return this.players.findIndex(player => player.id === id);
+    }
+    /* return the Id of a player */
+    getId(index) {
+        return this.players[index].id;
     }
     finish(id) {
         this.players[this.getIndex(id)].finish();
@@ -165,6 +170,11 @@ class Players {
     find(id) {
         return this.players[this.getIndex(id)]
     }
+    startTurn(id) {
+        this.players[this.getIndex(id)].turn = true;
+        this.players[this.getIndex(id)].isFinished = false;
+    }
 }
 
 export default Players;
+

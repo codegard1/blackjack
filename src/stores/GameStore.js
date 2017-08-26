@@ -346,7 +346,8 @@ function _endGameTrap(statusCode) {
 /* Start a new round with a new deck */
 function _deal() {
   /* start the player's turn */
-  Players[Players.currentPlayerIndex].turn = true;
+
+  Players.startTurn(Players.currentPlayer().id);
   _evaluateGame(1);
 }
 
