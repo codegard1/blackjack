@@ -83,17 +83,17 @@ class ControlPanel extends Component {
           AppActions.hit(this.props.playerId);
         }
       },
-      {
-        key: "bet",
-        name: `Bet $${this.props.minimumBet}`,
-        ariaLabel: `Bet $${this.props.minimumBet}`,
-        iconProps: { iconName: "Up" },
-        disabled: (gameStatusFlag || playerStatusFlag),
-        onClick: (ev, target, playerIndex, amount) => {
-          ev.preventDefault();
-          AppActions.bet(this.props.playerId, amount);
-        }
-      },
+      // {
+      //   key: "bet",
+      //   name: `Bet $${this.props.minimumBet}`,
+      //   ariaLabel: `Bet $${this.props.minimumBet}`,
+      //   iconProps: { iconName: "Up" },
+      //   disabled: (gameStatusFlag || playerStatusFlag),
+      //   onClick: (ev, target, playerIndex, amount) => {
+      //     ev.preventDefault();
+      //     AppActions.bet(this.props.playerId, amount);
+      //   }
+      // },
       {
         key: "stay",
         name: "Stay",
@@ -151,7 +151,8 @@ class ControlPanel extends Component {
     /* configure which items appear in the CommandBar */
     const commandBarItems = blackJackItems;
     const farItems = [];
-    const overFlowItems = selectedFlag ? [].concat(putMenu, drawMenu) : [];
+    // const overFlowItems = selectedFlag ? [].concat(putMenu, drawMenu) : [];
+    const overFlowItems = [];
 
     return (
       <div id="ControlPanel">
