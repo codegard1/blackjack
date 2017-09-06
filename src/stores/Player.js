@@ -62,7 +62,6 @@ class Player {
     /*   set busted status  */
     if (this.handValue.aceAsOne > 21 && this.handValue.aceAsEleven > 21) {
       this.bust();
-      this.finish();
     } else if (
       /*   set blackjack status  */
       this.handValue.aceAsOne === 21 || this.handValue.aceAsEleven === 21
@@ -86,39 +85,52 @@ class Player {
     this.pot -= amount;
     this.bet = amount;
     this.lastAction = 'bet';
+    this.log(`bet ${amount}`);
   }
   ante(amount) {
     this.bank -= amount;
     this.lastAction = 'ante';
+    this.log(`ante ${amount}`);
   }
   hit() {
     /* Deckstore adds a card to this player's hand */
     this.lastAction = 'hit';
+    this.log(`hit`);
   }
   bust() {
     this.isBusted = true;
     this.finish();
+    this.log(`busted`);
   }
   stay() {
     this.isStaying = true;
     this.lastAction = 'stay';
     this.finish();
+    this.log(`stayed`);
   }
   /* the player can not perform any more actions */
   finish() {
     this.endTurn();
     this.isFinished = true;
+    this.log(`finished`);
   }
   blackjack() {
     this.hasBlackjack = true;
+    this.log(`has blackjack`);
   }
   startTurn() {
     this.turn = true;
     this.isFinished = false;
+    this.lastAction = 'startTurn';
+    this.log(`started turn`);
   }
   endTurn() {
     this.turn = false;
     this.lastAction = 'endTurn';
+    this.log(`ended turn`);
+  }
+  log(msg){
+    console.log(`Player Action: ${this.title} - ${msg}`);
   }
 }
 

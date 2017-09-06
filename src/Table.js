@@ -133,7 +133,11 @@ class Table extends BaseComponent {
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-s12">
               <p className="ms-font-xl" id="PotDisplay">
-                Pot: ${this.state.pot}
+                <span>
+                Pot: ${this.state.pot} 
+                &nbsp;
+                Game Status: {this.state.gameStatus}
+                </span>
               </p>
             </div>
           </div>

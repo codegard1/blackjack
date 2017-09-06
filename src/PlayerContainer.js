@@ -17,7 +17,7 @@ export class PlayerContainer extends BaseComponent {
     super(props);
     this.state = {
       deck: [],
-      deckCalloutText: "I'm Deck Callout!",
+      deckCalloutText: "",
       gameStatus: 0,
       gameStatusFlag: true,
       handValue: { aceAsEleven: 0, aceAsOne: 0 },
@@ -30,7 +30,7 @@ export class PlayerContainer extends BaseComponent {
       playerStatusFlag: true,
       selectedFlag: false,
       title: "",
-      turnCount: 0,
+      turnCount: 0
     };
 
     this._bind(
@@ -75,21 +75,14 @@ export class PlayerContainer extends BaseComponent {
       thisPlayer.isStaying ||
       !thisPlayer.turn;
     /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
-    const gameStatusFlag =
-      newState.gameStatus === 0 ||
-      newState.gameStatus > 2;
+    const gameStatusFlag = newState.gameStatus === 0 || newState.gameStatus > 2;
 
     /* if the player is staying, display callout */
-    let text = '';
-    if (thisPlayer.isStaying) {
-      text = `${thisPlayer.title} stayed`;
-    }
-    if (thisPlayer.hasBlackJack) {
-      text = `${thisPlayer.title} has blackjack`;
-    }
-    if (thisPlayer.isBusted) {
-      text = `${thisPlayer.title} is busted`;
-    }
+    let text = thisPlayer.title;
+    if (thisPlayer.isStaying) text += " stayed";
+    if (thisPlayer.hasBlackJack) text += " has blackjack";
+    if (thisPlayer.isBusted) text += " busted";
+    if (thisPlayer.lastAction === "hit") text += " hit";
 
     this.setState({
       bank: thisPlayer.bank,
@@ -100,9 +93,8 @@ export class PlayerContainer extends BaseComponent {
       player: thisPlayer,
       playerStatusFlag,
       title: thisPlayer.title,
-      turnCount: newState.turnCount,
+      turnCount: newState.turnCount
     });
-
   }
   onChangeDeck() {
     /* selectedFlag is true if getSelected() returns an array */
@@ -146,8 +138,8 @@ export class PlayerContainer extends BaseComponent {
     const handValue = this.state.handValue;
     const bank = this.state.bank;
     const title = this.state.title;
-    const titleBar = !this.state.player.empty
-      ? <span>
+    const titleBar = !this.state.player.empty ? (
+      <span>
         {title} {` ($${bank}) `} Hand Value: {handValue.aceAsOne}
         {handValue.aceAsOne !== handValue.aceAsEleven &&
           " / " + handValue.aceAsEleven}{" "}
@@ -157,16 +149,14 @@ export class PlayerContainer extends BaseComponent {
           ref={calloutTarget => (this._statusCalloutTarget = calloutTarget)}
         />
       </span>
-      : <span>
-        {title}
-      </span>;
+    ) : (
+      <span>{title}</span>
+    );
 
     return (
       <div className="PlayerContainer">
-        <h3 className="ms-font-s">
-          {titleBar}
-        </h3>
-        {this.state.isStatusCalloutVisible &&
+        <h3 className="ms-font-s">{titleBar}</h3>
+        {this.state.isStatusCalloutVisible && (
           <Callout
             gapSpace={1}
             targetElement={this._statusCalloutTarget}
@@ -178,10 +168,11 @@ export class PlayerContainer extends BaseComponent {
               gameStatus={this.state.gameStatus}
               turnCount={this.state.turnCount}
             />
-          </Callout>}
+          </Callout>
+        )}
         {this.state.isDeckCalloutEnabled &&
-          this.state.isDeckCalloutVisible &&
-          this.state.deckCalloutText !== '' &&
+        this.state.isDeckCalloutVisible &&
+        this.state.deckCalloutText !== "" && (
           <Callout
             className="DeckCallout"
             gapSpace={1}
@@ -190,10 +181,9 @@ export class PlayerContainer extends BaseComponent {
             setInitialFocus={false}
             directionalHint={DirectionalHint.bottomCenter}
           >
-            <span className="ms-font-xl">
-              {this.state.deckCalloutText}
-            </span>
-          </Callout>}
+            <span className="ms-font-xl">{this.state.deckCalloutText}</span>
+          </Callout>
+        )}
 
         <ControlPanel
           gameStatus={this.state.gameStatus}
@@ -207,8 +197,7 @@ export class PlayerContainer extends BaseComponent {
           showDeckCallout={this._showDeckCallout}
         />
 
-        {
-          this.state.deck.length > 0 &&
+        {this.state.deck.length > 0 && (
           <DeckContainer
             deck={this.state.deck}
             gameStatus={this.state.gameStatus}
@@ -220,14 +209,13 @@ export class PlayerContainer extends BaseComponent {
             title={this.state.title}
             turnCount={this.state.turnCount}
           />
-        }
+        )}
         <div
           id="deckCalloutTarget"
           ref={callout => (this._deckCalloutTarget = callout)}
           className="ms-font-m"
-        >
-        </div>
-      </div >
+        />
+      </div>
     );
   }
 }
@@ -241,13 +229,9 @@ export default PlayerContainer;
 const StatusDisplay = props => {
   return (
     <div id="StatusPanel" className="ms-font-s">
-      <span>
-        Player: {props.player.title || ""}
-      </span>
+      <span>Player: {props.player.title || ""}</span>
       <br />
-      <span>
-        Status: {props.player.status || ""}
-      </span>
+      <span>Status: {props.player.status || ""}</span>
       <br />
       <span>
         Hand Value:{" "}
@@ -255,17 +239,11 @@ const StatusDisplay = props => {
           .aceAsOne}`}
       </span>
       <br />
-      <span>
-        Turn: {`${props.player.turn}`}
-      </span>
+      <span>Turn: {`${props.player.turn}`}</span>
       <br />
-      <span>
-        Game Status: {props.gameStatus || 0}
-      </span>
+      <span>Game Status: {props.gameStatus || 0}</span>
       <br />
-      <span>
-        Turn Count: {props.turnCount || 0}
-      </span>
+      <span>Turn Count: {props.turnCount || 0}</span>
       <br />
     </div>
   );
