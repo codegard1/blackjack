@@ -372,7 +372,7 @@ function _filterPlayers() {
 /* Reset the Game */
 function _reset() {
   state.players.forEach(player => {
-    player.resetStatus();
+    player.resetAll();
   });
 
   state.currentPlayerIndex = 0;
@@ -388,15 +388,6 @@ function _reset() {
 function _newRound() {
   state.players.forEach(player => {
     player.resetStatus();
-    console.log(`player.title: ${player.title}
-    player.status: ${player.status}
-    player.turn: ${player.turn}
-    player.bet: ${player.bet}
-    player.lastAction: ${player.lastAction}
-    player.isStaying: ${player.isStaying}
-    player.isBusted: ${player.isBusted}
-    player.isFinished: ${player.isFinished}
-    player.hasBlackjack: ${player.hasBlackjack}`);
   });
 
   state.currentPlayerIndex = 0;
@@ -405,7 +396,6 @@ function _newRound() {
   state.round += 1;
   state.turnCount = 0;
 
-  /* calls evaluateGame(1) */
   _deal();
 }
 
@@ -425,9 +415,9 @@ function _endGameTrap(statusCode) {
   }
 }
 
-/* Start a new round with a new deck */
+/* deal cards to each player and start gameplay */
 function _deal() {
-  /* start the player's turn */
+  state.gameStatus = 1;
   state.players[state.currentPlayerIndex].startTurn();
   _evaluateGame(1);
 }

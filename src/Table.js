@@ -109,16 +109,16 @@ class Table extends BaseComponent {
   }
 
   render() {
-    const playersArray = this.state.players.map(player =>
+    const playersArray = this.state.players.map(player => (
       <PlayerContainer key={`Player-${player.id}`} playerId={player.id} />
-    );
+    ));
 
     return (
       <div id="Table">
         <div className="ms-Grid">
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-sm12">
-              {this.state.isMessageBarVisible &&
+              {this.state.isMessageBarVisible && (
                 <MessageBar
                   messageBarType={this.state.messageBarDefinition.type}
                   isMultiline={this.state.messageBarDefinition.isMultiLine}
@@ -126,57 +126,53 @@ class Table extends BaseComponent {
                     this.setState({ isMessageBarVisible: false })}
                 >
                   {this.state.messageBarDefinition.text}
-                </MessageBar>}
+                </MessageBar>
+              )}
             </div>
           </div>
 
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-s12">
               <p className="ms-font-xl" id="PotDisplay">
-                <span>
-                Pot: ${this.state.pot} 
-                &nbsp;
-                Game Status: {this.state.gameStatus}
-                </span>
+                Pot: ${this.state.pot}
               </p>
             </div>
           </div>
 
           <div className="ms-Grid-row">
-            <div className="ms-Grid-col ms-u-sm6">
-              {playersArray[0]}
-            </div>
+            <div className="ms-Grid-col ms-u-sm6">{playersArray[0]}</div>
 
-            <div className="ms-Grid-col ms-u-sm6">
-              {playersArray[1]}
-            </div>
+            <div className="ms-Grid-col ms-u-sm6">{playersArray[1]}</div>
           </div>
 
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-sm12">
-              {this.state.isDeckVisible &&
+              {this.state.isDeckVisible && (
                 <DeckContainer
                   deck={this.state.deck.cards}
                   title="Deck"
                   hidden={false}
                   isSelectable={false}
-                />}
+                />
+              )}
 
-              {this.state.isDrawnVisible &&
+              {this.state.isDrawnVisible && (
                 <DeckContainer
                   deck={this.state.drawn}
                   title="Drawn Cards"
                   hidden={false}
                   isSelectable={false}
-                />}
+                />
+              )}
 
-              {this.state.isSelectedVisible &&
+              {this.state.isSelectedVisible && (
                 <DeckContainer
                   deck={this.state.selected}
                   title="Selected Cards"
                   hidden={false}
                   isSelectable={false}
-                />}
+                />
+              )}
             </div>
           </div>
 
