@@ -128,10 +128,12 @@ function _allPlayersFinish() {
 
 /* set flags that tell us which player is winning */
 function _setWinner(playerId) {
-  const index = state.players.findIndex(player => player.id === playerId);
-  state.players[index].status = D.winner;
-  state.winningPlayerIndex = index;
-  state.winningPlayerId = playerId;
+  if (state.players.length > 0 && playerId >= 0) {
+    const index = state.players.findIndex(player => player.id === playerId);
+    state.players[index].status = D.winner;
+    state.winningPlayerIndex = index;
+    state.winningPlayerId = playerId;
+  }
 }
 
 function _evaluateGame(
@@ -140,7 +142,7 @@ function _evaluateGame(
 ) {
   /* perform checks on each Player to help determine the next game state */
   if (state.players.length > 0) {
-    /* evaluate each player's hand and set status flags */
+    /* 1. evaluate each player's hand and set status flags */
     state.players.forEach(player => {
       player.handValue = DeckStore.getHandValue(player.id);
       player.setStatus();
@@ -151,51 +153,49 @@ function _evaluateGame(
 
   switch (nextGameStatus) {
     case 1 /*   Game in progress; first play  */:
-      ControlPanelStore.setMessageBar("Game in progress");
 
       /*   all players bet the minimum to start  */
-      if (state.turnCount === 0) {
-        _ante();
-        /** Blackjack Check
-         * If a player has Blackjack on the first play, that player wins immediately.
-         */
-        if (state.blackjackPlayers.length > 0) {
-          if (state.blackjackPlayers.length === state.players.length) {
-            /* all players have blackjack on the first turn => tie */
-            nextGameStatus = 6;
-          } else if (state.blackjackPlayers.length === 1) {
-            /* only one player has blackjack on the first turn */
-            const index = state.players.indexOf(state.blackjackPlayers[0]);
-            if (index === 0) nextGameStatus = 4; /* human player wins */
-            if (index === 1) nextGameStatus = 7; /* non-human player wins */
-          }
-          /* sets turn = false && isFinished = true for all players */
-          _allPlayersFinish();
-        }
+      if (state.turnCount === 0) _ante();
+
+      /** Set next game status 
+       * if it ends up being higher than 2, _exitTrap() will catch it and re-run _evaluateGame()
+       */
+      if (state.allPlayersBusted) {
+        /* all players busted => Endgame */
+        nextGameStatus = 3;
       } else {
-        /** Set next game status 
-         * if it ends up being higher than 2, _exitTrap() will catch it and re-run _evaluateGame()
-         */
-        if (state.allPlayersBusted) {
-          /* all players busted => Endgame */
-          nextGameStatus = 3;
+        /* not all players are busted */
+        if (state.allPlayersFinished) {
+          /* all players are finished => EndGame */
+          /* human player wins */
+          if (state.winningPlayerIndex === 0) nextGameStatus = 4;
+          /* non-human player wins */
+          if (state.winningPlayerIndex === 1) nextGameStatus = 7;
+          if (state.tieFlag) nextGameStatus = 6;
         } else {
-          /* not all players are busted */
-          if (state.allPlayersFinished) {
-            /* all players are finished => EndGame */
-            if (state.winningPlayerIndex === 0) nextGameStatus = 4; /* human player wins */
-            if (state.winningPlayerIndex === 1) nextGameStatus = 7; /* non-human player wins */
-            if (state.tieFlag) nextGameStatus = 6;
-          } else {
-            /* not all players are finished */
-            if (state.players[state.currentPlayerIndex].isStaying) {
-              /* current player is staying */
-              nextGameStatus = 2;
-            } else {
-              /* current player is not staying */
-              // Do nothing (?)
-              console.log('here!');
+          /** Blackjack Check
+       * If a player has Blackjack on the first play, that player wins immediately.
+       */
+          if (state.blackjackPlayers.length > 0) {
+            if (state.blackjackPlayers.length === state.players.length) {
+              /* all players have blackjack => tie */
+              nextGameStatus = 6;
+            } else if (state.blackjackPlayers.length === 1) {
+              /* only one player has blackjack on the first turn */
+              const index = state.players.indexOf(state.blackjackPlayers[0]);
+              if (index === 0) nextGameStatus = 4; /* human player wins */
+              if (index === 1) nextGameStatus = 7; /* non-human player wins */
             }
+            if (state.turnCount === 0) _allPlayersFinish();
+          }
+          /* not all players are finished */
+          if (state.players[state.currentPlayerIndex].isStaying) {
+            /* current player is staying */
+            nextGameStatus = 2;
+          } else {
+            /* current player is not staying */
+            _setWinner();
+            nextGameStatus = 1;
           }
         }
       }
@@ -236,8 +236,20 @@ function _evaluateGame(
         });
         nextGameStatus = 1;
       } else {
-        if (state.winningPlayerIndex === 0) nextGameStatus = 4;
-        if (state.winningPlayerIndex === 1) nextGameStatus = 7;
+        switch (state.winningPlayerIndex) {
+          case -1: /* no winner determined */
+            _determineWinner();
+            nextGameStatus = 1;
+            break;
+
+          case 0: /* human player wins */
+            nextGameStatus = 4
+            break;
+
+          case 1: /* NPC wins */
+            nextGameStatus = 7
+            break;
+        }
       }
 
       state.turnCount++;
@@ -306,9 +318,13 @@ function _payout(
   players = state.players,
   index = state.winningPlayerIndex,
   amount = state.pot) {
-  players[index].status = D.winner;
-  players[index].bank += amount;
-  state.pot = 0;
+  // players[index].status = D.winner;
+  if (index === -1) {
+    console.log('error! no winner was selected, so payout() cannot give money to anyone');
+  } else {
+    players[index].bank += amount;
+    state.pot = 0;
+  }
 }
 
 /* sort players into arrays based on status flags */
@@ -384,7 +400,7 @@ function _ante(amount = state.minimumBet) {
 
 /*   immediately evaluate game again if status > 2 (endgame condition)  */
 function _endGameTrap(statusCode) {
-  if (statusCode > 2) {
+  if (statusCode > 1) {
     _evaluateGame(statusCode);
   }
 }
@@ -421,10 +437,17 @@ function _bet(
 
 export default GameStore;
 
-
-class Resolver {
-  constructor(playersArray) {
-    this.players = playersArray;
+function _determineWinner() {
+  /*   determine the non-busted player with the highest value hand  */
+  if (state.nonBustedPlayers.length === 1) {
+    _setWinner(state.nonBustedPlayers[0].id)
+  } else {
+    state.nonBustedPlayers.forEach(player => {
+      let higherHandValue = player.getHigherHandValue();
+      if (higherHandValue > state.highestHandValue && higherHandValue <= 21) {
+        state.highestHandValue = higherHandValue;
+        _setWinner(player.id);
+      }
+    });
   }
-
 }

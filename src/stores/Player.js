@@ -102,6 +102,7 @@ class Player {
   stay() {
     this.isStaying = true;
     this.lastAction = 'stay';
+    this.finish();
   }
   /* the player can not perform any more actions */
   finish() {
