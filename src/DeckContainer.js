@@ -56,27 +56,14 @@ class DeckContainer extends BaseComponent {
 
     // Set toggle icon for Deck titles
     const toggleIcon = this.state.isDeckVisible
-      ? <i className="ms-Icon ms-Icon--ChevronDown" aria-hidden="true" />
-      : <i className="ms-Icon ms-Icon--ChevronUp" aria-hidden="true" />;
-
-    /* style the DeckContainer conditionally */
-    let style =
-      this.props.player && this.props.player.turn
-        ? "DeckContainer selected "
-        : "DeckContainer ";
-    if (
-      this.props.player &&
-      this.props.player.status === "staying" &&
-      !this.props.player.turn
-    ) {
-      style += "staying ";
-    }
+      ? <i className="ms-Icon ms-Icon--ChevronUp" aria-hidden="true" />
+      : <i className="ms-Icon ms-Icon--ChevronDown" aria-hidden="true" />;
 
     const deckTitleString = `${this.props.title} (${this.props.deck &&
       this.props.deck.length})`;
 
     return (
-      <div className={style}>
+      <div className="DeckContainer">
         <span
           data-title={deckTitleString}
           className="ms-font-m"

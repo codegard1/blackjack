@@ -25,11 +25,6 @@ div#Table {
   /*width: 100%;*/
 }
 
-#ControlPanel {
-  padding: 1em;
-  /*border: 1px solid green;*/
-}
-
 .handValue {
   float: left;
   margin-left: 10px;

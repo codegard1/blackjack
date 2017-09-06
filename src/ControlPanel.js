@@ -155,7 +155,7 @@ class ControlPanel extends Component {
     const overFlowItems = [];
 
     return (
-      <div id="ControlPanel">
+      <div className="player-controlpanel">
         {!this.props.hidden &&
           <CommandBar
             isSearchBoxVisible={false}

@@ -139,7 +139,7 @@ export class PlayerContainer extends BaseComponent {
     const bank = this.state.bank;
     const title = this.state.title;
     const titleBar = !this.state.player.empty ? (
-      <span>
+      <p className="player-titlebar ms-font-xl">
         {title} {` ($${bank}) `} Hand Value: {handValue.aceAsOne}
         {handValue.aceAsOne !== handValue.aceAsEleven &&
           " / " + handValue.aceAsEleven}{" "}
@@ -148,14 +148,27 @@ export class PlayerContainer extends BaseComponent {
           onClick={this._toggleStatusCallout}
           ref={calloutTarget => (this._statusCalloutTarget = calloutTarget)}
         />
-      </span>
+      </p>
     ) : (
       <span>{title}</span>
     );
 
+    /* style PlayerContainer conditionally */
+    let style = "PlayerContainer ";
+    if (!this.state.player.empty && this.state.player.turn) {
+      style += "selected ";
+    }
+    if (
+      !this.state.player.empty &&
+      this.state.player.isStaying &&
+      !this.state.player.turn
+    ) {
+      style += "staying ";
+    }
+
     return (
-      <div className="PlayerContainer">
-        <h3 className="ms-font-s">{titleBar}</h3>
+      <div className={style}>
+        {titleBar}
         {this.state.isStatusCalloutVisible && (
           <Callout
             gapSpace={1}
