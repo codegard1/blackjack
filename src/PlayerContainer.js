@@ -135,14 +135,11 @@ export class PlayerContainer extends BaseComponent {
   }
 
   render() {
-    const handValue = this.state.handValue;
     const bank = this.state.bank;
     const title = this.state.title;
     const titleBar = !this.state.player.empty ? (
       <p className="player-titlebar ms-font-xl">
-        {title} {` ($${bank}) `} Hand Value: {handValue.aceAsOne}
-        {handValue.aceAsOne !== handValue.aceAsEleven &&
-          " / " + handValue.aceAsEleven}{" "}
+        {`${title} ($${bank})  `}
         <i
           className="ms-Icon ms-Icon--Info"
           onClick={this._toggleStatusCallout}
@@ -150,8 +147,8 @@ export class PlayerContainer extends BaseComponent {
         />
       </p>
     ) : (
-      <span>{title}</span>
-    );
+        <span>{title}</span>
+      );
 
     /* style PlayerContainer conditionally */
     let style = "PlayerContainer ";
@@ -184,19 +181,19 @@ export class PlayerContainer extends BaseComponent {
           </Callout>
         )}
         {this.state.isDeckCalloutEnabled &&
-        this.state.isDeckCalloutVisible &&
-        this.state.deckCalloutText !== "" && (
-          <Callout
-            className="DeckCallout"
-            gapSpace={1}
-            targetElement={this._deckCalloutTarget}
-            onDismiss={this._hideDeckCallout}
-            setInitialFocus={false}
-            directionalHint={DirectionalHint.bottomCenter}
-          >
-            <span className="ms-font-xl">{this.state.deckCalloutText}</span>
-          </Callout>
-        )}
+          this.state.isDeckCalloutVisible &&
+          this.state.deckCalloutText !== "" && (
+            <Callout
+              className="DeckCallout"
+              gapSpace={1}
+              targetElement={this._deckCalloutTarget}
+              onDismiss={this._hideDeckCallout}
+              setInitialFocus={false}
+              directionalHint={DirectionalHint.bottomCenter}
+            >
+              <span className="ms-font-xl">{this.state.deckCalloutText}</span>
+            </Callout>
+          )}
 
         <ControlPanel
           gameStatus={this.state.gameStatus}
@@ -217,7 +214,8 @@ export class PlayerContainer extends BaseComponent {
             gameStatusFlag={this.gameStatusFlag}
             handValue={this.state.handValue}
             hidden={false}
-            isSelectable={true}
+            isPlayerDeck
+            isSelectable
             player={this.state.player}
             title={this.state.title}
             turnCount={this.state.turnCount}
@@ -263,7 +261,5 @@ const StatusDisplay = props => {
 };
 
 StatusDisplay.propTypes = {
-  // gameStatus: T.number.isRequired,
-  // turnCount: T.number.isRequired,
-  // player: T.object.isRequired
+  player: T.object.isRequired
 };
