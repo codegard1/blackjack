@@ -173,11 +173,7 @@ export class PlayerContainer extends BaseComponent {
             onDismiss={this._toggleStatusCallout}
             setInitialFocus={false}
           >
-            <StatusDisplay
-              player={this.state.player}
-              gameStatus={this.state.gameStatus}
-              turnCount={this.state.turnCount}
-            />
+            <StatusDisplay player={this.state.player} />
           </Callout>
         )}
         {this.state.isDeckCalloutEnabled &&
@@ -239,22 +235,22 @@ export default PlayerContainer;
 
 const StatusDisplay = props => {
   return (
-    <div id="StatusPanel" className="ms-font-s">
-      <span>Player: {props.player.title || ""}</span>
+    <div id="StatusPanel" className="ms-font-m">
+      Status: {props.player.status || ""}
       <br />
-      <span>Status: {props.player.status || ""}</span>
+      Hand Value:
+      {` ${props.player.handValue.aceAsEleven} / ${props.player.handValue
+        .aceAsOne}`}
       <br />
-      <span>
-        Hand Value:{" "}
-        {`${props.player.handValue.aceAsEleven} / ${props.player.handValue
-          .aceAsOne}`}
-      </span>
+      Turn: {`${props.player.turn}`}
       <br />
-      <span>Turn: {`${props.player.turn}`}</span>
+      isBusted: {`${props.player.isBusted}`}
       <br />
-      <span>Game Status: {props.gameStatus || 0}</span>
+      isStaying: {`${props.player.isStaying}`}
       <br />
-      <span>Turn Count: {props.turnCount || 0}</span>
+      isFinished: {`${props.player.isFinished}`}
+      <br />
+      lastAction: {`${props.player.lastAction}`}
       <br />
     </div>
   );

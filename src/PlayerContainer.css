@@ -15,6 +15,7 @@
 
 .PlayerContainer.staying {
   border: 2px solid green;
+  background-color: ghostwhite;
 }
 
 /* the span that display's the player's name */
