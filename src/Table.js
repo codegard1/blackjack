@@ -41,8 +41,6 @@ class Table extends BaseComponent {
       pot: 0,
       round: 0,
       turnCount: 0,
-      winningPlayerId: -1,
-      winningPlayerIndex: -1,
       // ControlPanelStore
       isDeckVisible: false,
       isDrawnVisible: false,

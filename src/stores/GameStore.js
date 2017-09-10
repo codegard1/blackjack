@@ -2,8 +2,6 @@ import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 import { EventEmitter } from "events";
 
 /* custom stuff */
-// import { log } from "../utils";
-import * as D from "../definitions";
 import Player from "./Player";
 // import Players from './Players';
 
@@ -31,9 +29,7 @@ let state = {
   pot: 0,
   round: 0,
   stayingPlayers: [],
-  turnCount: 0,
-  winningPlayerId: -1,
-  winningPlayerIndex: -1
+  turnCount: 0
 };
 
 /* Data, Getter method, Event Notifier */
@@ -116,202 +112,98 @@ function _newPlayer(id, title) {
   state.players.push(new Player(id, title));
 }
 
-/* set isFinished === true for all Players */
-function _allPlayersFinish() {
-  state.players.forEach(player => {
-    player.finish();
-  });
-}
-
-function _evaluateGame(nextGameStatus, nextPlayer = state.currentPlayerIndex) {
-  /* perform checks on each Player to help determine the next game state */
+function _evaluateGame(statusCode) {
   if (state.players.length > 0) {
     /* 1. evaluate each player's hand and set status flags */
     state.players.forEach(player => {
       player.handValue = DeckStore.getHandValue(player.id);
       player.setStatus();
     });
-    /* 2. Sort players into arrays based on status flags  */
-    _filterPlayers();
-    _determineWinner();
   }
 
-  switch (nextGameStatus) {
+  switch (statusCode) {
     case 1 /*   Game in progress; first play  */:
       /*   all players bet the minimum to start  */
       if (state.turnCount === 0) _ante();
-
-      /* Set next game status */
-      if (state.players[1].hasBlackJack) {
-        nextGameStatus = 7;
-      } else if (state.players[0].isBusted) {
-        nextGameStatus = 7;
-      } else if (state.players[1].isBusted) {
-        nextGameStatus = 4;
-      } else if (state.players[0].isStaying) {
-        if (state.winningPlayerIndex === 0) {
-          nextGameStatus = 7;
-        } else {
-          nextGameStatus = 4;
-        }
-      } else {
-        nextGameStatus = 1;
-      }
-
-      /* set up for next cycle */
-      state.turnCount++;
-      state.gameStatus = nextGameStatus;
-      state.currentPlayerIndex = nextPlayer;
-
-      _endGameTrap(nextGameStatus);
+      _endGameTrap();
       break;
 
     case 2 /*   stay (go to next turn)  */:
-      /*   set current player as staying / finished */
-      state.players[state.currentPlayerIndex].stay();
-      state.players[state.currentPlayerIndex].turn = false;
+      if (!_endGameTrap()) {
+        /*   set current player as staying / finished */
+        state.players[state.currentPlayerIndex].stay();
 
-      /*   get the next player by index  */
-      const nextPlayerIndex =
-        state.currentPlayerIndex + 1 >= state.players.length
-          ? 0
-          : state.currentPlayerIndex + 1;
-      nextPlayer = nextPlayerIndex;
+        /*   get the next player by index  */
+        let nextPlayerIndex =
+          state.currentPlayerIndex + 1 >= state.players.length
+            ? 0
+            : state.currentPlayerIndex + 1;
 
-      /*   re-evaluate STAYING PLAYERS  */
-      state.stayingPlayers = state.players.filter(player => player.isStaying);
-      state.allPlayersStaying =
-        state.stayingPlayers.length === state.players.length;
+        state.gameStatus = 1;
+        state.currentPlayerIndex = nextPlayerIndex;
+        state.players[state.currentPlayerIndex].startTurn();
 
-      if (!state.allPlayersStaying) {
-        state.players.forEach(player => {
-          /*   set turn = true for the next player that is not already staying  */
-          if (state.players.indexOf(player) === nextPlayerIndex) {
-            if (!player.isStaying && !player.isBusted) {
-              player.turn = true;
-            } else {
-              player.turn = false;
-            }
-          }
-        });
-        nextGameStatus = 1;
-      } else {
-        switch (state.winningPlayerIndex) {
-          case -1 /* no winner determined */:
-            console.log(
-              "error! no winner was determined. Game stalled at Case 2 of evaluateGame()"
-            );
-            break;
-
-          case 0 /* human player wins */:
-            nextGameStatus = 4;
-            break;
-
-          case 1 /* NPC wins */:
-            nextGameStatus = 7;
-            break;
-
-          default:
-            break;
-        }
+        _endGameTrap();
       }
 
-      state.turnCount++;
-      state.gameStatus = nextGameStatus;
-      state.currentPlayerIndex = nextPlayer;
-
-      _endGameTrap(nextGameStatus);
-      break;
-
-    case 3 /*   All Players Busted      */:
-      ControlPanelStore.setMessageBar(
-        "All players busted out!",
-        MessageBarType.warning
-      );
-      nextGameStatus = 0;
-
-      state.turnCount++;
-      state.gameStatus = nextGameStatus;
-
-      _endGameTrap(nextGameStatus);
       break;
 
     case 4 /*   Human Player Wins       */:
-      const winningPlayerTitle = state.players[state.winningPlayerIndex].title;
-      const messageBarText = state.players[state.winningPlayerIndex]
+      const winningPlayerTitle = state.players[0].title;
+      const messageBarText = state.players[0]
         .hasBlackJack
         ? `${winningPlayerTitle} wins with Blackjack!`
         : `${winningPlayerTitle} wins!`;
       ControlPanelStore.setMessageBar(messageBarText, MessageBarType.success);
-      nextGameStatus = 0;
 
-      /* add pot to winning Player's bank */
-      _payout();
-
-      state.turnCount++;
-      state.gameStatus = nextGameStatus;
-
-      _endGameTrap(nextGameStatus);
+      _payout(0);
+      _endGame();
       break;
 
     case 7 /*   Dealer wins   */:
       ControlPanelStore.setMessageBar(`${state.players[1].title} wins!`);
 
-      nextGameStatus = 0;
-
-      /* don't do payout unless all players are staying and not busted */
-      if (!state.allPlayersBusted) _payout();
-
-      state.turnCount++;
-      state.gameStatus = nextGameStatus;
-
-      _endGameTrap(nextGameStatus);
+      _payout(1);
+      _endGame();
       break;
 
     default:
       break;
   }
+
+  state.turnCount++;
 }
 
-function _payout(
-  players = state.players,
-  index = state.winningPlayerIndex,
-  amount = state.pot
-) {
-  // players[index].status = D.winner;
-  if (index === -1) {
-    console.log(
-      "error! no winner was selected, so payout() cannot give money to anyone"
-    );
+/*   immediately evaluate game again if status > 2 (endgame condition)  */
+function _endGameTrap() {
+  let nextGameStatus;
+  /* Set next game status */
+  if (state.players[1].hasBlackJack) {
+    nextGameStatus = 7;
+  } else if (state.players[0].isBusted) {
+    nextGameStatus = 7;
+  } else if (state.players[1].isBusted) {
+    nextGameStatus = 4;
+  } else if (state.players[1].isStaying) {
+    if (state.players[1].getHigherHandValue() > state.players[0].getHigherHandValue()) {
+      nextGameStatus = 7;
+    } else {
+      nextGameStatus = 4;
+    }
   } else {
-    players[index].bank += amount;
-    state.pot = 0;
+    state.gameStatus = 1;
+    return false;
+  }
+
+  if (nextGameStatus > 2) {
+    _evaluateGame(nextGameStatus);
+    return true;
   }
 }
 
-/* sort players into arrays based on status flags */
-function _filterPlayers() {
-  /*   STAYING PLAYERS  */
-  state.stayingPlayers = state.players.filter(player => player.isStaying);
-  /*   BUSTED PLAYERS   */
-  state.bustedPlayers = state.players.filter(player => player.isBusted);
-  /*   NON-BUSTED PLAYERS  */
-  state.nonBustedPlayers = state.players.filter(player => !player.isBusted);
-  /*   BLACKJACK PLAYERS   */
-  state.blackjackPlayers = state.players.filter(player => player.hasBlackJack);
-  /*   FINISHED PLAYERS   */
-  state.finishedPlayers = state.players.filter(player => player.isFinished);
-  /*   true if all players are staying  */
-  state.allPlayersStaying =
-    state.stayingPlayers.length === state.players.length;
-  /*   true if all players are busted  */
-  state.allPlayersBusted = state.bustedPlayers.length === state.players.length;
-  /*   true if all players are not busted  */
-  state.allPlayersNonBusted =
-    state.nonBustedPlayers.length === state.players.length;
-  /*   true if all players are finished */
-  state.allPlayersFinished =
-    state.finishedPlayers.length === state.players.length;
+function _payout(i) {
+  state.players[i].bank += state.pot;
+  state.pot = 0;
 }
 
 /* Reset the Game */
@@ -353,13 +245,6 @@ function _ante(amount = state.minimumBet) {
   });
 }
 
-/*   immediately evaluate game again if status > 2 (endgame condition)  */
-function _endGameTrap(statusCode) {
-  if (statusCode > 2) {
-    _evaluateGame(statusCode);
-  }
-}
-
 /* deal cards to each player and start gameplay */
 function _deal() {
   state.gameStatus = 1;
@@ -377,7 +262,6 @@ function _hit() {
 /* evaluateGame will should re-run itself with status 2 if 
 the current player is the only one staying */
 function _stay() {
-  state.players[state.currentPlayerIndex].stay();
   _evaluateGame(2);
 }
 
@@ -387,29 +271,10 @@ function _bet(playerId, amount = state.minimumBet) {
   state.players[index].bet(amount);
 }
 
-/* set flags that tell us which player is winning */
-function _setWinner(playerId) {
-  if (state.players.length > 0 && playerId >= 0) {
-    const index = state.players.findIndex(player => player.id === playerId);
-    state.players[index].status = D.winner;
-    state.winningPlayerIndex = index;
-    state.winningPlayerId = playerId;
-  }
-}
-
-function _determineWinner() {
-  /*   determine the non-busted player with the highest value hand  */
-  if (state.nonBustedPlayers.length === 1) {
-    _setWinner(state.nonBustedPlayers[0].id);
-  } else {
-    state.nonBustedPlayers.forEach(player => {
-      let higherHandValue = player.getHigherHandValue();
-      if (higherHandValue > state.highestHandValue && higherHandValue <= 21) {
-        state.highestHandValue = higherHandValue;
-        _setWinner(player.id);
-      }
-    });
-  }
+function _endGame() {
+  state.gameStatus = 0;
+  state.players.forEach(player =>
+  { player.finish(); })
 }
 
 export default GameStore;
