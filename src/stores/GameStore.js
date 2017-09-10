@@ -142,55 +142,22 @@ function _evaluateGame(nextGameStatus, nextPlayer = state.currentPlayerIndex) {
       if (state.turnCount === 0) _ante();
 
       /* Set next game status */
-      if (state.allPlayersBusted) {
-        /* all players busted => Endgame */
-        nextGameStatus = 3;
-      } else {
-        /* not all players are busted */
-        if (state.allPlayersFinished) {
-          /* all players are finished => EndGame */
-          switch (state.winningPlayerIndex) {
-            case -1 /* this should never happen */:
-              console.log(
-                "error! No winner was determined. Stalled in Case 1 on evaluateGame()"
-              );
-              break;
-            case 0 /* human player wins */:
-              nextGameStatus = 4;
-              break;
-            case 1 /* non-human player wins */:
-              nextGameStatus = 7;
-              break;
-            default:
-              break;
-
-          }
+      if (state.players[1].hasBlackJack) {
+        nextGameStatus = 7;
+      } else if (state.players[0].isBusted) {
+        nextGameStatus = 7;
+      } else if (state.players[1].isBusted) {
+        nextGameStatus = 4;
+      } else if (state.players[0].isStaying) {
+        if (state.winningPlayerIndex === 0) {
+          nextGameStatus = 7;
         } else {
-          /* Not all players are finished */
-
-          /* Blackjack Check */
-          if (state.blackjackPlayers.length > 0) {
-            if (state.blackjackPlayers.length === 1) {
-              /* only one player has blackjack on the first turn */
-              const index = state.players.indexOf(state.blackjackPlayers[0]);
-              if (index === 0) nextGameStatus = 4; /* human player wins */
-              if (index === 1) nextGameStatus = 7; /* non-human player wins */
-            }
-            if (state.turnCount === 0) _allPlayersFinish();
-
-            if (state.players[state.currentPlayerIndex].isStaying) {
-              /* current player is staying  */
-              nextGameStatus = 2;
-            } else if (state.players[state.currentPlayerIndex].isBusted) {
-              /* current player is busted */
-              if (state.currentPlayerIndex === 0)
-                nextGameStatus = 4; /* human player wins */
-              if (state.currentPlayerIndex === 1)
-                nextGameStatus = 7; /* non-human player wins */
-            }
-          }
+          nextGameStatus = 4;
         }
+      } else {
+        nextGameStatus = 1;
       }
+
       /* set up for next cycle */
       state.turnCount++;
       state.gameStatus = nextGameStatus;
@@ -287,7 +254,7 @@ function _evaluateGame(nextGameStatus, nextPlayer = state.currentPlayerIndex) {
       _endGameTrap(nextGameStatus);
       break;
 
-    case 7 /*   non-human player wins   */:
+    case 7 /*   Dealer wins   */:
       ControlPanelStore.setMessageBar(`${state.players[1].title} wins!`);
 
       nextGameStatus = 0;
