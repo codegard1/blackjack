@@ -40,7 +40,6 @@ class Table extends BaseComponent {
       players: [],
       pot: 0,
       round: 0,
-      tieFlag: false,
       turnCount: 0,
       winningPlayerId: -1,
       winningPlayerIndex: -1,

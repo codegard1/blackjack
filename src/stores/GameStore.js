@@ -31,7 +31,6 @@ let state = {
   pot: 0,
   round: 0,
   stayingPlayers: [],
-  tieFlag: false,
   turnCount: 0,
   winningPlayerId: -1,
   winningPlayerIndex: -1
@@ -40,25 +39,25 @@ let state = {
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "change";
 export const GameStore = Object.assign({}, EventEmitter.prototype, {
-  getPlayers: function() {
+  getPlayers: function () {
     return state.players;
   },
-  getPlayer: function(id) {
+  getPlayer: function (id) {
     return state.players.find(player => player.id === id);
   },
-  getState: function() {
+  getState: function () {
     return state;
   },
-  getStatus: function() {
+  getStatus: function () {
     return state.gameStatus;
   },
-  emitChange: function() {
+  emitChange: function () {
     this.emit(CHANGE_EVENT);
   },
-  addChangeListener: function(callback) {
+  addChangeListener: function (callback) {
     this.on(CHANGE_EVENT, callback);
   },
-  removeChangeListener: function(callback) {
+  removeChangeListener: function (callback) {
     this.removeListener(CHANGE_EVENT, callback);
   }
 });
@@ -138,10 +137,6 @@ function _evaluateGame(nextGameStatus, nextPlayer = state.currentPlayerIndex) {
   }
 
   switch (nextGameStatus) {
-    case 0:
-      alert("Error? Case 0 reached in evaluateGame()");
-      break;
-
     case 1 /*   Game in progress; first play  */:
       /*   all players bet the minimum to start  */
       if (state.turnCount === 0) _ante();
@@ -154,56 +149,48 @@ function _evaluateGame(nextGameStatus, nextPlayer = state.currentPlayerIndex) {
         /* not all players are busted */
         if (state.allPlayersFinished) {
           /* all players are finished => EndGame */
+          switch (state.winningPlayerIndex) {
+            case -1 /* this should never happen */:
+              console.log(
+                "error! No winner was determined. Stalled in Case 1 on evaluateGame()"
+              );
+              break;
+            case 0 /* human player wins */:
+              nextGameStatus = 4;
+              break;
+            case 1 /* non-human player wins */:
+              nextGameStatus = 7;
+              break;
+            default:
+              break;
 
-          if (state.tieFlag) {
-            nextGameStatus = 6;
-          } else {
-            switch (state.winningPlayerIndex) {
-              case -1 /* this should never happen */:
-                console.log(
-                  "error! No winner was determined. Stalled in Case 1 on evaluateGame()"
-                );
-                break;
-              case 0 /* human player wins */:
-                nextGameStatus = 4;
-                break;
-              case 1 /* non-human player wins */:
-                nextGameStatus = 7;
-                break;
-              default:
-                break;
-            }
           }
         } else {
           /* Not all players are finished */
 
           /* Blackjack Check */
           if (state.blackjackPlayers.length > 0) {
-            if (state.blackjackPlayers.length === state.players.length) {
-              /* all players have blackjack => tie */
-              nextGameStatus = 6;
-            } else if (state.blackjackPlayers.length === 1) {
+            if (state.blackjackPlayers.length === 1) {
               /* only one player has blackjack on the first turn */
               const index = state.players.indexOf(state.blackjackPlayers[0]);
               if (index === 0) nextGameStatus = 4; /* human player wins */
               if (index === 1) nextGameStatus = 7; /* non-human player wins */
             }
             if (state.turnCount === 0) _allPlayersFinish();
-          }
 
-          if (state.players[state.currentPlayerIndex].isStaying) {
-            /* current player is staying  */
-            nextGameStatus = 2;
-          } else if (state.players[state.currentPlayerIndex].isBusted) {
-            /* current player is busted */
-            if (state.currentPlayerIndex === 0)
-              nextGameStatus = 4; /* human player wins */
-            if (state.currentPlayerIndex === 1)
-              nextGameStatus = 7; /* non-human player wins */
+            if (state.players[state.currentPlayerIndex].isStaying) {
+              /* current player is staying  */
+              nextGameStatus = 2;
+            } else if (state.players[state.currentPlayerIndex].isBusted) {
+              /* current player is busted */
+              if (state.currentPlayerIndex === 0)
+                nextGameStatus = 4; /* human player wins */
+              if (state.currentPlayerIndex === 1)
+                nextGameStatus = 7; /* non-human player wins */
+            }
           }
         }
       }
-
       /* set up for next cycle */
       state.turnCount++;
       state.gameStatus = nextGameStatus;
@@ -298,15 +285,6 @@ function _evaluateGame(nextGameStatus, nextPlayer = state.currentPlayerIndex) {
       state.gameStatus = nextGameStatus;
 
       _endGameTrap(nextGameStatus);
-      break;
-
-    case 6 /*   tie                     */:
-      ControlPanelStore.setMessageBar("Tie?", MessageBarType.warning);
-      nextGameStatus = 0;
-
-      /*   don't do payout unless all players are not busted  */
-      if (!state.allPlayersBusted) _payout();
-
       break;
 
     case 7 /*   non-human player wins   */:
