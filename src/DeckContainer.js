@@ -14,7 +14,7 @@ class DeckContainer extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = {
-      isDeckVisible: true
+      isDeckVisible: true,
     };
 
     /* bind private methods */
@@ -22,9 +22,11 @@ class DeckContainer extends BaseComponent {
   }
 
   componentWillMount() {
-    if (this.props.hidden === true) {
-      this.setState({ isDeckVisible: false });
-    }
+    this.setState({
+      isDeckVisible: !this.props.hidden,
+    })
+
+
   }
 
   _toggleDeck() {
@@ -44,46 +46,46 @@ class DeckContainer extends BaseComponent {
     const childElements =
       this.props.deck && this.props.deck.length > 0
         ? this.props.deck.map(card =>
-            <CardContainer
-              key={card.suit + "-" + card.description}
-              {...card}
-              select={cardAttributes => AppActions.select(cardAttributes)}
-              deselect={cardAttributes => AppActions.deselect(cardAttributes)}
-              isSelectable={this.props.isSelectable}
-            />
-          )
+          <CardContainer
+            key={card.suit + "-" + card.description}
+            {...card}
+            select={cardAttributes => AppActions.select(cardAttributes)}
+            deselect={cardAttributes => AppActions.deselect(cardAttributes)}
+            isSelectable={this.props.isSelectable}
+          />
+        )
         : [];
 
     // Set toggle icon for Deck titles
     const toggleIcon = this.state.isDeckVisible
-      ? <i className="ms-Icon ms-Icon--ChevronDown" aria-hidden="true" />
-      : <i className="ms-Icon ms-Icon--ChevronUp" aria-hidden="true" />;
+      ? <i className="ms-Icon ms-Icon--ChevronUp" aria-hidden="true" />
+      : <i className="ms-Icon ms-Icon--ChevronDown" aria-hidden="true" />;
 
-    /* style the DeckContainer conditionally */
-    let style =
-      this.props.player && this.props.player.turn
-        ? "DeckContainer selected "
-        : "DeckContainer ";
-    if (
-      this.props.player &&
-      this.props.player.status === "staying" &&
-      !this.props.player.turn
-    ) {
-      style += "staying ";
-    }
-
+    /* Deck Title */
     const deckTitleString = `${this.props.title} (${this.props.deck &&
       this.props.deck.length})`;
 
+    /* Hand Value (if it's a player deck) */
+    let handValueString = `Hand Value: ${this.props.handValue.aceAsOne} `;
+    if (this.props.handValue.aceAsOne !== this.props.handValue.aceAsEleven) {
+      handValueString += " / " + this.props.handValue.aceAsEleven;
+    }
+
+
     return (
-      <div className={style}>
-        <span
-          data-title={deckTitleString}
-          className="ms-font-m"
-          onClick={this._toggleDeck}
-        >
-          {!this.props.player && toggleIcon}
-        </span>
+      <div className="DeckContainer">
+        {!this.props.isPlayerDeck &&
+          <span
+            data-title={deckTitleString}
+            className="ms-font-m"
+            onClick={this._toggleDeck}
+          >
+            {toggleIcon}
+          </span>}
+        {this.props.isPlayerDeck &&
+          <span
+            data-title={handValueString}
+            className="ms-font-l"></span>}
         {this.state.isDeckVisible &&
           <Masonry
             className={"deck"}
@@ -102,13 +104,14 @@ class DeckContainer extends BaseComponent {
 /* These props were verified on 8/21/17 */
 DeckContainer.propTypes = {
   deck: T.array, // DeckStore
-  handValue: T.object, // DeckStore
   gameStatus: T.number, // GameStore
-  player: T.object, // GameStore
-  turnCount: T.number, // GameStore
-  isSelectable: T.bool.isRequired, // props
+  gameStatusFlag: T.bool.isRequired, // props 
+  handValue: T.object, // DeckStore
   hidden: T.bool.isRequired, // props
-  title: T.string.isRequired // props
+  isSelectable: T.bool.isRequired, // props
+  player: T.object, // GameStore
+  title: T.string.isRequired, // props
+  turnCount: T.number, // GameStore
 };
 
 export default DeckContainer;

@@ -1,71 +1,64 @@
-export class Player {
+class Player {
   constructor(id, title) {
-    this.id = id;
-    this.title = title;
-    // this.hand = [];
-    this.handValue = { aceAsOne: 0, aceAsEleven: 0 };
-    this.status = "ok";
-    this.turn = false;
     this.bank = 1000;
     this.bet = 0;
-    this.lastAction = "none"; /* unused */
-    this.isStaying = false;
+    this.handValue = { aceAsOne: 0, aceAsEleven: 0 };
+    this.hasBlackjack = false;
+    this.id = id;
     this.isBusted = false;
     this.isFinished = false;
-    this.hasBlackjack = false;
+    this.isStaying = false;
+    this.lastAction = "none";
+    this.status = "ok";
+    this.title = title;
+    this.turn = false;
   }
   remove(...keys) {
     const defaults = {
-      id: "",
-      title: "",
-      handValue: { aceAsOne: 0, aceAsEleven: 0 },
-      status: "ok", /* deprecated */
-      turn: false,
       bank: 1000,
       bet: 0,
-      lastAction: "none", /* unused, deprecated */
-      isStaying: false,
+      handValue: { aceAsOne: 0, aceAsEleven: 0 },
+      hasBlackjack: false,
+      id: "",
       isBusted: false,
-      isFinished: false
+      isFinished: false,
+      isStaying: false,
+      lastAction: "none",
+      status: "ok",
+      title: "",
+      turn: false
     };
-    keys.forEach(key => { this[key] = defaults[key]; });
-  }
-  bet(amount) {
-    this.pot -= amount;
-    this.bet = amount;
-    this.lastAction = 'bet';
+    keys.forEach(key => {
+      // console.log(`this[${key}] = defaults[${key}] = ${defaults[key]};`)
+      this[key] = defaults[key];
+    });
   }
   resetStatus() {
     /* AKA NewRound; resets properties that are bound to a single round of play */
-    this.remove([
-      'status',
-      'turn',
-      'bet',
-      'lastAction',
-      'isStaying',
-      'isBusted',
-      'isFinished',
-      'hasBlackjack'
-    ]);
+    this.remove(
+      "bet",
+      "handValue",
+      "hasBlackjack",
+      "isBusted",
+      "isFinished",
+      "isStaying",
+      "lastAction",
+      "status",
+      "turn"
+    );
   }
   resetAll() {
-    this.remove(['handValue',
-      'status',
-      'turn',
-      'bank',
-      'bet',
-      'lastAction',
-      'isStaying'])
+    this.resetStatus();
+    this.remove("bank");
   }
   setStatus() {
     /*   set busted status  */
     if (this.handValue.aceAsOne > 21 && this.handValue.aceAsEleven > 21) {
-      this.busted();
-      this.finish();
-    }
-    /*   set blackjack status  */
-    if (
-      this.handValue.aceAsOne === 21 || this.handValue.aceAsEleven === 21
+      this.bust();
+    } else if (
+      /*   set blackjack status  */
+      this.handValue.aceAsOne === 21 ||
+      this.handValue.aceAsEleven === 21
     ) {
       this.blackjack();
     }
@@ -76,32 +69,63 @@ export class Player {
     if (this.handValue.aceAsEleven === this.handValue.aceAsOne) {
       return this.handValue.aceAsOne;
     } else {
-      higherHandValue = this.handValue.aceAsOne > this.handValue.aceAsEleven
-        ? this.handValue.aceAsOne
-        : this.handValue.aceAsEleven;
+      higherHandValue =
+        this.handValue.aceAsOne > this.handValue.aceAsEleven
+          ? this.handValue.aceAsOne
+          : this.handValue.aceAsEleven;
       return higherHandValue;
     }
   }
+  bet(amount) {
+    this.pot -= amount;
+    this.bet = amount;
+    this.lastAction = "bet";
+    this.log(`bet ${amount}`);
+  }
   ante(amount) {
     this.bank -= amount;
-    this.lastAction = 'ante';
+    this.lastAction = "ante";
+    this.log(`ante ${amount}`);
   }
   hit() {
-    this.lastAction = 'hit';
+    /* Deckstore adds a card to this player's hand */
+    this.lastAction = "hit";
+    this.log(`hit`);
   }
-  busted() {
+  bust() {
     this.isBusted = true;
+    this.finish();
+    this.log(`busted`);
   }
   stay() {
     this.isStaying = true;
-    this.lastAction = 'stay';
+    this.lastAction = "stay";
+    this.finish();
+    this.log(`stayed`);
   }
+  /* the player can not perform any more actions */
   finish() {
+    this.endTurn();
     this.isFinished = true;
-    // this.lastAction ='finish';
+    this.log(`finished`);
   }
   blackjack() {
     this.hasBlackjack = true;
+    this.log(`has blackjack`);
+  }
+  startTurn() {
+    this.turn = true;
+    this.isFinished = false;
+    this.lastAction = "startTurn";
+    this.log(`started turn`);
+  }
+  endTurn() {
+    this.turn = false;
+    this.lastAction = "endTurn";
+    this.log(`ended turn`);
+  }
+  log(msg) {
+    console.log(`Player Action: ${this.title} - ${msg}`);
   }
 }
 

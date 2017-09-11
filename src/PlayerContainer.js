@@ -17,19 +17,20 @@ export class PlayerContainer extends BaseComponent {
     super(props);
     this.state = {
       deck: [],
-      deckCalloutText: "I'm Deck Callout!",
+      deckCalloutText: "",
       gameStatus: 0,
+      gameStatusFlag: true,
       handValue: { aceAsEleven: 0, aceAsOne: 0 },
       id: -1,
-      isDeckCalloutVisible: false,
       isDeckCalloutEnabled: true,
+      isDeckCalloutVisible: false,
       isStatusCalloutVisible: false,
       minimumBet: 0,
       player: { empty: true },
+      playerStatusFlag: true,
       selectedFlag: false,
       title: "",
-      turnCount: 0,
-      gameStatusFlag: false
+      turnCount: 0
     };
 
     this._bind(
@@ -60,34 +61,28 @@ export class PlayerContainer extends BaseComponent {
     DeckStore.removeChangeListener(this.onChangeDeck);
   }
 
-  /* flux helpers */
+  /* flux helpegameStatusrs */
   onChangeGame() {
     const newState = GameStore.getState();
     const thisPlayer = newState.players.find(
       player => player.id === this.state.id
     );
 
+    /* playerStatusFlag is TRUE when the player cannot play. */
+    const playerStatusFlag =
+      thisPlayer.isBusted ||
+      thisPlayer.isFinished ||
+      thisPlayer.isStaying ||
+      !thisPlayer.turn;
     /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
-    const gameStatusFlag =
-      newState.gameStatus === 0 ||
-      newState.gameStatus > 2 ||
-      thisPlayer.turn === false;
+    const gameStatusFlag = newState.gameStatus === 0 || newState.gameStatus > 2;
 
     /* if the player is staying, display callout */
-    let text = '';
-    if (thisPlayer.isStaying) {
-      text = `${thisPlayer.title} stayed`;
-    }
-    if (thisPlayer.hasBlackJack) {
-      text = `${thisPlayer.title} has blackjack`;
-    }
-    if (thisPlayer.isBusted) {
-      text = `${thisPlayer.title} is busted`;
-    }
-    if (thisPlayer.isFinished) {
-      text = `${thisPlayer.title} is finished`;
-    }
-
+    let text = thisPlayer.title;
+    if (thisPlayer.isStaying) text += " stayed";
+    if (thisPlayer.hasBlackJack) text += " has blackjack";
+    if (thisPlayer.isBusted) text += " busted";
+    if (thisPlayer.lastAction === "hit") text += " hit";
 
     this.setState({
       bank: thisPlayer.bank,
@@ -96,10 +91,10 @@ export class PlayerContainer extends BaseComponent {
       gameStatusFlag,
       minimumBet: newState.minimumBet,
       player: thisPlayer,
+      playerStatusFlag,
       title: thisPlayer.title,
-      turnCount: newState.turnCount,
+      turnCount: newState.turnCount
     });
-
   }
   onChangeDeck() {
     /* selectedFlag is true if getSelected() returns an array */
@@ -140,85 +135,92 @@ export class PlayerContainer extends BaseComponent {
   }
 
   render() {
-    const handValue = this.state.handValue;
     const bank = this.state.bank;
     const title = this.state.title;
-
-    const titleBar = !this.state.player.empty
-      ? <span>
-        {title} {` ($${bank}) `} Hand Value: {handValue.aceAsOne}
-        {handValue.aceAsOne !== handValue.aceAsEleven &&
-          " / " + handValue.aceAsEleven}{" "}
+    const titleBar = !this.state.player.empty ? (
+      <p className="player-titlebar ms-font-xl">
+        {`${title} ($${bank})  `}
         <i
           className="ms-Icon ms-Icon--Info"
           onClick={this._toggleStatusCallout}
           ref={calloutTarget => (this._statusCalloutTarget = calloutTarget)}
         />
-      </span>
-      : <span>
-        {title}
-      </span>;
+      </p>
+    ) : (
+        <span>{title}</span>
+      );
+
+    /* style PlayerContainer conditionally */
+    let style = "PlayerContainer ";
+    if (!this.state.player.empty && this.state.player.turn) {
+      style += "selected ";
+    }
+    if (
+      !this.state.player.empty &&
+      this.state.player.isStaying &&
+      !this.state.player.turn
+    ) {
+      style += "staying ";
+    }
 
     return (
-      <div className="PlayerContainer">
-        <h3 className="ms-font-s">
-          {titleBar}
-        </h3>
-        {this.state.isStatusCalloutVisible &&
+      <div className={style}>
+        {titleBar}
+        {this.state.isStatusCalloutVisible && (
           <Callout
             gapSpace={1}
             targetElement={this._statusCalloutTarget}
             onDismiss={this._toggleStatusCallout}
             setInitialFocus={false}
           >
-            <StatusDisplay
-              player={this.state.player}
-              gameStatus={this.state.gameStatus}
-              turnCount={this.state.turnCount}
-            />
-          </Callout>}
+            <StatusDisplay player={this.state.player} />
+          </Callout>
+        )}
         {this.state.isDeckCalloutEnabled &&
           this.state.isDeckCalloutVisible &&
-          this.state.deckCalloutText !== '' &&
-          <Callout
-            className="DeckCallout"
-            gapSpace={1}
-            targetElement={this._deckCalloutTarget}
-            onDismiss={this._hideDeckCallout}
-            setInitialFocus={false}
-            directionalHint={DirectionalHint.bottomCenter}
-          >
-            <span className="ms-font-xl">
-              {this.state.deckCalloutText}
-            </span>
-          </Callout>}
+          this.state.deckCalloutText !== "" && (
+            <Callout
+              className="DeckCallout"
+              gapSpace={1}
+              targetElement={this._deckCalloutTarget}
+              onDismiss={this._hideDeckCallout}
+              setInitialFocus={false}
+              directionalHint={DirectionalHint.bottomCenter}
+            >
+              <span className="ms-font-xl">{this.state.deckCalloutText}</span>
+            </Callout>
+          )}
 
         <ControlPanel
-          playerId={this.state.id}
           gameStatus={this.state.gameStatus}
-          minimumBet={this.state.minimumBet}
-          hidden={false}
-          selectedFlag={this.state.selectedFlag}
-          player={this.state.player}
-          showDeckCallout={this._showDeckCallout}
           gameStatusFlag={this.state.gameStatusFlag}
+          hidden={false}
+          minimumBet={this.state.minimumBet}
+          player={this.state.player}
+          playerId={this.state.id}
+          playerStatusFlag={this.state.playerStatusFlag}
+          selectedFlag={this.state.selectedFlag}
+          showDeckCallout={this._showDeckCallout}
         />
 
-        {this.state.deck.length > 0 &&
+        {this.state.deck.length > 0 && (
           <DeckContainer
             deck={this.state.deck}
             gameStatus={this.state.gameStatus}
             gameStatusFlag={this.gameStatusFlag}
             handValue={this.state.handValue}
             hidden={false}
-            isSelectable={true}
+            isPlayerDeck
+            isSelectable
             player={this.state.player}
             title={this.state.title}
             turnCount={this.state.turnCount}
-          />}
+          />
+        )}
         <div
           id="deckCalloutTarget"
           ref={callout => (this._deckCalloutTarget = callout)}
+          className="ms-font-m"
         />
       </div>
     );
@@ -233,39 +235,27 @@ export default PlayerContainer;
 
 const StatusDisplay = props => {
   return (
-    <div id="StatusPanel" className="ms-font-s">
-      <span>
-        Player: {props.player.title || ""}
-      </span>
+    <div id="StatusPanel" className="ms-font-m">
+      Status: {props.player.status || ""}
       <br />
-      <span>
-        Status: {props.player.status || ""}
-      </span>
+      Hand Value:
+      {` ${props.player.handValue.aceAsEleven} / ${props.player.handValue
+        .aceAsOne}`}
       <br />
-      <span>
-        Hand Value:{" "}
-        {`${props.player.handValue.aceAsEleven} / ${props.player.handValue
-          .aceAsOne}`}
-      </span>
+      Turn: {`${props.player.turn}`}
       <br />
-      <span>
-        Turn: {`${props.player.turn}`}
-      </span>
+      isBusted: {`${props.player.isBusted}`}
       <br />
-      <span>
-        Game Status: {props.gameStatus || 0}
-      </span>
+      isStaying: {`${props.player.isStaying}`}
       <br />
-      <span>
-        Turn Count: {props.turnCount || 0}
-      </span>
+      isFinished: {`${props.player.isFinished}`}
+      <br />
+      lastAction: {`${props.player.lastAction}`}
       <br />
     </div>
   );
 };
 
 StatusDisplay.propTypes = {
-  // gameStatus: T.number.isRequired,
-  // turnCount: T.number.isRequired,
-  // player: T.object.isRequired
+  player: T.object.isRequired
 };
