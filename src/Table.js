@@ -14,7 +14,7 @@ import OptionsPanel from "./OptionsPanel";
 /* flux */
 import { GameStore } from "./stores/GameStore";
 import { DeckStore } from "./stores/DeckStore";
-import { ControlPanelStore } from "./stores/ControlPanelStore";
+import ControlPanelStore from "./stores/ControlPanelStore";
 import AppActions from "./actions/AppActions";
 
 class Table extends BaseComponent {

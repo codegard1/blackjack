@@ -24,7 +24,7 @@ let state = {
 
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "controlPanel";
-export const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
+const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
   getState: function () {
     return state;
   },

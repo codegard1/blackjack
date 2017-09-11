@@ -305,5 +305,3 @@ function _hit(id) {
   playerHands[index].hand.push(ret);
   return ret;
 }
-
-export default DeckStore;
