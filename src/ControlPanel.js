@@ -103,6 +103,22 @@ class ControlPanel extends Component {
         onClick: AppActions.stay
       }
     ];
+
+    if (!npcFlag) {
+      blackJackItems.push({
+        key: "new-round",
+        name: "New Round",
+        ariaLabel: "New Round",
+        iconProps: { iconName: "Refresh" },
+        disabled: !gameStatusFlag,
+        onClick: () => {
+          AppActions.newDeck();
+          AppActions.newRound();
+          AppActions.showMessageBar("New Round", MessageBarType.info);
+        }
+      });
+    }
+
     const drawMenu = [
       {
         key: "deck-menu",
@@ -136,31 +152,21 @@ class ControlPanel extends Component {
       }
     ];
 
-    const farItems = npcFlag ? [] : [{
-      key: "options",
-      name: "",
-      ariaLabel: "Options",
-      iconProps: { iconName: "Settings" },
-      disabled: npcFlag,
-      onClick: AppActions.showOptionsPanel
-    },
-    {
-      key: "new-round",
-      name: "New Round",
-      ariaLabel: "New Round",
-      iconProps: { iconName: "Refresh" },
-      disabled: npcFlag,
-      onClick: () => {
-        AppActions.newDeck();
-        AppActions.newRound();
-        AppActions.showMessageBar("New Round", MessageBarType.info);
-      }
-    }];
+    const farItems = npcFlag ? [] : [
+      {
+        key: "options",
+        name: "",
+        ariaLabel: "Options",
+        iconProps: { iconName: "Settings" },
+        disabled: npcFlag,
+        onClick: AppActions.showOptionsPanel
+      },
+    ];
     // const overFlowItems = selectedFlag ? [].concat(putMenu, drawMenu) : [];
     const overFlowItems = [];
 
     return (
-      <div className="player-controlpanel">
+      <div className="player-controlpanel" >
         {!this.props.hidden &&
           <CommandBar
             isSearchBoxVisible={false}
@@ -168,7 +174,7 @@ class ControlPanel extends Component {
             farItems={farItems}
             overflowItems={overFlowItems}
           />}
-      </div>
+      </div >
     );
   }
 }
