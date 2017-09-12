@@ -27,13 +27,13 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
   getPlayer: id => PlayersStore.getPlayer(id),
   getState: () => state,
   getStatus: () => state.gameStatus,
-  emitChange: function() {
+  emitChange: function () {
     this.emit(CHANGE_EVENT);
   },
-  addChangeListener: function(callback) {
+  addChangeListener: function (callback) {
     this.on(CHANGE_EVENT, callback);
   },
-  removeChangeListener: function(callback) {
+  removeChangeListener: function (callback) {
     this.removeListener(CHANGE_EVENT, callback);
   }
 });
@@ -119,7 +119,9 @@ AppDispatcher.register(action => {
 
 /* method definitions */
 function _evaluateGame(statusCode) {
-  if (PlayersStore.length > 0) PlayersStore.evaluatePlayers();
+  if (PlayersStore.length() > 0) {
+    PlayersStore.evaluatePlayers();
+  }
 
   switch (statusCode) {
     case 1 /*   Game in progress; first play  */:
