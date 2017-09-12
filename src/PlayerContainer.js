@@ -92,6 +92,7 @@ export class PlayerContainer extends BaseComponent {
       minimumBet: newState.minimumBet,
       player: thisPlayer,
       playerStatusFlag,
+      playerIsNPC: this.props.playerIsNPC,
       title: thisPlayer.title,
       turnCount: newState.turnCount
     });
@@ -199,6 +200,7 @@ export class PlayerContainer extends BaseComponent {
           player={this.state.player}
           playerId={this.state.id}
           playerStatusFlag={this.state.playerStatusFlag}
+          playerIsNPC={this.state.playerIsNPC}
           selectedFlag={this.state.selectedFlag}
           showDeckCallout={this._showDeckCallout}
         />

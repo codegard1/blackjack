@@ -17,7 +17,7 @@ class ControlPanel extends Component {
     /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
     const gameStatusFlag = this.props.gameStatusFlag;
     const playerStatusFlag = this.props.playerStatusFlag;
-
+    const npcFlag = this.props.playerIsNPC;
 
     const drawItems = [
       {
@@ -147,10 +147,18 @@ class ControlPanel extends Component {
         }
       }
     ];
+    const optionsButton = {
+      key: "options",
+      name: "",
+      ariaLabel: "Options",
+      iconProps: { iconName: "Settings" },
+      disabled: npcFlag,
+      onClick: AppActions.showOptionsPanel
+    }
 
     /* configure which items appear in the CommandBar */
     const commandBarItems = blackJackItems;
-    const farItems = [];
+    const farItems = [optionsButton];
     // const overFlowItems = selectedFlag ? [].concat(putMenu, drawMenu) : [];
     const overFlowItems = [];
 

@@ -99,7 +99,7 @@ class Table extends BaseComponent {
 
   render() {
     const playersArray = this.state.players.map(player => (
-      <PlayerContainer key={`Player-${player.id}`} playerId={player.id} />
+      <PlayerContainer key={`Player-${player.id}`} playerId={player.id} playerIsNPC={false} />
     ));
 
     return (
@@ -172,16 +172,6 @@ class Table extends BaseComponent {
             isSelectedVisible={this.state.isSelectedVisible}
             gameStatus={this.state.gameStatus}
           />
-          <div id="OptionsButtonContainer">
-            <CommandButton
-              iconProps={{ iconName: "StackIndicator" }}
-              disabled={false}
-              checked={false}
-              onClick={AppActions.showOptionsPanel}
-            >
-              Options
-            </CommandButton>
-          </div>
         </div>
       </div>
     );
