@@ -27,16 +27,8 @@ class Table extends BaseComponent {
       selected: [],
       playerHands: [],
       //GameStore
-      allPlayersBusted: false,
-      allPlayersNonBusted: true,
-      allPlayersStaying: false,
-      bustedPlayers: [],
-      // currentPlayer: 0, /* deprecated */
-      currentPlayerIndex: -1,
       gameStatus: 0,
-      highestHandValue: -1,
-      minimumBet: null,
-      nonBustedPlayers: null,
+      minimumBet: 25,
       players: [],
       pot: 0,
       round: 0,
