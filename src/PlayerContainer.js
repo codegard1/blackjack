@@ -53,6 +53,7 @@ export class PlayerContainer extends BaseComponent {
     /* callback when a change emits from GameStore*/
     GameStore.addChangeListener(this.onChangeGame);
     DeckStore.addChangeListener(this.onChangeDeck);
+    this.onChangeGame();
   }
 
   componentWillUnmount() {

@@ -70,7 +70,7 @@ class ControlPanel extends Component {
         }
       }
     ];
-    const blackJackItems = [
+    let blackJackItems = [
       {
         key: "hit",
         name: "Hit",
@@ -104,7 +104,7 @@ class ControlPanel extends Component {
       }
     ];
 
-    if (!npcFlag) {
+    if (npcFlag === false) {
       blackJackItems.push({
         key: "new-round",
         name: "New Round",

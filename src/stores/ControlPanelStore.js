@@ -13,6 +13,8 @@ let state = {
   isSelectedVisible: false,
   isOptionsPanelVisible: false,
   isMessageBarVisible: false,
+  isDealerHandVisible: false,
+  isHandValueVisible: false,
   messageBarDefinition: {
     type: MessageBarType.info,
     text: "",
@@ -82,6 +84,15 @@ AppDispatcher.register(action => {
       ControlPanelStore.emitChange();
       break;
 
+    case AppConstants.CONTROLPANEL_TOGGLEHANDVALUEVISIBILITY:
+      _toggleHandValueVisibility(action.bool);
+      ControlPanelStore.emitChange();
+      break;
+
+    case AppConstants.CONTROLPANEL_TOGGLEDEALERHANDVISIBILITY:
+      _toggleDealerHandVisibility(action.bool);
+      ControlPanelStore.emitChange();
+
     default:
       /* do nothing */
       break;
@@ -118,6 +129,14 @@ function _toggleDrawnVisibility(bool) {
 
 function _toggleSelectedVisibility(bool) {
   state.isSelectedVisible = bool;
+}
+
+function _toggleDealerHandVisibility(bool) {
+  state.isDealerHandVisible = bool;
+}
+
+function _toggleHandValueVisibility(bool) {
+  state.isHandValueVisible = bool;
 }
 
 export default ControlPanelStore;
