@@ -92,7 +92,6 @@ export class PlayerContainer extends BaseComponent {
       minimumBet: newState.minimumBet,
       player: thisPlayer,
       playerStatusFlag,
-      playerIsNPC: this.props.playerIsNPC,
       title: thisPlayer.title,
       turnCount: newState.turnCount
     });

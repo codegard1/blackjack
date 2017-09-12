@@ -26,8 +26,8 @@ class Players {
   }
 
   /* add a new Player to the array */
-  newPlayer(id, title) {
-    this.players.push(new Player(id, title));
+  newPlayer(...props) {
+    this.players.push(new Player(...props));
   }
 
   /* cycle currentPlayerIndex  */

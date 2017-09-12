@@ -46,7 +46,7 @@ AppDispatcher.register(action => {
 
   switch (action.actionType) {
     case AppConstants.GAME_NEWPLAYER:
-      PlayersStore.newPlayer(action.id, action.title);
+      PlayersStore.newPlayer(action.id, action.title, action.isNPC);
 
       GameStore.emitChange();
       break;

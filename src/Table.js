@@ -10,6 +10,7 @@ import PlayerContainer from "./PlayerContainer";
 import DeckContainer from "./DeckContainer";
 import BaseComponent from "./BaseComponent";
 import OptionsPanel from "./OptionsPanel";
+import { defaultPlayers } from './definitions';
 
 /* flux */
 import { GameStore } from "./stores/GameStore";
@@ -57,8 +58,7 @@ class Table extends BaseComponent {
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
 
     /* start a new game with these players */
-    const players = [{ id: 1, title: "Chris" }, { id: 2, title: "Dealer" }];
-    AppActions.newGame(players);
+    AppActions.newGame(defaultPlayers);
   }
 
   componentWillUnmount() {
@@ -99,7 +99,7 @@ class Table extends BaseComponent {
 
   render() {
     const playersArray = this.state.players.map(player => (
-      <PlayerContainer key={`Player-${player.id}`} playerId={player.id} playerIsNPC={false} />
+      <PlayerContainer key={`Player-${player.id}`} playerId={player.id} />
     ));
 
     return (

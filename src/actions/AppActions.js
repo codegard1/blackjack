@@ -18,7 +18,8 @@ const AppActions = {
       AppDispatcher.dispatch({
         actionType: AppConstants.GAME_NEWPLAYER,
         id: player.id,
-        title: player.title
+        title: player.title,
+        isNPC: player.isNPC
       });
     });
   },
