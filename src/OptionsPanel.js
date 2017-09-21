@@ -50,7 +50,7 @@ const OptionsPanel = props => {
         >
           Reset Game
         </CommandButton>
-        
+
         <CommandButton
           iconProps={{ iconName: "Sync" }}
           disabled={false}
@@ -87,6 +87,24 @@ const OptionsPanel = props => {
           onText="On"
           offText="Off"
           onChanged={checked => AppActions.toggleSelectedVisibility(checked)}
+        />
+        <Toggle
+          checked={props.isDealerHandVisible}
+          label="Show Dealer Hand"
+          onAriaLabel="The dealer's hand is visible. Press to hide it."
+          offAriaLabel="The dealer's hand is not visible. Press to show it."
+          onText="On"
+          offText="Off"
+          onChanged={checked => AppActions.toggleDealerHandVisibility(checked)}
+        />
+        <Toggle
+          checked={props.isHandValueVisible}
+          label="Show Hand Value"
+          onAriaLabel="The hand value display is visible. Press to hide it."
+          offAriaLabel="The hand value display is hidden. Press to show it."
+          onText="On"
+          offText="Off"
+          onChanged={checked => AppActions.toggleHandValueVisibility(checked)}
         />
       </div>
     </Panel>
