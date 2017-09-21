@@ -55,12 +55,12 @@ AppDispatcher.register(action => {
 
   switch (action.actionType) {
     case AppConstants.CONTROLPANEL_HIDEOPTIONSPANEL:
-      _hideOptionsPanel();
+      state.isOptionsPanelVisible = false;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_SHOWOPTIONSPANEL:
-      _showOptionsPanel();
+      state.isOptionsPanelVisible = true;
       ControlPanelStore.emitChange();
       break;
 
@@ -70,27 +70,27 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEDECKVISIBILITY:
-      _toggleDeckVisibility(action.bool);
+      state.isDeckVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEDRAWNVISIBILITY:
-      _toggleDrawnVisibility(action.bool);
+      state.isDrawnVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLESELECTEDVISIBLITY:
-      _toggleSelectedVisibility(action.bool);
+      state.isSelectedVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEHANDVALUEVISIBILITY:
-      _toggleHandValueVisibility(action.bool);
+      state.isHandValueVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEDEALERHANDVISIBILITY:
-      _toggleDealerHandVisibility(action.bool);
+      state.isDealerHandVisible = action.bool;
       ControlPanelStore.emitChange();
 
     default:
@@ -102,14 +102,6 @@ AppDispatcher.register(action => {
 /*  ========================================================  */
 
 /* method definitions */
-function _hideOptionsPanel() {
-  state.isOptionsPanelVisible = false;
-}
-
-function _showOptionsPanel() {
-  state.isOptionsPanelVisible = true;
-}
-
 function _showMessageBar(text, type = MessageBarType.info) {
   state.messageBarDefinition = {
     text,
@@ -117,26 +109,6 @@ function _showMessageBar(text, type = MessageBarType.info) {
     isMultiLine: state.messageBarDefinition.isMultiLine
   };
   state.isMessageBarVisible = true;
-}
-
-function _toggleDeckVisibility(bool) {
-  state.isDeckVisible = bool;
-}
-
-function _toggleDrawnVisibility(bool) {
-  state.isDrawnVisible = bool;
-}
-
-function _toggleSelectedVisibility(bool) {
-  state.isSelectedVisible = bool;
-}
-
-function _toggleDealerHandVisibility(bool) {
-  state.isDealerHandVisible = bool;
-}
-
-function _toggleHandValueVisibility(bool) {
-  state.isHandValueVisible = bool;
 }
 
 export default ControlPanelStore;

@@ -25,8 +25,6 @@ class DeckContainer extends BaseComponent {
     this.setState({
       isDeckVisible: !this.props.hidden,
     })
-
-
   }
 
   _toggleDeck() {
@@ -66,9 +64,12 @@ class DeckContainer extends BaseComponent {
       this.props.deck.length})`;
 
     /* Hand Value (if it's a player deck) */
-    let handValueString = `Hand Value: ${this.props.handValue.aceAsOne} `;
-    if (this.props.handValue.aceAsOne !== this.props.handValue.aceAsEleven) {
-      handValueString += " / " + this.props.handValue.aceAsEleven;
+    let handValueString;
+    if (this.props.handValue) {
+      handValueString = `Hand Value: ${this.props.handValue.aceAsOne} `;
+      if (this.props.handValue.aceAsOne !== this.props.handValue.aceAsEleven) {
+        handValueString += " / " + this.props.handValue.aceAsEleven;
+      }
     }
 
 

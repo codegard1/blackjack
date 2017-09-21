@@ -80,6 +80,18 @@ const AppActions = {
       bool
     });
   },
+  toggleDealerHandVisibility(bool) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.CONTROLPANEL_TOGGLEDEALERHANDVISIBILITY,
+      bool
+    });
+  },
+  toggleHandValueVisibility(bool) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.CONTROLPANEL_TOGGLEHANDVALUEVISIBILITY,
+      bool
+    });
+  },
   newDeck() {
     AppDispatcher.dispatch({
       actionType: AppConstants.DECK_NEWDECK
