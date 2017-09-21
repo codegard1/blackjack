@@ -92,6 +92,7 @@ AppDispatcher.register(action => {
     case AppConstants.CONTROLPANEL_TOGGLEDEALERHANDVISIBILITY:
       state.isDealerHandVisible = action.bool;
       ControlPanelStore.emitChange();
+      break;
 
     default:
       /* do nothing */

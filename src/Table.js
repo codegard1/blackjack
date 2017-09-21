@@ -35,8 +35,10 @@ class Table extends BaseComponent {
       round: 0,
       turnCount: 0,
       // ControlPanelStore
+      isDealerHandVisible: true,
       isDeckVisible: false,
       isDrawnVisible: false,
+      isHandValueVisible: true,
       isMessageBarVisible: false,
       isOptionsPanelVisible: false,
       isSelectedVisible: false,
@@ -88,8 +90,10 @@ class Table extends BaseComponent {
   onChangeControlPanel() {
     const newState = ControlPanelStore.getState();
     this.setState({
+      isDealerHandVisible: newState.isDealerHandVisible,
       isDeckVisible: newState.isDeckVisible,
       isDrawnVisible: newState.isDrawnVisible,
+      isHandValueVisible: newState.isHandValueVisible,
       isMessageBarVisible: newState.isMessageBarVisible,
       isOptionsPanelVisible: newState.isOptionsPanelVisible,
       isSelectedVisible: newState.isSelectedVisible,
@@ -170,6 +174,8 @@ class Table extends BaseComponent {
             isDeckVisible={this.state.isDeckVisible}
             isDrawnVisible={this.state.isDrawnVisible}
             isSelectedVisible={this.state.isSelectedVisible}
+            isDealerHandVisible={this.state.isDealerHandVisible}
+            isHandValueVisible={this.state.isHandValueVisible}
             gameStatus={this.state.gameStatus}
           />
         </div>

@@ -81,12 +81,14 @@ const AppActions = {
     });
   },
   toggleDealerHandVisibility(bool) {
+    // console.log(`toggleDealerHandVisibility( ${bool} )`);
     AppDispatcher.dispatch({
       actionType: AppConstants.CONTROLPANEL_TOGGLEDEALERHANDVISIBILITY,
       bool
     });
   },
   toggleHandValueVisibility(bool) {
+    // console.log(`toggleHandValueVisibility( ${bool} )`);
     AppDispatcher.dispatch({
       actionType: AppConstants.CONTROLPANEL_TOGGLEHANDVALUEVISIBILITY,
       bool
