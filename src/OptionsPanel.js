@@ -10,21 +10,31 @@ import BaseComponent from './BaseComponent';
 
 /* Flux */
 import AppActions from "./actions/AppActions";
+import ControlPanelStore from './stores/ControlPanelStore';
 
 class OptionsPanel extends BaseComponent {
   constructor(props) {
     super(props);
 
+    this.state = {}
+
     this._bind(
-      "resetGame",
-      "newDeal"
+      "newDeal",
+      "onChangeControlPanel",
+      "resetGame"
     )
   }
 
-  componentWillMount() {
-
+  componentDidMount() {
+    /* add change listener */
+    ControlPanelStore.addChangeListener(this.onChangeControlPanel);
+    this.onChangeControlPanel();
   }
 
+  componentWillUnmount() {
+    /* remove change listener */
+    ControlPanelStore.removeChangeListener(this.onChangeControlPanel);
+  }
 
   static propTypes = {
     isOptionsPanelVisible: T.bool.isRequired,
@@ -43,6 +53,11 @@ class OptionsPanel extends BaseComponent {
   newDeal() {
     AppActions.deal();
     AppActions.hideOptionsPanel();
+  }
+
+  onChangeControlPanel() {
+    const newState = ControlPanelStore.getState();
+    this.setState({ ...newState });
   }
 
   render() {
