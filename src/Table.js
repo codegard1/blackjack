@@ -90,13 +90,13 @@ class Table extends BaseComponent {
   onChangeControlPanel() {
     const newState = ControlPanelStore.getState();
     this.setState({
-      isDeckVisible: newState.isDeckVisible,
-      isDrawnVisible: newState.isDrawnVisible,
-      isSelectedVisible: newState.isSelectedVisible,
-      isOptionsPanelVisible: newState.isOptionsPanelVisible,
+      // isDeckVisible: newState.isDeckVisible,
+      // isDrawnVisible: newState.isDrawnVisible,
+      // isSelectedVisible: newState.isSelectedVisible,
+      // isOptionsPanelVisible: newState.isOptionsPanelVisible,
+      // isDealerHandVisible: newState.isDealerHandVisible,
+      // isHandValueVisible: newState.isHandValueVisible,
       isMessageBarVisible: newState.isMessageBarVisible,
-      isDealerHandVisible: newState.isDealerHandVisible,
-      isHandValueVisible: newState.isHandValueVisible,
       messageBarDefinition: newState.messageBarDefinition,
     });
   }
@@ -134,7 +134,6 @@ class Table extends BaseComponent {
 
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-sm6">{playersArray[0]}</div>
-
             <div className="ms-Grid-col ms-u-sm6">{playersArray[1]}</div>
           </div>
 

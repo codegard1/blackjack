@@ -11,6 +11,7 @@ import "./PlayerContainer.css";
 /* flux */
 import { GameStore } from "./stores/GameStore";
 import { DeckStore } from "./stores/DeckStore";
+import ControlPanelStore from "./stores/ControlPanelStore";
 
 export class PlayerContainer extends BaseComponent {
   constructor(props) {
@@ -22,8 +23,11 @@ export class PlayerContainer extends BaseComponent {
       gameStatusFlag: true,
       handValue: { aceAsEleven: 0, aceAsOne: 0 },
       id: -1,
+      isDealerHandVisible: true,
       isDeckCalloutEnabled: true,
       isDeckCalloutVisible: false,
+      isHandValueVisible: true,
+      isNPC: false,
       isStatusCalloutVisible: false,
       minimumBet: 0,
       player: { empty: true },
@@ -37,12 +41,16 @@ export class PlayerContainer extends BaseComponent {
       "_hideDeckCallout",
       "_setDeckCalloutText",
       "_showDeckCallout",
+      "_toggleDeckCallout",
       "_toggleStatusCallout",
+      "onChangeControlPanel",
       "onChangeDeck",
-      "onChangeGame",
-      "_toggleDeckCallout"
+      "onChangeGame"
     );
   }
+  static propTypes = {
+    playerId: T.number.isRequired
+  };
 
   componentWillMount() {
     /* everything else depends on this value being set initially */
@@ -53,6 +61,7 @@ export class PlayerContainer extends BaseComponent {
     /* callback when a change emits from GameStore*/
     GameStore.addChangeListener(this.onChangeGame);
     DeckStore.addChangeListener(this.onChangeDeck);
+    ControlPanelStore.addChangeListener(this.onChangeControlPanel);
     this.onChangeGame();
   }
 
@@ -60,6 +69,7 @@ export class PlayerContainer extends BaseComponent {
     /* remove change listeners */
     GameStore.removeChangeListener(this.onChangeGame);
     DeckStore.removeChangeListener(this.onChangeDeck);
+    ControlPanelStore.removeChangeListener(this.onChangeControlPanel);
   }
 
   /* flux helpegameStatusrs */
@@ -90,6 +100,7 @@ export class PlayerContainer extends BaseComponent {
       deckCalloutText: text,
       gameStatus: newState.gameStatus,
       gameStatusFlag,
+      isNPC: thisPlayer.isNPC,
       minimumBet: newState.minimumBet,
       player: thisPlayer,
       playerStatusFlag,
@@ -104,6 +115,13 @@ export class PlayerContainer extends BaseComponent {
       deck: DeckStore.getHand(this.state.id),
       handValue: DeckStore.getHandValue(this.state.id),
       selectedFlag
+    });
+  }
+  onChangeControlPanel() {
+    const newState = ControlPanelStore.getState();
+    this.setState({
+      isDealerHandVisible: newState.isDealerHandVisible,
+      isHandValueVisible: newState.isHandValueVisible
     });
   }
 
@@ -148,8 +166,8 @@ export class PlayerContainer extends BaseComponent {
         />
       </p>
     ) : (
-        <span>{title}</span>
-      );
+      <span>{title}</span>
+    );
 
     /* style PlayerContainer conditionally */
     let style = "PlayerContainer ";
@@ -178,19 +196,19 @@ export class PlayerContainer extends BaseComponent {
           </Callout>
         )}
         {this.state.isDeckCalloutEnabled &&
-          this.state.isDeckCalloutVisible &&
-          this.state.deckCalloutText !== "" && (
-            <Callout
-              className="DeckCallout"
-              gapSpace={1}
-              targetElement={this._deckCalloutTarget}
-              onDismiss={this._hideDeckCallout}
-              setInitialFocus={false}
-              directionalHint={DirectionalHint.bottomCenter}
-            >
-              <span className="ms-font-xl">{this.state.deckCalloutText}</span>
-            </Callout>
-          )}
+        this.state.isDeckCalloutVisible &&
+        this.state.deckCalloutText !== "" && (
+          <Callout
+            className="DeckCallout"
+            gapSpace={1}
+            targetElement={this._deckCalloutTarget}
+            onDismiss={this._hideDeckCallout}
+            setInitialFocus={false}
+            directionalHint={DirectionalHint.bottomCenter}
+          >
+            <span className="ms-font-xl">{this.state.deckCalloutText}</span>
+          </Callout>
+        )}
 
         <ControlPanel
           gameStatus={this.state.gameStatus}
@@ -200,7 +218,7 @@ export class PlayerContainer extends BaseComponent {
           player={this.state.player}
           playerId={this.state.id}
           playerStatusFlag={this.state.playerStatusFlag}
-          playerIsNPC={this.state.playerIsNPC}
+          playerIsNPC={this.state.isNPC}
           selectedFlag={this.state.selectedFlag}
           showDeckCallout={this._showDeckCallout}
         />
@@ -217,6 +235,7 @@ export class PlayerContainer extends BaseComponent {
             player={this.state.player}
             title={this.state.title}
             turnCount={this.state.turnCount}
+            isHandValueVisible={this.state.isHandValueVisible}
           />
         )}
         <div
@@ -228,10 +247,6 @@ export class PlayerContainer extends BaseComponent {
     );
   }
 }
-
-PlayerContainer.propTypes = {
-  playerId: T.number.isRequired
-};
 
 export default PlayerContainer;
 
