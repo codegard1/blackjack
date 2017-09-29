@@ -2,7 +2,7 @@
   "name": "blackjack",
   "description": "Chris's own blackjack game, made for fun",
   "author": "Chris Odegard <c.odegard@gmail.com>",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "repository": {
     "type": "git",
     "url": "git://github.com/codegard1/blackjack"
