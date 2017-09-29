@@ -11,6 +11,7 @@ import "./PlayerContainer.css";
 /* flux */
 import { GameStore } from "./stores/GameStore";
 import { DeckStore } from "./stores/DeckStore";
+import ControlPanelStore from "./stores/ControlPanelStore";
 
 export class PlayerContainer extends BaseComponent {
   constructor(props) {
@@ -22,8 +23,11 @@ export class PlayerContainer extends BaseComponent {
       gameStatusFlag: true,
       handValue: { aceAsEleven: 0, aceAsOne: 0 },
       id: -1,
+      isDealerHandVisible: true,
       isDeckCalloutEnabled: true,
       isDeckCalloutVisible: false,
+      isHandValueVisible: true,
+      isNPC: false,
       isStatusCalloutVisible: false,
       minimumBet: 0,
       player: { empty: true },
@@ -37,12 +41,16 @@ export class PlayerContainer extends BaseComponent {
       "_hideDeckCallout",
       "_setDeckCalloutText",
       "_showDeckCallout",
+      "_toggleDeckCallout",
       "_toggleStatusCallout",
+      "onChangeControlPanel",
       "onChangeDeck",
-      "onChangeGame",
-      "_toggleDeckCallout"
+      "onChangeGame"
     );
   }
+  static propTypes = {
+    playerId: T.number.isRequired
+  };
 
   componentWillMount() {
     /* everything else depends on this value being set initially */
@@ -53,12 +61,16 @@ export class PlayerContainer extends BaseComponent {
     /* callback when a change emits from GameStore*/
     GameStore.addChangeListener(this.onChangeGame);
     DeckStore.addChangeListener(this.onChangeDeck);
+    ControlPanelStore.addChangeListener(this.onChangeControlPanel);
+    this.onChangeGame();
+    this.onChangeControlPanel();
   }
 
   componentWillUnmount() {
     /* remove change listeners */
     GameStore.removeChangeListener(this.onChangeGame);
     DeckStore.removeChangeListener(this.onChangeDeck);
+    ControlPanelStore.removeChangeListener(this.onChangeControlPanel);
   }
 
   /* flux helpegameStatusrs */
@@ -89,6 +101,7 @@ export class PlayerContainer extends BaseComponent {
       deckCalloutText: text,
       gameStatus: newState.gameStatus,
       gameStatusFlag,
+      isNPC: thisPlayer.isNPC,
       minimumBet: newState.minimumBet,
       player: thisPlayer,
       playerStatusFlag,
@@ -103,6 +116,13 @@ export class PlayerContainer extends BaseComponent {
       deck: DeckStore.getHand(this.state.id),
       handValue: DeckStore.getHandValue(this.state.id),
       selectedFlag
+    });
+  }
+  onChangeControlPanel() {
+    const newState = ControlPanelStore.getState();
+    this.setState({
+      isDealerHandVisible: newState.isDealerHandVisible,
+      isHandValueVisible: newState.isHandValueVisible
     });
   }
 
@@ -199,6 +219,7 @@ export class PlayerContainer extends BaseComponent {
           player={this.state.player}
           playerId={this.state.id}
           playerStatusFlag={this.state.playerStatusFlag}
+          playerIsNPC={this.state.isNPC}
           selectedFlag={this.state.selectedFlag}
           showDeckCallout={this._showDeckCallout}
         />
@@ -210,6 +231,9 @@ export class PlayerContainer extends BaseComponent {
             gameStatusFlag={this.gameStatusFlag}
             handValue={this.state.handValue}
             hidden={false}
+            isDealerHandVisible={this.state.isDealerHandVisible}
+            isHandValueVisible={this.state.isHandValueVisible}
+            isNPC={this.state.isNPC}
             isPlayerDeck
             isSelectable
             player={this.state.player}
@@ -226,10 +250,6 @@ export class PlayerContainer extends BaseComponent {
     );
   }
 }
-
-PlayerContainer.propTypes = {
-  playerId: T.number.isRequired
-};
 
 export default PlayerContainer;
 

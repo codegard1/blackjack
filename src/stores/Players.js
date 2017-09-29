@@ -1,102 +1,123 @@
-import { Player } from './Player';
-import { DeckStore } from './DeckStore';
-import * as D from '../definitions';
+import Player from "./Player";
+import { DeckStore } from "./DeckStore";
 
-export class Players {
-    constructor() {
-        this.players = [];
-        this.currentPlayerIndex = -1;
-        this.stayingPlayers = [];
-        this.bustedPlayers = [];
-        this.nonBustedPlayers = [];
-        this.allPlayersStaying = false;
-        this.allPlayersBusted = false;
-        this.allPlayersNonBusted = true;
-        this.highestHandValue = 0;
-        this.winningPlayerId = -1;
-        this.winningPlayerIndex = -1;
-    }
-    /* add a new Player to the array */
-    newPlayer(id, title) {
-        this.players.push(new Player(id, title));
-    }
-    /* cycle the currentPlayerIndex  */
-    nextPlayer() {
-        this.currentPlayerIndex = this.currentPlayerIndex + 1 === this.players.length
-            ? 0
-            : this.currentPlayerIndex + 1;
-        this.players.forEach((player, index) => {
-            player.turn = index === this.currentPlayerIndex ? true : false;
-        });
-    }
-    /* reset props on the specified player */
-    resetPlayer(id, ...keys) {
-        const index = this.players.indexOf(this.players.find(player => player.id === id));
-        this.players[index].reset(...keys);
-    }
-    /* set players' status, hand values */
-    evaluatePlayers() {
-        /*   evaluate hands  */
-        if (this.players.length > 0) {
-            this.players.forEach(player => {
-                player.handValue = DeckStore.getHandValue(player.id);
-                player.getHighestHandValue();
-                player.setStatus();
-            });
+class Players {
+  constructor() {
+    this.players = [];
+    this.currentPlayerIndex = 0;
+    this.currentPlayer = {
+      bet: amount => this.currentPlayerBets(amount).bind(this),
+      finish: this.currentPlayerFinishes.bind(this),
+      hit: this.currentPlayerHits.bind(this),
+      startTurn: this.currentPlayerStartsTurn.bind(this),
+      stay: this.currentPlayerStays.bind(this)
+    };
+  }
+  /* return all players */
+  getPlayers() {
+    return this.players;
+  }
+  getIndex(id) {
+    return this.players.findIndex(player => player.id === id);
+  }
+  /* return the Id of a player */
+  getId(index) {
+    return this.players[index].id;
+  }
 
-            this.setWinningPlayer();
-        }
-    }
-    /* filter players by status */
-    filterPlayers() {
-        /*   SET STAYING PLAYERS  */
-        this.stayingPlayers = this.players.filter(player => player.isStaying === true);
+  /* add a new Player to the array */
+  newPlayer(...props) {
+    this.players.push(new Player(...props));
+  }
 
-        /*   SET BUSTED PLAYERS   */
-        this.bustedPlayers = this.players.filter(player => player.status === D.busted);
+  /* cycle currentPlayerIndex  */
+  nextPlayer() {
+    this.currentPlayerIndex =
+      this.currentPlayerIndex + 1 >= this.length()
+        ? 0
+        : this.currentPlayerIndex + 1;
+    this.currentPlayer.startTurn();
+  }
 
-        /*   SET NON-BUSTED PLAYERS  */
-        this.nonBustedPlayers = this.players.filter(player => player.status !== D.busted);
+  /* reset props on the specified player */
+  resetPlayer(id, ...keys) {
+    const i = this.getIndex(id);
+    this.players[i].reset(...keys);
+  }
 
-        /*   true if all players are staying  */
-        this.allPlayersStaying = this.stayingPlayers.length === this.players.length;
+  /* set players' status, hand values */
+  evaluatePlayers() {
+    this.players.forEach(player => {
+      player.handValue = DeckStore.getHandValue(player.id);
+      player.setStatus();
+    });
+  }
 
-        /*   true if all players are busted  */
-        this.allPlayersBusted = this.bustedPlayers.length === this.players.length;
+  finish(id) {
+    this.players[this.getIndex(id)].finish();
+  }
 
-        /*   true if all players are not busted  */
-        this.allPlayersNonBusted = this.nonBustedPlayers.length === this.players.length;
-    }
-    /* set winningPlayerId & winningPlayerIndex */
-    setWinningPlayer() {
-        /*   determine the non-busted player with the highest value hand  */
-        if (this.nonBustedPlayers.length === 1) {
-            this.nonBustedPlayers[0].status = D.winner;
-        } else {
-            this.nonBustedPlayers.forEach((player, index) => {
-                let higherHandValue = player.getHighestHandValue();
-                if (higherHandValue > this.highestHandValue && higherHandValue <= 21) {
-                    this.highestHandValue = higherHandValue;
-                    this.winningPlayerId = player.id;
-                    this.winningPlayerIndex = index;
-                }
-            });
-        }
-    }
-    /* return the winning Player object */
-    getWinningPlayer() {
-        return this.players[this.winningPlayerIndex];
-    }
-    /* return an array of busted players */
-    getBustedPlayers() {
-        this.filterPlayers();
-        return this.bustedPlayers;
-    }
-    /* return an array of busted Players */
-    getStayingPlayers() {
-        this.filterPlayers();
-        return this.stayingPlayers;
-    }
+  stay(id) {
+    this.players(this.getIndex(id)).stay();
+  }
+
+  currentPlayerStays() {
+    const i = this.currentPlayerIndex;
+    this.players[i].stay();
+  }
+  currentPlayerHits() {
+    const i = this.currentPlayerIndex;
+    this.players[i].hit();
+  }
+  currentPlayerStartsTurn() {
+    const i = this.currentPlayerIndex;
+    this.players[i].startTurn();
+  }
+  currentPlayerFinishes() {
+    const i = this.currentPlayerIndex;
+    this.players[i].finish();
+  }
+  currentPlayerBets(amount) {
+    const i = this.currentPlayerIndex;
+    this.players[i].bet(amount);
+  }
+
+  allPlayersAnte(amount) {
+    this.players.forEach(player => {
+      player.ante(amount);
+    });
+  }
+
+  length() {
+    return this.players.length;
+  }
+
+  startTurn(id) {
+    this.players[this.getIndex(id)].turn = true;
+    this.players[this.getIndex(id)].isFinished = false;
+  }
+
+  newRound() {
+    /* reset all players' status props for new Round */
+    this.players.forEach(player => player.resetStatus());
+    this.currentPlayerIndex = 0;
+  }
+
+  newGame() {
+    /* reset all players' props for new Game */
+    this.players.forEach(player => player.resetAll());
+    this.currentPlayerIndex = 0;
+  }
+
+  allPlayersFinish() {
+    this.players.forEach(player => {
+      player.finish();
+    });
+  }
+
+  payout(index, amount) {
+    this.players[index].bank += amount;
+  }
 }
 
 export default Players;

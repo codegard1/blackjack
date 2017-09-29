@@ -18,7 +18,8 @@ const AppActions = {
       AppDispatcher.dispatch({
         actionType: AppConstants.GAME_NEWPLAYER,
         id: player.id,
-        title: player.title
+        title: player.title,
+        isNPC: player.isNPC
       });
     });
   },
@@ -76,6 +77,20 @@ const AppActions = {
   toggleSelectedVisibility(bool) {
     AppDispatcher.dispatch({
       actionType: AppConstants.CONTROLPANEL_TOGGLESELECTEDVISIBLITY,
+      bool
+    });
+  },
+  toggleDealerHandVisibility(bool) {
+    // console.log(`toggleDealerHandVisibility( ${bool} )`);
+    AppDispatcher.dispatch({
+      actionType: AppConstants.CONTROLPANEL_TOGGLEDEALERHANDVISIBILITY,
+      bool
+    });
+  },
+  toggleHandValueVisibility(bool) {
+    // console.log(`toggleHandValueVisibility( ${bool} )`);
+    AppDispatcher.dispatch({
+      actionType: AppConstants.CONTROLPANEL_TOGGLEHANDVALUEVISIBILITY,
       bool
     });
   },

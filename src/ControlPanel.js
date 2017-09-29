@@ -17,7 +17,7 @@ class ControlPanel extends Component {
     /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
     const gameStatusFlag = this.props.gameStatusFlag;
     const playerStatusFlag = this.props.playerStatusFlag;
-
+    const npcFlag = this.props.player.isNPC;
 
     const drawItems = [
       {
@@ -70,7 +70,7 @@ class ControlPanel extends Component {
         }
       }
     ];
-    const blackJackItems = [
+    let blackJackItems = [
       {
         key: "hit",
         name: "Hit",
@@ -101,20 +101,24 @@ class ControlPanel extends Component {
         iconProps: { iconName: "Forward" },
         disabled: (gameStatusFlag || playerStatusFlag),
         onClick: AppActions.stay
-      },
-      {
+      }
+    ];
+
+    if (npcFlag === false) {
+      blackJackItems.push({
         key: "new-round",
         name: "New Round",
         ariaLabel: "New Round",
         iconProps: { iconName: "Refresh" },
-        disabled: false,
+        disabled: !gameStatusFlag,
         onClick: () => {
           AppActions.newDeck();
           AppActions.newRound();
           AppActions.showMessageBar("New Round", MessageBarType.info);
         }
-      }
-    ];
+      });
+    }
+
     const drawMenu = [
       {
         key: "deck-menu",
@@ -148,22 +152,29 @@ class ControlPanel extends Component {
       }
     ];
 
-    /* configure which items appear in the CommandBar */
-    const commandBarItems = blackJackItems;
-    const farItems = [];
+    const farItems = npcFlag ? [] : [
+      {
+        key: "options",
+        name: "",
+        ariaLabel: "Options",
+        iconProps: { iconName: "Settings" },
+        disabled: npcFlag,
+        onClick: AppActions.showOptionsPanel
+      },
+    ];
     // const overFlowItems = selectedFlag ? [].concat(putMenu, drawMenu) : [];
     const overFlowItems = [];
 
     return (
-      <div className="player-controlpanel">
+      <div className="player-controlpanel" >
         {!this.props.hidden &&
           <CommandBar
             isSearchBoxVisible={false}
-            items={commandBarItems}
+            items={blackJackItems}
             farItems={farItems}
             overflowItems={overFlowItems}
           />}
-      </div>
+      </div >
     );
   }
 }

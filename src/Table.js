@@ -10,11 +10,12 @@ import PlayerContainer from "./PlayerContainer";
 import DeckContainer from "./DeckContainer";
 import BaseComponent from "./BaseComponent";
 import OptionsPanel from "./OptionsPanel";
+import { defaultPlayers } from "./definitions";
 
 /* flux */
 import { GameStore } from "./stores/GameStore";
 import { DeckStore } from "./stores/DeckStore";
-import { ControlPanelStore } from "./stores/ControlPanelStore";
+import ControlPanelStore from "./stores/ControlPanelStore";
 import AppActions from "./actions/AppActions";
 
 class Table extends BaseComponent {
@@ -27,25 +28,17 @@ class Table extends BaseComponent {
       selected: [],
       playerHands: [],
       //GameStore
-      allPlayersBusted: false,
-      allPlayersNonBusted: true,
-      allPlayersStaying: false,
-      bustedPlayers: [],
-      // currentPlayer: 0, /* deprecated */
-      currentPlayerIndex: -1,
       gameStatus: 0,
-      highestHandValue: -1,
-      minimumBet: null,
-      nonBustedPlayers: null,
+      minimumBet: 25,
       players: [],
       pot: 0,
       round: 0,
       turnCount: 0,
-      winningPlayerId: -1,
-      winningPlayerIndex: -1,
       // ControlPanelStore
+      isDealerHandVisible: true,
       isDeckVisible: false,
       isDrawnVisible: false,
+      isHandValueVisible: true,
       isMessageBarVisible: false,
       isOptionsPanelVisible: false,
       isSelectedVisible: false,
@@ -67,8 +60,7 @@ class Table extends BaseComponent {
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
 
     /* start a new game with these players */
-    const players = [{ id: 1, title: "Chris" }, { id: 2, title: "Dealer" }];
-    AppActions.newGame(players);
+    AppActions.newGame(defaultPlayers);
   }
 
   componentWillUnmount() {
@@ -98,12 +90,14 @@ class Table extends BaseComponent {
   onChangeControlPanel() {
     const newState = ControlPanelStore.getState();
     this.setState({
-      isDeckVisible: newState.isDeckVisible,
-      isDrawnVisible: newState.isDrawnVisible,
+      // isDeckVisible: newState.isDeckVisible,
+      // isDrawnVisible: newState.isDrawnVisible,
+      // isSelectedVisible: newState.isSelectedVisible,
+      // isOptionsPanelVisible: newState.isOptionsPanelVisible,
+      // isDealerHandVisible: newState.isDealerHandVisible,
+      // isHandValueVisible: newState.isHandValueVisible,
       isMessageBarVisible: newState.isMessageBarVisible,
-      isOptionsPanelVisible: newState.isOptionsPanelVisible,
-      isSelectedVisible: newState.isSelectedVisible,
-      messageBarDefinition: newState.messageBarDefinition
+      messageBarDefinition: newState.messageBarDefinition,
     });
   }
 
@@ -140,7 +134,6 @@ class Table extends BaseComponent {
 
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-sm6">{playersArray[0]}</div>
-
             <div className="ms-Grid-col ms-u-sm6">{playersArray[1]}</div>
           </div>
 
@@ -175,23 +168,7 @@ class Table extends BaseComponent {
             </div>
           </div>
 
-          <OptionsPanel
-            isOptionsPanelVisible={this.state.isOptionsPanelVisible}
-            isDeckVisible={this.state.isDeckVisible}
-            isDrawnVisible={this.state.isDrawnVisible}
-            isSelectedVisible={this.state.isSelectedVisible}
-            gameStatus={this.state.gameStatus}
-          />
-          <div id="OptionsButtonContainer">
-            <CommandButton
-              iconProps={{ iconName: "StackIndicator" }}
-              disabled={false}
-              checked={false}
-              onClick={AppActions.showOptionsPanel}
-            >
-              Options
-            </CommandButton>
-          </div>
+          <OptionsPanel gameStatus={this.state.gameStatus} />
         </div>
       </div>
     );

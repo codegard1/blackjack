@@ -13,6 +13,8 @@ let state = {
   isSelectedVisible: false,
   isOptionsPanelVisible: false,
   isMessageBarVisible: false,
+  isDealerHandVisible: false,
+  isHandValueVisible: true,
   messageBarDefinition: {
     type: MessageBarType.info,
     text: "",
@@ -24,7 +26,7 @@ let state = {
 
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "controlPanel";
-export const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
+const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
   getState: function () {
     return state;
   },
@@ -53,12 +55,12 @@ AppDispatcher.register(action => {
 
   switch (action.actionType) {
     case AppConstants.CONTROLPANEL_HIDEOPTIONSPANEL:
-      _hideOptionsPanel();
+      state.isOptionsPanelVisible = false;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_SHOWOPTIONSPANEL:
-      _showOptionsPanel();
+      state.isOptionsPanelVisible = true;
       ControlPanelStore.emitChange();
       break;
 
@@ -68,17 +70,27 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEDECKVISIBILITY:
-      _toggleDeckVisibility(action.bool);
+      state.isDeckVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEDRAWNVISIBILITY:
-      _toggleDrawnVisibility(action.bool);
+      state.isDrawnVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLESELECTEDVISIBLITY:
-      _toggleSelectedVisibility(action.bool);
+      state.isSelectedVisible = action.bool;
+      ControlPanelStore.emitChange();
+      break;
+
+    case AppConstants.CONTROLPANEL_TOGGLEHANDVALUEVISIBILITY:
+      state.isHandValueVisible = action.bool;
+      ControlPanelStore.emitChange();
+      break;
+
+    case AppConstants.CONTROLPANEL_TOGGLEDEALERHANDVISIBILITY:
+      state.isDealerHandVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
 
@@ -91,14 +103,6 @@ AppDispatcher.register(action => {
 /*  ========================================================  */
 
 /* method definitions */
-function _hideOptionsPanel() {
-  state.isOptionsPanelVisible = false;
-}
-
-function _showOptionsPanel() {
-  state.isOptionsPanelVisible = true;
-}
-
 function _showMessageBar(text, type = MessageBarType.info) {
   state.messageBarDefinition = {
     text,
@@ -106,18 +110,6 @@ function _showMessageBar(text, type = MessageBarType.info) {
     isMultiLine: state.messageBarDefinition.isMultiLine
   };
   state.isMessageBarVisible = true;
-}
-
-function _toggleDeckVisibility(bool) {
-  state.isDeckVisible = bool;
-}
-
-function _toggleDrawnVisibility(bool) {
-  state.isDrawnVisible = bool;
-}
-
-function _toggleSelectedVisibility(bool) {
-  state.isSelectedVisible = bool;
 }
 
 export default ControlPanelStore;

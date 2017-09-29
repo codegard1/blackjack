@@ -1,5 +1,5 @@
 class Player {
-  constructor(id, title) {
+  constructor(id, title, isNPC) {
     this.bank = 1000;
     this.bet = 0;
     this.handValue = { aceAsOne: 0, aceAsEleven: 0 };
@@ -7,6 +7,7 @@ class Player {
     this.id = id;
     this.isBusted = false;
     this.isFinished = false;
+    this.isNPC = isNPC;
     this.isStaying = false;
     this.lastAction = "none";
     this.status = "ok";
@@ -20,6 +21,7 @@ class Player {
       handValue: { aceAsOne: 0, aceAsEleven: 0 },
       hasBlackjack: false,
       id: "",
+      isNPC: false,
       isBusted: false,
       isFinished: false,
       isStaying: false,

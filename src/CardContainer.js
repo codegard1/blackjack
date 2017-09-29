@@ -7,16 +7,22 @@ import "./CardContainer.css";
 class CardContainer extends BaseComponent {
   constructor(props) {
     super(props);
-    this.state = { isSelected: false, isBackfacing: false };
+    this.state = { isSelected: false };
 
     /* bind private methods */
-    this._bind('_toggleSelect','_toggleBackfacing');
+    this._bind('_toggleSelect');
   }
 
-  _toggleBackfacing() {
-    const isBackfacing = this.state.isBackfacing;
-    this.setState({ isBackfacing: !isBackfacing });
-  }
+  static propTypes = {
+    description: T.string.isRequired,
+    sort: T.number.isRequired,
+    suit: T.string.isRequired,
+    select: T.func,
+    deselect: T.func,
+    isSelectable: T.bool,
+    isBackFacing: T.bool,
+  };
+
 
   _toggleSelect() {
     const cardAttributes = {
@@ -84,6 +90,7 @@ class CardContainer extends BaseComponent {
     cardClass += this.props.suit.toLowerCase() + "s ";
     cardClass += this.props.isSelectable ? "selectable " : "unselectable";
     cardClass += this.state.isSelected ? " selected " : "";
+    cardClass += this.props.isBackFacing ? " backfacing" : "";
 
     return (
       <div
@@ -93,19 +100,10 @@ class CardContainer extends BaseComponent {
         <span className="ms-font-xl card-title top">{cardTitle}</span>
         <p className="ms-font-m" data-p={short} />
         <span className="ms-font-xl card-title bottom">{cardTitle}</span>
-        {this.state.isBackfacing && <div className="card-back" />}
+        {this.props.isBackFacing && <div className="card-back" />}
       </div>
     );
   }
 }
-
-CardContainer.propTypes = {
-  description: T.string.isRequired,
-  sort: T.number.isRequired,
-  suit: T.string.isRequired,
-  toShortDisplayString: T.func,
-  select: T.func,
-  deselect: T.func
-};
 
 export default CardContainer;
