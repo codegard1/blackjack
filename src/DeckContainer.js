@@ -28,12 +28,14 @@ class DeckContainer extends BaseComponent {
     gameStatusFlag: T.bool.isRequired, // props
     handValue: T.object, // DeckStore
     hidden: T.bool.isRequired, // props
+    isDealerHandVisible: T.bool, // ControlPanelStore 
     isHandValueVisible: T.bool, // ControlPanelStore
+    isNPC: T.bool, // props
     isPlayerDeck: T.bool,
     isSelectable: T.bool.isRequired, // props
     player: T.object, // GameStore
     title: T.string.isRequired, // props
-    turnCount: T.number // GameStore
+    turnCount: T.number, // GameStore
   };
 
   componentWillMount() {
@@ -56,25 +58,26 @@ class DeckContainer extends BaseComponent {
     };
 
     // Create CardContainers to display cards
-    const childElements =
-      this.props.deck && this.props.deck.length > 0
-        ? this.props.deck.map(card => (
-            <CardContainer
-              key={card.suit + "-" + card.description}
-              {...card}
-              select={cardAttributes => AppActions.select(cardAttributes)}
-              deselect={cardAttributes => AppActions.deselect(cardAttributes)}
-              isSelectable={this.props.isSelectable}
-            />
-          ))
-        : [];
+    let cardElements = [];
+    if (this.props.deck && this.props.deck.length > 0) {
+      cardElements = this.props.deck.map((card, index) => (
+        <CardContainer
+          key={card.suit + "-" + card.description}
+          {...card}
+          select={cardAttributes => AppActions.select(cardAttributes)}
+          deselect={cardAttributes => AppActions.deselect(cardAttributes)}
+          isSelectable={this.props.isSelectable}
+          isBackFacing={!this.props.isDealerHandVisible && this.props.isNPC}
+        />
+      ))
+    }
 
     // Set toggle icon for Deck titles
     const toggleIcon = this.state.isDeckVisible ? (
       <i className="ms-Icon ms-Icon--ChevronUp" aria-hidden="true" />
     ) : (
-      <i className="ms-Icon ms-Icon--ChevronDown" aria-hidden="true" />
-    );
+        <i className="ms-Icon ms-Icon--ChevronDown" aria-hidden="true" />
+      );
 
     /* Deck Title */
     const deckTitleString = `${this.props.title} (${this.props.deck &&
@@ -111,7 +114,7 @@ class DeckContainer extends BaseComponent {
             updateOnEachImageLoad={false} // default false and works only if disableImagesLoaded is false
             options={masonryOptions}
           >
-            {childElements}
+            {cardElements}
           </Masonry>
         )}
       </div>

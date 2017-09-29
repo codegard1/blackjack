@@ -13,7 +13,7 @@ let state = {
   isSelectedVisible: false,
   isOptionsPanelVisible: false,
   isMessageBarVisible: false,
-  isDealerHandVisible: true,
+  isDealerHandVisible: false,
   isHandValueVisible: true,
   messageBarDefinition: {
     type: MessageBarType.info,
