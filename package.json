@@ -13,7 +13,7 @@
     "flux": "^3.1.2",
     "immutable": "^3.8.1",
     "keymirror": "^0.1.1",
-    "office-ui-fabric-react": "^2.34.2",
+    "office-ui-fabric-react": "2.34.2",
     "prop-types": "^15.5.10",
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
@@ -22,9 +22,9 @@
   },
   "devDependencies": {
     "babel-eslint": "^7.2.3",
-    "eslint-plugin-import": "^2.2.0",
-    "eslint-plugin-react": "^7.0.1",
-    "react-dev-tools": "0.0.1",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-react": "^7.4.0",
+    "react-dev-tools": "^0.0.1",
     "react-scripts": "^1.0.5"
   },
   "scripts": {

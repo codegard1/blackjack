@@ -10,7 +10,7 @@ import PlayerContainer from "./PlayerContainer";
 import DeckContainer from "./DeckContainer";
 import BaseComponent from "./BaseComponent";
 import OptionsPanel from "./OptionsPanel";
-import { defaultPlayers } from './definitions';
+import { defaultPlayers } from "./definitions";
 
 /* flux */
 import { GameStore } from "./stores/GameStore";
@@ -90,14 +90,14 @@ class Table extends BaseComponent {
   onChangeControlPanel() {
     const newState = ControlPanelStore.getState();
     this.setState({
-      isDealerHandVisible: newState.isDealerHandVisible,
       isDeckVisible: newState.isDeckVisible,
       isDrawnVisible: newState.isDrawnVisible,
-      isHandValueVisible: newState.isHandValueVisible,
-      isMessageBarVisible: newState.isMessageBarVisible,
-      isOptionsPanelVisible: newState.isOptionsPanelVisible,
       isSelectedVisible: newState.isSelectedVisible,
-      messageBarDefinition: newState.messageBarDefinition
+      isOptionsPanelVisible: newState.isOptionsPanelVisible,
+      isMessageBarVisible: newState.isMessageBarVisible,
+      isDealerHandVisible: newState.isDealerHandVisible,
+      isHandValueVisible: newState.isHandValueVisible,
+      messageBarDefinition: newState.messageBarDefinition,
     });
   }
 
@@ -169,15 +169,7 @@ class Table extends BaseComponent {
             </div>
           </div>
 
-          <OptionsPanel
-            isOptionsPanelVisible={this.state.isOptionsPanelVisible}
-            isDeckVisible={this.state.isDeckVisible}
-            isDrawnVisible={this.state.isDrawnVisible}
-            isSelectedVisible={this.state.isSelectedVisible}
-            isDealerHandVisible={this.state.isDealerHandVisible}
-            isHandValueVisible={this.state.isHandValueVisible}
-            gameStatus={this.state.gameStatus}
-          />
+          <OptionsPanel gameStatus={this.state.gameStatus} />
         </div>
       </div>
     );
