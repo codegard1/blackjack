@@ -90,9 +90,9 @@ class Table extends BaseComponent {
   onChangeControlPanel() {
     const newState = ControlPanelStore.getState();
     this.setState({
-      // isDeckVisible: newState.isDeckVisible,
-      // isDrawnVisible: newState.isDrawnVisible,
-      // isSelectedVisible: newState.isSelectedVisible,
+      isDeckVisible: newState.isDeckVisible,
+      isDrawnVisible: newState.isDrawnVisible,
+      isSelectedVisible: newState.isSelectedVisible,
       // isOptionsPanelVisible: newState.isOptionsPanelVisible,
       // isDealerHandVisible: newState.isDealerHandVisible,
       // isHandValueVisible: newState.isHandValueVisible,
