@@ -13,6 +13,7 @@ import Agent from './Agent';
 /* ALMIGHTY STATE */
 let PlayersStore = new Players();
 let state = {
+  dealerHasControl: false,
   gameStatus: 0,
   minimumBet: 25,
   players: PlayersStore.getPlayers(),
@@ -57,6 +58,7 @@ AppDispatcher.register(action => {
       PlayersStore.newGame();
 
       /* reset game state props */
+      state.dealerHasControl = false;
       state.gameStatus = 0;
       state.pot = 0;
       state.round = 0;
@@ -85,8 +87,7 @@ AppDispatcher.register(action => {
       PlayersStore.currentPlayer.stay();
       /* current Player is Dealer and game is not over*/
       if (!_evaluateGame(2) && state.gameStatus !== 0) {
-        const dealer = PlayersStore.getCurrentPlayer();
-        console.log(dealer);
+        state.dealerHasControl = true;
       }
       GameStore.emitChange();
       break;
@@ -102,6 +103,7 @@ AppDispatcher.register(action => {
       PlayersStore.newRound();
 
       /* reset state props to default */
+      state.dealerHasControl = false;
       state.gameStatus = 0;
       state.pot = 0;
       state.round += 1;

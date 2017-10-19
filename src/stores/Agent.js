@@ -34,7 +34,7 @@ import AppActions from '../actions/AppActions';
 // }
 // }
 
-export function resolveAction() {
+export function resolveAction(playerId) {
     const aceAsEleven = this.player.aceAsEleven,
         aceAsOne = this.player.aceAsOne,
         handValue = this.player.handValue,

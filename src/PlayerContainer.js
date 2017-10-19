@@ -17,6 +17,7 @@ export class PlayerContainer extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = {
+      dealerHasControl: false,
       deck: [],
       deckCalloutText: "",
       gameStatus: 0,
@@ -98,6 +99,7 @@ export class PlayerContainer extends BaseComponent {
 
     this.setState({
       bank: thisPlayer.bank,
+      dealerHasControl: newState.dealerHasControl,
       deckCalloutText: text,
       gameStatus: newState.gameStatus,
       gameStatusFlag,
@@ -185,7 +187,7 @@ export class PlayerContainer extends BaseComponent {
 
     return (
       <div className={style}>
-        {titleBar}
+        <Agent dealerHasControl={this.state.dealerHasControl}>{titleBar}</Agent>
         {this.state.isStatusCalloutVisible && (
           <Callout
             gapSpace={1}
@@ -279,3 +281,20 @@ const StatusDisplay = props => {
 StatusDisplay.propTypes = {
   player: T.object.isRequired
 };
+
+
+class Agent extends BaseComponent {
+  componentDidMount() {
+    if (this.props.dealerHasControl) {
+
+    }
+  }
+
+  render() {
+    return (
+      <div>
+        {this.props.children}
+      </div>
+    )
+  }
+}
