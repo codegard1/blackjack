@@ -67,7 +67,7 @@ class DeckContainer extends BaseComponent {
           select={cardAttributes => AppActions.select(cardAttributes)}
           deselect={cardAttributes => AppActions.deselect(cardAttributes)}
           isSelectable={this.props.isSelectable}
-          isBackFacing={!this.props.isDealerHandVisible && this.props.isNPC}
+          isBackFacing={index === 0 && !this.props.isDealerHandVisible && this.props.isNPC}
         />
       ))
     }
@@ -86,9 +86,11 @@ class DeckContainer extends BaseComponent {
     /* Hand Value (if it's a player deck) */
     let handValueString;
     if (this.props.handValue) {
-      handValueString = `Hand Value: ${this.props.handValue.aceAsOne} `;
-      if (this.props.handValue.aceAsOne !== this.props.handValue.aceAsEleven) {
-        handValueString += " / " + this.props.handValue.aceAsEleven;
+      if (!this.props.isNPC || (this.props.isNPC && this.props.isDealerHandVisible)) {
+        handValueString = `Hand Value: ${this.props.handValue.aceAsOne} `;
+        if (this.props.handValue.aceAsOne !== this.props.handValue.aceAsEleven) {
+          handValueString += " / " + this.props.handValue.aceAsEleven;
+        }
       }
     }
 
@@ -103,9 +105,10 @@ class DeckContainer extends BaseComponent {
             {toggleIcon}
           </span>
         )}
-        {this.props.isPlayerDeck && this.props.isHandValueVisible && (
-          <span data-title={handValueString} className="ms-font-l" />
-        )}
+        {this.props.isPlayerDeck &&
+          this.props.isHandValueVisible && (
+            <span data-title={handValueString} className="ms-font-l" />
+          )}
         {this.state.isDeckVisible && (
           <Masonry
             className={"deck"}
