@@ -2,17 +2,17 @@ import GameStore from './GameStore';
 import AppActions from '../actions/AppActions';
 
 class Agent {
-    constructor(playerId) {
+    constructor(playerId, interval = 500) {
+        this.interval = interval;
         this.player = GameStore.getPlayer(playerId);
 
-        setTimeout(this.resolve, this.interval);
+        setTimeout(this.resolve(this.player), this.interval);
     }
     resolve(player) {
         const
             aceAsEleven = player.handValue.aceAsEleven,
             aceAsOne = player.handValue.aceAsOne,
             handValue = player.handValue,
-            hasBlackjack = player.hasBlackjack,
             isBusted = player.isBusted;
 
         /* when to hit */

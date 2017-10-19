@@ -42,15 +42,15 @@ const AppActions = {
     AppDispatcher.dispatch({
       actionType: AppConstants.DECK_CLEARHANDS
     });
-    console.log('actionType: AppConstants.DECK_CLEARHANDS');
+    // console.log('actionType: AppConstants.DECK_CLEARHANDS');
     AppDispatcher.dispatch({
       actionType: AppConstants.DECK_DEAL
     });
-    console.log('actionType: AppConstants.DECK_DEAL');
+    // console.log('actionType: AppConstants.DECK_DEAL');
     AppDispatcher.dispatch({
       actionType: AppConstants.GAME_NEWROUND
     });
-    console.log('actionType: AppConstants.GAME_NEWROUND');
+    // console.log('actionType: AppConstants.GAME_NEWROUND');
   },
   hideOptionsPanel() {
     AppDispatcher.dispatch({
