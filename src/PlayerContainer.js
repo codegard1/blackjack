@@ -12,6 +12,7 @@ import "./PlayerContainer.css";
 import { GameStore } from "./stores/GameStore";
 import { DeckStore } from "./stores/DeckStore";
 import ControlPanelStore from "./stores/ControlPanelStore";
+import AppActions from './actions/AppActions'
 
 export class PlayerContainer extends BaseComponent {
   constructor(props) {
@@ -286,7 +287,30 @@ StatusDisplay.propTypes = {
 class Agent extends BaseComponent {
   componentDidMount() {
     if (this.props.dealerHasControl) {
+      setTimeout(this.test.bind(this), 500);
+    }
+  }
 
+  test() {
+    console.log('timer up!');
+  }
+
+  resolveAction(playerId) {
+    const aceAsEleven = this.player.aceAsEleven,
+      aceAsOne = this.player.aceAsOne,
+      handValue = this.player.handValue,
+      isBusted = this.player.isBusted;
+
+    /* when to hit */
+    if (aceAsEleven <= 16 || aceAsOne <= 16) {
+      AppActions.hit();
+      console.log('Agent hit');
+    }
+
+    /* when to stay */
+    if ((aceAsOne >= 17 && aceAsOne <= 21) || (aceAsEleven >= 17 && aceAsEleven <= 21)) {
+      AppActions.stay();
+      console.log('Agent stayed');
     }
   }
 
