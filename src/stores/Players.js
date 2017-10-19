@@ -14,8 +14,16 @@ class Players {
     };
   }
   /* return all players */
+  getPlayer(id) {
+    const i = this.getIndex(id);
+    return this.players[i];
+  }
   getPlayers() {
     return this.players;
+  }
+  getCurrentPlayer() {
+    const i = this.currentPlayerIndex;
+    return this.players[i];
   }
   getIndex(id) {
     return this.players.findIndex(player => player.id === id);
@@ -80,6 +88,11 @@ class Players {
   currentPlayerBets(amount) {
     const i = this.currentPlayerIndex;
     this.players[i].bet(amount);
+  }
+  isCurrentPlayerNPC() {
+    const i = this.currentPlayerIndex;
+    // console.log(`this.players[${i}].isNPC === ${this.players[i].isNPC}`);
+    return this.players[i].isNPC;
   }
 
   allPlayersAnte(amount) {

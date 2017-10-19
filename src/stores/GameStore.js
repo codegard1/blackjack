@@ -8,6 +8,7 @@ import Players from "./Players";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 import ControlPanelStore from "./ControlPanelStore";
+import Agent from './Agent';
 
 /* ALMIGHTY STATE */
 let PlayersStore = new Players();
@@ -82,7 +83,11 @@ AppDispatcher.register(action => {
 
     case AppConstants.GAME_STAY:
       PlayersStore.currentPlayer.stay();
-      _evaluateGame(2);
+      /* current Player is Dealer and game is not over*/
+      if (!_evaluateGame(2) && state.gameStatus !== 0) {
+        const dealer = PlayersStore.getCurrentPlayer();
+        console.log(dealer);
+      }
       GameStore.emitChange();
       break;
 
@@ -119,9 +124,9 @@ AppDispatcher.register(action => {
 
 /* method definitions */
 function _evaluateGame(statusCode) {
-  if (PlayersStore.length() > 0) {
-    PlayersStore.evaluatePlayers();
-  }
+
+  PlayersStore.evaluatePlayers();
+
 
   switch (statusCode) {
     case 1 /*   Game in progress; first play  */:
@@ -131,11 +136,14 @@ function _evaluateGame(statusCode) {
       break;
 
     case 2 /*   stay (go to next turn)  */:
+      /* If endgame conditions not met   */
       if (!_endGameTrap()) {
-        /* sequence currentPlayerIndex */
+        /* increment currentPlayerIndex */
         PlayersStore.nextPlayer();
         state.gameStatus = 1;
         _endGameTrap();
+      } else {
+        return false;
       }
       break;
 
@@ -174,23 +182,28 @@ function _endGameTrap() {
   let nextGameStatus;
   /* Set next game status */
   if (state.players[1].hasBlackJack) {
-    nextGameStatus = 7;
+    nextGameStatus = 7; // Dealer has blackjack ; dealer wins
   } else if (state.players[0].isBusted) {
-    nextGameStatus = 7;
+    nextGameStatus = 7; // Player 0 busted ; dealer wins
   } else if (state.players[1].isBusted) {
-    nextGameStatus = 4;
+    nextGameStatus = 4; // Dealer is busted; Player 0 wins 
   } else if (state.players[1].isStaying) {
     if (
       state.players[1].getHigherHandValue() >
       state.players[0].getHigherHandValue()
     ) {
-      nextGameStatus = 7;
+      nextGameStatus = 7; // Dealer has higher hand ; dealer wins
     } else {
-      nextGameStatus = 4;
+      nextGameStatus = 4; // Player 0 has higher hand ; Player 0 wins
     }
   } else {
-    state.gameStatus = 1;
-    return false;
+    if (PlayersStore.isCurrentPlayerNPC()) {
+      return true;
+    } else {
+      /* current player is not Dealer */
+      state.gameStatus = 1; // Wait for next input
+      return false;
+    }
   }
 
   if (nextGameStatus > 2) {
