@@ -18,14 +18,14 @@ class OptionsPanel extends BaseComponent {
 
     this.state = {
       // All of this comes from ControlPanelStore
+      isCardTitleVisible: false,
+      isDealerHandVisible: false,
       isDeckVisible: false,
       isDrawnVisible: false,
-      isSelectedVisible: false,
-      isOptionsPanelVisible: false,
-      isMessageBarVisible: false,
-      isDealerHandVisible: false,
       isHandValueVisible: false,
-      isCardTitleVisible: false,
+      isMessageBarVisible: false,
+      isOptionsPanelVisible: false,
+      isSelectedVisible: false,
     };
 
     this._bind("newDeal", "onChangeControlPanel", "resetGame");

@@ -21,7 +21,6 @@ class DeckContainer extends BaseComponent {
     this._bind("_toggleDeck");
   }
 
-  /* These props were verified on 8/21/17 */
   static propTypes = {
     deck: T.array, // DeckStore
     gameStatus: T.number, // GameStore

@@ -4,17 +4,16 @@ import AppConstants from "../constants/AppConstants";
 
 import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 
-import { log } from "../utils";
-
 /* state variables */
 let state = {
+  isCardTitleVisible: false,
+  isDealerHandVisible: false,
   isDeckVisible: false,
   isDrawnVisible: false,
-  isSelectedVisible: false,
-  isOptionsPanelVisible: false,
-  isMessageBarVisible: false,
-  isDealerHandVisible: false,
   isHandValueVisible: true,
+  isMessageBarVisible: false,
+  isOptionsPanelVisible: false,
+  isSelectedVisible: false,
   messageBarDefinition: {
     type: MessageBarType.info,
     text: "",
@@ -31,6 +30,7 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
     return state;
   },
   /* This is redundant with AppActions.showMessageBar */
+  /* TO DO: move this to GameStore, since only GameStore uses it. */
   setMessageBar: function (text, type) {
     _showMessageBar(text, type);
     this.emitChange(CHANGE_EVENT);
@@ -50,8 +50,8 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
 /* register methods */
 AppDispatcher.register(action => {
   /* report for debugging */
-  const now = new Date().toTimeString();
-  log(`${action.actionType} was called at ${now}`);
+  //const now = new Date().toTimeString();
+  //console.log(`  - ${action.actionType} was called at ${now}`);
 
   switch (action.actionType) {
     case AppConstants.CONTROLPANEL_HIDEOPTIONSPANEL:
@@ -93,6 +93,10 @@ AppDispatcher.register(action => {
       state.isDealerHandVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
+
+    case AppConstants.CONTROLPANEL_TOGGLECARDTITLEVISIBILITY:
+      state.isCardTitleVisible = action.bool;
+      ControlPanelStore.emitChange();
 
     default:
       /* do nothing */
