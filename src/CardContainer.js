@@ -15,14 +15,14 @@ class CardContainer extends BaseComponent {
 
   static propTypes = {
     description: T.string.isRequired,
+    deselect: T.func,
+    isBackFacing: T.bool,
+    isSelectable: T.bool,
+    isDescVisible: T.bool,
+    select: T.func,
     sort: T.number.isRequired,
     suit: T.string.isRequired,
-    select: T.func,
-    deselect: T.func,
-    isSelectable: T.bool,
-    isBackFacing: T.bool,
   };
-
 
   _toggleSelect() {
     const cardAttributes = {
@@ -41,7 +41,7 @@ class CardContainer extends BaseComponent {
   }
 
   render() {
-    const short = this.props.description + " of " + this.props.suit + "s";
+    const description = this.props.description + " of " + this.props.suit + "s";
     let cardTitle = "";
     switch (this.props.sort) {
       case 14:
@@ -98,7 +98,7 @@ class CardContainer extends BaseComponent {
         onClick={this.props.isSelectable && this._toggleSelect}
       >
         <span className="ms-font-xl card-title top">{cardTitle}</span>
-        <p className="ms-font-m" data-p={short} />
+        {this.props.isDescVisible && <p className="ms-font-m" data-p={description} />}
         <span className="ms-font-xl card-title bottom">{cardTitle}</span>
         {this.props.isBackFacing && <div className="card-back" />}
       </div>

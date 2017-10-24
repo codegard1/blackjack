@@ -25,6 +25,7 @@ export class PlayerContainer extends BaseComponent {
       gameStatusFlag: true,
       handValue: { aceAsEleven: 0, aceAsOne: 0 },
       id: -1,
+      isCardDescVisible: false,
       isDealerHandVisible: true,
       isDeckCalloutEnabled: true,
       isDeckCalloutVisible: false,
@@ -125,7 +126,8 @@ export class PlayerContainer extends BaseComponent {
     const newState = ControlPanelStore.getState();
     this.setState({
       isDealerHandVisible: newState.isDealerHandVisible,
-      isHandValueVisible: newState.isHandValueVisible
+      isHandValueVisible: newState.isHandValueVisible,
+      isCardDescVisible: newState.isCardDescVisible,
     });
   }
 
@@ -237,6 +239,7 @@ export class PlayerContainer extends BaseComponent {
               gameStatusFlag={this.gameStatusFlag}
               handValue={this.state.handValue}
               hidden={false}
+              isCardDescVisible={this.state.isCardDescVisible}
               isDealerHandVisible={this.state.isDealerHandVisible}
               isHandValueVisible={this.state.isHandValueVisible}
               isNPC={this.state.isNPC}

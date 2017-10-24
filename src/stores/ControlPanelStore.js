@@ -6,7 +6,7 @@ import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 
 /* state variables */
 let state = {
-  isCardTitleVisible: false,
+  isCardDescVisible: false,
   isDealerHandVisible: false,
   isDeckVisible: false,
   isDrawnVisible: false,
@@ -95,7 +95,7 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLECARDTITLEVISIBILITY:
-      state.isCardTitleVisible = action.bool;
+      state.isCardDescVisible = action.bool;
       ControlPanelStore.emitChange();
 
     default:

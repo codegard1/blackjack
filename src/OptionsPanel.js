@@ -18,7 +18,7 @@ class OptionsPanel extends BaseComponent {
 
     this.state = {
       // All of this comes from ControlPanelStore
-      isCardTitleVisible: false,
+      isCardDescVisible: false,
       isDealerHandVisible: false,
       isDeckVisible: false,
       isDrawnVisible: false,
@@ -149,7 +149,7 @@ class OptionsPanel extends BaseComponent {
             onChanged={checked => AppActions.toggleHandValueVisibility(checked)}
           />
           <Toggle
-            checked={this.state.isCardTitleVisible}
+            checked={this.state.isCardDescVisible}
             label="Show Card Titles"
             onAriaLabel="The card titles are visible. Press to hide them."
             offAriaLabel="The card titles are hidden. Press to show them."
