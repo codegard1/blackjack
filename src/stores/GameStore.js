@@ -8,7 +8,6 @@ import Players from "./Players";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 import ControlPanelStore from "./ControlPanelStore";
-import Agent from './Agent';
 
 /* ALMIGHTY STATE */
 let PlayersStore = new Players();

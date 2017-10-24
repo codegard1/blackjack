@@ -215,18 +215,19 @@ export class PlayerContainer extends BaseComponent {
           )}
         {this.state.isNPC && this.state.dealerHasControl &&
           <Agent {...this.state} />}
-        <ControlPanel
-          gameStatus={this.state.gameStatus}
-          gameStatusFlag={this.state.gameStatusFlag}
-          hidden={false}
-          minimumBet={this.state.minimumBet}
-          player={this.state.player}
-          playerId={this.state.id}
-          playerStatusFlag={this.state.playerStatusFlag}
-          playerIsNPC={this.state.isNPC}
-          selectedFlag={this.state.selectedFlag}
-          showDeckCallout={this._showDeckCallout}
-        />
+        {!this.state.isNPC &&
+          <ControlPanel
+            gameStatus={this.state.gameStatus}
+            gameStatusFlag={this.state.gameStatusFlag}
+            hidden={false}
+            minimumBet={this.state.minimumBet}
+            player={this.state.player}
+            playerId={this.state.id}
+            playerStatusFlag={this.state.playerStatusFlag}
+            playerIsNPC={this.state.isNPC}
+            selectedFlag={this.state.selectedFlag}
+            showDeckCallout={this._showDeckCallout}
+          />}
 
         {
           this.state.deck.length > 0 && (
@@ -298,7 +299,7 @@ class Agent extends BaseComponent {
   componentDidMount() {
     if (this.props.dealerHasControl) {
       console.log('in agent- dealer has control');
-      const timeoutID = setInterval(() => {
+      const intervalID = setInterval(() => {
 
         const aceAsEleven = this.props.handValue.aceAsEleven,
           aceAsOne = this.props.handValue.aceAsOne;
@@ -318,14 +319,10 @@ class Agent extends BaseComponent {
             this.setState({ lastAction: 'Stay' });
           }
         } else {
-          console.log('Game is over- agent takes no action');
+          console.log('Clear intervalID ', intervalID);
+          clearInterval(intervalID);
         }
       }, 500);
-
-      setTimeout(() => {
-        clearInterval(intervalID);
-        console.log('cleared intervalID ', intervalID);
-      }, 5000);
 
     } else {
       console.log('in agent- dealer does not have control')
@@ -334,7 +331,7 @@ class Agent extends BaseComponent {
 
   render() {
     return (
-      <div>
+      <div id="Agent" className="ms-slideDownIn10">
         {this.state.lastAction}
       </div>
     )

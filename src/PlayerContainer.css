@@ -36,3 +36,8 @@
 .DeckCallout {
   padding: 1em;
 }
+
+/* the text children of the Agent component */
+#Agent {
+  text-align: center;
+}
