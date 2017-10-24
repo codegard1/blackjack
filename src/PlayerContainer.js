@@ -188,7 +188,7 @@ export class PlayerContainer extends BaseComponent {
 
     return (
       <div className={style}>
-        <Agent dealerHasControl={this.state.dealerHasControl}>{titleBar}</Agent>
+        {titleBar}
         {this.state.isStatusCalloutVisible && (
           <Callout
             gapSpace={1}
@@ -213,7 +213,8 @@ export class PlayerContainer extends BaseComponent {
               <span className="ms-font-xl">{this.state.deckCalloutText}</span>
             </Callout>
           )}
-
+        {this.state.isNPC && this.state.dealerHasControl &&
+          <Agent {...this.state} />}
         <ControlPanel
           gameStatus={this.state.gameStatus}
           gameStatusFlag={this.state.gameStatusFlag}
@@ -227,29 +228,31 @@ export class PlayerContainer extends BaseComponent {
           showDeckCallout={this._showDeckCallout}
         />
 
-        {this.state.deck.length > 0 && (
-          <DeckContainer
-            deck={this.state.deck}
-            gameStatus={this.state.gameStatus}
-            gameStatusFlag={this.gameStatusFlag}
-            handValue={this.state.handValue}
-            hidden={false}
-            isDealerHandVisible={this.state.isDealerHandVisible}
-            isHandValueVisible={this.state.isHandValueVisible}
-            isNPC={this.state.isNPC}
-            isPlayerDeck
-            isSelectable
-            player={this.state.player}
-            title={this.state.title}
-            turnCount={this.state.turnCount}
-          />
-        )}
+        {
+          this.state.deck.length > 0 && (
+            <DeckContainer
+              deck={this.state.deck}
+              gameStatus={this.state.gameStatus}
+              gameStatusFlag={this.gameStatusFlag}
+              handValue={this.state.handValue}
+              hidden={false}
+              isDealerHandVisible={this.state.isDealerHandVisible}
+              isHandValueVisible={this.state.isHandValueVisible}
+              isNPC={this.state.isNPC}
+              isPlayerDeck
+              isSelectable
+              player={this.state.player}
+              title={this.state.title}
+              turnCount={this.state.turnCount}
+            />
+          )
+        }
         <div
           id="deckCalloutTarget"
           ref={callout => (this._deckCalloutTarget = callout)}
           className="ms-font-m"
         />
-      </div>
+      </div >
     );
   }
 }
@@ -285,39 +288,54 @@ StatusDisplay.propTypes = {
 
 
 class Agent extends BaseComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      lastAction: ''
+    }
+  }
+
   componentDidMount() {
     if (this.props.dealerHasControl) {
-      setTimeout(this.test.bind(this), 500);
-    }
-  }
+      console.log('in agent- dealer has control');
+      const timeoutID = setInterval(() => {
 
-  test() {
-    console.log('timer up!');
-  }
+        const aceAsEleven = this.props.handValue.aceAsEleven,
+          aceAsOne = this.props.handValue.aceAsOne;
 
-  resolveAction(playerId) {
-    const aceAsEleven = this.player.aceAsEleven,
-      aceAsOne = this.player.aceAsOne,
-      handValue = this.player.handValue,
-      isBusted = this.player.isBusted;
+        if (this.props.gameStatus !== 0) {
+          /* when to hit */
+          if (aceAsEleven <= 16 || aceAsOne <= 16) {
+            AppActions.hit(this.props.id);
+            console.log('Agent hit');
+            this.setState({ lastAction: 'Hit' });
+          }
 
-    /* when to hit */
-    if (aceAsEleven <= 16 || aceAsOne <= 16) {
-      AppActions.hit();
-      console.log('Agent hit');
-    }
+          /* when to stay */
+          if ((aceAsOne >= 17 && aceAsOne <= 21) || (aceAsEleven >= 17 && aceAsEleven <= 21)) {
+            AppActions.stay();
+            console.log('Agent stayed');
+            this.setState({ lastAction: 'Stay' });
+          }
+        } else {
+          console.log('Game is over- agent takes no action');
+        }
+      }, 500);
 
-    /* when to stay */
-    if ((aceAsOne >= 17 && aceAsOne <= 21) || (aceAsEleven >= 17 && aceAsEleven <= 21)) {
-      AppActions.stay();
-      console.log('Agent stayed');
+      setTimeout(() => {
+        clearInterval(intervalID);
+        console.log('cleared intervalID ', intervalID);
+      }, 5000);
+
+    } else {
+      console.log('in agent- dealer does not have control')
     }
   }
 
   render() {
     return (
       <div>
-        {this.props.children}
+        {this.state.lastAction}
       </div>
     )
   }
