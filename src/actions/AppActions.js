@@ -94,6 +94,13 @@ const AppActions = {
       bool
     });
   },
+  toggleCardTitleVisibility(bool) {
+    console.log(`toggleCardTitleVisibility( ${bool} )`);
+    AppDispatcher.dispatch({
+      actionType: AppConstants.CONTROLPANEL_TOGGLECARDTITLEVISIBILITY,
+      bool
+    });
+  },
   newDeck() {
     AppDispatcher.dispatch({
       actionType: AppConstants.DECK_NEWDECK
