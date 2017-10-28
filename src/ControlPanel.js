@@ -107,8 +107,8 @@ class ControlPanel extends Component {
     if (npcFlag === false) {
       blackJackItems.push({
         key: "new-round",
-        name: "New Round",
-        ariaLabel: "New Round",
+        name: "Deal",
+        ariaLabel: "Deal",
         iconProps: { iconName: "Refresh" },
         disabled: !gameStatusFlag,
         onClick: () => {
