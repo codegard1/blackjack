@@ -35,10 +35,10 @@ class Table extends BaseComponent {
       round: 0,
       turnCount: 0,
       // ControlPanelStore
-      isDealerHandVisible: true,
-      isDeckVisible: true,
+      isDealerHandVisible: false,
+      isDeckVisible: false,
       isDrawnVisible: false,
-      isHandValueVisible: true,
+      isHandValueVisible: false,
       isMessageBarVisible: false,
       isOptionsPanelVisible: false,
       isSelectedVisible: false,
