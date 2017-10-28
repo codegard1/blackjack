@@ -3,8 +3,8 @@ div.card {
     background-color: ghostwhite;
     box-sizing: content-box;
     display: flex;
-    flex-wrap: wrap;
     height: 100px;
+    margin: 2px;
     overflow: hidden;
     padding: 0.35em;
     width: 65px;
@@ -14,6 +14,7 @@ div.card {
     border-right: 1px solid rgba(25, 25, 25, 0.3);
     border-top: 1px solid rgba(25, 25, 25, 0.1);
     box-shadow: 2px 2px 2px rgba(25, 25, 25, 0.3);
+    /* border: 2px solid orange; */
 }
 
 /* style everything inside the card */
