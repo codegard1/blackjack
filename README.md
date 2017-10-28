@@ -9,7 +9,8 @@ This project is an attempt to build a game of blackjack from scratch, as a way t
 * [Masonry](https://masonry.desandro.com/) 
 * [node-shuffle](https://github.com/codegard1/node-shuffle) (forked)
 
-#### Project Status as of 9/6/2017
+#### Project Status as of 10/27/2017
+* The Dealer can now play for itself, allowing a single human player to 
 * Endgame conditions are now handled more or less as expected
 * Game options are now sequestered in a panel  
 * Extraneous UI elements have been hidden from the game table by default
