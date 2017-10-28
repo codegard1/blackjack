@@ -36,7 +36,7 @@ class Table extends BaseComponent {
       turnCount: 0,
       // ControlPanelStore
       isDealerHandVisible: true,
-      isDeckVisible: false,
+      isDeckVisible: true,
       isDrawnVisible: false,
       isHandValueVisible: true,
       isMessageBarVisible: false,

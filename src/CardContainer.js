@@ -91,15 +91,16 @@ class CardContainer extends BaseComponent {
     cardClass += this.props.isSelectable ? "selectable " : "unselectable";
     cardClass += this.state.isSelected ? " selected " : "";
     cardClass += this.props.isBackFacing ? " backfacing" : "";
+    cardClass += this.props.isDescVisible ? " descripted" : " nondescript";
 
     return (
       <div
         className={cardClass}
         onClick={this.props.isSelectable && this._toggleSelect}
       >
-        <span className="ms-font-xl card-title top">{cardTitle}</span>
-        {this.props.isDescVisible && <p className="ms-font-m" data-p={description} />}
-        <span className="ms-font-xl card-title bottom">{cardTitle}</span>
+        <p className="ms-font-xl card-title top">{cardTitle}</p>
+        {this.props.isDescVisible && <p className="ms-font-m card-description" data-p={description} />}
+        <p className="ms-font-xl card-title bottom">{cardTitle}</p>
         {this.props.isBackFacing && <div className="card-back" />}
       </div>
     );

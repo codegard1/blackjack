@@ -1,24 +1,29 @@
+/*  Style the card itself, regardless of whats in it */
 div.card {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-content: center;
-    box-sizing: content-box;
-    height: 100px;
-    width: 65px;
-    padding: 0.35em;
-    overflow: hidden;
     background-color: ghostwhite;
-    cursor: pointer;
-    margin: 2px;
-    box-shadow: 2px 2px 2px rgba(25, 25, 25, 0.3);
+    box-sizing: content-box;
+    display: flex;
+    flex-wrap: wrap;
+    height: 100px;
+    overflow: hidden;
+    padding: 0.35em;
+    width: 65px;
+    border-bottom: 1px solid rgba(25, 25, 25, 0.3);
+    border-left: 1px solid rgba(25, 25, 25, 0.1);
     border-radius: 5px;
     border-right: 1px solid rgba(25, 25, 25, 0.3);
-    border-bottom: 1px solid rgba(25, 25, 25, 0.3);
     border-top: 1px solid rgba(25, 25, 25, 0.1);
-    border-left: 1px solid rgba(25, 25, 25, 0.1);
+    box-shadow: 2px 2px 2px rgba(25, 25, 25, 0.3);
 }
 
+/* style everything inside the card */
+div.card * {
+    margin: 0;
+    padding:0;
+    /* border: 1px solid #444; */
+}
+
+/* style backfacing cards */
 div.card-back {
     display: block;
     box-sizing: border-box;
@@ -29,65 +34,81 @@ div.card-back {
     top: 0;
     left: 0;
     background-color: #def;
-    background-image: radial-gradient(closest-side, transparent 98%, rgba(0, 0, 0, .3) 99%), radial-gradient(closest-side, transparent 98%, rgba(0, 0, 0, .3) 99%);
+    background-image: radial-gradient(closest-side, transparent 98%, rgba(10, 10, 90, .3) 99%), radial-gradient(closest-side, transparent 98%, rgba(10, 10, 90, .3) 99%);
     background-size: 80px 80px;
     background-position: 0 0, 40px 40px;
 }
 
-div.card * {
-    /*border: 1px solid blue;*/
-    margin: 0;
-}
-
-div.card.hearts span.card-title,
-div.card.diamonds span.card-title {
+/* color red suits */
+div.card.hearts p.card-title,
+div.card.diamonds p.card-title {
     color: salmon;
 }
 
-div.card.spades span.card-title,
-div.card.clubs span.card-title {
-    color: #444;
+/* color black suits */
+div.card.spades p.card-title,
+div.card.clubs p.card-title {
+    color: #555;
+}
+
+/* style card titles */
+div.card p.card-title {
+    display: inline-block;
+    flex-grow: 0;
+    /* color:#333; */
 }
 
 div.card p {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-    overflow: hidden;
     flex-grow: 1;
-}
-
-div.card p:after {
     text-align: center;
-    content: attr(data-p);
-    /*border: 1px solid green;*/
+    /* border:1px solid fuchsia; */
 }
 
-div.card span.card-title {
-    display: inline-block;
-    position: relative;
-    flex-grow: 0;
-}
 
-div.card span.card-title.bottom {
+div.card p.card-title.bottom {
+    align-self: flex-end;
     text-align: right;
-    right: 0;
-    bottom: 0px;
-    /*border: 1px solid gold;*/
+    /* border: 1px solid rgb(19, 18, 12); */
 }
 
-div.card span.card-title.top {
+div.card p.card-title.top {
+    align-self: flex-start;
     text-align: left;
-    top: 0;
-    left: 0;
-    /*border: 1px solid gold;*/
+    /* border: 1px solid gold; */
 }
 
+/* style cards that have been selected */
 div.card.selected {
     border: 1px solid blue;
 }
 
+/* style cards that cannot be selected */
 div.card.unselectable {
     cursor: default;
+}
+
+div.card.selectable {
+    cursor: pointer;
+}
+
+/* when the card description is not visible */
+div.card.nondescript {
+    flex-direction:column;
+    justify-content: space-between;
+}
+
+div.card.descripted {
+    flex-direction: column;
+    align-content: space-between;
+}
+
+div.card.descripted p.card-description {
+    /* padding-top:45%; *
+    /* border: 1px solid green; */
+}
+
+/* when the card description is visible */
+div.card.descripted p.card-description::after {
+    text-align: center;
+    content: attr(data-p);
 }

@@ -6,9 +6,9 @@ import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 
 /* state variables */
 let state = {
-  isCardDescVisible: false,
+  isCardDescVisible: true,
   isDealerHandVisible: false,
-  isDeckVisible: false,
+  isDeckVisible: true,
   isDrawnVisible: false,
   isHandValueVisible: true,
   isMessageBarVisible: false,
