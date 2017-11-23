@@ -52,35 +52,58 @@ div.card.clubs p.card-title {
     color: #555;
 }
 
+div.card p {
+    /* flex-grow: 1; */
+    text-align: center;
+    /* border:1px solid fuchsia; */
+}
+
 /* style card titles */
 div.card p.card-title {
     display: inline-block;
     flex-grow: 0;
     /* color:#333; */
+    min-width:1rem;
 }
 
-div.card p {
-    flex-grow: 1;
-    text-align: center;
-    /* border:1px solid fuchsia; */
-}
-
-
+/* style card bottommost title and icon */
 div.card p.card-title.bottom {
     align-self: flex-end;
     text-align: right;
     /* border: 1px solid rgb(19, 18, 12); */
 }
 
+/* style topmost title and icon */
 div.card p.card-title.top {
     align-self: flex-start;
     text-align: left;
     /* border: 1px solid gold; */
 }
 
+/* icon appears after the number on top */
+div.card p.card-title.top::after {
+    content: attr(data-cardIcon);
+}
+
+/* number appears before the icon on top */
+div.card p.card-title.top::before {
+    content: attr(data-cardTitle);
+}
+
+/* icon appears after the number on bottom */
+div.card p.card-title.bottom::before {
+    content: attr(data-cardIcon);
+}
+
+/* number appears before the icon on bottom */
+div.card p.card-title.bottom::after {
+    content: attr(data-cardTitle);
+}
+
 /* style cards that have been selected */
 div.card.selected {
     border: 1px solid blue;
+    box-shadow: 4px 4px 10px rgba(25, 25, 25, 0.2);
 }
 
 /* style cards that cannot be selected */
