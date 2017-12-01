@@ -96,8 +96,8 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
 /* register methods */
 AppDispatcher.register(action => {
   /* report for debugging */
-  const now = new Date().toTimeString();
-  log(`${action.actionType} was called at ${now}`);
+  //const now = new Date().toTimeString();
+  //log(`${action.actionType} was called at ${now}`);
 
   switch (action.actionType) {
     case AppConstants.DECK_NEWDECK:

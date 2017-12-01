@@ -11,6 +11,7 @@ import DeckContainer from "./DeckContainer";
 import BaseComponent from "./BaseComponent";
 import OptionsPanel from "./OptionsPanel";
 import { defaultPlayers } from "./definitions";
+import PotDisplay from "./PotDisplay";
 
 /* flux */
 import { GameStore } from "./stores/GameStore";
@@ -124,13 +125,7 @@ class Table extends BaseComponent {
             </div>
           </div>
 
-          <div className="ms-Grid-row">
-            <div className="ms-Grid-col ms-u-s12">
-              <p className="ms-font-xl" id="PotDisplay">
-                Pot: ${this.state.pot}
-              </p>
-            </div>
-          </div>
+          <PotDisplay pot={this.state.pot} />
 
           <div className="ms-Grid-row">
             <div className="ms-Grid-col ms-u-sm6">{playersArray[0]}</div>
