@@ -7,6 +7,10 @@ class PotDisplay extends BaseComponent {
         pot: T.number.isRequired
     }
 
+    static defaultProps = {
+        pot: 0
+    }
+
     render() {
         return (
             <div className="ms-Grid-row" >

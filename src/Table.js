@@ -116,8 +116,7 @@ class Table extends BaseComponent {
                 <MessageBar
                   messageBarType={this.state.messageBarDefinition.type}
                   isMultiline={this.state.messageBarDefinition.isMultiLine}
-                  onDismiss={() =>
-                    this.setState({ isMessageBarVisible: false })}
+                  onDismiss={AppActions.hideMessageBar}
                 >
                   {this.state.messageBarDefinition.text}
                 </MessageBar>

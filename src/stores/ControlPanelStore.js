@@ -69,6 +69,11 @@ AppDispatcher.register(action => {
       ControlPanelStore.emitChange();
       break;
 
+    case AppConstants.CONTROLPANEL_HIDEMESSAGEBAR:
+      state.isMessageBarVisible = false;
+      ControlPanelStore.emitChange();
+      break;
+
     case AppConstants.CONTROLPANEL_TOGGLEDECKVISIBILITY:
       state.isDeckVisible = action.bool;
       ControlPanelStore.emitChange();

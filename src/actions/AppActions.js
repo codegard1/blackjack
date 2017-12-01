@@ -30,6 +30,11 @@ const AppActions = {
       type
     });
   },
+  hideMessageBar() {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.CONTROLPANEL_HIDEMESSAGEBAR
+    });
+  },
   reset() {
     AppDispatcher.dispatch({
       actionType: AppConstants.DECK_CLEARHANDS
