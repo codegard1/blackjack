@@ -17,8 +17,7 @@
     "prop-types": "^15.0.0",
     "react": "^15.0.0",
     "react-dom": "^15.0.0",
-    "react-masonry-component": "5.0.7",
-    "shuffle": "git+https://github.com/codegard1/node-shuffle.git"
+    "react-masonry-component": "5.0.7"
   },
   "devDependencies": {
     "babel-eslint": "^7.2.3",
