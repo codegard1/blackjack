@@ -1,0 +1,22 @@
+.DeckContainer {
+  margin: auto 0;
+  display: block;
+  /* padding: 0 2em 2em 2em; */
+  /*width: 100%;*/
+  /*border: 3px solid blueviolet;*/
+}
+
+.deck {
+  /*border: 2px dotted gold;*/
+  width: 100%;
+}
+
+.handValue {
+  float: left;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+#PotDisplay {
+  margin: 1em;
+}

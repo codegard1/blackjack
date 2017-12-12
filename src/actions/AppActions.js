@@ -2,61 +2,9 @@ import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
 const AppActions = {
-  newGame(players) {
-    /* create a new deck */
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_NEWDECK
-    });
-
-    players.forEach(player => {
-      AppDispatcher.dispatch({
-        actionType: AppConstants.DECK_NEWPLAYERHAND,
-        id: player.id
-      });
-
-      /* add a new Player to the players array */
-      AppDispatcher.dispatch({
-        actionType: AppConstants.GAME_NEWPLAYER,
-        id: player.id,
-        title: player.title,
-        isNPC: player.isNPC
-      });
-    });
-  },
-  showMessageBar(text, type) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.CONTROLPANEL_SHOWMESSAGEBAR,
-      text,
-      type
-    });
-  },
-  hideMessageBar() {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.CONTROLPANEL_HIDEMESSAGEBAR
-    });
-  },
-  reset() {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_CLEARHANDS
-    });
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_RESET
-    });
-  },
-  newRound() {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_CLEARHANDS
-    });
-    // console.log('actionType: AppConstants.DECK_CLEARHANDS');
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_DEAL
-    });
-    // console.log('actionType: AppConstants.DECK_DEAL');
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_NEWROUND
-    });
-    // console.log('actionType: AppConstants.GAME_NEWROUND');
-  },
+  /**
+   * CONTROL PANEL ACTIONS
+   */
   hideOptionsPanel() {
     AppDispatcher.dispatch({
       actionType: AppConstants.CONTROLPANEL_HIDEOPTIONSPANEL
@@ -106,6 +54,10 @@ const AppActions = {
       bool
     });
   },
+
+  /**
+   * DECK ACTIONS
+   */
   newDeck() {
     AppDispatcher.dispatch({
       actionType: AppConstants.DECK_NEWDECK
@@ -163,6 +115,10 @@ const AppActions = {
       cardAttributes
     });
   },
+
+  /**
+   * GAMEPLAY ACTIONS
+   */
   deal() {
     AppDispatcher.dispatch({
       actionType: AppConstants.DECK_DEAL
@@ -191,6 +147,61 @@ const AppActions = {
       playerId,
       amount
     });
+  },
+  newGame(players) {
+    /* create a new deck */
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_NEWDECK
+    });
+
+    players.forEach(player => {
+      AppDispatcher.dispatch({
+        actionType: AppConstants.DECK_NEWPLAYERHAND,
+        id: player.id
+      });
+
+      /* add a new Player to the players array */
+      AppDispatcher.dispatch({
+        actionType: AppConstants.GAME_NEWPLAYER,
+        id: player.id,
+        title: player.title,
+        isNPC: player.isNPC
+      });
+    });
+  },
+  showMessageBar(text, type) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.CONTROLPANEL_SHOWMESSAGEBAR,
+      text,
+      type
+    });
+  },
+  hideMessageBar() {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.CONTROLPANEL_HIDEMESSAGEBAR
+    });
+  },
+  reset() {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_CLEARHANDS
+    });
+    AppDispatcher.dispatch({
+      actionType: AppConstants.GAME_RESET
+    });
+  },
+  newRound() {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_CLEARHANDS
+    });
+    // console.log('actionType: AppConstants.DECK_CLEARHANDS');
+    AppDispatcher.dispatch({
+      actionType: AppConstants.DECK_DEAL
+    });
+    // console.log('actionType: AppConstants.DECK_DEAL');
+    AppDispatcher.dispatch({
+      actionType: AppConstants.GAME_NEWROUND
+    });
+    // console.log('actionType: AppConstants.GAME_NEWROUND');
   }
 };
 

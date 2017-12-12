@@ -7,12 +7,14 @@ import BaseComponent from "./BaseComponent";
 import DeckContainer from "./DeckContainer";
 import ControlPanel from "./ControlPanel";
 import "./PlayerContainer.css";
+import "./StatusDisplay.css";
 
 /* flux */
 import { GameStore } from "./stores/GameStore";
 import { DeckStore } from "./stores/DeckStore";
+import StatsStore from "./stores/StatsStore";
 import ControlPanelStore from "./stores/ControlPanelStore";
-import AppActions from './actions/AppActions'
+import AppActions from "./actions/AppActions";
 
 export class PlayerContainer extends BaseComponent {
   constructor(props) {
@@ -36,6 +38,15 @@ export class PlayerContainer extends BaseComponent {
       player: { empty: true },
       playerStatusFlag: true,
       selectedFlag: false,
+      stats: {
+        numberOfGamesLost: 0,
+        numberOfGamesPlayed: 0,
+        numberOfGamesWon: 0,
+        numberOfHandsPlayer: 0,
+        numberOfTimesBlackjack: 0,
+        numberOfTimesBusted: 0,
+        winLossRatio: "1.000"
+      },
       title: "",
       turnCount: 0
     };
@@ -48,7 +59,8 @@ export class PlayerContainer extends BaseComponent {
       "_toggleStatusCallout",
       "onChangeControlPanel",
       "onChangeDeck",
-      "onChangeGame"
+      "onChangeGame",
+      "onChangeStats"
     );
   }
   static propTypes = {
@@ -62,21 +74,27 @@ export class PlayerContainer extends BaseComponent {
 
   componentDidMount() {
     /* callback when a change emits from GameStore*/
-    GameStore.addChangeListener(this.onChangeGame);
-    DeckStore.addChangeListener(this.onChangeDeck);
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
+    DeckStore.addChangeListener(this.onChangeDeck);
+    GameStore.addChangeListener(this.onChangeGame);
+    StatsStore.addChangeListener(this.onChangeStats);
     this.onChangeGame();
     this.onChangeControlPanel();
   }
 
   componentWillUnmount() {
     /* remove change listeners */
-    GameStore.removeChangeListener(this.onChangeGame);
-    DeckStore.removeChangeListener(this.onChangeDeck);
     ControlPanelStore.removeChangeListener(this.onChangeControlPanel);
+    DeckStore.removeChangeListener(this.onChangeDeck);
+    GameStore.removeChangeListener(this.onChangeGame);
+    StatsStore.removeChangeListener();
   }
 
-  /* flux helpegameStatusrs */
+  /**
+   * flux helpers
+   */
+
+  /* what to do when the game state changes */
   onChangeGame() {
     const newState = GameStore.getState();
     const thisPlayer = newState.players.find(
@@ -113,6 +131,8 @@ export class PlayerContainer extends BaseComponent {
       turnCount: newState.turnCount
     });
   }
+
+  /* what to do when the deck state changes */
   onChangeDeck() {
     /* selectedFlag is true if getSelected() returns an array */
     const selectedFlag = !!DeckStore.getSelected(this.state.id);
@@ -122,13 +142,21 @@ export class PlayerContainer extends BaseComponent {
       selectedFlag
     });
   }
+
+  /* what to do when the game options change */
   onChangeControlPanel() {
     const newState = ControlPanelStore.getState();
     this.setState({
       isDealerHandVisible: newState.isDealerHandVisible,
       isHandValueVisible: newState.isHandValueVisible,
-      isCardDescVisible: newState.isCardDescVisible,
+      isCardDescVisible: newState.isCardDescVisible
     });
+  }
+
+  /* What to do when the player stats change */
+  onChangeStats() {
+    const stats = StatsStore.getStats(this.state.id);
+    this.setState({ stats });
   }
 
   _toggleStatusCallout() {
@@ -172,8 +200,8 @@ export class PlayerContainer extends BaseComponent {
         />
       </p>
     ) : (
-        <span>{title}</span>
-      );
+      <span>{title}</span>
+    );
 
     /* style PlayerContainer conditionally */
     let style = "PlayerContainer ";
@@ -198,7 +226,10 @@ export class PlayerContainer extends BaseComponent {
             onDismiss={this._toggleStatusCallout}
             setInitialFocus={false}
           >
-            <StatusDisplay player={this.state.player} />
+            <StatusDisplay
+              player={this.state.player}
+              stats={this.state.stats}
+            />
           </Callout>
         )}
         {this.state.isDeckCalloutEnabled &&
@@ -215,9 +246,9 @@ export class PlayerContainer extends BaseComponent {
               <span className="ms-font-xl">{this.state.deckCalloutText}</span>
             </Callout>
           )}
-        {this.state.isNPC && this.state.dealerHasControl &&
-          <Agent {...this.state} />}
-        {!this.state.isNPC &&
+        {this.state.isNPC &&
+          this.state.dealerHasControl && <Agent {...this.state} />}
+        {!this.state.isNPC && (
           <ControlPanel
             gameStatus={this.state.gameStatus}
             gameStatusFlag={this.state.gameStatusFlag}
@@ -229,81 +260,90 @@ export class PlayerContainer extends BaseComponent {
             playerIsNPC={this.state.isNPC}
             selectedFlag={this.state.selectedFlag}
             showDeckCallout={this._showDeckCallout}
-          />}
+          />
+        )}
 
-        {
-          this.state.deck.length > 0 && (
-            <DeckContainer
-              deck={this.state.deck}
-              gameStatus={this.state.gameStatus}
-              gameStatusFlag={this.gameStatusFlag}
-              handValue={this.state.handValue}
-              hidden={false}
-              isCardDescVisible={this.state.isCardDescVisible}
-              isDealerHandVisible={this.state.isDealerHandVisible}
-              isHandValueVisible={this.state.isHandValueVisible}
-              isNPC={this.state.isNPC}
-              isPlayerDeck
-              isSelectable
-              player={this.state.player}
-              title={this.state.title}
-              turnCount={this.state.turnCount}
-            />
-          )
-        }
+        {this.state.deck.length > 0 && (
+          <DeckContainer
+            deck={this.state.deck}
+            gameStatus={this.state.gameStatus}
+            gameStatusFlag={this.gameStatusFlag}
+            handValue={this.state.handValue}
+            hidden={false}
+            isCardDescVisible={this.state.isCardDescVisible}
+            isDealerHandVisible={this.state.isDealerHandVisible}
+            isHandValueVisible={this.state.isHandValueVisible}
+            isNPC={this.state.isNPC}
+            isPlayerDeck
+            isSelectable
+            player={this.state.player}
+            title={this.state.title}
+            turnCount={this.state.turnCount}
+          />
+        )}
         <div
           id="deckCalloutTarget"
           ref={callout => (this._deckCalloutTarget = callout)}
           className="ms-font-m"
         />
-      </div >
+      </div>
     );
   }
 }
 
 export default PlayerContainer;
 
-const StatusDisplay = props => {
-  return (
-    <div id="StatusPanel" className="ms-font-m">
-      Status: {props.player.status || ""}
-      <br />
-      Hand Value:
-      {` ${props.player.handValue.aceAsEleven} / ${props.player.handValue
-        .aceAsOne}`}
-      <br />
-      Turn: {`${props.player.turn}`}
-      <br />
-      isBusted: {`${props.player.isBusted}`}
-      <br />
-      isStaying: {`${props.player.isStaying}`}
-      <br />
-      isFinished: {`${props.player.isFinished}`}
-      <br />
-      lastAction: {`${props.player.lastAction}`}
-      <br />
-    </div>
-  );
-};
+class StatusDisplay extends BaseComponent {
+  render() {
+    let playerInfo = [],
+      playerStats = [];
+
+    for (let key in this.props.player) {
+      if (this.props.player.hasOwnProperty(key)) {
+        playerInfo.push(
+          <li key={`statusdisplay-${key}`}>{`${key}: ${
+            this.props.player[key]
+          }`}</li>
+        );
+      }
+    }
+
+    for (let key in this.props.stats) {
+      if (this.props.stats.hasOwnProperty(key)) {
+        playerStats.push(
+          <li key={`statusdisplay-${key}`}>{`${key}: ${
+            this.props.stats[key]
+          }`}</li>
+        );
+      }
+    }
+
+    return (
+      <div className="StatusDisplay ms-font-s">
+        <ul className="playerStats">{playerStats}</ul>
+        <ul className="playerInfo">{playerInfo}</ul>
+      </div>
+    );
+  }
+}
 
 StatusDisplay.propTypes = {
-  player: T.object.isRequired
+  player: T.object.isRequired,
+  stats: T.object.isRequired
 };
-
 
 class Agent extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = {
-      lastAction: ''
-    }
+      lastAction: ""
+    };
   }
 
   componentDidMount() {
     if (this.props.dealerHasControl) {
-      console.log('in agent- dealer has control');
+      console.log("in agent- dealer has control");
       const intervalID = setInterval(() => {
-
         const aceAsEleven = this.props.handValue.aceAsEleven,
           aceAsOne = this.props.handValue.aceAsOne;
 
@@ -311,24 +351,26 @@ class Agent extends BaseComponent {
           /* when to hit */
           if (aceAsEleven <= 16 || aceAsOne <= 16) {
             AppActions.hit(this.props.id);
-            console.log('Agent hit');
-            this.setState({ lastAction: 'Hit' });
+            console.log("Agent hit");
+            this.setState({ lastAction: "Hit" });
           }
 
           /* when to stay */
-          if ((aceAsOne >= 17 && aceAsOne <= 21) || (aceAsEleven >= 17 && aceAsEleven <= 21)) {
+          if (
+            (aceAsOne >= 17 && aceAsOne <= 21) ||
+            (aceAsEleven >= 17 && aceAsEleven <= 21)
+          ) {
+            console.log("Agent stayed");
             AppActions.stay();
-            console.log('Agent stayed');
-            this.setState({ lastAction: 'Stay' });
+            this.setState({ lastAction: "Stay" });
           }
         } else {
-          console.log('Clear intervalID ', intervalID);
+          console.log("Clear intervalID ", intervalID);
           clearInterval(intervalID);
         }
       }, 500);
-
     } else {
-      console.log('in agent- dealer does not have control')
+      console.log("in agent- dealer does not have control");
     }
   }
 
@@ -337,6 +379,6 @@ class Agent extends BaseComponent {
       <div id="Agent" className="ms-slideDownIn10">
         {this.state.lastAction}
       </div>
-    )
+    );
   }
 }

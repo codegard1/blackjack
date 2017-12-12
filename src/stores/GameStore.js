@@ -8,17 +8,20 @@ import Players from "./Players";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 import ControlPanelStore from "./ControlPanelStore";
+import StatsStore from "./StatsStore";
 
 /* ALMIGHTY STATE */
 let PlayersStore = new Players();
 let state = {
   dealerHasControl: false,
   gameStatus: 0,
+  loser: -1,
   minimumBet: 25,
   players: PlayersStore.getPlayers(),
   pot: 0,
   round: 0,
-  turnCount: 0
+  turnCount: 0,
+  winner: -1
 };
 
 /* Data, Getter method, Event Notifier */
@@ -28,13 +31,13 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
   getPlayer: id => PlayersStore.getPlayer(id),
   getState: () => state,
   getStatus: () => state.gameStatus,
-  emitChange: function () {
+  emitChange: function() {
     this.emit(CHANGE_EVENT);
   },
-  addChangeListener: function (callback) {
+  addChangeListener: function(callback) {
     this.on(CHANGE_EVENT, callback);
   },
-  removeChangeListener: function (callback) {
+  removeChangeListener: function(callback) {
     this.removeListener(CHANGE_EVENT, callback);
   }
 });
@@ -48,6 +51,7 @@ AppDispatcher.register(action => {
   switch (action.actionType) {
     case AppConstants.GAME_NEWPLAYER:
       PlayersStore.newPlayer(action.id, action.title, action.isNPC);
+      StatsStore.new(action.id);
 
       GameStore.emitChange();
       break;
@@ -84,7 +88,7 @@ AppDispatcher.register(action => {
 
     case AppConstants.GAME_STAY:
       PlayersStore.currentPlayer.stay();
-      /* current Player is Dealer and game is not over*/
+      /* player 0 is Dealer and game is not over*/
       if (!_evaluateGame(2) && state.gameStatus !== 0) {
         state.dealerHasControl = true;
       }
@@ -125,9 +129,7 @@ AppDispatcher.register(action => {
 
 /* method definitions */
 function _evaluateGame(statusCode) {
-
   PlayersStore.evaluatePlayers();
-
 
   switch (statusCode) {
     case 1 /*   Game in progress; first play  */:
@@ -155,6 +157,8 @@ function _evaluateGame(statusCode) {
         : `${winningPlayerTitle} wins!`;
       ControlPanelStore.setMessageBar(messageBarText, MessageBarType.success);
 
+      state.winner = state.players[0].id;
+      state.loser = state.players[1].id;
       _payout(0);
       _endGame();
       break;
@@ -162,6 +166,8 @@ function _evaluateGame(statusCode) {
     case 7 /*   Dealer wins   */:
       ControlPanelStore.setMessageBar(`${state.players[1].title} wins!`);
 
+      state.winner = state.players[1].id;
+      state.loser = state.players[0].id;
       _payout(1);
       _endGame();
       break;
@@ -187,7 +193,7 @@ function _endGameTrap() {
   } else if (state.players[0].isBusted) {
     nextGameStatus = 7; // Player 0 busted ; dealer wins
   } else if (state.players[1].isBusted) {
-    nextGameStatus = 4; // Dealer is busted; Player 0 wins 
+    nextGameStatus = 4; // Dealer is busted; Player 0 wins
   } else if (state.players[1].isStaying) {
     if (
       state.players[1].getHigherHandValue() >
@@ -201,14 +207,26 @@ function _endGameTrap() {
     if (PlayersStore.isCurrentPlayerNPC()) {
       return true;
     } else {
-      /* current player is not Dealer */
+      /* player 0 is not Dealer */
       state.gameStatus = 1; // Wait for next input
       return false;
     }
   }
 
+  /* Endgame Condition encountered! */
   if (nextGameStatus > 2) {
     _evaluateGame(nextGameStatus);
+    console.log("inside endgametrap. Now we're gonna update StatsStore");
+    state.players.forEach(player => {
+      /* set properties to increment */
+      let statsFrame = {};
+      statsFrame.numberOfGamesPlayed = true;
+      if (player.id === state.winner) statsFrame.numberOfGamesWon = true;
+      if (player.id === state.loser) statsFrame.numberOfGamesLost = true;
+      if (player.hasBlackJack) statsFrame.numberOfTimesBlackjack = true;
+      if (player.isBusted) statsFrame.numberOfTimesBusted = true;
+      StatsStore.update(player.id, statsFrame);
+    });
     return true;
   }
 }

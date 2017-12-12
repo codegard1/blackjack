@@ -3,7 +3,7 @@ import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
 import Shuffle from "./Shuffle";
-import { log } from "../utils";
+// import { log } from "../utils";
 import { PlayerHand } from "./PlayerHand";
 import PlayingCard from "./PlayingCard";
 
@@ -17,10 +17,10 @@ let deck = [],
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "deck";
 export const DeckStore = Object.assign({}, EventEmitter.prototype, {
-  getDeck: function () {
+  getDeck: function() {
     return deck;
   },
-  getSelected: function (playerId) {
+  getSelected: function(playerId) {
     if (selected.length > 0) {
       let foundMatch = false;
       let foundCards = [];
@@ -53,10 +53,10 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
       return false;
     }
   },
-  getDrawn: function (playerId) {
+  getDrawn: function(playerId) {
     return drawn.find(item => item.id === playerId);
   },
-  getHand: function (playerId) {
+  getHand: function(playerId) {
     if (playerHands.length > 0) {
       const ret = playerHands.find(item => item.id === playerId);
       if (ret) {
@@ -66,10 +66,10 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
       }
     }
   },
-  getHands: function () {
+  getHands: function() {
     return playerHands;
   },
-  getHandValue: function (playerId) {
+  getHandValue: function(playerId) {
     if (playerHands.length > 0) {
       let index = playerHands.findIndex(player => player.id === playerId);
       // console.log(`getHandValue: playerHands[index]`);
@@ -78,16 +78,16 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
       return { aceAsOne: 0, AceAsEvelen: 0 };
     }
   },
-  getState: function () {
+  getState: function() {
     return { deck, selected, drawn, playerHands };
   },
-  emitChange: function () {
+  emitChange: function() {
     this.emit(CHANGE_EVENT);
   },
-  addChangeListener: function (callback) {
+  addChangeListener: function(callback) {
     this.on(CHANGE_EVENT, callback);
   },
-  removeChangeListener: function (callback) {
+  removeChangeListener: function(callback) {
     this.removeListener(CHANGE_EVENT, callback);
   }
 });
