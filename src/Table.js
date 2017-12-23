@@ -3,7 +3,6 @@ import {
   MessageBar,
   MessageBarType
 } from "office-ui-fabric-react/lib/MessageBar";
-import { CommandButton } from "office-ui-fabric-react/lib/Button";
 
 /* custom stuff */
 import PlayerContainer from "./PlayerContainer";
@@ -98,7 +97,7 @@ class Table extends BaseComponent {
       // isDealerHandVisible: newState.isDealerHandVisible,
       // isHandValueVisible: newState.isHandValueVisible,
       isMessageBarVisible: newState.isMessageBarVisible,
-      messageBarDefinition: newState.messageBarDefinition,
+      messageBarDefinition: newState.messageBarDefinition
     });
   }
 
@@ -111,7 +110,7 @@ class Table extends BaseComponent {
       <div id="Table">
         <div className="ms-Grid">
           <div className="ms-Grid-row">
-            <div className="ms-Grid-col ms-u-sm12">
+            <div className="ms-Grid-col ms-sm12">
               {this.state.isMessageBarVisible && (
                 <MessageBar
                   messageBarType={this.state.messageBarDefinition.type}
@@ -127,12 +126,12 @@ class Table extends BaseComponent {
           <PotDisplay pot={this.state.pot} />
 
           <div className="ms-Grid-row">
-            <div className="ms-Grid-col ms-u-sm6">{playersArray[0]}</div>
-            <div className="ms-Grid-col ms-u-sm6">{playersArray[1]}</div>
+            <div className="ms-Grid-col ms-sm6">{playersArray[0]}</div>
+            <div className="ms-Grid-col ms-sm6">{playersArray[1]}</div>
           </div>
 
           <div className="ms-Grid-row">
-            <div className="ms-Grid-col ms-u-sm12">
+            <div className="ms-Grid-col ms-sm12">
               {this.state.isDeckVisible && (
                 <DeckContainer
                   deck={this.state.deck.cards}

@@ -26,22 +26,22 @@ let state = {
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "controlPanel";
 const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
-  getState: function () {
+  getState: function() {
     return state;
   },
   /* This is redundant with AppActions.showMessageBar */
   /* TO DO: move this to GameStore, since only GameStore uses it. */
-  setMessageBar: function (text, type) {
+  setMessageBar: function(text, type) {
     _showMessageBar(text, type);
     this.emitChange(CHANGE_EVENT);
   },
-  emitChange: function () {
+  emitChange: function() {
     this.emit(CHANGE_EVENT);
   },
-  addChangeListener: function (callback) {
+  addChangeListener: function(callback) {
     this.on(CHANGE_EVENT, callback);
   },
-  removeChangeListener: function (callback) {
+  removeChangeListener: function(callback) {
     this.removeListener(CHANGE_EVENT, callback);
   }
 });
@@ -102,6 +102,7 @@ AppDispatcher.register(action => {
     case AppConstants.CONTROLPANEL_TOGGLECARDTITLEVISIBILITY:
       state.isCardDescVisible = action.bool;
       ControlPanelStore.emitChange();
+      break;
 
     default:
       /* do nothing */

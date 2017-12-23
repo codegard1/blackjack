@@ -57,7 +57,7 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
     return drawn.find(item => item.id === playerId);
   },
   getHand: function(playerId) {
-    if (playerHands.length > 0) {
+    if (playerHands && playerHands.length > 0) {
       const ret = playerHands.find(item => item.id === playerId);
       if (ret) {
         return ret.hand;
