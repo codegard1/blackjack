@@ -1,32 +1,33 @@
 {
-    "env": {
-        "browser": true,
-        "commonjs": true,
-        "es6": true,
-        "node": true
-    },
-    "parserOptions": {
-        "ecmaFeatures": {
-            "jsx": true
-        },
-        "sourceType": "module"
-    },
-    "rules": {
-        "no-const-assign": "warn",
-        "no-this-before-super": "warn",
-        "no-undef": "error",
-        "no-unreachable": "error",
-        "no-unused-vars": "error",
-        "constructor-super": "warn",
-        "valid-typeof": "warn"
-    },
-    "root": true,
+  "env": {
+    "browser": true,
+    "commonjs": true,
+    "es6": true,
+    "node": true
+  },
+  "parser": "babel-eslint",
+  "plugins": [
+    "react",
+    "jsx-a11y",
+    "import"
+  ],
+  "parserOptions": {
     "ecmaFeatures": {
-        "arrowFunctions": true,
-        "classes": true,
-        "experimentalObjectRestSpread": true,
-        "templateStrings": true,
-        "defaultParams": true,
-        "jsx": true
-    }
+      "jsx": true
+    },
+    "sourceType": "module"
+  },
+  "rules": {
+    "constructor-super": "warn",
+    "linebreak-style": "off",
+    "no-const-assign": "warn",
+    "no-this-before-super": "warn",
+    "no-undef": "warn",
+    "no-underscore-dangle": "off",
+    "no-unreachable": "warn",
+    "no-unused-vars": "off",
+    "react/jsx-indent-props": "off",
+    "react/no-multi-comp": "off",
+    "valid-typeof": "warn"
+  }
 }
