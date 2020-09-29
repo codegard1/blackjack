@@ -12,7 +12,6 @@ import Table from "./components/blackjack/Table";
 /* Initialize Fabric Icons */
 initializeIcons();
 
-
 export default class App extends BaseComponent {
   constructor() {
     super();
@@ -34,10 +33,6 @@ export default class App extends BaseComponent {
   _onShowPanel = () => {
     this.setState({ isNavOpen: true });
   };
-
-  _onNavLinkClicked(item) {
-    this.setState({ page: item.key });
-  }
 
   render() {
     return (
