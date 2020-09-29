@@ -1,22 +1,12 @@
-.DeckContainer {
-  margin: auto 0;
-  display: block;
-  /* padding: 0 2em 2em 2em; */
-  /*width: 100%;*/
-  /*border: 3px solid blueviolet;*/
-}
-
-.deck {
-  /*border: 2px dotted gold;*/
-  width: 100%;
-}
-
-.handValue {
-  float: left;
-  margin-left: 10px;
-  margin-right: 10px;
-}
-
-#PotDisplay {
-  margin: 1em;
+div#Table {
+  background-color: ghostwhite;
+  border-radius: 1.5em;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.4);
+  box-sizing: content-box;
+  height: 100%;
+  margin: 0 auto;
+  padding: 1em;
+  min-height: 200px;
+  min-width: 350px;
+  width: 95%;
 }

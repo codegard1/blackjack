@@ -1,8 +1,12 @@
+import "office-ui-fabric-react/dist/css/fabric.min.css";
+import "./Table.css";
 import React from "react";
+import { Fabric } from "office-ui-fabric-react/lib/Fabric";
 import {
   MessageBar,
   MessageBarType
 } from "office-ui-fabric-react/lib/MessageBar";
+import { initializeIcons } from "@uifabric/icons";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
@@ -18,7 +22,10 @@ import { DeckStore } from "./stores/DeckStore";
 import ControlPanelStore from "./stores/ControlPanelStore";
 import AppActions from "./actions/AppActions";
 
-class Table extends BaseComponent {
+/* Initialize Fabric Icons */
+initializeIcons();
+
+export default class Table extends BaseComponent {
   constructor() {
     super();
     this.state = {
@@ -107,65 +114,65 @@ class Table extends BaseComponent {
     ));
 
     return (
-      <div id="Table">
-        <div className="ms-Grid">
-          <div className="ms-Grid-row">
-            <div className="ms-Grid-col ms-sm12">
-              {this.state.isMessageBarVisible && (
-                <MessageBar
-                  messageBarType={this.state.messageBarDefinition.type}
-                  isMultiline={this.state.messageBarDefinition.isMultiLine}
-                  onDismiss={AppActions.hideMessageBar}
-                >
-                  {this.state.messageBarDefinition.text}
-                </MessageBar>
-              )}
+      <Fabric>
+        <div id="Table">
+          <div className="ms-Grid ms-fadeIn400">
+            <div className="ms-Grid-row">
+              <div className="ms-Grid-col ms-sm12">
+                {this.state.isMessageBarVisible && (
+                  <MessageBar
+                    messageBarType={this.state.messageBarDefinition.type}
+                    isMultiline={this.state.messageBarDefinition.isMultiLine}
+                    onDismiss={AppActions.hideMessageBar}
+                  >
+                    {this.state.messageBarDefinition.text}
+                  </MessageBar>
+                )}
+              </div>
             </div>
-          </div>
 
-          <PotDisplay pot={this.state.pot} />
+            <PotDisplay pot={this.state.pot} />
 
-          <div className="ms-Grid-row">
-            <div className="ms-Grid-col ms-sm6">{playersArray[0]}</div>
-            <div className="ms-Grid-col ms-sm6">{playersArray[1]}</div>
-          </div>
-
-          <div className="ms-Grid-row">
-            <div className="ms-Grid-col ms-sm12">
-              {this.state.isDeckVisible && (
-                <DeckContainer
-                  deck={this.state.deck.cards}
-                  title="Deck"
-                  hidden={false}
-                  isSelectable={false}
-                />
-              )}
-
-              {this.state.isDrawnVisible && (
-                <DeckContainer
-                  deck={this.state.drawn}
-                  title="Drawn Cards"
-                  hidden={false}
-                  isSelectable={false}
-                />
-              )}
-
-              {this.state.isSelectedVisible && (
-                <DeckContainer
-                  deck={this.state.selected}
-                  title="Selected Cards"
-                  hidden={false}
-                  isSelectable={false}
-                />
-              )}
+            <div className="ms-Grid-row">
+              <div className="ms-Grid-col ms-sm6">{playersArray[0]}</div>
+              <div className="ms-Grid-col ms-sm6">{playersArray[1]}</div>
             </div>
-          </div>
 
-          <OptionsPanel gameStatus={this.state.gameStatus} />
+            <div className="ms-Grid-row">
+              <div className="ms-Grid-col ms-sm12">
+                {this.state.isDeckVisible && (
+                  <DeckContainer
+                    deck={this.state.deck.cards}
+                    title="Deck"
+                    hidden={false}
+                    isSelectable={false}
+                  />
+                )}
+
+                {this.state.isDrawnVisible && (
+                  <DeckContainer
+                    deck={this.state.drawn}
+                    title="Drawn Cards"
+                    hidden={false}
+                    isSelectable={false}
+                  />
+                )}
+
+                {this.state.isSelectedVisible && (
+                  <DeckContainer
+                    deck={this.state.selected}
+                    title="Selected Cards"
+                    hidden={false}
+                    isSelectable={false}
+                  />
+                )}
+              </div>
+            </div>
+
+            <OptionsPanel gameStatus={this.state.gameStatus} />
+          </div>
         </div>
-      </div>
+      </Fabric>
     );
   }
 }
-
-export default Table;

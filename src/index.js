@@ -1,5 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './App';
+import Table from "./components/blackjack/Table";
 
-ReactDOM.render(<App />, document.getElementById('root'));
+ReactDOM.render(<Table />, document.getElementById('root'));
