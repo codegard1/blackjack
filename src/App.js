@@ -1,5 +1,4 @@
 import "./App.css";
-import "animate.css";
 import "office-ui-fabric-react/dist/css/fabric.min.css";
 import { Fabric } from "office-ui-fabric-react/lib/Fabric";
 import { initializeIcons } from "@uifabric/icons";
