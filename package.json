@@ -7,7 +7,7 @@
     "type": "git",
     "url": "git://github.com/codegard1/blackjack"
   },
-  "main": "./src/components.js",
+  "main": "./src/index.js",
   "private": true,
   "dependencies": {
     "@uifabric/icons": "^5.8.0",
