@@ -6,8 +6,7 @@ import { CommandButton } from "office-ui-fabric-react/lib/Button";
 
 /* custom stuff */
 import "./OptionsPanel.css";
-import BaseComponent from "./BaseComponent";
-
+import BaseComponent from "../BaseComponent";
 /* Flux */
 import AppActions from "./actions/AppActions";
 import ControlPanelStore from "./stores/ControlPanelStore";

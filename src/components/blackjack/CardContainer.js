@@ -1,7 +1,7 @@
 import React from "react";
 import * as T from "prop-types";
 
-import BaseComponent from "./BaseComponent";
+import BaseComponent from "../BaseComponent";
 import "./CardContainer.css";
 
 class CardContainer extends BaseComponent {

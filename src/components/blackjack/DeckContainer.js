@@ -3,7 +3,7 @@ import * as T from "prop-types";
 import Masonry from "react-masonry-component";
 
 /* custom stuff */
-import BaseComponent from "./BaseComponent";
+import BaseComponent from "../BaseComponent";
 import "./DeckContainer.css";
 import CardContainer from "./CardContainer";
 
