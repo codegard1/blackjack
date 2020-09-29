@@ -5,9 +5,9 @@ import {
 } from "office-ui-fabric-react/lib/MessageBar";
 
 /* custom stuff */
+import BaseComponent from "../BaseComponent";
 import PlayerContainer from "./PlayerContainer";
 import DeckContainer from "./DeckContainer";
-import BaseComponent from "./BaseComponent";
 import OptionsPanel from "./OptionsPanel";
 import { defaultPlayers } from "./definitions";
 import PotDisplay from "./PotDisplay";

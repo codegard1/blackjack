@@ -1,6 +1,6 @@
 import React from "react";
 import * as T from "prop-types";
-import BaseComponent from "./BaseComponent";
+import BaseComponent from "../BaseComponent";
 
 class PotDisplay extends BaseComponent {
   static propTypes = {

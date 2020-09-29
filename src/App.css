@@ -1,44 +1,26 @@
-div#App {
-  width: 100vw;
-  padding:0;
-  margin: 0;
+body {
+  background: linear-gradient(63deg, teal 23%, transparent 23%) 7px 0, linear-gradient(63deg, transparent 74%, teal 78%), linear-gradient(63deg, transparent 34%, teal 38%, teal 58%, transparent 62%), #333;
+  background-size: 16px 48px;
+  margin: 16px;
 }
 
-div#Table {
+div#root {
+  /* border: 1px solid salmon; */
+  height: 100%;
+  margin: 0 auto;
+  /* overflow: hidden; */
   width: 100%;
-  /*height: 100%;*/
-  padding: 0;
-  margin: 0;
-  /*border:2px solid salmon;*/
 }
 
-.DeckContainer {
-  margin: auto 0;
-  display: block;
-  padding: 0 2em 2em 2em;
-  /*width: 100%;*/
-  /*border: 3px solid blueviolet;*/
-}
-
-.deck {
-  /*border: 2px dotted gold;*/
-  /*width: 100%;*/
-}
-
-.handValue {
-  float: left;
-  margin-left: 10px;
-  margin-right: 10px;
-}
-
-div#StatusPanel {
+div#FirstDiv {
+  background-color: ghostwhite;
+  border-radius: 1.5em;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.4);
+  box-sizing: content-box;
+  height: 100%;
+  margin: 0 auto;
   padding: 1em;
-}
-
-.ms-Grid-col {
-  /*border:1px solid lightgreen;*/
-}
-
-#PotDisplay {
-  margin: 1em;
+  min-height: 200px;
+  min-width: 350px;
+  width: 98%;
 }

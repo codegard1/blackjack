@@ -3,7 +3,7 @@ import * as T from "prop-types";
 import { Callout, DirectionalHint } from "office-ui-fabric-react/lib/Callout";
 
 /* custom stuff */
-import BaseComponent from "./BaseComponent";
+import BaseComponent from "../BaseComponent";
 import DeckContainer from "./DeckContainer";
 import ControlPanel from "./ControlPanel";
 import "./PlayerContainer.css";
