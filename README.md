@@ -3,6 +3,13 @@
 ### Introduction
 This project is an attempt to build a game of blackjack from scratch, as a way to practice implementing some of the web technologies I've been using at work. 
 
+### How to Play
+1. Clone the repo 
+2. `cd` into the repo directory
+3. Run `npm install`
+4. Run `npm start`
+5. Navigate to `localhost:3000`
+
 #### Technologies Used
 * [React](https://facebook.github.io/react/)
 * [Office UI Fabric](https://dev.office.com/fabric)@2.34
