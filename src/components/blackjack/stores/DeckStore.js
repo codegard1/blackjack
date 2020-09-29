@@ -3,7 +3,6 @@ import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
 import Shuffle from "./Shuffle";
-// import { log } from "../utils";
 import { PlayerHand } from "./PlayerHand";
 import PlayingCard from "./PlayingCard";
 
