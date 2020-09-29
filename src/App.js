@@ -23,7 +23,7 @@ export default class App extends BaseComponent {
     };
 
     /* bind private methods */
-    this._bind("_onClosePanel", "_onShowPanel", "_onNavLinkClicked");
+    this._bind("_onClosePanel", "_onShowPanel");
   }
 
   _onClosePanel = () => {
