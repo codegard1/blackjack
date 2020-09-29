@@ -1,8 +1,12 @@
 // Place your settings in this file to overwrite default and user settings.
 {
-    "files.associations": {
-        "*.js": "javascriptreact"
-    },
-    "eslint.enable": true,
-    "emmet.showAbbreviationSuggestions": false
+  "files.associations": {
+      "*.js": "javascriptreact"
+  },
+  "search.exclude": {
+      "**/node_modules": true,
+      "**/bower_components": true,
+      "**/build": true
+  },
+  "emmet.showAbbreviationSuggestions": false
 }
