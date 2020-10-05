@@ -22,9 +22,7 @@
     "react-masonry-component": "^6.2.1"
   },
   "devDependencies": {
-    "babel-eslint": "^7.2.3",
     "eslint": "^4.19.1",
-    "eslint-config-airbnb": "^15.1.0",
     "eslint-config-defaults": "^9.0.0",
     "eslint-config-react-app": "^2.1.0",
     "eslint-plugin-flowtype": "^2.50.3",
