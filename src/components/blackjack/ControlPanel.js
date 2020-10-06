@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import * as T from "prop-types";
-import { CommandBar } from "office-ui-fabric-react/lib/CommandBar";
-import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
+import { CommandBar, MessageBarType } from "@fluentui/react";
 
 /* Flux */
 import AppActions from "./actions/AppActions";
@@ -159,15 +158,15 @@ class ControlPanel extends Component {
     const farItems = npcFlag
       ? []
       : [
-          {
-            key: "options",
-            name: "",
-            ariaLabel: "Options",
-            iconProps: { iconName: "Settings" },
-            disabled: npcFlag,
-            onClick: AppActions.showOptionsPanel
-          }
-        ];
+        {
+          key: "options",
+          name: "",
+          ariaLabel: "Options",
+          iconProps: { iconName: "Settings" },
+          disabled: npcFlag,
+          onClick: AppActions.showOptionsPanel
+        }
+      ];
     // const overFlowItems = selectedFlag ? [].concat(putMenu, drawMenu) : [];
     const overFlowItems = [];
 
