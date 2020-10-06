@@ -1,6 +1,6 @@
 import React from "react";
 import * as T from "prop-types";
-import { Callout, DirectionalHint } from "office-ui-fabric-react/lib/Callout";
+import { Stack, Callout, DirectionalHint, Text, Icon, DefaultEffects } from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
@@ -191,33 +191,31 @@ export class PlayerContainer extends BaseComponent {
     const bank = this.state.bank;
     const title = this.state.title;
     const titleBar = !this.state.player.empty ? (
-      <p className="player-titlebar ms-font-xl">
+      <Text block nowrap variant="large">
         {`${title} ($${bank})  `}
-        <i
-          className="ms-Icon ms-Icon--Info"
-          onClick={this._toggleStatusCallout}
+        <Icon iconName="Info" onClick={this._toggleStatusCallout}
           ref={calloutTarget => (this._statusCalloutTarget = calloutTarget)}
         />
-      </p>
+      </Text>
     ) : (
-      <span>{title}</span>
-    );
+        <Text block nowrap variant="large">{title}</Text>
+      );
 
     /* style PlayerContainer conditionally */
-    let style = "PlayerContainer ";
+    let playerContainerClass = "PlayerContainer ";
     if (!this.state.player.empty && this.state.player.turn) {
-      style += "selected ";
+      playerContainerClass += "selected ";
     }
     if (
       !this.state.player.empty &&
       this.state.player.isStaying &&
       !this.state.player.turn
     ) {
-      style += "staying ";
+      playerContainerClass += "staying ";
     }
 
     return (
-      <div className={style}>
+      <div className={playerContainerClass}>
         {titleBar}
         {this.state.isStatusCalloutVisible && (
           <Callout
@@ -301,9 +299,8 @@ class StatusDisplay extends BaseComponent {
     for (let key in this.props.player) {
       if (this.props.player.hasOwnProperty(key)) {
         playerInfo.push(
-          <li key={`statusdisplay-${key}`}>{`${key}: ${
-            this.props.player[key]
-          }`}</li>
+          <li key={`statusdisplay-${key}`}>{`${key}: ${this.props.player[key]
+            }`}</li>
         );
       }
     }
@@ -311,9 +308,8 @@ class StatusDisplay extends BaseComponent {
     for (let key in this.props.stats) {
       if (this.props.stats.hasOwnProperty(key)) {
         playerStats.push(
-          <li key={`statusdisplay-${key}`}>{`${key}: ${
-            this.props.stats[key]
-          }`}</li>
+          <li key={`statusdisplay-${key}`}>{`${key}: ${this.props.stats[key]
+            }`}</li>
         );
       }
     }
