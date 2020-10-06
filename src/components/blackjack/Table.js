@@ -117,7 +117,7 @@ export default class Table extends BaseComponent {
     }
 
     return (
-      <Stack vertical verticalAlign="start" tokens={{ childrenGap: 5, padding: 10 }} style={tableStyles}>
+      <Stack vertical verticalAlign="start" wrap tokens={{ childrenGap: 5, padding: 10 }} style={tableStyles}>
         {this.state.isMessageBarVisible && (
           <MessageBar
             messageBarType={this.state.messageBarDefinition.type}
@@ -130,11 +130,11 @@ export default class Table extends BaseComponent {
 
         <PotDisplay pot={this.state.pot} />
 
-        <Stack horizontal tokens={{ childrenGap: 5, padding: 10 }}>
-          <Stack.Item grow>
+        <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
+          <Stack.Item align="stretch" verticalAlign="top" grow={2}>
             {playersArray[0]}
           </Stack.Item>
-          <Stack.Item grow>
+          <Stack.Item align="stretch" grow={2}>
             {playersArray[1]}
           </Stack.Item>
         </Stack>

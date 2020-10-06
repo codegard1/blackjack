@@ -1,6 +1,6 @@
 import React from "react";
 import * as T from "prop-types";
-import { Stack, Callout, DirectionalHint, Text, Icon, DefaultEffects } from "@fluentui/react";
+import { Stack, Callout, DirectionalHint, Text, Icon } from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
@@ -191,12 +191,17 @@ export class PlayerContainer extends BaseComponent {
     const bank = this.state.bank;
     const title = this.state.title;
     const titleBar = !this.state.player.empty ? (
-      <Text block nowrap variant="large">
-        {`${title} ($${bank})  `}
-        <Icon iconName="Info" onClick={this._toggleStatusCallout}
-          ref={calloutTarget => (this._statusCalloutTarget = calloutTarget)}
-        />
-      </Text>
+      <Stack horizontal horizontalAlign="space-between" style={{ padding: '5px' }}>
+        <Stack.Item align="start">
+          <Text block nowrap variant="large">
+            {`${title} ($${bank})  `}
+          </Text>
+        </Stack.Item>
+        <Stack.Item align="center">
+          <Icon iconName="Info" onClick={this._toggleStatusCallout}
+            ref={calloutTarget => (this._statusCalloutTarget = calloutTarget)}
+          /></Stack.Item>
+      </Stack>
     ) : (
         <Text block nowrap variant="large">{title}</Text>
       );

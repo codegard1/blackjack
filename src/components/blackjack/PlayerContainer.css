@@ -1,5 +1,6 @@
 /* container for the player's cards and control panel */
 .PlayerContainer {
+  width:100%;
   background-color: whitesmoke;
   border-radius: 0.25em;
   transition: all 300ms ease-in;
