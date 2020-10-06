@@ -1,12 +1,10 @@
 import React from "react";
 import * as T from "prop-types";
-import { Panel, PanelType } from "office-ui-fabric-react/lib/Panel";
-import { Toggle } from "office-ui-fabric-react/lib/Toggle";
-import { CommandButton } from "office-ui-fabric-react/lib/Button";
+import { Stack, Panel, PanelType, Toggle, CommandButton } from "@fluentui/react";
 
 /* custom stuff */
-import "./OptionsPanel.css";
 import BaseComponent from "../BaseComponent";
+
 /* Flux */
 import AppActions from "./actions/AppActions";
 import ControlPanelStore from "./stores/ControlPanelStore";
@@ -68,11 +66,11 @@ class OptionsPanel extends BaseComponent {
         id="OptionsPanel"
         isOpen={this.state.isOptionsPanelVisible}
         onDismiss={AppActions.hideOptionsPanel}
-        type={PanelType.smallFixedNear}
+        type={PanelType.smallFixedFar}
         headerText="Options"
         isLightDismiss
       >
-        <div id="ButtonColumn">
+        <Stack vertical verticalAlign="start">
           <CommandButton
             iconProps={{ iconName: "StackIndicator" }}
             disabled={false}
@@ -156,7 +154,7 @@ class OptionsPanel extends BaseComponent {
             offText="Off"
             onChanged={checked => AppActions.toggleCardTitleVisibility(checked)}
           />
-        </div>
+        </Stack>
       </Panel>
     );
   }

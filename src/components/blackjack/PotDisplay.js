@@ -1,8 +1,8 @@
 import React from "react";
 import * as T from "prop-types";
-import BaseComponent from "../BaseComponent";
+import { Text } from '@fluentui/react';
 
-class PotDisplay extends BaseComponent {
+export default class PotDisplay extends React.Component {
   static propTypes = {
     pot: T.number.isRequired
   };
@@ -13,15 +13,9 @@ class PotDisplay extends BaseComponent {
 
   render() {
     return (
-      <div className="ms-Grid-row">
-        <div className="ms-Grid-col ms-s12">
-          <p className="ms-font-xl" id="PotDisplay">
-            Pot: ${this.props.pot}
-          </p>
-        </div>
-      </div>
+      <Text block nowrap variant="xLarge">
+        Pot: ${this.props.pot}
+      </Text>
     );
   }
 }
-
-export default PotDisplay;
