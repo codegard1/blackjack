@@ -108,7 +108,7 @@ export default class Table extends BaseComponent {
       <PlayerContainer key={`Player-${player.id}`} playerId={player.id} />
     ));
 
-    // Ad
+    // Ad-hod styles for the Table
     const tableStyles = {
       boxShadow: DefaultEffects.elevation16,
       borderRadius: DefaultEffects.roundedCorner6,
