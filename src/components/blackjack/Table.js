@@ -2,6 +2,7 @@ import React from "react";
 import { Stack, MessageBar, MessageBarType, DefaultEffects } from '@fluentui/react';
 import { MotionAnimations } from '@fluentui/theme';
 import { initializeIcons } from "@uifabric/icons";
+import { get, set } from 'idb-keyval';
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
@@ -19,6 +20,18 @@ import AppActions from "./actions/AppActions";
 
 /* Initialize Fabric Icons */
 initializeIcons();
+
+// Check for saved player data
+async function getSavedData() {
+  let playersData = await get('players');
+  if (undefined === playersData) {
+    console.log('No player data found. Using defaults instead.');
+    await set('players', defaultPlayers);
+  } else {
+    console.log('Loaded players data.');
+    console.log(JSON.stringify(playersData));
+  }
+}
 
 export default class Table extends BaseComponent {
   constructor() {
@@ -60,6 +73,8 @@ export default class Table extends BaseComponent {
     GameStore.addChangeListener(this.onChangeGame);
     DeckStore.addChangeListener(this.onChangeDeck);
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
+
+    getSavedData();
 
     /* start a new game with these players */
     AppActions.newGame(defaultPlayers);
