@@ -5,7 +5,7 @@
   "version": "0.8.1",
   "repository": {
     "type": "git",
-    "url": "git://github.com/codegard1/blackjack"
+    "url": "https://github.com/codegard1/blackjack"
   },
   "main": "./src/index.js",
   "private": true,
