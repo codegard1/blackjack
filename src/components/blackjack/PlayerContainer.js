@@ -26,7 +26,7 @@ export class PlayerContainer extends BaseComponent {
       gameStatus: 0,
       gameStatusFlag: true,
       handValue: { aceAsEleven: 0, aceAsOne: 0 },
-      id: -1,
+      id: this.props.playerId,
       isCardDescVisible: false,
       isDealerHandVisible: true,
       isDeckCalloutEnabled: true,
@@ -66,12 +66,7 @@ export class PlayerContainer extends BaseComponent {
   static propTypes = {
     playerId: T.number.isRequired
   };
-
-  componentWillMount() {
-    /* everything else depends on this value being set initially */
-    this.setState({ id: this.props.playerId });
-  }
-
+  
   componentDidMount() {
     /* callback when a change emits from GameStore*/
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
