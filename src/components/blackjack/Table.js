@@ -2,7 +2,6 @@ import React from "react";
 import { Stack, MessageBar, MessageBarType, DefaultEffects } from '@fluentui/react';
 import { MotionAnimations } from '@fluentui/theme';
 import { initializeIcons } from "@uifabric/icons";
-import { get, set, keys } from 'idb-keyval';
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
@@ -11,8 +10,6 @@ import DeckContainer from "./DeckContainer";
 import OptionsPanel from "./OptionsPanel";
 import { defaultPlayers } from "./definitions";
 import PotDisplay from "./PotDisplay";
-import UserForm from "./UserForm";
-import DebugDisplay from "./DebugDisplay";
 
 /* flux */
 import { GameStore } from "./stores/GameStore";
@@ -52,30 +49,11 @@ export default class Table extends BaseComponent {
         text: "",
         isMultiLine: false
       },
-      debugMessage: "null",
       playersData: undefined
     };
 
     //Flux helpers
     this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame", "getSavedData");
-  }
-  // Check for saved player data
-  // TODO: integrate this into Flux 
-  getSavedData() {
-    get('players').then((d) => {
-      console.log(`Loaded players data.`);
-      this.setState({ debugMessage: JSON.stringify(d) })
-    })
-      .catch(err => {
-        console.log('No player data found. Using defaults instead.');
-        this.setState({ debugMessage: `No player data found. ${err}` });
-        set('players', defaultPlayers)
-          .then(() => this.setState({ playersData: defaultPlayers }))
-          .catch(err => {
-            console.log(`Failed to load data. ${err}`);
-            this.setState({ debugMessage: err, playersData: defaultPlayers });
-          });
-      });
   }
 
   componentDidMount() {
@@ -83,9 +61,6 @@ export default class Table extends BaseComponent {
     GameStore.addChangeListener(this.onChangeGame);
     DeckStore.addChangeListener(this.onChangeDeck);
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
-
-    /* Get saved data from the Internal DB */
-    this.getSavedData();
 
     /* start a new game with these players */
     AppActions.newGame(defaultPlayers);
@@ -194,11 +169,6 @@ export default class Table extends BaseComponent {
         )}
 
         <OptionsPanel gameStatus={this.state.gameStatus} />
-
-        <Stack horizontal horizontalAlign="space-between">
-          <UserForm />
-          <DebugDisplay textContent={this.state.debugMessage} />
-        </Stack>
 
       </Stack>
     );
