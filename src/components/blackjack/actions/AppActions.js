@@ -202,6 +202,13 @@ const AppActions = {
       actionType: AppConstants.GAME_NEWROUND
     });
     // console.log('actionType: AppConstants.GAME_NEWROUND');
+  },
+
+  selectPlayer(key) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.CONTROLPANEL_SELECTPLAYER,
+      key
+    });
   }
 };
 
