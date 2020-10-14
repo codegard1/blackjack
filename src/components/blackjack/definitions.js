@@ -7,3 +7,5 @@ export const defaultPlayers = [
     { id: 2, title: "Dealer", isNPC: true },
     { id: 3, title: "John", isNPC: true },
 ];
+
+export const defaultSelectedPlayerKey = "chris";
