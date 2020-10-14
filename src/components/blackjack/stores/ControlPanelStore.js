@@ -54,27 +54,38 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
   // Check for saved player data
   async getSavedData() {
 
+    // Get IDB values
     let players = await get('players');
     let selectedPlayerKey = await get('selectedPlayerKey');
+    let isCardDescVisible = await get('isCardDescVisible');
+    let isDealerHandVisible = await get('isDealerHandVisible');
+    let isDeckVisible = await get('isDeckVisible');
+    let isDrawnVisible = await get('isDrawnVisible');
+    let isHandValueVisible = await get('isHandValueVisible');
+    let isSelectedVisible = await get('isSelectedVisible');
 
+    // Log IDB Values
     console.log(`players: ${JSON.stringify(players)}`);
     console.log(`selectedPlayerKey: ${selectedPlayerKey}`);
+    console.log(`isCardDescVisible: ${isCardDescVisible}`);
+    console.log(`isDealerHandVisible: ${isDealerHandVisible}`);
+    console.log(`isDeckVisible: ${isDeckVisible}`);
+    console.log(`isDrawnVisible: ${isDrawnVisible}`);
+    console.log(`isHandValueVisible: ${isHandValueVisible}`);
+    console.log(`isSelectedVisible: ${isSelectedVisible}`);
 
     // If no saved data is located
-    if (players === undefined) {
-      // Set saved data from default 
-      await set('players', defaultPlayers);
-    } else {
-      state.players = players
-    }
+    if (players) { state.players = players }
+    if (selectedPlayerKey) { state.selectedPlayerKey = selectedPlayerKey }
+    if (isCardDescVisible) { state.isCardDescVisible = isCardDescVisible }
+    if (isDealerHandVisible) { state.isDealerHandVisible = isDealerHandVisible }
+    if (isDeckVisible) { state.isDeckVisible = isDeckVisible }
+    if (isDrawnVisible) { state.isDrawnVisible = isDrawnVisible }
+    if (isHandValueVisible) { state.isHandValueVisible = isHandValueVisible }
+    if (isSelectedVisible) { state.isSelectedVisible = isSelectedVisible }
 
-    // If no saved data is located
-    if (selectedPlayerKey === undefined) {
-      // Set saved data from default 
-      await set('selectedPlayerKey', defaultSelectedPlayerKey);
-    } else {
-      state.selectedPlayerKey = selectedPlayerKey;
-    }
+    // Emit change to update the UI
+    this.emitChange();
   },
   async updateSavedData(...keys) {
     keys.forEach(key => {
@@ -118,31 +129,37 @@ AppDispatcher.register(action => {
 
     case AppConstants.CONTROLPANEL_TOGGLEDECKVISIBILITY:
       state.isDeckVisible = action.bool;
+      ControlPanelStore.updateSavedData("isDeckVisible");
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEDRAWNVISIBILITY:
       state.isDrawnVisible = action.bool;
+      ControlPanelStore.updateSavedData("isDrawnVisible");
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLESELECTEDVISIBLITY:
       state.isSelectedVisible = action.bool;
+      ControlPanelStore.updateSavedData("isSelectedVisible");
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEHANDVALUEVISIBILITY:
       state.isHandValueVisible = action.bool;
+      ControlPanelStore.updateSavedData("isHandValueVisible");
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEDEALERHANDVISIBILITY:
       state.isDealerHandVisible = action.bool;
+      ControlPanelStore.updateSavedData("isDealerHandVisible");
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLECARDTITLEVISIBILITY:
       state.isCardDescVisible = action.bool;
+      ControlPanelStore.updateSavedData("isCardDescVisible");
       ControlPanelStore.emitChange();
       break;
 
