@@ -14,7 +14,7 @@ class DeckContainer extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = {
-      isDeckVisible: true
+      isDeckVisible: !this.props.hidden
     };
 
     /* bind private methods */
@@ -37,12 +37,6 @@ class DeckContainer extends BaseComponent {
     title: T.string.isRequired, // props
     turnCount: T.number, // GameStore
   };
-
-  componentWillMount() {
-    this.setState({
-      isDeckVisible: !this.props.hidden
-    });
-  }
 
   _toggleDeck() {
     this.setState({ isDeckVisible: !this.state.isDeckVisible });
