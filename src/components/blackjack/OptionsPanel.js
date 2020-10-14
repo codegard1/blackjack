@@ -1,6 +1,6 @@
 import React from "react";
 import * as T from "prop-types";
-import { Stack, Panel, PanelType, Toggle, CommandButton, Dropdown, MessageBarType } from "@fluentui/react";
+import { Stack, Panel, PanelType, Toggle, CommandButton, Dropdown, MessageBarType, TextField, DefaultButton } from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
@@ -30,10 +30,14 @@ class OptionsPanel extends BaseComponent {
         type: MessageBarType.info,
         text: "",
         isMultiLine: false
-      }
+      },
+      // The below state variables are not shared with ControlPanelStore
+      newPlayerFieldValue: "",
+      isNewPlayerFieldEmpty: true,
+      isNewPlayerSaveButtonDisabled: false,
     };
 
-    this._bind("newDeal", "onChangeControlPanel", "resetGame");
+    this._bind("newDeal", "onChangeControlPanel", "resetGame", "onClickNewPlayerSaveButton");
   }
 
   static propTypes = {
@@ -70,6 +74,16 @@ class OptionsPanel extends BaseComponent {
     this.setState({ ...newState });
   }
 
+  // save new player
+  onClickNewPlayerSaveButton() {
+    const newPlayerName = this.state.newPlayerFieldValue;
+    AppActions.createNewPlayer(newPlayerName);
+    this.setState({
+      newPlayerFieldValue: "",
+      isNewPlayerSaveButtonDisabled: true
+    });
+  }
+
   render() {
 
     const playerSelectDropdownOptions = this.state.players.map(v => { return { key: v.title.toLowerCase(), text: v.title } });
@@ -83,7 +97,7 @@ class OptionsPanel extends BaseComponent {
         headerText="Options"
         isLightDismiss
       >
-        <Stack vertical verticalAlign="start">
+        <Stack vertical verticalAlign="start" tokens={{ childrenGap: 5 }}>
           <CommandButton
             iconProps={{ iconName: "StackIndicator" }}
             disabled={false}
@@ -169,6 +183,24 @@ class OptionsPanel extends BaseComponent {
             selectedKey={this.state.selectedPlayerKey}
             onChange={(e, option) => AppActions.selectPlayer(option.key)}
           />
+
+          <Stack tokens={{ padding: 10, childrenGap: 10 }}>
+            <Stack.Item shrink>
+              <TextField
+                label="Create new player"
+                ariaLabel="Create new player"
+                text={this.state.newPlayerFieldValue}
+                onChange={(e, newValue) => this.setState({ newPlayerFieldValue: newValue })}
+              />
+            </Stack.Item>
+            <Stack.Item shrink>
+              <DefaultButton
+                text="Save"
+                disabled={this.state.isNewPlayerSaveButtonDisabled}
+                onClick={e => this.onClickNewPlayerSaveButton()}
+              />
+            </Stack.Item>
+          </Stack>
 
         </Stack>
       </Panel>

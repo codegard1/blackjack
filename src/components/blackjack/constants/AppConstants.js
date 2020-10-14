@@ -39,9 +39,10 @@ export default keyMirror({
   CONTROLPANEL_TOGGLEHANDVALUEVISIBILITY: null,
   CONTROLPANEL_TOGGLEDEALERHANDVISIBILITY: null,
   CONTROLPANEL_TOGGLECARDTITLEVISIBILITY: null,
-  
-  // following line is experimental
-  CONTROLPANEL_SELECTPLAYER:null,
+
+  // following lines are experimental
+  CONTROLPANEL_SELECTPLAYER: null,
+  CONTROLPANEL_NEWPLAYER: null,
 
   /* StatsStore */
   STATS_NEW: null,

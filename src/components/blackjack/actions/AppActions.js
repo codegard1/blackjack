@@ -209,6 +209,12 @@ const AppActions = {
       actionType: AppConstants.CONTROLPANEL_SELECTPLAYER,
       key
     });
+  },
+  createNewPlayer(name) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.CONTROLPANEL_NEWPLAYER,
+      name
+    });
   }
 };
 

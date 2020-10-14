@@ -169,6 +169,18 @@ AppDispatcher.register(action => {
       ControlPanelStore.emitChange();
       break;
 
+    // Add a new player to the players array
+    case AppConstants.CONTROLPANEL_NEWPLAYER:
+      const newPlayerId = (state.players[state.players.length - 1].id) + 1;
+      state.players.push({
+        id: newPlayerId,
+        title: action.name,
+        isNPC: false
+      });
+      ControlPanelStore.updateSavedData("players");
+      ControlPanelStore.emitChange();
+      break;
+
     default:
       /* do nothing */
       break;
