@@ -1,9 +1,10 @@
 import React from "react";
 import * as T from "prop-types";
-import { Stack, Panel, PanelType, Toggle, CommandButton } from "@fluentui/react";
+import { Stack, Panel, PanelType, Toggle, CommandButton, Dropdown, MessageBarType } from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
+import { defaultPlayers, defaultSelectedPlayerKey } from "./definitions";
 
 /* Flux */
 import AppActions from "./actions/AppActions";
@@ -23,6 +24,13 @@ class OptionsPanel extends BaseComponent {
       isMessageBarVisible: false,
       isOptionsPanelVisible: false,
       isSelectedVisible: false,
+      players: defaultPlayers,
+      selectedPlayerKey: defaultSelectedPlayerKey,
+      messageBarDefinition: {
+        type: MessageBarType.info,
+        text: "",
+        isMultiLine: false
+      }
     };
 
     this._bind("newDeal", "onChangeControlPanel", "resetGame");
@@ -35,6 +43,7 @@ class OptionsPanel extends BaseComponent {
   componentDidMount() {
     /* add change listener */
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
+    // Get state from the Store
     this.onChangeControlPanel();
   }
 
@@ -55,12 +64,16 @@ class OptionsPanel extends BaseComponent {
     AppActions.hideOptionsPanel();
   }
 
+  // Update the Component State from the Store
   onChangeControlPanel() {
     const newState = ControlPanelStore.getState();
     this.setState({ ...newState });
   }
 
   render() {
+
+    const playerSelectDropdownOptions = this.state.players.map(v => { return { key: v.title.toLowerCase(), text: v.title } });
+
     return (
       <Panel
         id="OptionsPanel"
@@ -101,59 +114,62 @@ class OptionsPanel extends BaseComponent {
           <Toggle
             checked={this.state.isDeckVisible}
             label="Show Deck"
-            onAriaLabel="The deck is visible. Pres to hide it."
-            offAriaLabel="The deck is not visible. Press to show it."
+            ariaLabel="The deck is visible. Pres to hide it."
             onText="On"
             offText="Off"
-            onChanged={checked => AppActions.toggleDeckVisibility(checked)}
+            onChange={(e, checked) => AppActions.toggleDeckVisibility(checked)}
             value
           />
           <Toggle
             checked={this.state.isDrawnVisible}
             label="Show Drawn"
-            onAriaLabel="The Drawn cards are visible. Pres to hide it."
-            offAriaLabel="The Drawn cards are not visible. Press to show it."
+            ariaLabel="The Drawn cards are visible. Pres to hide it."
             onText="On"
             offText="Off"
-            onChanged={checked => AppActions.toggleDrawnVisibility(checked)}
+            onChange={(e, checked) => AppActions.toggleDrawnVisibility(checked)}
           />
           <Toggle
             checked={this.state.isSelectedVisible}
             label="Show Selected"
-            onAriaLabel="The Selected cards are visible. Pres to hide it."
-            offAriaLabel="The Selected cards are not visible. Press to show it."
+            ariaLabel="The Selected cards are visible. Pres to hide it."
             onText="On"
             offText="Off"
-            onChanged={checked => AppActions.toggleSelectedVisibility(checked)}
+            onChange={(e, checked) => AppActions.toggleSelectedVisibility(checked)}
           />
           <Toggle
             checked={this.state.isDealerHandVisible}
             label="Show Dealer Hand"
-            onAriaLabel="The dealer's hand is visible. Press to hide it."
-            offAriaLabel="The dealer's hand is not visible. Press to show it."
+            ariaLabel="The dealer's hand is visible. Press to hide it."
             onText="On"
             offText="Off"
-            onChanged={checked =>
+            onChange={(e, checked) =>
               AppActions.toggleDealerHandVisibility(checked)}
           />
           <Toggle
             checked={this.state.isHandValueVisible}
             label="Show Hand Value"
-            onAriaLabel="The hand value display is visible. Press to hide it."
-            offAriaLabel="The hand value display is hidden. Press to show it."
+            ariaLabel="The hand value display is visible. Press to hide it."
             onText="On"
             offText="Off"
-            onChanged={checked => AppActions.toggleHandValueVisibility(checked)}
+            onChange={(e, checked) => AppActions.toggleHandValueVisibility(checked)}
           />
           <Toggle
             checked={this.state.isCardDescVisible}
             label="Show Card Titles"
-            onAriaLabel="The card titles are visible. Press to hide them."
-            offAriaLabel="The card titles are hidden. Press to show them."
+            ariaLabel="The card titles are visible. Press to hide them."
             onText="On"
             offText="Off"
-            onChanged={checked => AppActions.toggleCardTitleVisibility(checked)}
+            onChange={(e, checked) => AppActions.toggleCardTitleVisibility(checked)}
           />
+
+          <Dropdown
+            placeholder="Select"
+            label="Select existing user"
+            options={playerSelectDropdownOptions}
+            selectedKey={this.state.selectedPlayerKey}
+            onChange={(e, option) => AppActions.selectPlayer(option.key)}
+          />
+
         </Stack>
       </Panel>
     );
