@@ -53,7 +53,7 @@ export default class Table extends BaseComponent {
     };
 
     //Flux helpers
-    this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame", "getSavedData");
+    this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame");
   }
 
   componentDidMount() {
