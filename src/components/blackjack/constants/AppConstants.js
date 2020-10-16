@@ -46,5 +46,9 @@ export default keyMirror({
 
   /* StatsStore */
   STATS_NEW: null,
-  STATS_UPDATE: null
+  STATS_UPDATE: null,
+
+  /* IDStore */
+  IDB_FETCH: null,
+  IDB_SAVE: null,
 });

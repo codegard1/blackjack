@@ -215,7 +215,19 @@ const AppActions = {
       actionType: AppConstants.CONTROLPANEL_NEWPLAYER,
       name
     });
-  }
+  },
+  IDBFetch(key) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.IDB_FETCH,
+      key
+    });
+  },
+  IDBSave(key, payload) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.IDB_SAVE,
+      key, payload
+    });
+  },
 };
 
 export default AppActions;
