@@ -4,7 +4,7 @@ import AppConstants from "../constants/AppConstants";
 
 import { defaultPlayers, defaultSelectedPlayerKey } from "../definitions";
 
-import { get, set } from 'idb-keyval';
+import { get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
 
 /* state variables */
 let state = {

@@ -6,7 +6,7 @@ import { defaultPlayers, defaultSelectedPlayerKey } from "../definitions";
 
 import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 
-import { get, set } from 'idb-keyval';
+import { get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
 
 /* state variables */
 let state = {
