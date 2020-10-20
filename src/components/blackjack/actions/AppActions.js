@@ -216,29 +216,6 @@ const AppActions = {
       name
     });
   },
-
-  IDBPatch(key, payload) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.IDB_PATCH,
-      key, payload
-    });
-  },
-  IDBClearAll() {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.IDB_CLEARALL
-    });
-  },
-  IDBDel(key) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.IDB_DEL,
-      key
-    });
-  },
-  IDBSaveAll() {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.IDB_SAVEALL,
-    });
-  },
 };
 
 export default AppActions;

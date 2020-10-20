@@ -47,10 +47,4 @@ export default keyMirror({
   /* StatsStore */
   STATS_NEW: null,
   STATS_UPDATE: null,
-
-  /* IDStore */
-  IDB_CLEARALL: null,
-  IDB_DEL: null,
-  IDB_PATCH: null,
-  IDB_SAVEALL: null,
 });
