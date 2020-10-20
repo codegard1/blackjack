@@ -9,6 +9,7 @@ import CardContainer from "./CardContainer";
 
 /* flux */
 import AppActions from "./actions/AppActions";
+import { nullRender } from "@fluentui/react";
 
 class DeckContainer extends BaseComponent {
   constructor(props) {
@@ -89,7 +90,7 @@ class DeckContainer extends BaseComponent {
       }
     }
 
-    return (
+    return this.state.isDeckVisible ? (
       <div className="DeckContainer">
         {!this.props.isPlayerDeck && (
           <span
@@ -116,7 +117,7 @@ class DeckContainer extends BaseComponent {
           </Masonry>
         )}
       </div>
-    );
+    ) : nullRender();
   }
 }
 

@@ -14,7 +14,9 @@ import PotDisplay from "./PotDisplay";
 /* flux */
 import { GameStore } from "./stores/GameStore";
 import { DeckStore } from "./stores/DeckStore";
+// import IDBStore from "./stores/IDBStore";
 import ControlPanelStore from "./stores/ControlPanelStore";
+
 import AppActions from "./actions/AppActions";
 
 /* Initialize Fabric Icons */
@@ -49,11 +51,9 @@ export default class Table extends BaseComponent {
         text: "",
         isMultiLine: false
       },
-      playersData: undefined
     };
 
-    //Flux helpers
-    this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame");
+    this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame", "onChangeIDBStore");
   }
 
   componentDidMount() {
@@ -61,6 +61,10 @@ export default class Table extends BaseComponent {
     GameStore.addChangeListener(this.onChangeGame);
     DeckStore.addChangeListener(this.onChangeDeck);
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
+
+    this.onChangeControlPanel();
+    this.onChangeDeck();
+    this.onChangeGame();
 
     /* start a new game with these players */
     AppActions.newGame(defaultPlayers);
@@ -70,7 +74,7 @@ export default class Table extends BaseComponent {
     /* remove change listeners */
     GameStore.removeChangeListener(this.onChangeGame);
     DeckStore.removeChangeListener(this.onChangeDeck);
-    ControlPanelStore.addChangeListener(this.onChangeControlPanel);
+    ControlPanelStore.removeChangeListener(this.onChangeControlPanel);
   }
 
   /* flux helpers */
@@ -99,9 +103,13 @@ export default class Table extends BaseComponent {
       // isOptionsPanelVisible: newState.isOptionsPanelVisible,
       // isDealerHandVisible: newState.isDealerHandVisible,
       // isHandValueVisible: newState.isHandValueVisible,
-      isMessageBarVisible: newState.isMessageBarVisible,
-      messageBarDefinition: newState.messageBarDefinition
+      // isMessageBarVisible: newState.isMessageBarVisible,
+      // messageBarDefinition: newState.messageBarDefinition
     });
+  }
+  onChangeIDBStore() {
+    // const newState = IDBStore.getState();
+    // this.setState(newState);
   }
 
 
@@ -141,34 +149,28 @@ export default class Table extends BaseComponent {
           </Stack.Item>
         </Stack>
 
-        {this.state.isDeckVisible && (
-          <DeckContainer
-            deck={this.state.deck.cards}
-            title="Deck"
-            hidden={false}
-            isSelectable={false}
-          />
-        )}
+        <DeckContainer
+          deck={this.state.deck.cards}
+          title="Deck"
+          hidden={!this.state.isDeckVisible}
+          isSelectable={false}
+        />
 
-        {this.state.isDrawnVisible && (
-          <DeckContainer
-            deck={this.state.drawn}
-            title="Drawn Cards"
-            hidden={false}
-            isSelectable={false}
-          />
-        )}
+        <DeckContainer
+          deck={this.state.drawn}
+          title="Drawn Cards"
+          hidden={!this.state.isDrawnVisible}
+          isSelectable={false}
+        />
 
-        {this.state.isSelectedVisible && (
-          <DeckContainer
-            deck={this.state.selected}
-            title="Selected Cards"
-            hidden={false}
-            isSelectable={false}
-          />
-        )}
+        <DeckContainer
+          deck={this.state.selected}
+          title="Selected Cards"
+          hidden={!this.state.isSelectedVisible}
+          isSelectable={false}
+        />
 
-        <OptionsPanel gameStatus={this.state.gameStatus} />
+        <OptionsPanel />
 
       </Stack>
     );
