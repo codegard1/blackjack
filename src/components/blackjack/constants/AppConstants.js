@@ -9,6 +9,8 @@ export default keyMirror({
   GAME_NEWROUND: null,
   GAME_RESET: null,
   GAME_STAY: null,
+  GAME_SHOWMESSAGEBAR: null,
+  GAME_HIDEMESSAGEBAR: null,
 
   /* Deck */
   DECK_CLEARHANDS: null,
@@ -30,8 +32,6 @@ export default keyMirror({
 
   /* ControlPanel */
   CONTROLPANEL_HIDEOPTIONSPANEL: null,
-  CONTROLPANEL_SHOWMESSAGEBAR: null,
-  CONTROLPANEL_HIDEMESSAGEBAR: null,
   CONTROLPANEL_SHOWOPTIONSPANEL: null,
   CONTROLPANEL_TOGGLEDECKVISIBILITY: null,
   CONTROLPANEL_TOGGLEDRAWNVISIBILITY: null,
@@ -49,6 +49,10 @@ export default keyMirror({
   STATS_UPDATE: null,
 
   /* IDStore */
+  IDB_CLEARALL: null,
+  IDB_DEL: null,
   IDB_FETCH: null,
-  IDB_SAVE: null,
+  IDB_FETCHALL: null,
+  IDB_PATCH: null,
+  IDB_SAVEALL: null,
 });

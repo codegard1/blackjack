@@ -171,14 +171,14 @@ const AppActions = {
   },
   showMessageBar(text, type) {
     AppDispatcher.dispatch({
-      actionType: AppConstants.CONTROLPANEL_SHOWMESSAGEBAR,
+      actionType: AppConstants.GAME_SHOWMESSAGEBAR,
       text,
       type
     });
   },
   hideMessageBar() {
     AppDispatcher.dispatch({
-      actionType: AppConstants.CONTROLPANEL_HIDEMESSAGEBAR
+      actionType: AppConstants.GAME_HIDEMESSAGEBAR
     });
   },
   reset() {
@@ -216,18 +216,40 @@ const AppActions = {
       name
     });
   },
+
   IDBFetch(key) {
     AppDispatcher.dispatch({
       actionType: AppConstants.IDB_FETCH,
       key
     });
   },
-  IDBSave(key, payload) {
+  IDBPatch(key, payload) {
     AppDispatcher.dispatch({
-      actionType: AppConstants.IDB_SAVE,
+      actionType: AppConstants.IDB_PATCH,
       key, payload
     });
   },
+  IDBClearAll() {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.IDB_CLEARALL
+    });
+  },
+  IDBDel(key) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.IDB_DEL,
+      key
+    });
+  },
+  IDBSaveAll() {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.IDB_SAVEALL,
+    });
+  },
+  IDBFetchAll(){
+    AppDispatcher.dispatch({
+      actionType: AppConstants.IDB_FETCHALL,
+    });
+  }
 };
 
 export default AppActions;
