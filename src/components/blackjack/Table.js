@@ -51,7 +51,7 @@ export default class Table extends BaseComponent {
       },
     };
 
-    this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame", "onChangeIDBStore");
+    this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame");
   }
 
   componentDidMount() {
@@ -94,22 +94,8 @@ export default class Table extends BaseComponent {
   }
   onChangeControlPanel() {
     const newState = ControlPanelStore.getState();
-    this.setState({
-      isDeckVisible: newState.isDeckVisible,
-      isDrawnVisible: newState.isDrawnVisible,
-      isSelectedVisible: newState.isSelectedVisible,
-      // isOptionsPanelVisible: newState.isOptionsPanelVisible,
-      // isDealerHandVisible: newState.isDealerHandVisible,
-      // isHandValueVisible: newState.isHandValueVisible,
-      // isMessageBarVisible: newState.isMessageBarVisible,
-      // messageBarDefinition: newState.messageBarDefinition
-    });
+    this.setState({ ...newState });
   }
-  onChangeIDBStore() {
-    // const newState = IDBStore.getState();
-    // this.setState(newState);
-  }
-
 
   render() {
     const playersArray = this.state.players.map(player => (
