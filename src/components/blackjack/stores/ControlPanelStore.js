@@ -1,9 +1,7 @@
 import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
-import IDBStore from "./IDBStore";
-import { Store, get, set, clear, del } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-import { defaults } from "../definitions";
+import {get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
 
 /* state variables */
 let state = {
@@ -56,9 +54,6 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
 });
 
 ControlPanelStore.initialize();
-
-
-
 
 /*  ========================================================  */
 /* register methods */
