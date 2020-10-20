@@ -15,7 +15,7 @@ class DeckContainer extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = {
-      isDeckVisible: !this.props.hidden
+      isDeckVisible: true
     };
 
     /* bind private methods */
@@ -90,7 +90,7 @@ class DeckContainer extends BaseComponent {
       }
     }
 
-    return this.state.isDeckVisible ? (
+    return this.props.hidden ? nullRender() : (
       <div className="DeckContainer">
         {!this.props.isPlayerDeck && (
           <span
@@ -117,7 +117,7 @@ class DeckContainer extends BaseComponent {
           </Masonry>
         )}
       </div>
-    ) : nullRender();
+    );
   }
 }
 
