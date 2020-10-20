@@ -86,11 +86,7 @@ export default class Table extends BaseComponent {
   }
   onChangeDeck() {
     const newState = DeckStore.getState();
-    this.setState({
-      deck: newState.deck,
-      selected: newState.selected,
-      drawn: newState.drawn
-    });
+    this.setState({ ...newState });
   }
   onChangeControlPanel() {
     const newState = ControlPanelStore.getState();
@@ -138,6 +134,7 @@ export default class Table extends BaseComponent {
           title="Deck"
           hidden={!this.state.isDeckVisible}
           isSelectable={false}
+          isCardDescVisible={this.state.isCardDescVisible}
         />
 
         <DeckContainer
@@ -145,6 +142,7 @@ export default class Table extends BaseComponent {
           title="Drawn Cards"
           hidden={!this.state.isDrawnVisible}
           isSelectable={false}
+          isCardDescVisible={this.state.isCardDescVisible}
         />
 
         <DeckContainer
@@ -152,6 +150,7 @@ export default class Table extends BaseComponent {
           title="Selected Cards"
           hidden={!this.state.isSelectedVisible}
           isSelectable={false}
+          isCardDescVisible={this.state.isCardDescVisible}
         />
 
         <OptionsPanel />
