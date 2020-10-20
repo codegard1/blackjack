@@ -1,10 +1,10 @@
 import React from "react";
 import * as T from "prop-types";
-import { Stack, Panel, PanelType, Toggle, CommandButton, Dropdown, DropdownMenuItemType, MessageBarType, TextField, DefaultButton } from "@fluentui/react";
+import { Stack, Panel, PanelType, Toggle, CommandButton, Dropdown, DropdownMenuItemType, TextField, DefaultButton } from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
-import { defaultPlayers, defaultSelectedPlayerKey } from "./definitions";
+import { defaults, defaultPlayers, defaultSelectedPlayerKey } from "./definitions";
 
 /* Flux */
 import AppActions from "./actions/AppActions";
@@ -14,41 +14,15 @@ class OptionsPanel extends BaseComponent {
   constructor(props) {
     super(props);
 
-    this.state = {
-      // All of this comes from ControlPanelStore
-      isCardDescVisible: false,
-      isDealerHandVisible: false,
-      isDeckVisible: false,
-      isDrawnVisible: false,
-      isHandValueVisible: false,
-      isMessageBarVisible: false,
-      isOptionsPanelVisible: false,
-      isSelectedVisible: false,
-      players: defaultPlayers,
-      selectedPlayerKey: defaultSelectedPlayerKey,
-      messageBarDefinition: {
-        type: MessageBarType.info,
-        text: "",
-        isMultiLine: false
-      },
-      // The below state variables are not shared with ControlPanelStore
-      newPlayerFieldValue: "",
-      isNewPlayerFieldEmpty: true,
-      isNewPlayerSaveButtonDisabled: false,
-    };
+    // get default state from the Store
+    this.state = ControlPanelStore.getState();
 
     this._bind("newDeal", "onChangeControlPanel", "resetGame", "onClickNewPlayerSaveButton", "makePlayerSelectDropdownOptions");
   }
 
-  static propTypes = {
-    gameStatus: T.number.isRequired
-  };
-
   componentDidMount() {
     /* add change listener */
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
-    // Get state from the Store
-    this.onChangeControlPanel();
   }
 
   componentWillUnmount() {
@@ -91,7 +65,7 @@ class OptionsPanel extends BaseComponent {
     ];
 
     // add default players to the array
-    this.state.players.forEach(v => {
+    this.state.players.forEach((v, i, a) => {
       if (defaultPlayers.find(el => el.id === v.id)) {
         options.push({ key: v.title.toLowerCase(), text: v.title });
       }
@@ -103,8 +77,9 @@ class OptionsPanel extends BaseComponent {
       { key: 'customsHeader', text: 'Custom', itemType: DropdownMenuItemType.Header }
     );
 
-    // add default players to the array
-    this.state.players.forEach(v => {
+
+    // add custom players to the array
+    this.state.players.forEach((v, i, a) => {
       if (!defaultPlayers.find(el => el.id === v.id)) {
         options.push({ key: v.title.toLowerCase(), text: v.title });
       }
@@ -114,8 +89,6 @@ class OptionsPanel extends BaseComponent {
   }
 
   render() {
-
-    const playerSelectOptions = this.makePlayerSelectDropdownOptions();
 
     return (
       <Panel
@@ -208,13 +181,13 @@ class OptionsPanel extends BaseComponent {
           <Dropdown
             placeholder="Select"
             label="Select existing user"
-            options={playerSelectOptions}
+            options={this.makePlayerSelectDropdownOptions()}
             selectedKey={this.state.selectedPlayerKey}
             onChange={(e, option) => AppActions.selectPlayer(option.key)}
             styles={{ dropdown: { width: 300 } }}
           />
 
-          <Stack tokens={{ padding: 10, childrenGap: 10 }}>
+          {/* <Stack tokens={{ padding: 10, childrenGap: 10 }}>
             <Stack.Item shrink>
               <TextField
                 label="Create new player"
@@ -230,7 +203,7 @@ class OptionsPanel extends BaseComponent {
                 onClick={e => this.onClickNewPlayerSaveButton()}
               />
             </Stack.Item>
-          </Stack>
+          </Stack> */}
 
         </Stack>
       </Panel>
