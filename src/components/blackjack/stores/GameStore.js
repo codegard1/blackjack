@@ -21,7 +21,13 @@ let state = {
   pot: 0,
   round: 0,
   turnCount: 0,
-  winner: -1
+  winner: -1,
+  messageBarDefinition: {
+    type: MessageBarType.info,
+    text: "",
+    isMultiLine: false
+  },
+  isMessageBarVisible: false,
 };
 
 /* Data, Getter method, Event Notifier */
@@ -31,14 +37,18 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
   getPlayer: id => PlayersStore.getPlayer(id),
   getState: () => state,
   getStatus: () => state.gameStatus,
-  emitChange: function() {
+  emitChange: function () {
     this.emit(CHANGE_EVENT);
   },
-  addChangeListener: function(callback) {
+  addChangeListener: function (callback) {
     this.on(CHANGE_EVENT, callback);
   },
-  removeChangeListener: function(callback) {
+  removeChangeListener: function (callback) {
     this.removeListener(CHANGE_EVENT, callback);
+  },
+  setMessageBar(text, type = MessageBarType.info) {
+    state.messageBarDefinition = { text, type, isMultiLine: false };
+    state.isMessageBarVisible = true;
   }
 });
 
@@ -120,6 +130,16 @@ AppDispatcher.register(action => {
       GameStore.emitChange();
       break;
 
+    case AppConstants.GAME_SHOWMESSAGEBAR:
+      GameStore.setMessageBar(action.text, action.type);
+      GameStore.emitChange();
+      break;
+
+    case AppConstants.GAME_HIDEMESSAGEBAR:
+      state.isMessageBarVisible = false;
+      GameStore.emitChange();
+      break;
+
     default:
       break;
   }
@@ -155,7 +175,7 @@ function _evaluateGame(statusCode) {
       const messageBarText = state.players[0].hasBlackJack
         ? `${winningPlayerTitle} wins with Blackjack!`
         : `${winningPlayerTitle} wins!`;
-      ControlPanelStore.setMessageBar(messageBarText, MessageBarType.success);
+      GameStore.setMessageBar(messageBarText, MessageBarType.success);
 
       state.winner = state.players[0].id;
       state.loser = state.players[1].id;
@@ -164,7 +184,7 @@ function _evaluateGame(statusCode) {
       break;
 
     case 7 /*   Dealer wins   */:
-      ControlPanelStore.setMessageBar(`${state.players[1].title} wins!`);
+      GameStore.setMessageBar(`${state.players[1].title} wins!`);
 
       state.winner = state.players[1].id;
       state.loser = state.players[0].id;
@@ -238,7 +258,7 @@ function _payout(i) {
 
 /* pay a specified amount into the pot */
 function _ante(amount = state.minimumBet) {
-  ControlPanelStore.setMessageBar(`Ante: $${amount}`);
+  GameStore.setMessageBar(`Ante: $${amount}`);
   PlayersStore.allPlayersAnte(amount);
   state.pot += amount * PlayersStore.length();
 }
