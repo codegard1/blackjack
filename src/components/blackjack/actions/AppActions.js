@@ -217,12 +217,6 @@ const AppActions = {
     });
   },
 
-  IDBFetch(key) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.IDB_FETCH,
-      key
-    });
-  },
   IDBPatch(key, payload) {
     AppDispatcher.dispatch({
       actionType: AppConstants.IDB_PATCH,
@@ -245,11 +239,6 @@ const AppActions = {
       actionType: AppConstants.IDB_SAVEALL,
     });
   },
-  IDBFetchAll(){
-    AppDispatcher.dispatch({
-      actionType: AppConstants.IDB_FETCHALL,
-    });
-  }
 };
 
 export default AppActions;

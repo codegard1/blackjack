@@ -14,9 +14,7 @@ import PotDisplay from "./PotDisplay";
 /* flux */
 import { GameStore } from "./stores/GameStore";
 import { DeckStore } from "./stores/DeckStore";
-// import IDBStore from "./stores/IDBStore";
 import ControlPanelStore from "./stores/ControlPanelStore";
-
 import AppActions from "./actions/AppActions";
 
 /* Initialize Fabric Icons */

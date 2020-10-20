@@ -51,8 +51,6 @@ export default keyMirror({
   /* IDStore */
   IDB_CLEARALL: null,
   IDB_DEL: null,
-  IDB_FETCH: null,
-  IDB_FETCHALL: null,
   IDB_PATCH: null,
   IDB_SAVEALL: null,
 });
