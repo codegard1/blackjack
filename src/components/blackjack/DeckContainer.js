@@ -24,11 +24,11 @@ class DeckContainer extends BaseComponent {
 
   static propTypes = {
     // gameStatusFlag: T.bool.isRequired, // props
-    deck: T.array, // DeckStore
+    deck: T.array.isRequired, // DeckStore
     gameStatus: T.number, // GameStore
     handValue: T.object, // DeckStore
     hidden: T.bool.isRequired, // props
-    isCardDescVisible: T.bool, // ControlPanelStore
+    isCardDescVisible: T.bool.isRequired, // ControlPanelStore
     isDealerHandVisible: T.bool, // ControlPanelStore 
     isHandValueVisible: T.bool, // ControlPanelStore
     isNPC: T.bool, // props
