@@ -25,7 +25,7 @@ export default class Table extends BaseComponent {
     super();
     this.state = {
       //DeckStore
-      deck: [],
+      deck: { cards: [] },
       drawn: [],
       selected: [],
       playerHands: [],
@@ -43,6 +43,7 @@ export default class Table extends BaseComponent {
       isHandValueVisible: false,
       isMessageBarVisible: false,
       isOptionsPanelVisible: false,
+      isCardDescVisible: false,
       isSelectedVisible: false,
       messageBarDefinition: {
         type: MessageBarType.info,
