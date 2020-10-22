@@ -95,9 +95,14 @@ export default class Table extends BaseComponent {
   }
 
   render() {
-    const playersArray = this.state.players.map(player => (
-      <PlayerContainer key={`Player-${player.id}`} playerId={player.id} />
-    ));
+    // slice out the selected players (Chris and Dealer) and return PlayerContainers
+    const selectedPlayersContainers = this.state.players
+      .filter(v => v.title === 'Chris' || v.title === "Dealer")
+      .map(player => (
+        <Stack.Item align="stretch" verticalAlign="top" grow={2}>
+          <PlayerContainer key={`Player-${player.id}`} playerId={player.id} />
+        </Stack.Item>
+      ));
 
     // Ad-hod styles for the Table
     const tableStyles = {
@@ -122,12 +127,13 @@ export default class Table extends BaseComponent {
         <PotDisplay pot={this.state.pot} />
 
         <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
-          <Stack.Item align="stretch" verticalAlign="top" grow={2}>
+          {/* <Stack.Item align="stretch" verticalAlign="top" grow={2}>
             {playersArray[0]}
           </Stack.Item>
           <Stack.Item align="stretch" grow={2}>
             {playersArray[1]}
-          </Stack.Item>
+          </Stack.Item> */}
+          {selectedPlayersContainers}
         </Stack>
 
         <DeckContainer
