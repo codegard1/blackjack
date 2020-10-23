@@ -1,6 +1,6 @@
 import React from "react";
 import * as T from "prop-types";
-import { Stack, Callout, DirectionalHint, Text, Icon } from "@fluentui/react";
+import { Stack, Callout, DirectionalHint, Text, Icon, mergeStyleSets, getTheme, FontWeights } from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
@@ -66,7 +66,7 @@ export class PlayerContainer extends BaseComponent {
   static propTypes = {
     playerId: T.number.isRequired
   };
-  
+
   componentDidMount() {
     /* callback when a change emits from GameStore*/
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
@@ -193,9 +193,11 @@ export class PlayerContainer extends BaseComponent {
           </Text>
         </Stack.Item>
         <Stack.Item align="center">
-          <Icon iconName="Info" onClick={this._toggleStatusCallout}
-            ref={calloutTarget => (this._statusCalloutTarget = calloutTarget)}
-          /></Stack.Item>
+          <StatusDisplay
+            player={this.state.player}
+            stats={this.state.stats}
+          />
+        </Stack.Item>
       </Stack>
     ) : (
         <Text block nowrap variant="large">{title}</Text>
@@ -217,19 +219,6 @@ export class PlayerContainer extends BaseComponent {
     return (
       <div className={playerContainerClass}>
         {titleBar}
-        {this.state.isStatusCalloutVisible && (
-          <Callout
-            gapSpace={1}
-            target={this._statusCalloutTarget}
-            onDismiss={this._toggleStatusCallout}
-            setInitialFocus={false}
-          >
-            <StatusDisplay
-              player={this.state.player}
-              stats={this.state.stats}
-            />
-          </Callout>
-        )}
         {this.state.isDeckCalloutEnabled &&
           this.state.isDeckCalloutVisible &&
           this.state.deckCalloutText !== "" && (
@@ -292,6 +281,27 @@ export class PlayerContainer extends BaseComponent {
 export default PlayerContainer;
 
 class StatusDisplay extends BaseComponent {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      isCalloutVisible: false
+    }
+
+    this._bind("_toggleIsCalloutVisible");
+  }
+
+  static propTypes = {
+    player: T.object.isRequired,
+    stats: T.object.isRequired
+  }
+
+  _toggleIsCalloutVisible() {
+    console.log('_toggleIsCalloutVisible');
+    this.setState({ isCalloutVisible: !this.state.isCalloutVisible });
+  }
+
+
   render() {
     let playerInfo = [],
       playerStats = [];
@@ -314,10 +324,73 @@ class StatusDisplay extends BaseComponent {
       }
     }
 
+    const theme = getTheme();
+    const styles = mergeStyleSets({
+      buttonArea: {
+        verticalAlign: 'top',
+        display: 'inline-block',
+        textAlign: 'center',
+        // margin: '0 100px',
+        // minWidth: 130,
+        // height: 32,
+      },
+      callout: {
+        maxWidth: 300,
+      },
+      header: {
+        padding: '18px 24px 12px',
+      },
+      title: [
+        theme.fonts.large,
+        {
+          margin: 0,
+          fontWeight: FontWeights.semilight,
+        },
+      ],
+      inner: {
+        height: '100%',
+        padding: '0 10px 20px',
+      },
+      subtext: [
+        theme.fonts.small,
+        {
+          margin: 0,
+          fontWeight: FontWeights.semilight,
+        },
+      ],
+    });
+
+    const labelId = `${this.props.player.title}-statsCalloutLabel`;
+    const descriptionId = `${this.props.player.title}-statsCalloutDescription`;
+    const targetClass = `InfoButton-${this.props.player.id}`
+
     return (
-      <div className="StatusDisplay ms-font-s">
-        <ul className="playerStats">{playerStats}</ul>
-        <ul className="playerInfo">{playerInfo}</ul>
+      <div>
+        <Icon iconName="Info" onClick={this._toggleIsCalloutVisible} className={targetClass} />
+        {this.state.isCalloutVisible &&
+          <Callout
+            className={styles.callout}
+            role="alertdialog"
+            gapSpace={0}
+            target={`.${targetClass}`}
+            onDismiss={this._toggleIsCalloutVisible}
+            setInitialFocus
+            ariaLabelledBy={labelId}
+            ariaDescribedBy={descriptionId}
+          >
+            <div className={styles.header}>
+              <Text className={styles.title} id={labelId}>
+                Stats &amp; Variables
+              </Text>
+            </div>
+            <div className={styles.inner}>
+              <Text className={styles.subtext} id={descriptionId}>
+                <ul className="playerStats">{playerStats}</ul>
+                <ul className="playerInfo">{playerInfo}</ul>
+              </Text>
+            </div>
+          </Callout>
+        }
       </div>
     );
   }
@@ -339,6 +412,7 @@ class Agent extends BaseComponent {
   componentDidMount() {
     if (this.props.dealerHasControl) {
       console.log("in agent- dealer has control");
+      // Agent acts on a 500 ms interval
       const intervalID = setInterval(() => {
         const aceAsEleven = this.props.handValue.aceAsEleven,
           aceAsOne = this.props.handValue.aceAsOne;

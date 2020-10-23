@@ -99,7 +99,7 @@ export default class Table extends BaseComponent {
     const selectedPlayersContainers = this.state.players
       .filter(v => v.title === 'Chris' || v.title === "Dealer")
       .map(player => (
-        <Stack.Item align="stretch" verticalAlign="top" grow={2}>
+        <Stack.Item align="stretch" verticalAlign="top" grow={2} key={`PlayerStack-${player.id}`}>
           <PlayerContainer key={`Player-${player.id}`} playerId={player.id} />
         </Stack.Item>
       ));
