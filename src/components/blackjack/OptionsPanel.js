@@ -1,10 +1,10 @@
 import React from "react";
-import * as T from "prop-types";
+// import * as T from "prop-types";
 import { Stack, Panel, PanelType, Toggle, CommandButton, Dropdown, DropdownMenuItemType, TextField, DefaultButton } from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
-import { defaults, defaultPlayers, defaultSelectedPlayerKey } from "./definitions";
+import { defaultPlayers } from "./definitions";
 
 /* Flux */
 import AppActions from "./actions/AppActions";

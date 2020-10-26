@@ -31,7 +31,7 @@ let state = {
 const CHANGE_EVENT = "controlPanel";
 const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
   getState() { return state },
-  emitChange() { this.emit(CHANGE_EVENT); this.saveAll },
+  emitChange() { this.emit(CHANGE_EVENT); this.saveAll() },
   addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
   async initialize() {
