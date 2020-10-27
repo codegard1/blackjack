@@ -167,6 +167,12 @@ const AppActions = {
         title: player.title,
         isNPC: player.isNPC
       });
+
+      /* Create a Stats object for the player */
+      AppDispatcher.dispatch({
+        actionType: AppConstants.STATS_NEW,
+        playerId: player.id
+      });
     });
   },
   showMessageBar(text, type) {
@@ -190,18 +196,10 @@ const AppActions = {
     });
   },
   newRound() {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_CLEARHANDS
-    });
-    // console.log('actionType: AppConstants.DECK_CLEARHANDS');
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_DEAL
-    });
-    // console.log('actionType: AppConstants.DECK_DEAL');
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_NEWROUND
-    });
-    // console.log('actionType: AppConstants.GAME_NEWROUND');
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_CLEARHANDS });
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_DEAL });
+    AppDispatcher.dispatch({ actionType: AppConstants.GAME_NEWROUND });
+    AppDispatcher.dispatch({ actionType: AppConstants.STATS_UPDATE });
   },
 
   selectPlayer(key) {

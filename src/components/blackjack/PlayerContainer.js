@@ -73,8 +73,11 @@ export class PlayerContainer extends BaseComponent {
     DeckStore.addChangeListener(this.onChangeDeck);
     GameStore.addChangeListener(this.onChangeGame);
     StatsStore.addChangeListener(this.onChangeStats);
+
+    // force initial update, in case saved data was loaded from IDB
     this.onChangeGame();
     this.onChangeControlPanel();
+    // this.onChangeStats();
   }
 
   componentWillUnmount() {
@@ -151,7 +154,8 @@ export class PlayerContainer extends BaseComponent {
   /* What to do when the player stats change */
   onChangeStats() {
     const stats = StatsStore.getStats(this.state.id);
-    this.setState({ stats });
+    // Don't update if getStats() returns false
+    if (stats) this.setState({ stats });
   }
 
   _toggleStatusCallout() {

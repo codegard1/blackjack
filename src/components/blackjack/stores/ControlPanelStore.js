@@ -1,7 +1,7 @@
 import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
-import {get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
+import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
 
 /* state variables */
 let state = {
@@ -23,7 +23,6 @@ let state = {
   isNewPlayerFieldEmpty: true,
   isNewPlayerSaveButtonDisabled: false,
 };
-// let state1 = new Store('blackjack', 'controlPanelStore');
 
 /*  ========================================================  */
 
@@ -31,7 +30,7 @@ let state = {
 const CHANGE_EVENT = "controlPanel";
 const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
   getState() { return state },
-  emitChange() { this.emit(CHANGE_EVENT); this.saveAll() },
+  emitChange() { this.emit(CHANGE_EVENT); this.saveAll(); },
   addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
   async initialize() {
@@ -39,17 +38,17 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
       let val = await get(key);
       if (val) {
         state[key] = val;
-        // console.log(key, val);
-        this.emitChange();
       } else {
-        set(key, state[key]);
+        await set(key, state[key]);
       }
     }
+    this.emitChange();
   },
   async saveAll() {
     for (let key in state) {
       await set(key, state[key]);
     }
+    console.log('ControlPanelStore#saveAll');
   }
 });
 
@@ -62,55 +61,46 @@ AppDispatcher.register(action => {
   switch (action.actionType) {
     case AppConstants.CONTROLPANEL_HIDEOPTIONSPANEL:
       state.isOptionsPanelVisible = false;
-      set('isOptionsPanelVisible', false);
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_SHOWOPTIONSPANEL:
       state.isOptionsPanelVisible = true;
-      set('isOptionsPanelVisible', true);
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEDECKVISIBILITY:
       state.isDeckVisible = action.bool;
-      set('isDeckVisible', action.bool);
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEDRAWNVISIBILITY:
       state.isDrawnVisible = action.bool;
-      set('isDrawnVisible', action.bool);
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLESELECTEDVISIBLITY:
       state.isSelectedVisible = action.bool;
-      set('isSelectedVisible', action.bool);
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEHANDVALUEVISIBILITY:
       state.isHandValueVisible = action.bool;
-      set('isHandValueVisible', action.bool);
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEDEALERHANDVISIBILITY:
       state.isDealerHandVisible = action.bool;
-      set('isDealerHandVisible', action.bool);
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLECARDTITLEVISIBILITY:
       state.isCardDescVisible = action.bool;
-      set('isCardDescVisible', action.bool);
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_SELECTPLAYER:
       state.selectedPlayerKey = action.key;
-      set('selectedPlayerKey', action.key);
       ControlPanelStore.emitChange();
       break;
 

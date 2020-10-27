@@ -16,10 +16,12 @@ let deck = [],
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "deck";
 export const DeckStore = Object.assign({}, EventEmitter.prototype, {
-  getDeck: function() {
-    return deck;
-  },
-  getSelected: function(playerId) {
+  getState () { return { deck, selected, drawn, playerHands } },
+  emitChange () { this.emit(CHANGE_EVENT) },
+  addChangeListener (callback) { this.on(CHANGE_EVENT, callback) },
+  removeChangeListener (callback) { this.removeListener(CHANGE_EVENT, callback) },
+  getDeck () { return deck },
+  getSelected (playerId) {
     if (selected.length > 0) {
       let foundMatch = false;
       let foundCards = [];
@@ -52,10 +54,10 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
       return false;
     }
   },
-  getDrawn: function(playerId) {
+  getDrawn (playerId) {
     return drawn.find(item => item.id === playerId);
   },
-  getHand: function(playerId) {
+  getHand (playerId) {
     if (playerHands && playerHands.length > 0) {
       const ret = playerHands.find(item => item.id === playerId);
       if (ret) {
@@ -65,10 +67,10 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
       }
     }
   },
-  getHands: function() {
+  getHands () {
     return playerHands;
   },
-  getHandValue: function(playerId) {
+  getHandValue (playerId) {
     if (playerHands.length > 0) {
       let index = playerHands.findIndex(player => player.id === playerId);
       // console.log(`getHandValue: playerHands[index]`);
@@ -77,18 +79,6 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
       return { aceAsOne: 0, AceAsEvelen: 0 };
     }
   },
-  getState: function() {
-    return { deck, selected, drawn, playerHands };
-  },
-  emitChange: function() {
-    this.emit(CHANGE_EVENT);
-  },
-  addChangeListener: function(callback) {
-    this.on(CHANGE_EVENT, callback);
-  },
-  removeChangeListener: function(callback) {
-    this.removeListener(CHANGE_EVENT, callback);
-  }
 });
 
 /*  ========================================================  */

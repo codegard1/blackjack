@@ -14,6 +14,7 @@ let PlayersStore = new Players();
 let state = {
   dealerHasControl: false,
   gameStatus: 0,
+  isMessageBarVisible: false,
   loser: -1,
   minimumBet: 25,
   players: PlayersStore.getPlayers(),
@@ -26,7 +27,6 @@ let state = {
     text: "",
     isMultiLine: false
   },
-  isMessageBarVisible: false,
 };
 
 /* Data, Getter method, Event Notifier */
@@ -60,8 +60,6 @@ AppDispatcher.register(action => {
   switch (action.actionType) {
     case AppConstants.GAME_NEWPLAYER:
       PlayersStore.newPlayer(action.id, action.title, action.isNPC);
-      StatsStore.new(action.id);
-
       GameStore.emitChange();
       break;
 
@@ -235,15 +233,16 @@ function _endGameTrap() {
   /* Endgame Condition encountered! */
   if (nextGameStatus > 2) {
     _evaluateGame(nextGameStatus);
-    // console.log("inside endgametrap. Now we're gonna update StatsStore");
+    
     state.players.forEach(player => {
       /* set properties to increment */
-      let statsFrame = {};
-      statsFrame.numberOfGamesPlayed = true;
-      if (player.id === state.winner) statsFrame.numberOfGamesWon = true;
-      if (player.id === state.loser) statsFrame.numberOfGamesLost = true;
-      if (player.hasBlackJack) statsFrame.numberOfTimesBlackjack = true;
-      if (player.isBusted) statsFrame.numberOfTimesBusted = true;
+      const statsFrame = {
+        numberOfGamesPlayed: true,
+        numberOfGamesWon: (player.id === state.winner),
+        numberOfGamesLost: (player.id === state.loser),
+        numberOfTimesBlackjack: (player.hasBlackJack),
+        numberOfTimesBusted: (player.isBusted)
+      };
       StatsStore.update(player.id, statsFrame);
     });
     return true;

@@ -30,26 +30,29 @@ export default class Table extends BaseComponent {
       selected: [],
       playerHands: [],
       //GameStore
+      dealerHasControl: false,
       gameStatus: 0,
+      isMessageBarVisible: false,
+      loser: -1,
       minimumBet: 25,
       players: [],
       pot: 0,
       round: 0,
       turnCount: 0,
-      // ControlPanelStore
-      isDealerHandVisible: false,
-      isDeckVisible: false,
-      isDrawnVisible: false,
-      isHandValueVisible: false,
-      isMessageBarVisible: false,
-      isOptionsPanelVisible: false,
-      isCardDescVisible: false,
-      isSelectedVisible: false,
+      winner: -1,
       messageBarDefinition: {
         type: MessageBarType.info,
         text: "",
         isMultiLine: false
       },
+      // ControlPanelStore
+      isCardDescVisible: false,
+      isDealerHandVisible: false,
+      isDeckVisible: false,
+      isDrawnVisible: false,
+      isHandValueVisible: false,
+      isOptionsPanelVisible: false,
+      isSelectedVisible: false,
     };
 
     this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame");
@@ -61,12 +64,13 @@ export default class Table extends BaseComponent {
     DeckStore.addChangeListener(this.onChangeDeck);
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
 
-    this.onChangeControlPanel();
-    this.onChangeDeck();
-    this.onChangeGame();
+    // this.onChangeControlPanel();
+    // this.onChangeDeck();
+    // this.onChangeGame();
 
     /* start a new game with these players */
-    AppActions.newGame(defaultPlayers);
+    const selectedPlayers = defaultPlayers.filter(v => v.title === 'Chris' || v.title === "Dealer");
+    AppActions.newGame(selectedPlayers);
   }
 
   componentWillUnmount() {
@@ -83,7 +87,7 @@ export default class Table extends BaseComponent {
       const newHand = DeckStore.getHand(player.id);
       player.hand = newHand;
     });
-    this.setState(newState);
+    this.setState({ ...newState });
   }
   onChangeDeck() {
     const newState = DeckStore.getState();
@@ -91,18 +95,25 @@ export default class Table extends BaseComponent {
   }
   onChangeControlPanel() {
     const newState = ControlPanelStore.getState();
-    this.setState({ ...newState });
+    this.setState({
+      isCardDescVisible: newState.isCardDescVisible,
+      isDealerHandVisible: newState.isDealerHandVisible,
+      isDeckVisible: newState.isDeckVisible,
+      isDrawnVisible: newState.isDrawnVisible,
+      isHandValueVisible: newState.isHandValueVisible,
+      isOptionsPanelVisible: newState.isOptionsPanelVisible,
+      isSelectedVisible: newState.isSelectedVisible,
+    });
   }
 
   render() {
     // slice out the selected players (Chris and Dealer) and return PlayerContainers
-    const selectedPlayersContainers = this.state.players
-      .filter(v => v.title === 'Chris' || v.title === "Dealer")
-      .map(player => (
+    const selectedPlayersContainers = this.state.players.length > 0 ?
+      this.state.players.map(player => (
         <Stack.Item align="stretch" verticalAlign="top" grow={2} key={`PlayerStack-${player.id}`}>
           <PlayerContainer key={`Player-${player.id}`} playerId={player.id} />
         </Stack.Item>
-      ));
+      )) : <div />
 
     // Ad-hod styles for the Table
     const tableStyles = {
@@ -127,12 +138,6 @@ export default class Table extends BaseComponent {
         <PotDisplay pot={this.state.pot} />
 
         <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
-          {/* <Stack.Item align="stretch" verticalAlign="top" grow={2}>
-            {playersArray[0]}
-          </Stack.Item>
-          <Stack.Item align="stretch" grow={2}>
-            {playersArray[1]}
-          </Stack.Item> */}
           {selectedPlayersContainers}
         </Stack>
 
