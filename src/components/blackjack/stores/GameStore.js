@@ -235,7 +235,7 @@ function _endGameTrap() {
   /* Endgame Condition encountered! */
   if (nextGameStatus > 2) {
     _evaluateGame(nextGameStatus);
-    console.log("inside endgametrap. Now we're gonna update StatsStore");
+    // console.log("inside endgametrap. Now we're gonna update StatsStore");
     state.players.forEach(player => {
       /* set properties to increment */
       let statsFrame = {};

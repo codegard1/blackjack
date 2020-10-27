@@ -39,7 +39,7 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
       let val = await get(key);
       if (val) {
         state[key] = val;
-        console.log(key, val);
+        // console.log(key, val);
         this.emitChange();
       } else {
         set(key, state[key]);

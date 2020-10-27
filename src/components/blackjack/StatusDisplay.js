@@ -23,7 +23,6 @@ class StatusDisplay extends BaseComponent {
   }
 
   _toggleIsCalloutVisible() {
-    console.log('_toggleIsCalloutVisible');
     this.setState({ isCalloutVisible: !this.state.isCalloutVisible });
   }
 
