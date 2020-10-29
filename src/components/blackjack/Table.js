@@ -1,5 +1,5 @@
 import React from "react";
-import { Stack, MessageBar, MessageBarType, DefaultEffects } from '@fluentui/react';
+import { Stack, MessageBar, MessageBarType, DefaultEffects, Icon } from '@fluentui/react';
 import { MotionAnimations } from '@fluentui/theme';
 import { initializeIcons } from "@uifabric/icons";
 
@@ -135,7 +135,10 @@ export default class Table extends BaseComponent {
           </MessageBar>
         )}
 
-        <PotDisplay pot={this.state.pot} />
+        <Stack horizontal horizontalAlign="space-between" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
+          <PotDisplay pot={this.state.pot} />
+          <Icon iconName="Settings" aria-label="Settings" onClick={AppActions.showOptionsPanel} />
+        </Stack>
 
         <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
           {selectedPlayersContainers}

@@ -56,7 +56,7 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
     state.isMessageBarVisible = true;
   },
   async saveAll() {
-    for (let key in state) { set(key, state[key], this.store) }
+    for (let key in state) { await set(key, state[key], this.store) }
     console.log(`saved GameStore state`);
   }
 });

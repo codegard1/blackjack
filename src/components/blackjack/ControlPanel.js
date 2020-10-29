@@ -158,14 +158,15 @@ class ControlPanel extends Component {
     const farItems = npcFlag
       ? []
       : [
-        {
-          key: "options",
-          name: "",
-          ariaLabel: "Options",
-          iconProps: { iconName: "Settings" },
-          disabled: npcFlag,
-          onClick: AppActions.showOptionsPanel
-        }
+        // Settings button moved to Table on 10.29.20
+        // {
+        //   key: "options",
+        //   name: "",
+        //   ariaLabel: "Options",
+        //   iconProps: { iconName: "Settings" },
+        //   disabled: npcFlag,
+        //   onClick: AppActions.showOptionsPanel
+        // }
       ];
     // const overFlowItems = selectedFlag ? [].concat(putMenu, drawMenu) : [];
     const overFlowItems = [];
