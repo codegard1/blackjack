@@ -9,6 +9,10 @@ import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 import StatsStore from "./StatsStore";
 
+/* idb-keyval */
+import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
+// import { Store, get, set } from 'idb-keyval';
+
 /* ALMIGHTY STATE */
 let PlayersStore = new Players();
 let state = {
@@ -38,6 +42,7 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
   getStatus: () => state.gameStatus,
   emitChange: function () {
     this.emit(CHANGE_EVENT);
+    this.saveAll();
   },
   addChangeListener: function (callback) {
     this.on(CHANGE_EVENT, callback);
@@ -45,18 +50,19 @@ export const GameStore = Object.assign({}, EventEmitter.prototype, {
   removeChangeListener: function (callback) {
     this.removeListener(CHANGE_EVENT, callback);
   },
+  store: new Store('GameStore', 'Game'),
   setMessageBar(text, type = MessageBarType.info) {
     state.messageBarDefinition = { text, type, isMultiLine: false };
     state.isMessageBarVisible = true;
+  },
+  async saveAll() {
+    for (let key in state) { set(key, state[key], this.store) }
+    console.log(`saved GameStore state`);
   }
 });
 
 /* Responding to Actions */
 AppDispatcher.register(action => {
-  /* report for debugging */
-  // const now = new Date().toTimeString();
-  // log(`${action.actionType} was called at ${now}`);
-
   switch (action.actionType) {
     case AppConstants.GAME_NEWPLAYER:
       PlayersStore.newPlayer(action.id, action.title, action.isNPC);
@@ -233,7 +239,7 @@ function _endGameTrap() {
   /* Endgame Condition encountered! */
   if (nextGameStatus > 2) {
     _evaluateGame(nextGameStatus);
-    
+
     state.players.forEach(player => {
       /* set properties to increment */
       const statsFrame = {
