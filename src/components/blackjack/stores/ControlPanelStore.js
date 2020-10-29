@@ -2,6 +2,7 @@ import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
+// import { Store, get, set } from 'idb-keyval';
 
 /* state variables */
 let state = {
@@ -33,20 +34,17 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
   emitChange() { this.emit(CHANGE_EVENT); this.saveAll(); },
   addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
+  store: new Store('ControlPanelStore', 'Options'),
   async initialize() {
     for (let key in state) {
-      let val = await get(key);
-      if (val) {
-        state[key] = val;
-      } else {
-        await set(key, state[key]);
-      }
+      let val = await get(key, this.store);
+      if (val) { state[key] = val }
     }
     this.emitChange();
   },
   async saveAll() {
     for (let key in state) {
-      await set(key, state[key]);
+      await set(key, state[key], this.store);
     }
     console.log('ControlPanelStore#saveAll');
   }

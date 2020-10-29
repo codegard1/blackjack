@@ -6,13 +6,14 @@ import AppConstants from "../constants/AppConstants";
 
 /* idb-keyval */
 import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
+// import { Store, get, set } from 'idb-keyval';
 
 /* New instance of PlayerStats created for each player */
 class PlayerStats {
   constructor(id, preset) {
     this.id = id;
     // Use the preset value if present, otherwise use defaults
-    this.state = preset ? preset :{
+    this.state = preset ? preset : {
       numberOfGamesLost: 0,
       numberOfGamesPlayed: 0,
       numberOfGamesWon: 0,
@@ -42,10 +43,10 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
   addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
   getState() { return state },
-  store: new Store('Blackjack', 'StatsStore'),
+  store: new Store('StatsStore', 'Stats'),
   getStats(playerId) {
     const index = state.findIndex(item => item.id === playerId);
-    if(index !== -1){
+    if (index !== -1) {
       const stats = state[index].state;
       return stats;
     } else {
@@ -54,7 +55,6 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
   },
   async update(playerId, statsFrame) {
     const index = state.findIndex(item => item.id === playerId);
-    debugger;
     for (let key in statsFrame) {
       /* if the key in statsFrame === true, ++1 it */
       if (statsFrame[key] && state[index].state.hasOwnProperty(key)) {
