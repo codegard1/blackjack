@@ -182,7 +182,7 @@ function _evaluateGame(statusCode) {
 
       state.winner = state.players[0].id;
       state.loser = state.players[1].id;
-      _payout(0);
+      PlayersStore.payout(0, state.pot);
       _endGame();
       break;
 
@@ -191,7 +191,7 @@ function _evaluateGame(statusCode) {
 
       state.winner = state.players[1].id;
       state.loser = state.players[0].id;
-      _payout(1);
+      PlayersStore.payout(1, state.pot);
       _endGame();
       break;
 
@@ -243,21 +243,17 @@ function _endGameTrap() {
     state.players.forEach(player => {
       /* set properties to increment */
       const statsFrame = {
-        numberOfGamesPlayed: true,
-        numberOfGamesWon: (player.id === state.winner),
-        numberOfGamesLost: (player.id === state.loser),
-        numberOfTimesBlackjack: (player.hasBlackJack),
-        numberOfTimesBusted: (player.isBusted)
+        numberOfGamesLost: (player.id === state.loser ? 1 : 0),
+        numberOfGamesPlayed: 1,
+        numberOfGamesWon: (player.id === state.winner ? 1 : 0),
+        numberOfTimesBlackjack: (player.hasBlackJack ? 1 : 0),
+        numberOfTimesBusted: (player.isBusted ? 1 : 0),
+        totalWinnings: (player.id === state.winner ? state.pot : 0)
       };
       StatsStore.update(player.id, statsFrame);
     });
     return true;
   }
-}
-
-function _payout(i) {
-  PlayersStore.payout(i, state.pot);
-  state.pot = 0;
 }
 
 /* pay a specified amount into the pot */
