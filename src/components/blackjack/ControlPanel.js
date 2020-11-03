@@ -7,6 +7,19 @@ import AppActions from "./actions/AppActions";
 // import { DeckStore } from "./stores/DeckStore";
 
 class ControlPanel extends Component {
+  static propTypes = {
+    gameStatus: T.number.isRequired,
+    gameStatusFlag: T.bool.isRequired,
+    hidden: T.bool.isRequired,
+    minimumBet: T.number.isRequired,
+    player: T.object,
+    playerIsNPC: T.bool.isRequired,
+    playerId: T.number.isRequired,
+    playerStatusFlag: T.bool.isRequired,
+    selectedFlag: T.bool.isRequired,
+    showDeckCallout: T.func.isRequired,
+  };
+
   render() {
     /* selectedFlag is true when the player has selected cards in his hand */
     // let selectedFlag = this.props.selectedFlag;
@@ -17,7 +30,7 @@ class ControlPanel extends Component {
     /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
     const gameStatusFlag = this.props.gameStatusFlag;
     const playerStatusFlag = this.props.playerStatusFlag;
-    const npcFlag = this.props.player.isNPC;
+    const npcFlag = this.props.playerIsNPC;
 
     // const drawItems = [
     //   {
@@ -79,7 +92,6 @@ class ControlPanel extends Component {
         disabled: gameStatusFlag || playerStatusFlag,
         onClick: ev => {
           ev.preventDefault();
-          this.props.showDeckCallout();
           AppActions.hit(this.props.playerId);
         }
       },
@@ -103,21 +115,6 @@ class ControlPanel extends Component {
         onClick: AppActions.stay
       }
     ];
-
-    if (npcFlag === false) {
-      blackJackItems.push({
-        key: "new-round",
-        name: "Deal",
-        ariaLabel: "Deal",
-        iconProps: { iconName: "Refresh" },
-        disabled: !gameStatusFlag,
-        onClick: () => {
-          AppActions.newDeck();
-          AppActions.newRound();
-          AppActions.showMessageBar("New Round", MessageBarType.info);
-        }
-      });
-    }
 
     /* menu items for drawing cards */
     // const drawMenu = [
@@ -167,7 +164,20 @@ class ControlPanel extends Component {
         //   disabled: npcFlag,
         //   onClick: AppActions.showOptionsPanel
         // }
+        {
+          key: "new-round",
+          name: "Deal",
+          ariaLabel: "Deal",
+          iconProps: { iconName: "Refresh" },
+          disabled: !gameStatusFlag,
+          onClick: () => {
+            AppActions.newDeck();
+            AppActions.newRound();
+            AppActions.showMessageBar("New Round", MessageBarType.info);
+          }
+        }
       ];
+
     // const overFlowItems = selectedFlag ? [].concat(putMenu, drawMenu) : [];
     const overFlowItems = [];
 
@@ -185,15 +195,5 @@ class ControlPanel extends Component {
     );
   }
 }
-
-ControlPanel.propTypes = {
-  playerId: T.number.isRequired,
-  gameStatus: T.number.isRequired,
-  gameStatusFlag: T.bool.isRequired,
-  playerStatusFlag: T.bool.isRequired,
-  minimumBet: T.number.isRequired,
-  hidden: T.bool.isRequired,
-  selectedFlag: T.bool.isRequired
-};
 
 export default ControlPanel;

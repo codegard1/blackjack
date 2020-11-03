@@ -5,6 +5,7 @@ import { Stack, Callout, DirectionalHint, Text } from "@fluentui/react";
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
 import DeckContainer from "./DeckContainer";
+import DeckCallout from "./DeckCallout";
 import ControlPanel from "./ControlPanel";
 import StatusDisplay from "./StatusDisplay";
 import Agent from "./Agent";
@@ -22,14 +23,12 @@ export class PlayerContainer extends BaseComponent {
     this.state = {
       dealerHasControl: false,
       deck: [],
-      deckCalloutText: "",
       gameStatus: 0,
       gameStatusFlag: true,
       handValue: { aceAsEleven: 0, aceAsOne: 0 },
       id: this.props.playerId,
       isCardDescVisible: false,
       isDealerHandVisible: true,
-      isDeckCalloutEnabled: true,
       isDeckCalloutVisible: false,
       isHandValueVisible: true,
       isNPC: false,
@@ -53,9 +52,7 @@ export class PlayerContainer extends BaseComponent {
 
     this._bind(
       "_hideDeckCallout",
-      "_setDeckCalloutText",
       "_showDeckCallout",
-      "_toggleDeckCallout",
       "_toggleStatusCallout",
       "onChangeControlPanel",
       "onChangeDeck",
@@ -108,17 +105,9 @@ export class PlayerContainer extends BaseComponent {
     /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
     const gameStatusFlag = newState.gameStatus === 0 || newState.gameStatus > 2;
 
-    /* if the player is staying, display callout */
-    let text = thisPlayer.title;
-    if (thisPlayer.isStaying) text += " stayed";
-    if (thisPlayer.hasBlackJack) text += " has blackjack";
-    if (thisPlayer.isBusted) text += " busted";
-    if (thisPlayer.lastAction === "hit") text += " hit";
-
     this.setState({
       bank: thisPlayer.bank,
       dealerHasControl: newState.dealerHasControl,
-      deckCalloutText: text,
       gameStatus: newState.gameStatus,
       gameStatusFlag,
       isNPC: thisPlayer.isNPC,
@@ -126,7 +115,8 @@ export class PlayerContainer extends BaseComponent {
       player: thisPlayer,
       playerStatusFlag,
       title: thisPlayer.title,
-      turnCount: newState.turnCount
+      turnCount: newState.turnCount,
+      isDeckCalloutVisible: true,
     });
   }
 
@@ -164,49 +154,15 @@ export class PlayerContainer extends BaseComponent {
     });
   }
 
-  _toggleDeckCallout() {
-    this.setState({
-      isDeckCalloutVisible: !this.state.isDeckCalloutVisible
-    });
-  }
-
   _showDeckCallout() {
-    if (!this.state.isDeckCalloutVisible) {
-      this.setState({ isDeckCalloutVisible: true });
-    }
+    this.setState({ isDeckCalloutVisible: true });
   }
 
   _hideDeckCallout() {
-    this.setState({
-      isDeckCalloutVisible: false
-    });
-  }
-
-  _setDeckCalloutText(text) {
-    this.setState({ deckCalloutText: text });
+    this.setState({ isDeckCalloutVisible: false });
   }
 
   render() {
-    const bank = this.state.bank;
-    const title = this.state.title;
-    const titleBar = !this.state.player.empty ? (
-      <Stack horizontal horizontalAlign="space-between" style={{ padding: '5px' }}>
-        <Stack.Item align="start">
-          <Text block nowrap variant="large">
-            {`${title} ($${bank})  `}
-          </Text>
-        </Stack.Item>
-        <Stack.Item align="center">
-          <StatusDisplay
-            player={this.state.player}
-            stats={this.state.stats}
-          />
-        </Stack.Item>
-      </Stack>
-    ) : (
-        <Text block nowrap variant="large">{title}</Text>
-      );
-
     /* style PlayerContainer conditionally */
     let playerContainerClass = "PlayerContainer ";
     if (!this.state.player.empty && this.state.player.turn) {
@@ -221,63 +177,64 @@ export class PlayerContainer extends BaseComponent {
     }
 
     return (
-      <div className={playerContainerClass}>
-        {titleBar}
-        {this.state.isDeckCalloutEnabled &&
-          this.state.isDeckCalloutVisible &&
-          this.state.deckCalloutText !== "" && (
-            <Callout
-              className="DeckCallout"
-              gapSpace={1}
-              target={this._deckCalloutTarget}
-              onDismiss={this._hideDeckCallout}
-              setInitialFocus={false}
-              directionalHint={DirectionalHint.bottomCenter}
-            >
-              <span className="ms-font-xl">{this.state.deckCalloutText}</span>
-            </Callout>
+      <Stack verticalAlign className={playerContainerClass}>
+        <Stack horizontal horizontalAlign="space-between" style={{ padding: '5px' }} className={`${this.state.title}-titleBar playerContainerClass`}>
+          <Stack.Item align="start">
+            <Text block nowrap variant="large">
+              {`${this.state.title} ($${this.state.bank || 0})  `}</Text>
+          </Stack.Item>
+          <Stack.Item>
+            <StatusDisplay player={this.state.player} stats={this.state.stats} />
+          </Stack.Item>
+        </Stack>
+        <Stack verticalAlign horizontalAlign="space-between">
+          {this.state.isNPC &&
+            this.state.dealerHasControl && <Agent {...this.state} />}
+          {!this.state.isNPC && (
+            <Stack.Item>
+              <ControlPanel
+                gameStatus={this.state.gameStatus}
+                gameStatusFlag={this.state.gameStatusFlag}
+                hidden={false}
+                minimumBet={this.state.minimumBet}
+                player={this.state.player}
+                playerId={this.state.id}
+                playerStatusFlag={this.state.playerStatusFlag}
+                playerIsNPC={this.state.isNPC}
+                selectedFlag={this.state.selectedFlag}
+                showDeckCallout={this._showDeckCallout}
+              />
+            </Stack.Item>
           )}
-        {this.state.isNPC &&
-          this.state.dealerHasControl && <Agent {...this.state} />}
-        {!this.state.isNPC && (
-          <ControlPanel
-            gameStatus={this.state.gameStatus}
-            gameStatusFlag={this.state.gameStatusFlag}
-            hidden={false}
-            minimumBet={this.state.minimumBet}
-            player={this.state.player}
-            playerId={this.state.id}
-            playerStatusFlag={this.state.playerStatusFlag}
-            playerIsNPC={this.state.isNPC}
-            selectedFlag={this.state.selectedFlag}
-            showDeckCallout={this._showDeckCallout}
-          />
-        )}
 
-        {this.state.deck.length > 0 && (
-          <DeckContainer
-            deck={this.state.deck}
-            gameStatus={this.state.gameStatus}
-            gameStatusFlag={this.gameStatusFlag}
-            handValue={this.state.handValue}
-            hidden={false}
-            isCardDescVisible={this.state.isCardDescVisible}
-            isDealerHandVisible={this.state.isDealerHandVisible}
-            isHandValueVisible={this.state.isHandValueVisible}
-            isNPC={this.state.isNPC}
-            isPlayerDeck
-            isSelectable
-            player={this.state.player}
-            title={this.state.title}
-            turnCount={this.state.turnCount}
-          />
-        )}
-        <div
-          id="deckCalloutTarget"
-          ref={callout => (this._deckCalloutTarget = callout)}
-          className="ms-font-m"
+          {this.state.deck.length > 0 && (
+            <Stack.Item className={`DeckCalloutTarget-${this.state.title}`}>
+              <DeckContainer
+                deck={this.state.deck}
+                gameStatus={this.state.gameStatus}
+                gameStatusFlag={this.gameStatusFlag}
+                handValue={this.state.handValue}
+                hidden={false}
+                isCardDescVisible={this.state.isCardDescVisible}
+                isDealerHandVisible={this.state.isDealerHandVisible}
+                isHandValueVisible={this.state.isHandValueVisible}
+                isNPC={this.state.isNPC}
+                isPlayerDeck
+                isSelectable
+                player={this.state.player}
+                title={this.state.title}
+                turnCount={this.state.turnCount}
+              />
+            </Stack.Item>
+          )}
+        </Stack>
+        <DeckCallout
+          player={this.state.player}
+          isDeckCalloutVisible={this.state.isDeckCalloutVisible}
+          onHideCallout={this._hideDeckCallout}
+          target={`.DeckCalloutTarget-${this.state.title}`}
         />
-      </div>
+      </Stack>
     );
   }
 }

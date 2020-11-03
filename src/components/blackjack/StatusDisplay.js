@@ -1,6 +1,6 @@
 import React from "react";
 import * as T from "prop-types";
-import { Stack, Callout, DirectionalHint, Text, Icon, mergeStyleSets, getTheme, FontWeights } from "@fluentui/react";
+import { Stack, Callout, Text, Icon, mergeStyleSets, getTheme, FontWeights } from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
@@ -90,18 +90,18 @@ class StatusDisplay extends BaseComponent {
     const targetClass = `InfoButton-${this.props.player.id}`
 
     return (
-      <div>
+      <Stack.Item align="center">
         <Icon iconName="Info" onClick={this._toggleIsCalloutVisible} className={targetClass} />
         {this.state.isCalloutVisible &&
           <Callout
-            className={styles.callout}
-            role="alertdialog"
-            gapSpace={0}
-            target={`.${targetClass}`}
-            onDismiss={this._toggleIsCalloutVisible}
-            setInitialFocus
-            ariaLabelledBy={labelId}
             ariaDescribedBy={descriptionId}
+            ariaLabelledBy={labelId}
+            className={styles.callout}
+            gapSpace={0}
+            onDismiss={this._toggleIsCalloutVisible}
+            role="alertdialog"
+            setInitialFocus
+            target={`.${targetClass}`}
           >
             <div className={styles.header}>
               <Text className={styles.title} id={labelId}>
@@ -116,7 +116,7 @@ class StatusDisplay extends BaseComponent {
             </div>
           </Callout>
         }
-      </div>
+      </Stack.Item>
     );
   }
 }
