@@ -68,12 +68,28 @@ AppDispatcher.register(action => {
         iconName: "Add",
       });
       break;
-    
-      case AppConstants.GAME_STAY:
+
+    case AppConstants.GAME_STAY:
       ActivityLogStore.new({
         description: " stayed",
         name: GameStore.getPlayerName(action.playerId),
         iconName: "Forward",
+      });
+      break;
+
+    case AppConstants.GAME_BET:
+      ActivityLogStore.new({
+        description: ` bet $${action.amount}`,
+        name: GameStore.getPlayerName(action.playerId),
+        iconName: "Money",
+      });
+      break;
+  
+      case AppConstants.DECK_HIT:
+      ActivityLogStore.new({
+        description: ` hit`,
+        name: GameStore.getPlayerName(action.playerId),
+        iconName: "ChevronDownMed",
       });
       break;
 
