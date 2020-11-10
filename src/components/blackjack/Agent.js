@@ -1,24 +1,12 @@
 /* React */
 import React from "react";
 import * as T from "prop-types";
-import { Text, mergeStyleSets } from '@fluentui/react';
-import { MotionAnimations } from '@fluentui/theme';
+import { Text } from '@fluentui/react';
 
 /* Flux */
 import AppActions from "./actions/AppActions";
 
-/* custom stuff */
-import BaseComponent from "../BaseComponent";
-
-// CSS Styles
-const classNames = mergeStyleSets({
-  divRoot: {
-    animation: MotionAnimations.fadeIn,
-  }
-});
-
-
-class Agent extends BaseComponent {
+class Agent extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -54,8 +42,7 @@ class Agent extends BaseComponent {
             (aceAsOne >= 17 && aceAsOne <= 21) ||
             (aceAsEleven >= 17 && aceAsEleven <= 21)
           ) {
-            console.log("Agent stayed");
-            debugger;
+            // console.log("Agent stayed");
             AppActions.stay(this.props.id);
             this.setState({ lastAction: "Stay" });
           }
@@ -71,7 +58,7 @@ class Agent extends BaseComponent {
 
   render() {
     return (
-      <div className={classNames.divRoot}>
+      <div>
         <Text block nowrap variant="large">{this.state.lastAction}</Text>
       </div>
     );

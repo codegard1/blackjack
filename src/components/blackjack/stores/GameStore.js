@@ -10,8 +10,8 @@ import AppConstants from "../constants/AppConstants";
 import StatsStore from "./StatsStore";
 
 /* idb-keyval */
-import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-// import { Store, get, set } from 'idb-keyval';
+import { Store, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
+// import { Store, set } from 'idb-keyval';
 
 /* ALMIGHTY STATE */
 let PlayersStore = new Players();
@@ -37,14 +37,14 @@ let state = {
 const CHANGE_EVENT = "change";
 export const GameStore = Object.assign({}, EventEmitter.prototype, {
   store: new Store('GameStore', 'Game'),
-  getPlayers() { return PlayersStore.getPlayers() },
-  getPlayer(id) { PlayersStore.getPlayer(id) },
-  getPlayerName(id) { const p = this.getPlayer(id); return p.title },
-  getState() { return state },
-  getStatus() { return state.gameStatus },
   emitChange() { this.emit(CHANGE_EVENT); this.saveAll() },
   addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
+  getPlayers: () => PlayersStore.getPlayers(),
+  getPlayer: id => PlayersStore.getPlayer(id),
+  getPlayerName: id => { const p = PlayersStore.getPlayer(id); return p.title },
+  getState: () => state,
+  getStatus: () => state.gameStatus,
   setMessageBar(text, type = MessageBarType.info) {
     state.messageBarDefinition = { text, type, isMultiLine: false };
     state.isMessageBarVisible = true;
