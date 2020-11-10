@@ -10,6 +10,7 @@ import DeckContainer from "./DeckContainer";
 import OptionsPanel from "./OptionsPanel";
 import { defaultPlayers } from "./definitions";
 import PotDisplay from "./PotDisplay";
+import ActivityLog from "./ActivityLog";
 
 /* flux */
 import { GameStore } from "./stores/GameStore";
@@ -143,6 +144,8 @@ export default class Table extends BaseComponent {
         <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
           {selectedPlayersContainers}
         </Stack>
+
+        <ActivityLog />
 
         <DeckContainer
           deck={this.state.deck.cards}

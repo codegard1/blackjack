@@ -47,4 +47,7 @@ export default keyMirror({
   /* StatsStore */
   STATS_NEW: null,
   STATS_UPDATE: null,
+
+  /* ActivityLogStore */
+  ACTIVITYLOG_NEW: null,
 });

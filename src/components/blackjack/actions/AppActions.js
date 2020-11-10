@@ -136,9 +136,10 @@ const AppActions = {
       actionType: AppConstants.GAME_HIT
     });
   },
-  stay() {
+  stay(playerId) {
     AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_STAY
+      actionType: AppConstants.GAME_STAY,
+      playerId
     });
   },
   bet(playerId, amount) {
@@ -212,6 +213,13 @@ const AppActions = {
     AppDispatcher.dispatch({
       actionType: AppConstants.CONTROLPANEL_NEWPLAYER,
       name
+    });
+  },
+
+  newActivityLogItem(name, description, iconName) {
+    AppDispatcher.dispatch({
+      actionType: AppConstants.ACTIVITYLOG_NEW,
+      name, description, iconName
     });
   },
 };
