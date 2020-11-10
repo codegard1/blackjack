@@ -4,7 +4,7 @@ import AppConstants from "../constants/AppConstants";
 import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
 // import { Store, get, set } from 'idb-keyval';
 
-import Players from './Players';
+import GameStore from './GameStore';
 
 /*  ========================================================  */
 
@@ -72,7 +72,7 @@ AppDispatcher.register(action => {
       case AppConstants.GAME_STAY:
       ActivityLogStore.new({
         description: " stayed",
-        name: Players.getPlayerName(action.playerId),
+        name: GameStore.getPlayerName(action.playerId),
         iconName: "Forward",
       });
       break;
