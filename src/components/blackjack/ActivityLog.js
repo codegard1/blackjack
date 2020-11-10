@@ -63,7 +63,8 @@ class ActivityLog extends BaseComponent {
   }
 
   render() {
-    const activityItems = this.state.activityItems.map(item => (
+    const activityItemsSorted = this.state.activityItems.sort(function (a, b) { return b.key - a.key });
+    const activityItems = activityItemsSorted.map(item => (
       <ActivityItem
         activityDescription={[
           <span key={1} className={classNames.nameText}>{item.name}</span>,
