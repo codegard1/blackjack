@@ -112,7 +112,7 @@ class ControlPanel extends Component {
         ariaLabel: "Stay",
         iconProps: { iconName: "Forward" },
         disabled: gameStatusFlag || playerStatusFlag,
-        onClick: AppActions.stay
+        onClick: () => AppActions.stay(this.props.playerId),
       }
     ];
 
