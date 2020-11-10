@@ -36,29 +36,20 @@ let state = {
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "change";
 export const GameStore = Object.assign({}, EventEmitter.prototype, {
-  getPlayers: () => PlayersStore.getPlayers(),
-  getPlayer: id => PlayersStore.getPlayer(id),
-  getState: () => state,
-  getStatus: () => state.gameStatus,
-  emitChange: function () {
-    this.emit(CHANGE_EVENT);
-    this.saveAll();
-  },
-  addChangeListener: function (callback) {
-    this.on(CHANGE_EVENT, callback);
-  },
-  removeChangeListener: function (callback) {
-    this.removeListener(CHANGE_EVENT, callback);
-  },
   store: new Store('GameStore', 'Game'),
+  getPlayers() { return PlayersStore.getPlayers() },
+  getPlayer(id) { PlayersStore.getPlayer(id) },
+  getPlayerName(id) { const p = this.getPlayer(id); return p.title },
+  getState() { return state },
+  getStatus() { return state.gameStatus },
+  emitChange() { this.emit(CHANGE_EVENT); this.saveAll() },
+  addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
+  removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
   setMessageBar(text, type = MessageBarType.info) {
     state.messageBarDefinition = { text, type, isMultiLine: false };
     state.isMessageBarVisible = true;
   },
-  async saveAll() {
-    for (let key in state) { await set(key, state[key], this.store) }
-    console.log(`saved GameStore state`);
-  }
+  async saveAll() { for (let key in state) { await set(key, state[key], this.store) } }
 });
 
 /* Responding to Actions */
