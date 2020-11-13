@@ -104,6 +104,7 @@ export default class Table extends BaseComponent {
       isHandValueVisible: newState.isHandValueVisible,
       isOptionsPanelVisible: newState.isOptionsPanelVisible,
       isSelectedVisible: newState.isSelectedVisible,
+      isActivityLogVisible: newState.isActivityLogVisible
     });
   }
 
@@ -145,7 +146,7 @@ export default class Table extends BaseComponent {
           {selectedPlayersContainers}
         </Stack>
 
-        <ActivityLog />
+        {this.state.isActivityLogVisible && <ActivityLog />}
 
         <DeckContainer
           deck={this.state.deck.cards}

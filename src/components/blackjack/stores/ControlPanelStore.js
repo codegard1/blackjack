@@ -23,6 +23,7 @@ let state = {
   newPlayerFieldValue: "",
   isNewPlayerFieldEmpty: true,
   isNewPlayerSaveButtonDisabled: false,
+  isActivityLogVisible: false,
 };
 
 /*  ========================================================  */
@@ -99,6 +100,11 @@ AppDispatcher.register(action => {
 
     case AppConstants.CONTROLPANEL_SELECTPLAYER:
       state.selectedPlayerKey = action.key;
+      ControlPanelStore.emitChange();
+      break;
+
+    case AppConstants.CONTROLPANEL_TOGGLEACTIVITYLOGVISIBILITY:
+      state.isActivityLogVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
 

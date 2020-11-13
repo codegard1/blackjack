@@ -130,7 +130,7 @@ class OptionsPanel extends BaseComponent {
           <Toggle
             checked={this.state.isDeckVisible}
             label="Show Deck"
-            ariaLabel="The deck is visible. Pres to hide it."
+            ariaLabel="The deck is visible. Press to hide it."
             onText="On"
             offText="Off"
             onChange={(e, checked) => AppActions.toggleDeckVisibility(checked)}
@@ -139,7 +139,7 @@ class OptionsPanel extends BaseComponent {
           <Toggle
             checked={this.state.isDrawnVisible}
             label="Show Drawn"
-            ariaLabel="The Drawn cards are visible. Pres to hide it."
+            ariaLabel="The Drawn cards are visible. Press to hide it."
             onText="On"
             offText="Off"
             onChange={(e, checked) => AppActions.toggleDrawnVisibility(checked)}
@@ -147,7 +147,7 @@ class OptionsPanel extends BaseComponent {
           <Toggle
             checked={this.state.isSelectedVisible}
             label="Show Selected"
-            ariaLabel="The Selected cards are visible. Pres to hide it."
+            ariaLabel="The Selected cards are visible. Press to hide it."
             onText="On"
             offText="Off"
             onChange={(e, checked) => AppActions.toggleSelectedVisibility(checked)}
@@ -177,17 +177,28 @@ class OptionsPanel extends BaseComponent {
             offText="Off"
             onChange={(e, checked) => AppActions.toggleCardTitleVisibility(checked)}
           />
-
-          <Dropdown
-            placeholder="Select"
-            label="Select existing user"
-            options={this.makePlayerSelectDropdownOptions()}
-            selectedKey={this.state.selectedPlayerKey}
-            onChange={(e, option) => AppActions.selectPlayer(option.key)}
-            styles={{ dropdown: { width: 300 } }}
+          <Toggle
+            checked={this.state.isActivityLogVisible}
+            label="Show Activity Log"
+            ariaLabel="The Activity Log visible. Press to hide it."
+            onText="On"
+            offText="Off"
+            onChange={(e, checked) => AppActions.toggleActivityLogVisibility(checked)}
           />
 
+
+
           {/* <Stack tokens={{ padding: 10, childrenGap: 10 }}>
+            <Stack.Item>
+              <Dropdown
+                placeholder="Select"
+                label="Select existing user"
+                options={this.makePlayerSelectDropdownOptions()}
+                selectedKey={this.state.selectedPlayerKey}
+                onChange={(e, option) => AppActions.selectPlayer(option.key)}
+                styles={{ dropdown: { width: 300 } }}
+              />
+            </Stack.Item>
             <Stack.Item shrink>
               <TextField
                 label="Create new player"

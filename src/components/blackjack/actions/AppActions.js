@@ -6,53 +6,35 @@ const AppActions = {
    * CONTROL PANEL ACTIONS
    */
   hideOptionsPanel() {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.CONTROLPANEL_HIDEOPTIONSPANEL
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_HIDEOPTIONSPANEL });
   },
   showOptionsPanel() {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.CONTROLPANEL_SHOWOPTIONSPANEL
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_SHOWOPTIONSPANEL });
   },
   toggleDeckVisibility(bool) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.CONTROLPANEL_TOGGLEDECKVISIBILITY,
-      bool
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLEDECKVISIBILITY, bool });
   },
   toggleDrawnVisibility(bool) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.CONTROLPANEL_TOGGLEDRAWNVISIBILITY,
-      bool
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLEDRAWNVISIBILITY, bool });
   },
   toggleSelectedVisibility(bool) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.CONTROLPANEL_TOGGLESELECTEDVISIBLITY,
-      bool
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLESELECTEDVISIBLITY, bool });
   },
   toggleDealerHandVisibility(bool) {
     // console.log(`toggleDealerHandVisibility( ${bool} )`);
-    AppDispatcher.dispatch({
-      actionType: AppConstants.CONTROLPANEL_TOGGLEDEALERHANDVISIBILITY,
-      bool
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLEDEALERHANDVISIBILITY, bool });
   },
   toggleHandValueVisibility(bool) {
     // console.log(`toggleHandValueVisibility( ${bool} )`);
-    AppDispatcher.dispatch({
-      actionType: AppConstants.CONTROLPANEL_TOGGLEHANDVALUEVISIBILITY,
-      bool
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLEHANDVALUEVISIBILITY, bool });
   },
   toggleCardTitleVisibility(bool) {
-    console.log(`toggleCardTitleVisibility( ${bool} )`);
-    AppDispatcher.dispatch({
-      actionType: AppConstants.CONTROLPANEL_TOGGLECARDTITLEVISIBILITY,
-      bool
-    });
+    // console.log(`toggleCardTitleVisibility( ${bool} )`);
+    AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLECARDTITLEVISIBILITY, bool });
+  },
+  toggleActivityLogVisibility(bool) {
+    console.log(`toggleActivityLogVisibility( ${bool} )`);
+    AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLEACTIVITYLOGVISIBILITY, bool });
   },
 
   /**
@@ -204,23 +186,14 @@ const AppActions = {
   },
 
   selectPlayer(key) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.CONTROLPANEL_SELECTPLAYER,
-      key
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_SELECTPLAYER, key });
   },
   createNewPlayer(name) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.CONTROLPANEL_NEWPLAYER,
-      name
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_NEWPLAYER, name });
   },
 
   newActivityLogItem(name, description, iconName) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.ACTIVITYLOG_NEW,
-      name, description, iconName
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.ACTIVITYLOG_NEW, name, description, iconName });
   },
 };
 
