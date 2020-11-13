@@ -65,7 +65,7 @@ class ActivityLog extends BaseComponent {
   onChangeLog() {
     const newState = ActivityLogStore.getState();
     this.setState({ ...newState });
-    console.log(`ActivityLog#onChangeLog`);
+    // console.log(`ActivityLog#onChangeLog`);
   }
 
   render() {

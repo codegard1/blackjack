@@ -86,10 +86,10 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
     if (p) {
       this.state.push(new PlayerStats(playerId, p));
 
-      console.log(`loaded saved playerstats state for player #${playerId}`);
+      // console.log(`loaded saved playerstats state for player #${playerId}`);
     } else {
       this.state.push(new PlayerStats(playerId));
-      console.log(`using default playerstats state for player #${playerId}`);
+      // console.log(`using default playerstats state for player #${playerId}`);
     }
     this.emitChange();
   },

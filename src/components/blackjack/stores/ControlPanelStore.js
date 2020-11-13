@@ -46,7 +46,7 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
     for (let key in state) {
       await set(key, state[key], this.store);
     }
-    console.log('ControlPanelStore#saveAll');
+    // console.log('ControlPanelStore#saveAll');
   }
 });
 

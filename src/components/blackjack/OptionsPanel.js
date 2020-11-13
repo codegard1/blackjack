@@ -1,6 +1,6 @@
 import React from "react";
 // import * as T from "prop-types";
-import { Stack, Panel, PanelType, Toggle, CommandButton, Dropdown, DropdownMenuItemType, TextField, DefaultButton } from "@fluentui/react";
+import { Stack, Panel, PanelType, Toggle, CommandButton, Dropdown, DropdownMenuItemType } from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";

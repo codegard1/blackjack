@@ -1,6 +1,6 @@
 import React from "react";
 import * as T from "prop-types";
-import { Stack, Callout, DirectionalHint, Text } from "@fluentui/react";
+import { Stack, Text } from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
@@ -53,7 +53,6 @@ export class PlayerContainer extends BaseComponent {
     this._bind(
       "_hideDeckCallout",
       "_showDeckCallout",
-      "_toggleStatusCallout",
       "onChangeControlPanel",
       "onChangeDeck",
       "onChangeGame",
@@ -146,12 +145,6 @@ export class PlayerContainer extends BaseComponent {
     const stats = StatsStore.getStats(this.state.id);
     // Don't update if getStats() returns false
     if (stats) this.setState({ stats });
-  }
-
-  _toggleStatusCallout() {
-    this.setState({
-      isStatusCalloutVisible: !this.state.isStatusCalloutVisible
-    });
   }
 
   _showDeckCallout() {

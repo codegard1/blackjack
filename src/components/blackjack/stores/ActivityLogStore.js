@@ -24,10 +24,10 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
     const newItem = { ...itemProps, key: this.state.nextKey, timestamp: new Date(), };
     this.state.activityItems.push(newItem);
     this.state.nextKey++;
-    console.log(`ActivityLogStore#new:${JSON.stringify(itemProps)}`);
+    // console.log(`ActivityLogStore#new:${JSON.stringify(newItem)}`);
     this.emitChange();
   },
-  clear() { this.state.activityItems = new Array() },
+  clear() { this.state.activityItems = [] },
   async initialize() {
     let storedState = await get('state', this.store);
     if (storedState) { this.state = storedState }
@@ -35,7 +35,7 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   },
   async saveAll() {
     await set('state', this.state, this.store);
-    console.log('ActivityLogStore#saveAll');
+    // console.log('ActivityLogStore#saveAll');
   }
 });
 
