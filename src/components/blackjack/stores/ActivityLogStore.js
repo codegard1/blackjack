@@ -13,14 +13,7 @@ const CHANGE_EVENT = "activityLog";
 const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   store: new Store('ActivityLogStore', 'ActivityItems'),
   state: {
-    activityItems: [
-      {
-        key: 1,
-        name: 'Chris',
-        description: ' stayed',
-        iconName: 'Add'
-      },
-    ],
+    activityItems: [],
     nextKey: 2,
   },
   getState() { return this.state },
@@ -28,7 +21,7 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
   new(itemProps) {
-    const newItem = { ...itemProps, key: this.state.nextKey };
+    const newItem = { ...itemProps, key: this.state.nextKey, timestamp: new Date(), };
     this.state.activityItems.push(newItem);
     this.state.nextKey++;
     console.log(`ActivityLogStore#new:${JSON.stringify(itemProps)}`);
@@ -84,8 +77,8 @@ AppDispatcher.register(action => {
         iconName: "Money",
       });
       break;
-  
-      case AppConstants.DECK_HIT:
+
+    case AppConstants.DECK_HIT:
       ActivityLogStore.new({
         description: ` hit`,
         name: GameStore.getPlayerName(action.playerId),

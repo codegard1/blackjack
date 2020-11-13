@@ -15,7 +15,7 @@ const classNames = mergeStyleSets({
     borderRadius: DefaultEffects.roundedCorner6,
     boxShadow: DefaultEffects.elevation8,
     color: 'darkslategray',
-    marginLeft: '10px',
+    margin: '10px',
     maxHeight: '400px',
     maxWidth: '500px',
     overflowY: 'hidden',
@@ -34,6 +34,12 @@ const classNames = mergeStyleSets({
     fontWeight: 'normal',
     color: 'darkslategray',
   },
+  timestamp: {
+    fontWeight: 'light',
+    color: '#aaa',
+    fontSize: 'x-small',
+    marginLeft: '10px',
+  }
 });
 
 class ActivityLog extends BaseComponent {
@@ -68,7 +74,8 @@ class ActivityLog extends BaseComponent {
       <ActivityItem
         activityDescription={[
           <span key={1} className={classNames.nameText}>{item.name}</span>,
-          <span key={2} className={classNames.descriptionText}>{item.description}</span>
+          <span key={2} className={classNames.descriptionText}>{item.description}</span>,
+          <span key={3} className={classNames.timestamp}>{(item.timestamp.toLocaleString())}</span>,
         ]}
         activityIcon={<Icon iconName={item.iconName} />}
         isCompact
