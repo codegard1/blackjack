@@ -105,11 +105,11 @@ class ActivityLog extends BaseComponent {
 
   createActivityItems() {
     // sort activityItems in State
-    const activityItemsSorted = this.state.activityItems.sort(function (a, b) { return a.timestamp > b.timestamp });
+    this.state.activityItems.sort((a, b) => b.timestamp - a.timestamp);
     // 
     let datememo = [];
     let outputMemo = [];
-    activityItemsSorted.forEach((item, index, arr) => {
+    this.state.activityItems.forEach((item, index, arr) => {
       const ts = item.timestamp.toLocaleDateString('en-US');
       // If the datememo does not contain the current item's date 
       // then add it as a Sticky and also add activity items from 
@@ -119,22 +119,22 @@ class ActivityLog extends BaseComponent {
         let filteredItems = arr.filter(v => v.timestamp.toLocaleDateString('en-US') === ts);
         // Push the date header
         outputMemo.push(
-          <Sticky key={index} stickyPosition={StickyPositionType.Both}>
+          <Sticky key={`Sticky-${index}`} stickyPosition={StickyPositionType.Both}>
             <div className={classNames.sticky}>{ts}</div>
           </Sticky>
         );
-        filteredItems.forEach(item => {
+        filteredItems.forEach((item1,index1) => {
           outputMemo.push(
             <ActivityItem
               activityDescription={[
-                <span key={1} className={classNames.nameText}>{item.name}</span>,
-                <span key={2} className={classNames.descriptionText}>{item.description}</span>,
-                <span key={3} className={classNames.timestamp}>{(item.timestamp.toLocaleString('en-US'))}</span>,
-                <span key={4} className={classNames.timestamp}>{(item.key)}</span>,
+                <span key={`ActivityItem-${index1}-1`} className={classNames.nameText}>{item1.name}</span>,
+                <span key={`ActivityItem-${index1}-2`} className={classNames.descriptionText}>{item1.description}</span>,
+                <span key={`ActivityItem-${index1}-3`} className={classNames.timestamp}>{(item1.timestamp.toLocaleString('en-US'))}</span>,
+                <span key={`ActivityItem-${index1}-4`} className={classNames.timestamp}>{(item1.key)}</span>,
               ]}
-              activityIcon={<Icon iconName={item.iconName} />}
+              activityIcon={<Icon iconName={item1.iconName} />}
               isCompact
-              key={item.key}
+              key={item1.key}
               className={classNames.activityItemRoot}
             />
           )
