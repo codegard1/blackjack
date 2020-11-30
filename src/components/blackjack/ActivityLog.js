@@ -66,7 +66,7 @@ const classNames = mergeStyleSets({
     border: '1px solid ' + theme.palette.neutralLight,
   },
   sticky: {
-    color: theme.palette.neutral,
+    color: theme.palette.neutralSecondary,
     padding: '5px 20px 5px 10px',
     fontSize: '13px',
     borderTop: '1px solid ' + theme.palette.neutralLight,
@@ -127,9 +127,9 @@ class ActivityLog extends BaseComponent {
           outputMemo.push(
             <ActivityItem
               activityDescription={[
-                <span key={`ActivityItem-${index1}-1`} className={classNames.nameText}>{item1.name}</span>,
-                <span key={`ActivityItem-${index1}-2`} className={classNames.descriptionText}>{item1.description}</span>,
-                <span key={`ActivityItem-${index1}-3`} className={classNames.timestamp}>{(item1.timestamp.toLocaleString('en-US'))}</span>,
+                <span key={`ActivityItem-${index1}-1`} className={classNames.nameText}>{item1.name}&nbsp;</span>,
+                <span key={`ActivityItem-${index1}-2`} className={classNames.descriptionText}>{item1.description}&nbsp;</span>,
+                <span key={`ActivityItem-${index1}-3`} className={classNames.timestamp}>{(item1.timestamp.toLocaleTimeString('en-US'))}&nbsp;</span>,
                 <span key={`ActivityItem-${index1}-4`} className={classNames.timestamp}>{(item1.key)}</span>,
               ]}
               activityIcon={<Icon iconName={item1.iconName} />}

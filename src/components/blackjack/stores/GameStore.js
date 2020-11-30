@@ -8,6 +8,7 @@ import Players from "./Players";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 import StatsStore from "./StatsStore";
+import ActivityLogStore from "./ActivityLogStore";
 
 /* idb-keyval */
 import { Store, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
@@ -170,6 +171,11 @@ function _evaluateGame(statusCode) {
         ? `${winningPlayerTitle} wins with Blackjack!`
         : `${winningPlayerTitle} wins!`;
       GameStore.setMessageBar(messageBarText, MessageBarType.success);
+      ActivityLogStore.new({
+        description: "wins!",
+        name: winningPlayerTitle,
+        iconName: "Crown",
+      });
 
       state.winner = state.players[0].id;
       state.loser = state.players[1].id;
@@ -178,7 +184,12 @@ function _evaluateGame(statusCode) {
       break;
 
     case 7 /*   Dealer wins   */:
-      GameStore.setMessageBar(`${state.players[1].title} wins!`);
+      GameStore.setMessageBar(`Dealer wins!`);
+      ActivityLogStore.new({
+        description: "wins!",
+        name: "Dealer",
+        iconName: "Crown",
+      });
 
       state.winner = state.players[1].id;
       state.loser = state.players[0].id;
@@ -249,9 +260,14 @@ function _endGameTrap() {
 
 /* pay a specified amount into the pot */
 function _ante(amount = state.minimumBet) {
-  GameStore.setMessageBar(`Ante: $${amount}`);
   PlayersStore.allPlayersAnte(amount);
   state.pot += amount * PlayersStore.length();
+  GameStore.setMessageBar(`Ante: $${amount}`);
+  ActivityLogStore.new({
+    description: `ante $${amount}`,
+    name: "All players",
+    iconName: "Money",
+  });
 }
 
 export default GameStore;
