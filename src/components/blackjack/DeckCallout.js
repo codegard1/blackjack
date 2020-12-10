@@ -1,6 +1,6 @@
 import React from "react";
 import * as T from "prop-types";
-import { Callout, Icon, nullRender, mergeStyleSets, getTheme, FontWeights } from "@fluentui/react";
+import { Callout, nullRender, mergeStyleSets, getTheme, FontWeights } from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
@@ -45,7 +45,6 @@ class DeckCallout extends BaseComponent {
         role="alertdialog"
         target={this.props.target}
       >
-        <Icon iconName="alert" />
         {text}
       </Callout>
     ) : nullRender();

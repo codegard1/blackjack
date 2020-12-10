@@ -141,8 +141,8 @@ export class PlayerContainer extends BaseComponent {
   }
 
   /* What to do when the player stats change */
-  onChangeStats() {
-    const stats = StatsStore.getStats(this.state.id);
+  async onChangeStats() {
+    const stats = await StatsStore.getStats(this.state.id);
     // Don't update if getStats() returns false
     if (stats) this.setState({ stats });
   }

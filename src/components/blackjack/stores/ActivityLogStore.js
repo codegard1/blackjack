@@ -2,7 +2,6 @@ import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-// import { Store, get, set } from 'idb-keyval';
 
 import GameStore from './GameStore';
 
@@ -11,32 +10,62 @@ import GameStore from './GameStore';
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "activityLog";
 const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
-  store: new Store('ActivityLogStore', 'ActivityItems'),
+  // in-memory state 
   state: {
     activityItems: [],
-    nextKey: 2,
+    nextKey: 1,
   },
+
+  // locally-stored state
+  store: new Store('ActivityLogStore', 'State'),
+
+  // return state 
   getState() { return this.state },
-  emitChange() { this.emit(CHANGE_EVENT); this.saveAll(); },
+
+  // notify subscribers of a state change and save state to local storage
+  emitChange() {
+    this.emit(CHANGE_EVENT);
+    this.saveAll();
+  },
+
+  // subscribe to this store 
   addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
+
+  // unsubscribe to this store
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
+
+  // create a new ActivityItem
   new(itemProps) {
-    const newItem = { ...itemProps, key: this.state.nextKey, timestamp: new Date(), };
+    const newItem = { 
+      ...itemProps, 
+      key: this.state.nextKey, 
+      timestamp: new Date(), 
+    };
     this.state.activityItems.push(newItem);
+    // sort items in reverse chronological order
+    this.state.activityItems.sort((a,b)=>b.timestamp-a.timestamp);
     this.state.nextKey++;
-    // console.log(`ActivityLogStore#new:${JSON.stringify(newItem)}`);
     this.emitChange();
   },
-  clear() { this.state.activityItems = [] },
+
+  // clear state 
+  clear() {
+    this.state.activityItems = [];
+    this.emitChange();
+  },
+
+  // Load data from local storage, if available
+  // ideally this should be in the constructor
   async initialize() {
     let storedState = await get('state', this.store);
-    if (storedState) { this.state = storedState }
-    this.emitChange();
+    if (storedState) { 
+      this.state = storedState 
+      this.emitChange();
+    }
   },
-  async saveAll() {
-    await set('state', this.state, this.store);
-    // console.log('ActivityLogStore#saveAll');
-  }
+
+  // save state to local storage
+  async saveAll() { set('state', this.state, this.store) },
 });
 
 ActivityLogStore.initialize();
@@ -58,21 +87,21 @@ AppDispatcher.register(action => {
       ActivityLogStore.new({
         description: "New Round Started",
         name: "",
-        iconName: "Add",
+        iconName: "SyncOccurence",
       });
       break;
 
     case AppConstants.GAME_STAY:
       ActivityLogStore.new({
-        description: " stayed",
+        description: "stayed",
         name: GameStore.getPlayerName(action.playerId),
-        iconName: "Forward",
+        iconName: "HandsFree",
       });
       break;
 
     case AppConstants.GAME_BET:
       ActivityLogStore.new({
-        description: ` bet $${action.amount}`,
+        description: `bet $${action.amount}`,
         name: GameStore.getPlayerName(action.playerId),
         iconName: "Money",
       });
@@ -80,9 +109,9 @@ AppDispatcher.register(action => {
 
     case AppConstants.DECK_HIT:
       ActivityLogStore.new({
-        description: ` hit`,
+        description: `hit`,
         name: GameStore.getPlayerName(action.playerId),
-        iconName: "ChevronDownMed",
+        iconName: "CheckedOutByOther12",
       });
       break;
 
