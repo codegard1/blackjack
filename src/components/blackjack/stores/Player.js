@@ -127,7 +127,7 @@ class Player {
     this.log(`ended turn`);
   }
   log(msg) {
-    console.log(`Player Action: ${this.title} - ${msg}`);
+    // console.log(`Player Action: ${this.title} - ${msg}`);
   }
 }
 

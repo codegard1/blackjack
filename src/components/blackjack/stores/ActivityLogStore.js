@@ -17,7 +17,7 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   },
 
   // locally-stored state
-  store: new Store('Blackjack', 'ActivityLogStore'),
+  store: new Store('ActivityLogStore', 'State'),
 
   // return state 
   getState() { return this.state },

@@ -8,99 +8,76 @@ import AppConstants from "../constants/AppConstants";
 import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
 // import { Store, get, set } from 'idb-keyval';
 
-/* New instance of PlayerStats created for each player */
-class PlayerStats {
-  constructor(id, preset) {
-    this.id = id;
-
-    // setup default  
-    this.state = {
-      numberOfGamesLost: 0,
-      numberOfGamesPlayed: 0,
-      numberOfGamesWon: 0,
-      numberOfTimesBlackjack: 0,
-      numberOfTimesBusted: 0,
-      totalWinnings: 0,
-      winLossRatio: "1",
-    };
-
-    // update state variables from preset, if present
-    for (let key in preset) {
-      try {
-        this.state[key] = preset[key];
-      } catch (error) {
-        console.error(error);
-      }
-    }
-  }
-
-  calculateWinLossRatio() {
-    const numerator =
-      this.state.numberOfGamesWon > 0 ? this.state.numberOfGamesWon : 1;
-    const denominator =
-      this.state.numberOfGamesLost > 0 ? this.state.numberOfGamesLost : 1;
-    const ratio = (numerator / denominator).toString();
-    this.state.winLossRatio = ratio.substr(0, 4);
-  }
-}
-
-/* State variables */
-// let state = [];
-
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "playerstats";
 const StatsStore = Object.assign({}, EventEmitter.prototype, {
-  state:[],
+
+  // IDB Store holds state
+  store: new Store('StatsStore', 'State'),
+
+  // default value of stats for each player
+  defaultStats: {
+    numberOfGamesLost: 0,
+    numberOfGamesPlayed: 0,
+    numberOfGamesWon: 0,
+    numberOfTimesBlackjack: 0,
+    numberOfTimesBusted: 0,
+    totalWinnings: 0,
+    winLossRatio: "1",
+  },
+
+  // tell subscribers that a change has occurred in state
   emitChange() { this.emit(CHANGE_EVENT); },
+
+  // subscribe to this store
   addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
+
+  // unsubscribe from this store
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
-  getState() { return this.state },
-  store: new Store('StatsStore', 'Stats'),
-  getStats(playerId) {
-    const index = this.state.findIndex(item => item.id === playerId);
-    if (index !== -1) {
-      const stats = this.state[index].state;
-      return stats;
-    } else {
-      return false;
-    }
+
+  // return stats for the given player
+  getStats(playerId) { return get(playerId, this.store) },
+
+  // return the win/loss ratio as a string
+  calculateWinLossRatio(gamesWon, gamesLost) {
+    const numerator = gamesWon > 0 ? gamesWon : 1;
+    const denominator = gamesLost > 0 ? gamesLost : 1;
+    const ratio = (numerator / denominator).toString();
+    return ratio.substr(0, 4);
   },
+
+  // update stats for a given player
   async update(playerId, statsFrame) {
-    const index = this.state.findIndex(item => item.id === playerId);
-    for (let key in statsFrame) {
-      /* add the value of stasFrame[key] to the corresponding key in statsstore */
-      if (statsFrame[key] && this.state[index].state.hasOwnProperty(key)) {
-        this.state[index].state[key] += statsFrame[key];
+    let stats = await this.getStats(playerId);
+    if (stats) {
+      for (let key in statsFrame) {
+        /* add the value of stasFrame[key] to the corresponding key in statsstore */
+        if (stats.hasOwnProperty(key)) {
+          stats[key] += statsFrame[key];
+        }
       }
+      /* recalculate win/loss ratio */
+      stats.winLossRatio = this.calculateWinLossRatio(stats.numberOfGamesWon, stats.numberOfGamesLost);
+      // save the new value
+      await set(playerId, stats, this.store);
+      await set(playerId, stats, this.store2);
+      
+      console.log(`Updated stats for player #${playerId}`);
+      this.emitChange();
     }
-    /* recalculate win/loss ratio */
-    this.state[index].calculateWinLossRatio();
-    await set(playerId, this.state[index].state, this.store);
-    console.log(`Updated stats for player #${playerId}`);
-    this.emitChange();
   },
+
+  // start tracking a new player
   async new(playerId) {
     // get saved data from IDB
-    const p = await get(playerId, this.store);
-    // if saved data exists, use it as the base state for the PlayerStats object; otherwise use defaults
-    if (p) {
-      this.state.push(new PlayerStats(playerId, p));
-
-      // console.log(`loaded saved playerstats state for player #${playerId}`);
+    const stats = await this.getStats(playerId);
+    // if saved data does not exist, create a new entry with defaults
+    if (stats) {
+      console.log(`loaded saved stats for player #${playerId}`);
     } else {
-      this.state.push(new PlayerStats(playerId));
-      // console.log(`using default playerstats state for player #${playerId}`);
+      await set(playerId, this.defaultStats, this.store);
     }
     this.emitChange();
-  },
-  // Save all PlayerStats. This method is unused. 
-  async saveAll() {
-    if (this.state.length > 0) {
-      this.state.forEach(v => {
-        set(v.id, v.state, this.store);
-        console.log(`saved playerstats state for player #${v.id}`);
-      });
-    }
   },
 });
 
@@ -110,11 +87,10 @@ AppDispatcher.register(action => {
   switch (action.actionType) {
     case AppConstants.STATS_NEW:
       StatsStore.new(action.playerId);
-      StatsStore.emitChange();
       break;
 
+    // redundant because GameStore calls StatsStore.update() directly
     case AppConstants.STATS_UPDATE:
-      StatsStore.emitChange();
       break;
 
     default:
