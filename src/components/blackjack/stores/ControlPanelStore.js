@@ -2,52 +2,48 @@ import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-// import { Store, get, set } from 'idb-keyval';
-
-/* state variables */
-let state = {
-  isCardDescVisible: false,
-  isDealerHandVisible: false,
-  isDeckVisible: false,
-  isDrawnVisible: false,
-  isHandValueVisible: false,
-  isMessageBarVisible: false,
-  isOptionsPanelVisible: false,
-  isSelectedVisible: false,
-  players: [
-    { id: 1, title: "Chris", isNPC: false },
-    { id: 2, title: "Dealer", isNPC: true },
-    { id: 3, title: "John", isNPC: true },
-  ],
-  selectedPlayerKey: "chris",
-  newPlayerFieldValue: "",
-  isNewPlayerFieldEmpty: true,
-  isNewPlayerSaveButtonDisabled: false,
-  isActivityLogVisible: false,
-};
 
 /*  ========================================================  */
 
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "controlPanel";
 const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
-  getState() { return state },
+  store: new Store('ControlPanelStore', 'State'),
+  state: {
+    isCardDescVisible: false,
+    isDealerHandVisible: false,
+    isDeckVisible: false,
+    isDrawnVisible: false,
+    isHandValueVisible: false,
+    isMessageBarVisible: false,
+    isOptionsPanelVisible: false,
+    isSelectedVisible: false,
+    players: [
+      { id: 1, title: "Chris", isNPC: false },
+      { id: 2, title: "Dealer", isNPC: true },
+      { id: 3, title: "John", isNPC: true },
+    ],
+    selectedPlayerKey: "chris",
+    newPlayerFieldValue: "",
+    isNewPlayerFieldEmpty: true,
+    isNewPlayerSaveButtonDisabled: false,
+    isActivityLogVisible: false,
+  },
+  getState() { return this.state },
   emitChange() { this.emit(CHANGE_EVENT); this.saveAll(); },
   addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
-  store: new Store('ControlPanelStore', 'Options'),
   async initialize() {
-    for (let key in state) {
-      let val = await get(key, this.store);
-      if (val) { state[key] = val }
+    for (let key in this.state) {
+      let val = await get(key, this.store)
+      if (val) { this.state[key] = val }
     }
     this.emitChange();
   },
   async saveAll() {
-    for (let key in state) {
-      await set(key, state[key], this.store);
+    for (let key in this.state) {
+      await set(key, this.state[key], this.store);
     }
-    // console.log('ControlPanelStore#saveAll');
   }
 });
 
@@ -59,59 +55,60 @@ AppDispatcher.register(action => {
 
   switch (action.actionType) {
     case AppConstants.CONTROLPANEL_HIDEOPTIONSPANEL:
-      state.isOptionsPanelVisible = false;
+      ControlPanelStore.state.isOptionsPanelVisible = false;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_SHOWOPTIONSPANEL:
-      state.isOptionsPanelVisible = true;
+      ControlPanelStore.state.isOptionsPanelVisible = true;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEDECKVISIBILITY:
-      state.isDeckVisible = action.bool;
+      ControlPanelStore.state.isDeckVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEDRAWNVISIBILITY:
-      state.isDrawnVisible = action.bool;
+      ControlPanelStore.state.isDrawnVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLESELECTEDVISIBLITY:
-      state.isSelectedVisible = action.bool;
+      ControlPanelStore.state.isSelectedVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEHANDVALUEVISIBILITY:
-      state.isHandValueVisible = action.bool;
+      ControlPanelStore.state.isHandValueVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEDEALERHANDVISIBILITY:
-      state.isDealerHandVisible = action.bool;
+      ControlPanelStore.state.isDealerHandVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLECARDTITLEVISIBILITY:
-      state.isCardDescVisible = action.bool;
+      ControlPanelStore.state.isCardDescVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_SELECTPLAYER:
-      state.selectedPlayerKey = action.key;
+      ControlPanelStore.state.selectedPlayerKey = action.key;
       ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEACTIVITYLOGVISIBILITY:
-      state.isActivityLogVisible = action.bool;
+      ControlPanelStore.state.isActivityLogVisible = action.bool;
       ControlPanelStore.emitChange();
       break;
 
     // Add a new player to the players array
     case AppConstants.CONTROLPANEL_NEWPLAYER:
-      const newPlayerId = (state.players[state.players.length - 1].id) + 1;
-      state.players.push({
+      const lastIndex = ControlPanelStore.state.players.length - 1
+      const newPlayerId = ControlPanelStore.state.players[lastIndex].id + 1;
+      ControlPanelStore.state.players.push({
         id: newPlayerId,
         title: action.name,
         isNPC: false
