@@ -2,7 +2,6 @@ import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-// import { Store, get, set } from 'idb-keyval';
 
 import GameStore from './GameStore';
 
@@ -14,11 +13,11 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   // in-memory state 
   state: {
     activityItems: [],
-    nextKey: 2,
+    nextKey: 1,
   },
 
   // locally-stored state
-  store: new Store('ActivityLogStore', 'ActivityItems'),
+  store: new Store('Blackjack', 'ActivityLogStore'),
 
   // return state 
   getState() { return this.state },
@@ -37,8 +36,14 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
 
   // create a new ActivityItem
   new(itemProps) {
-    const newItem = { ...itemProps, key: this.state.nextKey, timestamp: new Date(), };
+    const newItem = { 
+      ...itemProps, 
+      key: this.state.nextKey, 
+      timestamp: new Date(), 
+    };
     this.state.activityItems.push(newItem);
+    // sort items in reverse chronological order
+    this.state.activityItems.sort((a,b)=>b.timestamp-a.timestamp);
     this.state.nextKey++;
     this.emitChange();
   },
@@ -53,12 +58,14 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   // ideally this should be in the constructor
   async initialize() {
     let storedState = await get('state', this.store);
-    if (storedState) { this.state = storedState }
-    this.emitChange();
+    if (storedState) { 
+      this.state = storedState 
+      this.emitChange();
+    }
   },
 
   // save state to local storage
-  saveAll() { set('state', this.state, this.store) },
+  async saveAll() { set('state', this.state, this.store) },
 });
 
 ActivityLogStore.initialize();

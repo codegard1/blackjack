@@ -104,26 +104,34 @@ class ActivityLog extends BaseComponent {
   }
 
   createActivityItems() {
-    // sort activityItems in State
-    this.state.activityItems.sort((a, b) => b.timestamp - a.timestamp);
-    // 
+    // memos for the loop 
     let datememo = [];
     let outputMemo = [];
+
+    // Loop through ActivityItems
     this.state.activityItems.forEach((item, index, arr) => {
-      const ts = item.timestamp.toLocaleDateString('en-US');
-      // If the datememo does not contain the current item's date 
+
+      // If the datememo does not contain the current item's timestamp
       // then add it as a Sticky and also add activity items from 
       // the same date
-      if (datememo.indexOf(ts) < 0) {
-        datememo.push(ts);
-        let filteredItems = arr.filter(v => v.timestamp.toLocaleDateString('en-US') === ts);
+
+      // format the timestamp as a date string e.g. '11/18/2020'
+      const datestamp = item.timestamp.toLocaleDateString('en-US'); 
+
+      // Check if the datestamp is in the memo
+      if (-1 === datememo.indexOf(datestamp)) {
+        datememo.push(datestamp);
         // Push the date header
         outputMemo.push(
           <Sticky key={`Sticky-${index}`} stickyPosition={StickyPositionType.Both}>
-            <div className={classNames.sticky}>{ts}</div>
+            <div className={classNames.sticky}>{datestamp}</div>
           </Sticky>
         );
-        filteredItems.forEach((item1,index1) => {
+        
+        const filteredItems = arr.filter(v => v.timestamp.toLocaleDateString('en-US') === datestamp);
+        // Loop through the items that occurred on the same date as timestamp
+        
+        filteredItems.forEach((item1, index1) => {
           outputMemo.push(
             <ActivityItem
               activityDescription={[
