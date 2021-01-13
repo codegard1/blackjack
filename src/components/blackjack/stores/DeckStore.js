@@ -6,29 +6,41 @@ import Shuffle from "./Shuffle";
 import { PlayerHand } from "./PlayerHand";
 import PlayingCard from "./PlayingCard";
 
-/* state variables */
-let deck = [],
-  drawn = [],
-  selected = [],
-  playerHands = [];
-/*  ========================================================  */
+/*========================================================  */
 
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "deck";
 export const DeckStore = Object.assign({}, EventEmitter.prototype, {
-  getState () { return { deck, selected, drawn, playerHands } },
-  emitChange () { this.emit(CHANGE_EVENT) },
-  addChangeListener (callback) { this.on(CHANGE_EVENT, callback) },
-  removeChangeListener (callback) { this.removeListener(CHANGE_EVENT, callback) },
-  getDeck () { return deck },
-  getSelected (playerId) {
-    if (selected.length > 0) {
+
+  // in-memory state
+  state: {
+    deck: [],
+    drawn: [],
+    playerHands: [],
+    selected: [],
+  },
+
+  // return state toa  subscriber
+  getState() { return this.state },
+
+  // notify subscribers of a state change and save state to local storage
+  emitChange() { this.emit(CHANGE_EVENT); },
+
+  // subscribe to this store 
+  addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
+
+  // unsubscribe from this store
+  removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
+
+  // check whether selected cards are in a player's hand
+  getSelected(playerId) {
+    if (this.state.selected.length > 0) {
       let foundMatch = false;
       let foundCards = [];
       let playerHand = this.getHand(playerId);
 
       /* check each card in selected to see if it's in the specified player's hand */
-      selected.forEach(selectedCard => {
+      this.state.selected.forEach(selectedCard => {
         playerHand.forEach(playerCard => {
           // console.log(`comparing ${selectedCard} to ${playerCard}`);
           if (
@@ -54,118 +66,233 @@ export const DeckStore = Object.assign({}, EventEmitter.prototype, {
       return false;
     }
   },
-  getDrawn (playerId) {
-    return drawn.find(item => item.id === playerId);
+
+  getDrawn(playerId) {
+    return this.state.drawn.find(item => item.id === playerId);
   },
-  getHand (playerId) {
-    if (playerHands && playerHands.length > 0) {
-      const ret = playerHands.find(item => item.id === playerId);
-      if (ret) {
-        return ret.hand;
-      } else {
-        return [];
-      }
+
+  getHand(playerId) {
+    const ret = this.state.playerHands.find(item => item.id === playerId);
+    if (ret) {
+      return ret.hand;
+    } else {
+      return [];
     }
   },
-  getHands () {
-    return playerHands;
+
+  getHands() {
+    return this.state.playerHands;
   },
-  getHandValue (playerId) {
-    if (playerHands.length > 0) {
-      let index = playerHands.findIndex(player => player.id === playerId);
+  
+  getHandValue(playerId) {
+    if (this.state.playerHands.length > 0) {
+      let index = this.state.playerHands.findIndex(player => player.id === playerId);
       // console.log(`getHandValue: playerHands[index]`);
-      return playerHands[index].evaluate();
+      return this.state.playerHands[index].evaluate();
     } else {
       return { aceAsOne: 0, AceAsEvelen: 0 };
     }
   },
+
+  newDeck() {
+    /* returns a new Deck populated with PlayingCards */
+    this.state.deck = new Shuffle();
+    this.state.selected = [];
+    this.state.drawn = [];
+  },
+
+  drawFromBottomOfDeck(num) {
+    const ret = this.state.deck.drawFromBottomOfDeck(num);
+    this.state.drawn.push(ret);
+    // log(`drawFromBottomOfDeck: ${ret}`);
+  },
+
+  drawRandom(num) {
+    const ret = this.state.deck.drawRandom(num);
+    this.state.drawn.push(ret);
+    // log(`drawRandom: ${ret}`);
+    return ret;
+  },
+
+  putOnTopOfDeck(cards = this.state.selected) {
+    this.state.deck.putOnTopOfDeck(cards);
+    this.removeSelectedFromDrawn();
+    this.clearSelected();
+  },
+
+  putOnBottomOfDeck(cards = this.state.selected) {
+    this.state.deck.putOnBottomOfDeck(cards);
+    this.removeSelectedFromDrawn();
+    this.clearSelected();
+  },
+
+  /* sets the deck back to a full 52-card deck, unshuffled */
+  reset() {
+    this.state.deck.reset();
+  },
+
+  draw(num) {
+    const ret = this.state.deck.draw(num);
+    if (num > 1) {
+      ret.forEach(item => this.state.drawn.push(item));
+    } else {
+      this.state.drawn.push(ret);
+    }
+    return ret;
+  },
+
+  shuffle() { this.state.deck.shuffle() },
+
+  clearSelected() { this.state.selected = [] },
+
+  removeSelectedFromDrawn() {
+    this.state.selected.forEach(card => {
+      const index = this.state.drawn.findIndex(element => {
+        return element.suit === card.suit && element.sort === card.sort;
+      });
+      this.state.drawn.splice(index, 1);
+    });
+  },
+
+  select(cardAttributes) {
+    this.state.selected.push(
+      new PlayingCard(
+        cardAttributes.suit,
+        cardAttributes.description,
+        cardAttributes.sort
+      )
+    );
+  },
+
+  deselect(cardAttributes) {
+    const toDeselect = this.state.selected.findIndex(
+      card =>
+        card.suit === cardAttributes.suit && card.sort === cardAttributes.sort
+    );
+    this.state.selected.splice(toDeselect, 1);
+  },
+
+  newPlayerHand(playerId) {
+    this.state.playerHands.push(new PlayerHand(playerId));
+  },
+
+  clearHands() {
+    this.state.playerHands.forEach(hand => {
+      hand.clear();
+    });
+  },
+
+  removeSelectedFromPlayerHand(playerId, cards) {
+    cards.forEach(card => {
+      const index = this.state.playerHands.findIndex(player => player.id === playerId);
+
+      this.state.playerHands[index].findIndex(element => {
+        return element.suit === card.suit && element.sort === card.sort;
+      });
+      this.state.playerHands[index].splice(index, 1);
+    });
+  },
+
+  deal() {
+    this.state.playerHands.forEach(player => {
+      player.hand = this.draw(2);
+      player.evaluate();
+      // console.log(`DeckStore::Deal  player ${player.id}'s hand: ${JSON.stringify(player.hand)}`);
+    });
+  },
+
+  hit(id) {
+    const index = this.state.playerHands.findIndex(hand => hand.id === id);
+    const ret = this.draw(1);
+    this.state.playerHands[index].hand.push(ret);
+    return ret;
+  },
+
 });
 
 /*  ========================================================  */
 /* register methods */
 AppDispatcher.register(action => {
-  /* report for debugging */
-  //const now = new Date().toTimeString();
-  //log(`${action.actionType} was called at ${now}`);
 
   switch (action.actionType) {
+
     case AppConstants.DECK_NEWDECK:
-      _newDeck();
+      DeckStore.newDeck();
       DeckStore.emitChange();
       break;
 
     case AppConstants.DECK_DRAW:
-      _draw(action.num);
+      DeckStore.draw(action.num);
       DeckStore.emitChange();
       break;
 
     case AppConstants.DECK_DRAWRANDOM:
-      _drawRandom(action.num);
+      DeckStore.drawRandom(action.num);
       DeckStore.emitChange();
       break;
 
     case AppConstants.DECK_DRAWFROMBOTTOMOFDECK:
-      _drawFromBottomOfDeck(action.num);
+      DeckStore.drawFromBottomOfDeck(action.num);
       DeckStore.emitChange();
       break;
 
     case AppConstants.DECK_RESET:
-      _reset();
+      DeckStore.reset();
       DeckStore.emitChange();
       break;
 
     case AppConstants.DECK_SHUFFLE:
-      _shuffle();
+      DeckStore.shuffle();
       DeckStore.emitChange();
       break;
 
     case AppConstants.DECK_PUTONBOTTOMOFDECK:
-      _putOnBottomOfDeck(action.cards);
+      DeckStore.putOnBottomOfDeck(action.cards);
       DeckStore.emitChange();
       break;
 
     case AppConstants.DECK_PUTONTOPOFDECK:
-      _putOnTopOfDeck(action.cards);
+      DeckStore.putOnTopOfDeck(action.cards);
       DeckStore.emitChange();
       break;
 
     case AppConstants.DECK_REMOVESELECTEDFROMDRAWN:
-      _removeSelectedFromDrawn(action.cards);
+      DeckStore.removeSelectedFromDrawn(action.cards);
       DeckStore.emitChange();
       break;
 
     case AppConstants.DECK_SELECT:
-      _select(action.cardAttributes);
+      DeckStore.select(action.cardAttributes);
       DeckStore.emitChange();
       break;
 
     case AppConstants.DECK_DESELECT:
-      _deselect(action.cardAttributes);
+      DeckStore.deselect(action.cardAttributes);
       DeckStore.emitChange();
       break;
 
     case AppConstants.DECK_NEWPLAYERHAND:
-      _newPlayerHand(action.id);
+      DeckStore.newPlayerHand(action.id);
       DeckStore.emitChange();
       break;
 
     case AppConstants.DECK_CLEARHANDS:
-      _clearHands();
+      DeckStore.clearHands();
       DeckStore.emitChange();
       break;
 
     case AppConstants.DECK_REMOVESELECTEDFROMPLAYERHAND:
-      _removeSelectedFromPlayerHand(action.playerId, action.cards);
+      DeckStore.removeSelectedFromPlayerHand(action.playerId, action.cards);
       DeckStore.emitChange();
       break;
 
     case AppConstants.DECK_DEAL:
-      _deal();
+      DeckStore.deal();
       DeckStore.emitChange();
       break;
 
     case AppConstants.DECK_HIT:
-      _hit(action.playerId);
+      DeckStore.hit(action.playerId);
       DeckStore.emitChange();
       break;
 
@@ -174,123 +301,3 @@ AppDispatcher.register(action => {
       break;
   }
 });
-
-/*  ========================================================  */
-
-/* method definitions */
-function _newDeck() {
-  /* returns a new Deck populated with PlayingCards */
-  deck = new Shuffle();
-  selected = [];
-  drawn = [];
-}
-
-function _drawFromBottomOfDeck(num) {
-  const ret = deck.drawFromBottomOfDeck(num);
-  drawn.push(ret);
-  // log(`drawFromBottomOfDeck: ${ret}`);
-}
-
-function _drawRandom(num) {
-  const ret = deck.drawRandom(num);
-  drawn.push(ret);
-  // log(`drawRandom: ${ret}`);
-  return ret;
-}
-
-function _putOnTopOfDeck(cards = selected) {
-  deck.putOnTopOfDeck(cards);
-  _removeSelectedFromDrawn();
-  _clearSelected();
-}
-
-function _putOnBottomOfDeck(cards = selected) {
-  deck.putOnBottomOfDeck(cards);
-  _removeSelectedFromDrawn();
-  _clearSelected();
-}
-
-function _reset() {
-  deck.reset(); /* sets the deck back to a full 52-card deck, unshuffled */
-}
-
-function _draw(num) {
-  const ret = deck.draw(num);
-  if (num > 1) {
-    ret.forEach(item => drawn.push(item));
-  } else {
-    drawn.push(ret);
-  }
-  return ret;
-}
-
-function _shuffle() {
-  deck.shuffle();
-}
-
-function _clearSelected() {
-  selected = [];
-}
-
-function _removeSelectedFromDrawn() {
-  selected.forEach(card => {
-    const index = drawn.findIndex(element => {
-      return element.suit === card.suit && element.sort === card.sort;
-    });
-    drawn.splice(index, 1);
-  });
-}
-
-function _select(cardAttributes) {
-  selected.push(
-    new PlayingCard(
-      cardAttributes.suit,
-      cardAttributes.description,
-      cardAttributes.sort
-    )
-  );
-}
-
-function _deselect(cardAttributes) {
-  const toDeselect = selected.findIndex(
-    card =>
-      card.suit === cardAttributes.suit && card.sort === cardAttributes.sort
-  );
-  selected.splice(toDeselect, 1);
-}
-
-function _newPlayerHand(playerId) {
-  playerHands.push(new PlayerHand(playerId));
-}
-
-function _clearHands() {
-  playerHands.forEach(hand => {
-    hand.clear();
-  });
-}
-
-function _removeSelectedFromPlayerHand(playerId, cards) {
-  cards.forEach(card => {
-    const index = playerHands.findIndex(player => player.id === playerId);
-
-    playerHands[index].findIndex(element => {
-      return element.suit === card.suit && element.sort === card.sort;
-    });
-    playerHands[index].splice(index, 1);
-  });
-}
-
-function _deal() {
-  playerHands.forEach(player => {
-    player.hand = _draw(2);
-    player.evaluate();
-    // console.log(`DeckStore::Deal  player ${player.id}'s hand: ${JSON.stringify(player.hand)}`);
-  });
-}
-
-function _hit(id) {
-  const index = playerHands.findIndex(hand => hand.id === id);
-  const ret = _draw(1);
-  playerHands[index].hand.push(ret);
-  return ret;
-}
