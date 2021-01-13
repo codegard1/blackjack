@@ -8,7 +8,10 @@ import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.j
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "controlPanel";
 const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
+  // browser cache
   store: new Store('ControlPanelStore', 'State'),
+
+  // in-memory state 
   state: {
     isCardDescVisible: false,
     isDealerHandVisible: false,
@@ -29,17 +32,31 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
     isNewPlayerSaveButtonDisabled: false,
     isActivityLogVisible: false,
   },
+
+  // return state to a subscriber
   getState() { return this.state },
-  emitChange() { this.emit(CHANGE_EVENT); this.saveAll(); },
+
+  // notify subscribers of a state change and save state to local storage
+  emitChange() {
+    this.emit(CHANGE_EVENT);
+    this.saveAll();
+  },
+
+  // subscribe to this store 
   addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
+
+  // unsubscribe from this store
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
+
   async initialize() {
+    console.time(`initializing ControlPanelStore`);
     for (let key in this.state) {
       let val = await get(key, this.store)
       if (val) { this.state[key] = val }
     }
-    this.emitChange();
   },
+
+  // save state to local storage
   async saveAll() {
     for (let key in this.state) {
       await set(key, this.state[key], this.store);
@@ -47,13 +64,17 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
   }
 });
 
-ControlPanelStore.initialize();
-
 /*  ========================================================  */
 /* register methods */
 AppDispatcher.register(action => {
 
   switch (action.actionType) {
+    case AppConstants.INITIALIZE_STORES:
+      ControlPanelStore.initialize();
+      console.timeEnd(`initializing ControlPanelStore`);
+      ControlPanelStore.emitChange();
+      break;
+
     case AppConstants.CONTROLPANEL_HIDEOPTIONSPANEL:
       ControlPanelStore.state.isOptionsPanelVisible = false;
       ControlPanelStore.emitChange();

@@ -10,16 +10,16 @@ import GameStore from './GameStore';
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "activityLog";
 const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
+  // browser cache
+  store: new Store('ActivityLogStore', 'State'),
+
   // in-memory state 
   state: {
     activityItems: [],
     nextKey: 1,
   },
 
-  // locally-stored state
-  store: new Store('ActivityLogStore', 'State'),
-
-  // return state 
+  // return state to a subscriber
   getState() { return this.state },
 
   // notify subscribers of a state change and save state to local storage
@@ -31,19 +31,19 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   // subscribe to this store 
   addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
 
-  // unsubscribe to this store
+  // unsubscribe from this store
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
 
   // create a new ActivityItem
   new(itemProps) {
-    const newItem = { 
-      ...itemProps, 
-      key: this.state.nextKey, 
-      timestamp: new Date(), 
+    const newItem = {
+      ...itemProps,
+      key: this.state.nextKey,
+      timestamp: new Date(),
     };
     this.state.activityItems.push(newItem);
     // sort items in reverse chronological order
-    this.state.activityItems.sort((a,b)=>b.timestamp-a.timestamp);
+    this.state.activityItems.sort((a, b) => b.timestamp - a.timestamp);
     this.state.nextKey++;
     this.emitChange();
   },
@@ -57,24 +57,32 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   // Load data from local storage, if available
   // ideally this should be in the constructor
   async initialize() {
-    let storedState = await get('state', this.store);
-    if (storedState) { 
-      this.state = storedState 
-      this.emitChange();
+    console.time(`initializing ActivityLogStore Store`);
+    for (let key in this.state) {
+      let val = await get(key, this.store)
+      if (val) { this.state[key] = val }
     }
   },
 
   // save state to local storage
-  async saveAll() { set('state', this.state, this.store) },
+  async saveAll() {
+    for (let key in this.state) {
+      await set(key, this.state[key], this.store);
+    }
+  },
 });
-
-ActivityLogStore.initialize();
 
 /*  ========================================================  */
 /* register methods */
 AppDispatcher.register(action => {
 
   switch (action.actionType) {
+    case AppConstants.INITIALIZE_STORES:
+      ActivityLogStore.initialize();
+      console.timeEnd(`initializing ActivityLogStore Store`);
+      ActivityLogStore.emitChange();
+      break;
+
     case AppConstants.ACTIVITYLOG_NEW:
       ActivityLogStore.new({
         description: action.description,

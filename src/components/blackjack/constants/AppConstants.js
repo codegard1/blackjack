@@ -45,6 +45,10 @@ export default keyMirror({
   CONTROLPANEL_SELECTPLAYER: null,
   CONTROLPANEL_NEWPLAYER: null,
 
+
+  // call initialize() on stores
+  INITIALIZE_STORES: null,
+
   /* StatsStore */
   STATS_NEW: null,
   STATS_UPDATE: null,

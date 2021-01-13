@@ -195,6 +195,11 @@ const AppActions = {
   newActivityLogItem(name, description, iconName) {
     AppDispatcher.dispatch({ actionType: AppConstants.ACTIVITYLOG_NEW, name, description, iconName });
   },
+  
+  // Initialize Stores
+  initializeStores(){
+    AppDispatcher.dispatch({ actionType: AppConstants.INITIALIZE_STORES, });
+  },
 };
 
 export default AppActions;

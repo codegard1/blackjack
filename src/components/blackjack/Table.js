@@ -60,14 +60,13 @@ export default class Table extends BaseComponent {
   }
 
   componentDidMount() {
-    /* callback when a change emits from GameStore*/
+    /* subscribe to the stores */
     GameStore.addChangeListener(this.onChangeGame);
     DeckStore.addChangeListener(this.onChangeDeck);
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
 
-    // this.onChangeControlPanel();
-    // this.onChangeDeck();
-    // this.onChangeGame();
+    // Fetch local data from stores
+    AppActions.initializeStores();
 
     /* start a new game with these players */
     const selectedPlayers = defaultPlayers.filter(v => v.title === 'Chris' || v.title === "Dealer");
