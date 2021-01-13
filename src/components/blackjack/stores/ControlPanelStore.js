@@ -61,7 +61,7 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
     for (let key in this.state) {
       await set(key, this.state[key], this.store);
     }
-  }
+  },
 });
 
 /*  ========================================================  */
