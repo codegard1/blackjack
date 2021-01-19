@@ -2,6 +2,7 @@ import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
+// import { Store, get, set } from 'idb-keyval';
 
 import GameStore from './GameStore';
 
@@ -57,16 +58,21 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   // Load data from local storage, if available
   // ideally this should be in the constructor
   async initialize() {
-    console.time(`initializing ActivityLogStore Store`);
+    console.time(`ActivityLogStore#initialize()`);
     for (let key in this.state) {
-      let val = await get(key, this.store)
-      if (val) { this.state[key] = val }
+      let val = await get(key, this.store);
+      if(val !== undefined){
+        // console.log(`\tfetched ${key} :: ${val}`);
+        this.state[key] = val;
+      }
     }
   },
-
+  
   // save state to local storage
   async saveAll() {
+    // console.log(`ActivityLogStore#saveAll`);
     for (let key in this.state) {
+      // console.log(`${key} :: ${this.state[key]}`);
       await set(key, this.state[key], this.store);
     }
   },
@@ -78,9 +84,10 @@ AppDispatcher.register(action => {
 
   switch (action.actionType) {
     case AppConstants.INITIALIZE_STORES:
-      ActivityLogStore.initialize();
-      console.timeEnd(`initializing ActivityLogStore Store`);
-      ActivityLogStore.emitChange();
+      ActivityLogStore.initialize().then(()=>{
+        console.timeEnd(`ActivityLogStore#initialize()`);
+        ActivityLogStore.emitChange();
+      })
       break;
 
     case AppConstants.ACTIVITYLOG_NEW:

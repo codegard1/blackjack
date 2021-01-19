@@ -33,7 +33,7 @@ const AppActions = {
     AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLECARDTITLEVISIBILITY, bool });
   },
   toggleActivityLogVisibility(bool) {
-    console.log(`toggleActivityLogVisibility( ${bool} )`);
+    // console.log(`toggleActivityLogVisibility( ${bool} )`);
     AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLEACTIVITYLOGVISIBILITY, bool });
   },
 

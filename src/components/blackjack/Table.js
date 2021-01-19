@@ -64,7 +64,7 @@ export default class Table extends BaseComponent {
     GameStore.addChangeListener(this.onChangeGame);
     DeckStore.addChangeListener(this.onChangeDeck);
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
-
+    
     // Fetch local data from stores
     AppActions.initializeStores();
 
