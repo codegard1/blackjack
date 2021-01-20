@@ -36,7 +36,7 @@ export default class Table extends BaseComponent {
       isMessageBarVisible: false,
       loser: -1,
       minimumBet: 25,
-      players: [],
+      players: [], 
       pot: 0,
       round: 0,
       turnCount: 0,
@@ -54,6 +54,7 @@ export default class Table extends BaseComponent {
       isHandValueVisible: false,
       isOptionsPanelVisible: false,
       isSelectedVisible: false,
+      isActivityLogVisible: false,
     };
 
     this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame");
@@ -64,7 +65,7 @@ export default class Table extends BaseComponent {
     GameStore.addChangeListener(this.onChangeGame);
     DeckStore.addChangeListener(this.onChangeDeck);
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
-    
+
     // Fetch local data from stores
     AppActions.initializeStores();
 
@@ -95,16 +96,7 @@ export default class Table extends BaseComponent {
   }
   onChangeControlPanel() {
     const newState = ControlPanelStore.getState();
-    this.setState({
-      isCardDescVisible: newState.isCardDescVisible,
-      isDealerHandVisible: newState.isDealerHandVisible,
-      isDeckVisible: newState.isDeckVisible,
-      isDrawnVisible: newState.isDrawnVisible,
-      isHandValueVisible: newState.isHandValueVisible,
-      isOptionsPanelVisible: newState.isOptionsPanelVisible,
-      isSelectedVisible: newState.isSelectedVisible,
-      isActivityLogVisible: newState.isActivityLogVisible
-    });
+    this.setState({ ...newState });
   }
 
   render() {

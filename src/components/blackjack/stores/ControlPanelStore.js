@@ -19,19 +19,9 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
     isDeckVisible: false,
     isDrawnVisible: false,
     isHandValueVisible: false,
-    isMessageBarVisible: false,
     isOptionsPanelVisible: false,
     isSelectedVisible: false,
-    isActivityLogVisible: false,  
-    players: [
-      { id: 1, title: "Chris", isNPC: false },
-      { id: 2, title: "Dealer", isNPC: true },
-      { id: 3, title: "John", isNPC: true },
-    ],
-    selectedPlayerKey: "chris",
-    newPlayerFieldValue: "",
-    isNewPlayerFieldEmpty: true,
-    isNewPlayerSaveButtonDisabled: false,
+    isActivityLogVisible: false,
   },
 
   // return state to a subscriber
@@ -53,7 +43,7 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
     console.time(`ControlPanelStore#initialize()`);
     for (let key in this.state) {
       let val = await get(key, this.store);
-      if(val !== undefined){
+      if (val !== undefined) {
         // console.log(`\tfetched ${key} :: ${val}`);
         this.state[key] = val;
       }

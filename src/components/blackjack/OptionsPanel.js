@@ -1,10 +1,9 @@
 import React from "react";
 // import * as T from "prop-types";
-import { Stack, Panel, PanelType, Toggle, CommandButton, Dropdown, DropdownMenuItemType } from "@fluentui/react";
+import { Stack, Panel, PanelType, Toggle, CommandButton } from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
-import { defaultPlayers } from "./definitions";
 
 /* Flux */
 import AppActions from "./actions/AppActions";
@@ -17,17 +16,7 @@ class OptionsPanel extends BaseComponent {
     // get default state from the Store
     this.state = ControlPanelStore.getState();
 
-    this._bind("newDeal", "onChangeControlPanel", "resetGame", "onClickNewPlayerSaveButton", "makePlayerSelectDropdownOptions");
-  }
-
-  componentDidMount() {
-    /* add change listener */
-    ControlPanelStore.addChangeListener(this.onChangeControlPanel);
-  }
-
-  componentWillUnmount() {
-    /* remove change listener */
-    ControlPanelStore.removeChangeListener(this.onChangeControlPanel);
+    this._bind("newDeal", "resetGame");
   }
 
   resetGame() {
@@ -40,52 +29,6 @@ class OptionsPanel extends BaseComponent {
   newDeal() {
     AppActions.deal();
     AppActions.hideOptionsPanel();
-  }
-
-  // Update the Component State from the Store
-  onChangeControlPanel() {
-    const newState = ControlPanelStore.getState();
-    this.setState({ ...newState });
-  }
-
-  // save new player
-  onClickNewPlayerSaveButton() {
-    const newPlayerName = this.state.newPlayerFieldValue;
-    AppActions.createNewPlayer(newPlayerName);
-    this.setState({
-      newPlayerFieldValue: "",
-      isNewPlayerSaveButtonDisabled: true
-    });
-  }
-
-  makePlayerSelectDropdownOptions() {
-    // define options array with initial header
-    let options = [
-      { key: 'defaultsHeader', text: 'Default', itemType: DropdownMenuItemType.Header }
-    ];
-
-    // add default players to the array
-    this.state.players.forEach((v, i, a) => {
-      if (defaultPlayers.find(el => el.id === v.id)) {
-        options.push({ key: v.title.toLowerCase(), text: v.title });
-      }
-    });
-
-    // add a divider and second header
-    options.push(
-      { key: 'divider_1', text: '-', itemType: DropdownMenuItemType.Divider },
-      { key: 'customsHeader', text: 'Custom', itemType: DropdownMenuItemType.Header }
-    );
-
-
-    // add custom players to the array
-    this.state.players.forEach((v, i, a) => {
-      if (!defaultPlayers.find(el => el.id === v.id)) {
-        options.push({ key: v.title.toLowerCase(), text: v.title });
-      }
-    });
-
-    return options;
   }
 
   render() {
@@ -185,36 +128,6 @@ class OptionsPanel extends BaseComponent {
             offText="Off"
             onChange={(e, checked) => AppActions.toggleActivityLogVisibility(checked)}
           />
-
-
-
-          {/* <Stack tokens={{ padding: 10, childrenGap: 10 }}>
-            <Stack.Item>
-              <Dropdown
-                placeholder="Select"
-                label="Select existing user"
-                options={this.makePlayerSelectDropdownOptions()}
-                selectedKey={this.state.selectedPlayerKey}
-                onChange={(e, option) => AppActions.selectPlayer(option.key)}
-                styles={{ dropdown: { width: 300 } }}
-              />
-            </Stack.Item>
-            <Stack.Item shrink>
-              <TextField
-                label="Create new player"
-                ariaLabel="Create new player"
-                text={this.state.newPlayerFieldValue}
-                onChange={(e, newValue) => this.setState({ newPlayerFieldValue: newValue })}
-              />
-            </Stack.Item>
-            <Stack.Item shrink>
-              <DefaultButton
-                text="Save"
-                disabled={this.state.isNewPlayerSaveButtonDisabled}
-                onClick={e => this.onClickNewPlayerSaveButton()}
-              />
-            </Stack.Item>
-          </Stack> */}
 
         </Stack>
       </Panel>
