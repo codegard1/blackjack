@@ -1,8 +1,9 @@
-import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 import { EventEmitter } from "events";
 
+import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
+
 /* custom stuff */
-import Players from "./Players";
+import PlayerStore from "./PlayerStore";
 
 /* flux */
 import AppDispatcher from "../dispatcher/AppDispatcher";
@@ -15,7 +16,7 @@ import { Store, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
 // import { Store, set } from 'idb-keyval';
 
 /* ALMIGHTY STATE */
-let PlayersStore = new Players();
+let PlayersStore = new PlayerStore();
 let state = {
   dealerHasControl: false,
   gameStatus: 0,
@@ -35,10 +36,10 @@ let state = {
 };
 
 /* Data, Getter method, Event Notifier */
-const CHANGE_EVENT = "change";
+const CHANGE_EVENT = "game";
 export const GameStore = Object.assign({}, EventEmitter.prototype, {
-  store: new Store('GameStore', 'Game'),
-  emitChange() { this.emit(CHANGE_EVENT); this.saveAll() },
+  store: new Store('GameStore', 'State'),
+  emitChange() { this.emit(CHANGE_EVENT); },
   addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
   getPlayers: () => PlayersStore.getPlayers(),
@@ -84,7 +85,7 @@ AppDispatcher.register(action => {
       GameStore.emitChange();
       break;
 
-    case AppConstants.GAME_HIT:
+    case AppConstants.GAME_HIT:     
       PlayersStore.currentPlayer.hit();
       _evaluateGame(1);
 

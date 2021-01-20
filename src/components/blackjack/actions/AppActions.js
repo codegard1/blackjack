@@ -154,12 +154,6 @@ const gameplayActions = {
         title: player.title,
         isNPC: player.isNPC
       });
-
-      /* Create a Stats object for the player */
-      AppDispatcher.dispatch({
-        actionType: AppConstants.STATS_NEW,
-        playerId: player.id
-      });
     });
   },
   showMessageBar(text, type) {

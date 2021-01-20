@@ -1,7 +1,20 @@
+import { EventEmitter } from "events";
+
+/* flux */
+import AppDispatcher from "../dispatcher/AppDispatcher";
+import AppConstants from "../constants/AppConstants";
+
+/* idb-keyval */
+import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
+// import { Store, get, set } from 'idb-keyval';
+
+// custom stuff
 import Player from "./Player";
 import { DeckStore } from "./DeckStore";
+import { defaultPlayers } from "../definitions";
 
-class Players {
+// Deprecated
+export default class PlayerStore {
   constructor() {
     this.players = [];
     this.currentPlayerIndex = 0;
@@ -133,4 +146,107 @@ class Players {
   }
 }
 
-export default Players;
+
+/* Data, Getter method, Event Notifier */
+const CHANGE_EVENT = "player";
+export const PlayerStore1 = Object.assign({}, EventEmitter.prototype, {
+
+  // cached state
+  store: new Store('PlayerStore', 'State'),
+
+  // in-memory state
+  state: {
+    players: defaultPlayers.filter(v => v.title === 'Chris' || v.title === "Dealer"),
+    currentPlayerIndex: 0,
+  },
+
+  // Default values for a player record
+  defaultPlayerState: {
+    bank: 1000,
+    bet: 0,
+    handValue: { aceAsOne: 0, aceAsEleven: 0 },
+    hasBlackjack: false,
+    // id: undefined,
+    isBusted: false,
+    isFinished: false,
+    isNPC: false,
+    isStaying: false,
+    lastAction: "none",
+    status: "ok",
+    // title: undefined,
+    turn: false,
+  },
+
+  // return state to a subscriber
+  getState() { return this.state },
+
+  // notify subscribers of a state change
+  emitChange() {
+    this.emit(CHANGE_EVENT);
+    this.saveAll(); 
+  },
+
+  // subscribe to this store 
+  addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
+
+  // unsubscribe from this store
+  removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
+
+  async initialize() {
+    console.time(`PlayerStore#initialize()`);
+    for (let key in this.state) {
+      let val = await get(key, this.store);
+      if (val !== undefined) {
+        console.log(`\tfetched ${key} :: ${val}`);
+        this.state[key] = val;
+      }
+    }
+  },
+
+  // save state to local storage
+  async saveAll() {
+    console.log(`PlayerStore#saveAll`);
+    for (let key in this.state) {
+      console.log(`${key} :: ${this.state[key]}`);
+      await set(key, this.state[key], this.store);
+    }
+  },
+
+  // Return index of player by ID
+  getIndex(id) {
+    return this.state.players.findIndex(player => player.id === id);
+  },
+
+  // set default player state for given id
+  newPlayer(id){
+    const i = this.getIndex(id);
+    this.state.players[i] = Object.assign(this.state.players[i], this.defaultPlayerState);
+  }
+
+});
+
+
+/*  ========================================================  */
+/* register methods */
+AppDispatcher.register(action => {
+
+  switch (action.actionType) {
+    case AppConstants.INITIALIZE_STORES:
+      PlayerStore1.initialize().then(() => {
+        console.timeEnd(`PlayerStore#initialize()`);
+        PlayerStore1.emitChange();
+      });
+      break;
+
+    case AppConstants.GAME_NEWPLAYER:
+      PlayerStore1.newPlayer(action.id, action.title, action.isNPC);
+      PlayerStore1.emitChange();
+      break;
+
+    default:
+      // do nothing
+      break;
+  }
+});
+
+/*  ========================================================  */
