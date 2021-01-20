@@ -159,6 +159,7 @@ export const PlayerStore1 = Object.assign({}, EventEmitter.prototype, {
     players: {},
     activePlayers: [],
     currentPlayerId: 0,
+    lastWriteTime: undefined,
   },
 
   // Default values for a player record
@@ -207,6 +208,7 @@ export const PlayerStore1 = Object.assign({}, EventEmitter.prototype, {
 
   // save state to local storage
   async saveAll() {
+    this.state.lastWriteTime = new Date().toISOString();
     console.log(`PlayerStore#saveAll`);
     for (let key in this.state) {
       // console.log(`${key} :: ${this.state[key]}`);
@@ -230,16 +232,33 @@ export const PlayerStore1 = Object.assign({}, EventEmitter.prototype, {
 
   // reset gameplay variables for each player
   // and set the current player ID to the first in the list
-  newGame(){
+  newGame() {
     this.state.activePlayers.forEach(id => this.resetPlayer(id));
     this.state.currentPlayerId = this.state.activePlayers[0];
   },
 
+  newRound() {
+    this.state.activePlayers.forEach(id => this.resetPlayer(id, "bank"));
+    this.state.currentPlayerId = this.state.activePlayers[0];
+    this.startTurn(this.state.currentPlayerId);
+  },
+
+  // set the given player as having started their turn 
+  startTurn(id) {
+    let p = this.getPlayer(id);
+    p.turn = true;
+    p.isFinished = false;
+    p.lastAction = "startTurn";
+    console.log(`${p.title} started turn`);
+  },
+
   // AKA NewRound; reset properties that are bound to a single round of play
-  resetPlayer(id) {
-    const props = ["bet","bank","handValue","hasBlackjack","isBusted","isFinished","isStaying","lastAction","status","turn"];
+  resetPlayer(id, ...omit) {
+    const props = ["bet", "bank", "handValue", "hasBlackjack", "isBusted", "isFinished", "isStaying", "lastAction", "status", "turn"];
     props.forEach(prop => {
-      this.state.players[id][prop] = this.defaultPlayerState[prop]
+      if (!(prop in omit)) {
+        this.state.players[id][prop] = this.defaultPlayerState[prop]
+      }
     });
   },
 
@@ -267,6 +286,12 @@ AppDispatcher.register(action => {
       PlayerStore1.newGame();
       PlayerStore1.emitChange();
       break;
+
+    case AppConstants.GAME_NEWROUND:
+      PlayerStore1.newRound();
+      PlayerStore1.emitChange();
+      break;
+
 
 
     default:

@@ -84,7 +84,7 @@ AppDispatcher.register(action => {
 
   switch (action.actionType) {
     case AppConstants.INITIALIZE_STORES:
-      console.log(`placeholder for initialize_stores`)
+      // console.log(`placeholder for initialize_stores`)
       break;
 
 
