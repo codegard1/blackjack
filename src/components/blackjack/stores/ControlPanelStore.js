@@ -2,6 +2,7 @@ import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
+// import { Store, get, set } from 'idb-keyval';
 
 /*  ========================================================  */
 
@@ -10,6 +11,8 @@ const CHANGE_EVENT = "controlPanel";
 const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
   // browser cache
   store: new Store('ControlPanelStore', 'State'),
+  store2: new Store('ControlPanelStore', 'State2'),
+  
 
   // in-memory state 
   state: {
@@ -49,17 +52,23 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
 
   async initialize() {
-    console.time(`initializing ControlPanelStore`);
+    console.time(`ControlPanelStore#initialize()`);
     for (let key in this.state) {
-      let val = await get(key, this.store)
-      if (val) { this.state[key] = val }
+      let val = await get(key, this.store);
+      if(val !== undefined){
+        // console.log(`\tfetched ${key} :: ${val}`);
+        this.state[key] = val;
+      }
     }
   },
 
   // save state to local storage
   async saveAll() {
+    // console.log(`ControlPanelStore#saveAll`);
     for (let key in this.state) {
+      // console.log(`${key} :: ${this.state[key]}`);
       await set(key, this.state[key], this.store);
+      await set(key, this.state[key], this.store2);
     }
   },
 });
@@ -70,9 +79,10 @@ AppDispatcher.register(action => {
 
   switch (action.actionType) {
     case AppConstants.INITIALIZE_STORES:
-      ControlPanelStore.initialize();
-      console.timeEnd(`initializing ControlPanelStore`);
-      ControlPanelStore.emitChange();
+      ControlPanelStore.initialize().then(() => {
+        console.timeEnd(`ControlPanelStore#initialize()`);
+        ControlPanelStore.emitChange();
+      });
       break;
 
     case AppConstants.CONTROLPANEL_HIDEOPTIONSPANEL:

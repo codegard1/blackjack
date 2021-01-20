@@ -73,7 +73,7 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
     const stats = await this.getStats(playerId);
     // if saved data does not exist, create a new entry with defaults
     if (stats) {
-      console.log(`loaded saved stats for player #${playerId}`);
+      // console.log(`loaded saved stats for player #${playerId}`);
     } else {
       await set(playerId, this.defaultStats, this.store);
     }
