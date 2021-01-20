@@ -2,11 +2,19 @@
  * Definitions
  */
 
+//  Default players as array
 export const defaultPlayers = [
   { id: 1, title: "Chris", isNPC: false },
   { id: 2, title: "Dealer", isNPC: true },
   { id: 3, title: "John", isNPC: true },
 ];
+
+// Default players as object
+export const defaultPlayersObj = {
+  1: { title: "Chris", isNPC: false },
+  2: { title: "Dealer", isNPC: true },
+  3: { title: "John", isNPC: true }
+};
 
 export const defaultSelectedPlayerKey = "chris";
 

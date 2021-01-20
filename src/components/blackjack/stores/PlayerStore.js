@@ -11,9 +11,9 @@ import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.j
 // custom stuff
 import Player from "./Player";
 import { DeckStore } from "./DeckStore";
-import { defaultPlayers } from "../definitions";
+import { defaultPlayers, defaultPlayersObj } from "../definitions";
 
-// Deprecated
+// Deprecated but still in use until the EventEmitter class is ready to take over
 export default class PlayerStore {
   constructor() {
     this.players = [];
@@ -156,24 +156,25 @@ export const PlayerStore1 = Object.assign({}, EventEmitter.prototype, {
 
   // in-memory state
   state: {
-    players: defaultPlayers.filter(v => v.title === 'Chris' || v.title === "Dealer"),
-    currentPlayerIndex: 0,
+    players: {},
+    activePlayers: [],
+    currentPlayerId: 0,
   },
 
   // Default values for a player record
   defaultPlayerState: {
+    // id: undefined,
+    isNPC: undefined,
+    // title: undefined,
     bank: 1000,
     bet: 0,
     handValue: { aceAsOne: 0, aceAsEleven: 0 },
     hasBlackjack: false,
-    // id: undefined,
     isBusted: false,
     isFinished: false,
-    isNPC: false,
     isStaying: false,
     lastAction: "none",
     status: "ok",
-    // title: undefined,
     turn: false,
   },
 
@@ -183,7 +184,7 @@ export const PlayerStore1 = Object.assign({}, EventEmitter.prototype, {
   // notify subscribers of a state change
   emitChange() {
     this.emit(CHANGE_EVENT);
-    this.saveAll(); 
+    this.saveAll();
   },
 
   // subscribe to this store 
@@ -192,12 +193,13 @@ export const PlayerStore1 = Object.assign({}, EventEmitter.prototype, {
   // unsubscribe from this store
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
 
+  // Load saved state from IDB, if available
   async initialize() {
     console.time(`PlayerStore#initialize()`);
     for (let key in this.state) {
       let val = await get(key, this.store);
       if (val !== undefined) {
-        console.log(`\tfetched ${key} :: ${val}`);
+        // console.log(`\tfetched ${key} :: ${val}`);
         this.state[key] = val;
       }
     }
@@ -207,21 +209,39 @@ export const PlayerStore1 = Object.assign({}, EventEmitter.prototype, {
   async saveAll() {
     console.log(`PlayerStore#saveAll`);
     for (let key in this.state) {
-      console.log(`${key} :: ${this.state[key]}`);
+      // console.log(`${key} :: ${this.state[key]}`);
       await set(key, this.state[key], this.store);
     }
   },
 
-  // Return index of player by ID
-  getIndex(id) {
-    return this.state.players.findIndex(player => player.id === id);
-  },
+  // Lookup player by ID (key)
+  getPlayer(id) { return this.state.players[id] },
+
+  // Get all players
+  getPlayers() { return this.state.players },
 
   // set default player state for given id
-  newPlayer(id){
-    const i = this.getIndex(id);
-    this.state.players[i] = Object.assign(this.state.players[i], this.defaultPlayerState);
-  }
+  newPlayer(id, title, isNPC) {
+    // Create new player record
+    this.state.players[id] = Object.assign({ id, title, isNPC }, this.defaultPlayerState);
+    // add new player to the active players list
+    this.state.activePlayers.push(id);
+  },
+
+  // reset gameplay variables for each player
+  // and set the current player ID to the first in the list
+  newGame(){
+    this.state.activePlayers.forEach(id => this.resetPlayer(id));
+    this.state.currentPlayerId = this.state.activePlayers[0];
+  },
+
+  // AKA NewRound; reset properties that are bound to a single round of play
+  resetPlayer(id) {
+    const props = ["bet","bank","handValue","hasBlackjack","isBusted","isFinished","isStaying","lastAction","status","turn"];
+    props.forEach(prop => {
+      this.state.players[id][prop] = this.defaultPlayerState[prop]
+    });
+  },
 
 });
 
@@ -242,6 +262,12 @@ AppDispatcher.register(action => {
       PlayerStore1.newPlayer(action.id, action.title, action.isNPC);
       PlayerStore1.emitChange();
       break;
+
+    case AppConstants.GAME_RESET:
+      PlayerStore1.newGame();
+      PlayerStore1.emitChange();
+      break;
+
 
     default:
       // do nothing

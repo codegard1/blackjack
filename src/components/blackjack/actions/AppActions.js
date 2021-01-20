@@ -147,12 +147,10 @@ const gameplayActions = {
         id: player.id
       });
 
-      /* add a new Player to the players array */
+      /* add a new Player to the PlayerStore */
       AppDispatcher.dispatch({
         actionType: AppConstants.GAME_NEWPLAYER,
-        id: player.id,
-        title: player.title,
-        isNPC: player.isNPC
+        ...player
       });
     });
   },
