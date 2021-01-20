@@ -1,10 +1,10 @@
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
-const AppActions = {
-  /**
-   * CONTROL PANEL ACTIONS
-   */
+/**
+ *  CONTROL PANEL ACTIONS
+ */
+const controlPanelActions = {
   hideOptionsPanel() {
     AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_HIDEOPTIONSPANEL });
   },
@@ -36,10 +36,12 @@ const AppActions = {
     // console.log(`toggleActivityLogVisibility( ${bool} )`);
     AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLEACTIVITYLOGVISIBILITY, bool });
   },
+};
 
-  /**
-   * DECK ACTIONS
-   */
+/**
+ *  DECK ACTIONS
+ */
+const deckActions = {
   newDeck() {
     AppDispatcher.dispatch({
       actionType: AppConstants.DECK_NEWDECK
@@ -97,10 +99,12 @@ const AppActions = {
       cardAttributes
     });
   },
+};
 
-  /**
-   * GAMEPLAY ACTIONS
-   */
+/**
+  *  GAMEPLAY ACTIONS
+  */
+const gameplayActions = {
   deal() {
     AppDispatcher.dispatch({
       actionType: AppConstants.DECK_DEAL
@@ -184,20 +188,20 @@ const AppActions = {
     AppDispatcher.dispatch({ actionType: AppConstants.GAME_NEWROUND });
     AppDispatcher.dispatch({ actionType: AppConstants.STATS_UPDATE });
   },
+};
 
-  selectPlayer(key) {
-    AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_SELECTPLAYER, key });
-  },
-  createNewPlayer(name) {
-    AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_NEWPLAYER, name });
-  },
+const AppActions = {
+  ...controlPanelActions,
+  ...deckActions,
+  ...gameplayActions,
 
+  // Add a new entry to the Activity Log Store
   newActivityLogItem(name, description, iconName) {
     AppDispatcher.dispatch({ actionType: AppConstants.ACTIVITYLOG_NEW, name, description, iconName });
   },
-  
+
   // Initialize Stores
-  initializeStores(){
+  initializeStores() {
     AppDispatcher.dispatch({ actionType: AppConstants.INITIALIZE_STORES, });
   },
 };

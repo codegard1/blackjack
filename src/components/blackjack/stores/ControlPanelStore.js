@@ -11,8 +11,6 @@ const CHANGE_EVENT = "controlPanel";
 const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
   // browser cache
   store: new Store('ControlPanelStore', 'State'),
-  store2: new Store('ControlPanelStore', 'State2'),
-  
 
   // in-memory state 
   state: {
@@ -24,6 +22,7 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
     isMessageBarVisible: false,
     isOptionsPanelVisible: false,
     isSelectedVisible: false,
+    isActivityLogVisible: false,  
     players: [
       { id: 1, title: "Chris", isNPC: false },
       { id: 2, title: "Dealer", isNPC: true },
@@ -33,7 +32,6 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
     newPlayerFieldValue: "",
     isNewPlayerFieldEmpty: true,
     isNewPlayerSaveButtonDisabled: false,
-    isActivityLogVisible: false,
   },
 
   // return state to a subscriber
@@ -68,7 +66,6 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
     for (let key in this.state) {
       // console.log(`${key} :: ${this.state[key]}`);
       await set(key, this.state[key], this.store);
-      await set(key, this.state[key], this.store2);
     }
   },
 });
@@ -125,25 +122,8 @@ AppDispatcher.register(action => {
       ControlPanelStore.emitChange();
       break;
 
-    case AppConstants.CONTROLPANEL_SELECTPLAYER:
-      ControlPanelStore.state.selectedPlayerKey = action.key;
-      ControlPanelStore.emitChange();
-      break;
-
     case AppConstants.CONTROLPANEL_TOGGLEACTIVITYLOGVISIBILITY:
       ControlPanelStore.state.isActivityLogVisible = action.bool;
-      ControlPanelStore.emitChange();
-      break;
-
-    // Add a new player to the players array
-    case AppConstants.CONTROLPANEL_NEWPLAYER:
-      const lastIndex = ControlPanelStore.state.players.length - 1
-      const newPlayerId = ControlPanelStore.state.players[lastIndex].id + 1;
-      ControlPanelStore.state.players.push({
-        id: newPlayerId,
-        title: action.name,
-        isNPC: false
-      });
       ControlPanelStore.emitChange();
       break;
 

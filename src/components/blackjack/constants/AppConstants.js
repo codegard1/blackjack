@@ -41,11 +41,6 @@ export default keyMirror({
   CONTROLPANEL_TOGGLECARDTITLEVISIBILITY: null,
   CONTROLPANEL_TOGGLEACTIVITYLOGVISIBILITY: null,
 
-  // following lines are experimental
-  CONTROLPANEL_SELECTPLAYER: null,
-  CONTROLPANEL_NEWPLAYER: null,
-
-
   // call initialize() on stores
   INITIALIZE_STORES: null,
 
