@@ -4,7 +4,7 @@ import AppConstants from "../constants/AppConstants";
 import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
 // import { Store, get, set } from 'idb-keyval';
 
-import GameStore from './GameStore';
+import { PlayerStore1 } from './PlayerStore';
 
 /*  ========================================================  */
 
@@ -61,13 +61,13 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
     console.time(`ActivityLogStore#initialize()`);
     for (let key in this.state) {
       let val = await get(key, this.store);
-      if(val !== undefined){
+      if (val !== undefined) {
         // console.log(`\tfetched ${key} :: ${val}`);
         this.state[key] = val;
       }
     }
   },
-  
+
   // save state to local storage
   async saveAll() {
     // console.log(`ActivityLogStore#saveAll`);
@@ -84,7 +84,7 @@ AppDispatcher.register(action => {
 
   switch (action.actionType) {
     case AppConstants.INITIALIZE_STORES:
-      ActivityLogStore.initialize().then(()=>{
+      ActivityLogStore.initialize().then(() => {
         console.timeEnd(`ActivityLogStore#initialize()`);
         ActivityLogStore.emitChange();
       })
@@ -109,7 +109,7 @@ AppDispatcher.register(action => {
     case AppConstants.GAME_STAY:
       ActivityLogStore.new({
         description: "stayed",
-        name: GameStore.getPlayerName(action.playerId),
+        name: PlayerStore1.getPlayerName(action.playerId),
         iconName: "HandsFree",
       });
       break;
@@ -117,7 +117,7 @@ AppDispatcher.register(action => {
     case AppConstants.GAME_BET:
       ActivityLogStore.new({
         description: `bet $${action.amount}`,
-        name: GameStore.getPlayerName(action.playerId),
+        name: PlayerStore1.getPlayerName(action.playerId),
         iconName: "Money",
       });
       break;
@@ -125,7 +125,7 @@ AppDispatcher.register(action => {
     case AppConstants.DECK_HIT:
       ActivityLogStore.new({
         description: `hit`,
-        name: GameStore.getPlayerName(action.playerId),
+        name: PlayerStore1.getPlayerName(action.playerId),
         iconName: "CheckedOutByOther12",
       });
       break;
