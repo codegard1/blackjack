@@ -4,7 +4,7 @@ import { CommandBar, MessageBarType } from "@fluentui/react";
 
 /* Flux */
 import AppActions from "./actions/AppActions";
-// import { DeckStore } from "./stores/DeckStore";
+// import DeckStore from "./stores/DeckStore";
 
 class ControlPanel extends Component {
   static propTypes = {

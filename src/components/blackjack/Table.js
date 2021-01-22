@@ -13,9 +13,10 @@ import PotDisplay from "./PotDisplay";
 import ActivityLog from "./ActivityLog";
 
 /* flux */
-import { GameStore } from "./stores/GameStore";
-import { DeckStore } from "./stores/DeckStore";
+import GameStore from "./stores/GameStore";
+import DeckStore from "./stores/DeckStore";
 import ControlPanelStore from "./stores/ControlPanelStore";
+import PlayerStore from "./stores/PlayerStore";
 import AppActions from "./actions/AppActions";
 
 /* Initialize Fabric Icons */
@@ -36,7 +37,6 @@ export default class Table extends BaseComponent {
       isMessageBarVisible: false,
       loser: -1,
       minimumBet: 25,
-      players: [], 
       pot: 0,
       round: 0,
       turnCount: 0,
@@ -46,6 +46,10 @@ export default class Table extends BaseComponent {
         text: "",
         isMultiLine: false
       },
+      // PlayerStore
+      players: [],
+      activePlayers: [],
+      currentPlayerId: 0,
       // ControlPanelStore
       isCardDescVisible: false,
       isDealerHandVisible: false,
@@ -57,7 +61,7 @@ export default class Table extends BaseComponent {
       isActivityLogVisible: false,
     };
 
-    this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame");
+    this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame", "onChangePlayerStore");
   }
 
   componentDidMount() {
@@ -65,6 +69,7 @@ export default class Table extends BaseComponent {
     GameStore.addChangeListener(this.onChangeGame);
     DeckStore.addChangeListener(this.onChangeDeck);
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
+    PlayerStore.addChangeListener(this.onChangePlayerStore);
 
     // Fetch local data from stores
     AppActions.initializeStores();
@@ -84,10 +89,6 @@ export default class Table extends BaseComponent {
   /* flux helpers */
   onChangeGame() {
     const newState = GameStore.getState();
-    newState.players.forEach(player => {
-      const newHand = DeckStore.getHand(player.id);
-      player.hand = newHand;
-    });
     this.setState({ ...newState });
   }
   onChangeDeck() {
@@ -96,6 +97,14 @@ export default class Table extends BaseComponent {
   }
   onChangeControlPanel() {
     const newState = ControlPanelStore.getState();
+    this.setState({ ...newState });
+  }
+  onChangePlayerStore() {
+    const newState = PlayerStore.getState();
+    newState.activePlayers.forEach(id => {
+      const newHand = DeckStore.getHand(id);
+      newState.players[id].hand = newHand;
+    });
     this.setState({ ...newState });
   }
 

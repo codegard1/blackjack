@@ -2,6 +2,10 @@ import { EventEmitter } from "events";
 
 import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 
+/* idb-keyval */
+import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
+// import { Store, get, set } from 'idb-keyval';
+
 /* custom stuff */
 import PlayerStore from "./PlayerStore";
 
@@ -11,116 +15,207 @@ import AppConstants from "../constants/AppConstants";
 import StatsStore from "./StatsStore";
 import ActivityLogStore from "./ActivityLogStore";
 
-/* idb-keyval */
-import { Store, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-// import { Store, set } from 'idb-keyval';
 
-/* ALMIGHTY STATE */
-let PlayersStore = new PlayerStore();
-let state = {
-  dealerHasControl: false,
-  gameStatus: 0,
-  isMessageBarVisible: false,
-  loser: -1,
-  minimumBet: 25,
-  players: PlayersStore.getPlayers(),
-  pot: 0,
-  round: 0,
-  turnCount: 0,
-  winner: -1,
-  messageBarDefinition: {
-    type: MessageBarType.info,
-    text: "",
-    isMultiLine: false
-  },
-};
 
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "game";
-export const GameStore = Object.assign({}, EventEmitter.prototype, {
+const GameStore = Object.assign({}, EventEmitter.prototype, {
+  // Local storage
   store: new Store('GameStore', 'State'),
-  emitChange() { this.emit(CHANGE_EVENT); },
-  addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
-  removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
-  getPlayers: () => PlayersStore.getPlayers(),
-  getPlayer: id => PlayersStore.getPlayer(id),
-  getPlayerName: id => { const p = PlayersStore.getPlayer(id); return p.title },
-  getState: () => state,
-  getStatus: () => state.gameStatus,
-  setMessageBar(text, type = MessageBarType.info) {
-    state.messageBarDefinition = { text, type, isMultiLine: false };
-    state.isMessageBarVisible = true;
+
+  // in-memory storage
+  state: {
+    dealerHasControl: false,
+    gameStatus: 0,
+    isMessageBarVisible: false,
+    loser: -1,
+    minimumBet: 25,
+    // players: PlayerStore.getPlayers(),
+    pot: 0,
+    round: 0,
+    turnCount: 0,
+    winner: -1,
+    messageBarDefinition: {
+      type: MessageBarType.info,
+      text: "",
+      isMultiLine: false
+    },
+    lasWriteTime: undefined,
   },
-  async saveAll() { for (let key in state) { await set(key, state[key], this.store) } }
+
+  /**
+   * notify subscribers of a change in state
+   */
+  emitChange() { this.emit(CHANGE_EVENT); },
+
+  /**
+   * subscribe to this Store
+   * @param {function} callback 
+   */
+  addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
+
+  /**
+   * unsubscribe from this store
+   * @param {function} callback 
+   */
+  removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
+
+  /**
+   * return state to a subscriber
+   */
+  getState() { return this.state },
+
+  /**
+   * return game status
+   */
+  getStatus() { return this.state.gameStatus },
+
+  /**
+   * set message bar text
+   * @param {string} text 
+   * @param {MessageBarType} type 
+   */
+  setMessageBar(text, type = MessageBarType.info) {
+    this.state.messageBarDefinition = { text, type, isMultiLine: false };
+    this.state.isMessageBarVisible = true;
+  },
+
+  /**
+   * hide the Message Bar
+   */
+  hideMessageBar(){
+    this.state.isMessageBarVisible = false;
+  },
+
+  /**
+ * Load saved state from IDB, if available
+ */
+  async initialize() {
+    console.time(`GameStore#initialize()`);
+    for (let key in this.state) {
+      let val = await get(key, this.store);
+      if (val !== undefined) {
+        // console.log(`\tfetched ${key} :: ${val}`);
+        // this.state[key] = val;
+      }
+    }
+  },
+
+  /**
+  * save state to local storage
+  */
+  async saveAll() {
+    this.state.lastWriteTime = new Date().toISOString();
+    console.log(`GameStore#saveAll`);
+    for (let key in this.state) {
+      // console.log(`${key} :: ${this.state[key]}`);
+      await set(key, this.state[key], this.store);
+    }
+  },
+
+  /**
+   * reset game state props
+   */
+  _gameReset() {
+    this.state.dealerHasControl = false;
+    this.state.gameStatus = 0;
+    this.state.pot = 0;
+    this.state.round = 0;
+    this.state.round = 0;
+    this.state.turnCount = 0;
+  },
+
+  /**
+   * Set game status to 1 (Playing)
+   */
+  _gameDeal() {
+    this.state.gameStatus = 1;
+  },
+
+  /**
+   * @todo determine what this method does
+   */
+  _gameStay() {
+    if (!_evaluateGame(2) && state.gameStatus !== 0) {
+      this.state.dealerHasControl = true;
+    }
+  },
+
+  /**
+   * Reset game state variables for a new round
+   */
+  _gameNewRound() {
+    /* reset state props to default */
+    this.state.dealerHasControl = false;
+    this.state.gameStatus = 0;
+    this.state.pot = 0;
+    this.state.round += 1;
+    this.state.turnCount = 0;
+
+    /* start a new round with a new deck */
+    // PlayersStore.currentPlayer.startTurn();
+    // this.state.gameStatus = 1;
+  }
 });
 
+/*  ========================================================  */
 /* Responding to Actions */
 AppDispatcher.register(action => {
   switch (action.actionType) {
+    case AppConstants.INITIALIZE_STORES:
+      GameStore.initialize().then(() => {
+        console.timeEnd(`GameStore#initialize()`);
+        PlayerStore.emitChange();
+      });
+      break;
+
     case AppConstants.GAME_NEWPLAYER:
-      PlayersStore.newPlayer(action.id, action.title, action.isNPC);
+      // PlayerStore.newPlayer(action.id, action.title, action.isNPC);
       GameStore.emitChange();
       break;
 
     case AppConstants.GAME_RESET:
       /* prepare players for a new Game */
-      PlayersStore.newGame();
-
-      /* reset game state props */
-      state.dealerHasControl = false;
-      state.gameStatus = 0;
-      state.pot = 0;
-      state.round = 0;
-      state.round = 0;
-      state.turnCount = 0;
-
+      // PlayersStore.newGame();
+      GameStore._gameReset();
       GameStore.emitChange();
       break;
 
     case AppConstants.GAME_DEAL:
-      PlayersStore.currentPlayer.startTurn();
-      state.gameStatus = 1;
+      // PlayerStore.currentPlayer.startTurn();
+      GameStore._gameDeal();
       _evaluateGame(1);
-
       GameStore.emitChange();
       break;
 
-    case AppConstants.GAME_HIT:     
-      PlayersStore.currentPlayer.hit();
+    case AppConstants.GAME_HIT:
+      // PlayerStore.currentPlayer.hit();
       _evaluateGame(1);
-
       GameStore.emitChange();
       break;
 
     case AppConstants.GAME_STAY:
-      PlayersStore.currentPlayer.stay();
+      // PlayersStore.currentPlayer.stay();
       /* player 0 is Dealer and game is not over*/
-      if (!_evaluateGame(2) && state.gameStatus !== 0) {
-        state.dealerHasControl = true;
-      }
+      GameStore._gameStay();
       GameStore.emitChange();
       break;
 
     case AppConstants.GAME_BET:
-      PlayersStore.currentPlayer.bet(action.amount);
-      GameStore.emitChange();
+      // PlayersStore.currentPlayer.bet(action.amount);
+      // GameStore.emitChange();
       break;
 
     /* This method is called after DECK_CLEARHANDS & DECK_DEAL */
     case AppConstants.GAME_NEWROUND:
       /* prepare players for a new round */
-      PlayersStore.newRound();
+      // PlayersStore.newRound();
 
-      /* reset state props to default */
-      state.dealerHasControl = false;
-      state.gameStatus = 0;
-      state.pot = 0;
-      state.round += 1;
-      state.turnCount = 0;
-
-      /* start a new round with a new deck */
-      PlayersStore.currentPlayer.startTurn();
-      state.gameStatus = 1;
+      GameStore._gameNewRound();
+      /**
+       * @todo clean this up 
+       */
+      GameStore.state.gameStatus = 1;
       _evaluateGame(1);
 
       GameStore.emitChange();
@@ -132,7 +227,7 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.GAME_HIDEMESSAGEBAR:
-      state.isMessageBarVisible = false;
+      GameStore.hideMessageBar();
       GameStore.emitChange();
       break;
 
@@ -141,11 +236,16 @@ AppDispatcher.register(action => {
   }
 });
 
+/**
+ * @todo delete this 
+ */
+let state = GameStore.state;
+
 /*  ========================================================  */
 
 /* method definitions */
 function _evaluateGame(statusCode) {
-  PlayersStore.evaluatePlayers();
+  PlayerStore.evaluatePlayers();
 
   switch (statusCode) {
     case 1 /*   Game in progress; first play  */:
@@ -158,7 +258,7 @@ function _evaluateGame(statusCode) {
       /* If endgame conditions not met   */
       if (!_endGameTrap()) {
         /* increment currentPlayerIndex */
-        PlayersStore.nextPlayer();
+        PlayerStore._nextPlayer();
         state.gameStatus = 1;
         _endGameTrap();
       } else {
@@ -180,7 +280,7 @@ function _evaluateGame(statusCode) {
 
       state.winner = state.players[0].id;
       state.loser = state.players[1].id;
-      PlayersStore.payout(0, state.pot);
+      PlayerStore._payout(0, state.pot);
       _endGame();
       break;
 
@@ -194,7 +294,7 @@ function _evaluateGame(statusCode) {
 
       state.winner = state.players[1].id;
       state.loser = state.players[0].id;
-      PlayersStore.payout(1, state.pot);
+      PlayerStore._payout(1, state.pot);
       _endGame();
       break;
 
@@ -207,7 +307,7 @@ function _evaluateGame(statusCode) {
 
 function _endGame() {
   state.gameStatus = 0;
-  PlayersStore.allPlayersFinish();
+  PlayerStore._allPlayersFinish();
 }
 
 /* immediately evaluate game again if status > 2 (endgame condition) */
@@ -230,7 +330,7 @@ function _endGameTrap() {
       nextGameStatus = 4; // Player 0 has higher hand ; Player 0 wins
     }
   } else {
-    if (PlayersStore.isCurrentPlayerNPC()) {
+    if (PlayerStore._isCurrentPlayerNPC()) {
       return true;
     } else {
       /* player 0 is not Dealer */
@@ -261,8 +361,8 @@ function _endGameTrap() {
 
 /* pay a specified amount into the pot */
 function _ante(amount = state.minimumBet) {
-  PlayersStore.allPlayersAnte(amount);
-  state.pot += amount * PlayersStore.length();
+  PlayerStore._allPlayersAnte(amount);
+  state.pot += amount * PlayerStore.length();
   GameStore.setMessageBar(`Ante: $${amount}`);
   ActivityLogStore.new({
     description: `ante $${amount}`,

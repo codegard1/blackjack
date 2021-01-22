@@ -10,7 +10,7 @@ import PlayingCard from "./PlayingCard";
 
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "deck";
-export const DeckStore = Object.assign({}, EventEmitter.prototype, {
+const DeckStore = Object.assign({}, EventEmitter.prototype, {
 
   // in-memory state
   state: {
@@ -301,3 +301,5 @@ AppDispatcher.register(action => {
       break;
   }
 });
+
+export default DeckStore;

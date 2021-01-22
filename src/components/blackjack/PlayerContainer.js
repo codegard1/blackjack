@@ -12,8 +12,9 @@ import Agent from "./Agent";
 import "./PlayerContainer.css";
 
 /* flux */
-import { GameStore } from "./stores/GameStore";
-import { DeckStore } from "./stores/DeckStore";
+import GameStore from "./stores/GameStore";
+import DeckStore from "./stores/DeckStore";
+import PlayerStore from "./stores/PlayerStore";
 import StatsStore from "./stores/StatsStore";
 import ControlPanelStore from "./stores/ControlPanelStore";
 
@@ -56,7 +57,8 @@ export class PlayerContainer extends BaseComponent {
       "onChangeControlPanel",
       "onChangeDeck",
       "onChangeGame",
-      "onChangeStats"
+      "onChangeStats",
+      "onChangePlayer"
     );
   }
   static propTypes = {
@@ -69,6 +71,7 @@ export class PlayerContainer extends BaseComponent {
     DeckStore.addChangeListener(this.onChangeDeck);
     GameStore.addChangeListener(this.onChangeGame);
     StatsStore.addChangeListener(this.onChangeStats);
+    PlayerStore.addChangeListener(this.onChangePlayer);
 
     // force initial update, in case saved data was loaded from IDB
     this.onChangeGame();
@@ -91,31 +94,17 @@ export class PlayerContainer extends BaseComponent {
   /* what to do when the game state changes */
   onChangeGame() {
     const newState = GameStore.getState();
-    const thisPlayer = newState.players.find(
-      player => player.id === this.state.id
-    );
 
-    /* playerStatusFlag is TRUE when the player cannot play. */
-    const playerStatusFlag =
-      thisPlayer.isBusted ||
-      thisPlayer.isFinished ||
-      thisPlayer.isStaying ||
-      !thisPlayer.turn;
     /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
     const gameStatusFlag = newState.gameStatus === 0 || newState.gameStatus > 2;
 
     this.setState({
-      bank: thisPlayer.bank,
       dealerHasControl: newState.dealerHasControl,
       gameStatus: newState.gameStatus,
       gameStatusFlag,
-      isNPC: thisPlayer.isNPC,
-      minimumBet: newState.minimumBet,
-      player: thisPlayer,
-      playerStatusFlag,
-      title: thisPlayer.title,
-      turnCount: newState.turnCount,
       isDeckCalloutVisible: true,
+      minimumBet: newState.minimumBet,
+      turnCount: newState.turnCount,
     });
   }
 
@@ -145,6 +134,27 @@ export class PlayerContainer extends BaseComponent {
     const stats = await StatsStore.getStats(this.state.id);
     // Don't update if getStats() returns false
     if (stats) this.setState({ stats });
+  }
+
+  /* What to do when the Player Store changes */
+  onChangePlayer() {
+    const newState = PlayerStore.getState();
+    const thisPlayer = newState.players[this.state.id];
+
+    /* playerStatusFlag is TRUE when the player cannot play. */
+    const playerStatusFlag =
+      thisPlayer.isBusted ||
+      thisPlayer.isFinished ||
+      thisPlayer.isStaying ||
+      !thisPlayer.turn;
+
+      this.setState({
+        bank: thisPlayer.bank,
+        isNPC: thisPlayer.isNPC,
+        player: thisPlayer,
+        playerStatusFlag,
+        title: thisPlayer.title,
+      })
   }
 
   _showDeckCallout() {
