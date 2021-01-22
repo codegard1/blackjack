@@ -4,7 +4,7 @@ import AppConstants from "../constants/AppConstants";
 import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
 // import { Store, get, set } from 'idb-keyval';
 
-import { PlayerStore1 } from './PlayerStore';
+import PlayerStore from './PlayerStore';
 
 /*  ========================================================  */
 
@@ -109,7 +109,7 @@ AppDispatcher.register(action => {
     case AppConstants.GAME_STAY:
       ActivityLogStore.new({
         description: "stayed",
-        name: PlayerStore1.getPlayerName(action.playerId),
+        name: PlayerStore.getPlayerName(action.playerId),
         iconName: "HandsFree",
       });
       break;
@@ -117,7 +117,7 @@ AppDispatcher.register(action => {
     case AppConstants.GAME_BET:
       ActivityLogStore.new({
         description: `bet $${action.amount}`,
-        name: PlayerStore1.getPlayerName(action.playerId),
+        name: PlayerStore.getPlayerName(action.playerId),
         iconName: "Money",
       });
       break;
@@ -125,7 +125,7 @@ AppDispatcher.register(action => {
     case AppConstants.DECK_HIT:
       ActivityLogStore.new({
         description: `hit`,
-        name: PlayerStore1.getPlayerName(action.playerId),
+        name: PlayerStore.getPlayerName(action.playerId),
         iconName: "CheckedOutByOther12",
       });
       break;

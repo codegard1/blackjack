@@ -9,147 +9,10 @@ import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.j
 // import { Store, get, set } from 'idb-keyval';
 
 // custom stuff
-import Player from "./Player";
-import { DeckStore } from "./DeckStore";
-import { defaultPlayers, defaultPlayersObj } from "../definitions";
-
-// Deprecated but still in use until the EventEmitter class is ready to take over
-export default class PlayerStore {
-  constructor() {
-    this.players = [];
-    this.currentPlayerIndex = 0;
-    this.currentPlayer = {
-      bet: amount => this.currentPlayerBets(amount).bind(this),
-      finish: this.currentPlayerFinishes.bind(this),
-      hit: this.currentPlayerHits.bind(this),
-      startTurn: this.currentPlayerStartsTurn.bind(this),
-      stay: this.currentPlayerStays.bind(this)
-    };
-  }
-  /* return all players */
-  getPlayer(id) {
-    const i = this.getIndex(id);
-    return this.players[i];
-  }
-  getPlayers() {
-    return this.players;
-  }
-  getCurrentPlayer() {
-    const i = this.currentPlayerIndex;
-    return this.players[i];
-  }
-  getIndex(id) {
-    return this.players.findIndex(player => player.id === id);
-  }
-  /* return the Id of a player */
-  getId(index) {
-    return this.players[index].id;
-  }
-
-  /* add a new Player to the array */
-  newPlayer(...props) {
-    this.players.push(new Player(...props));
-  }
-
-  /* cycle currentPlayerIndex  */
-  nextPlayer() {
-    this.currentPlayerIndex =
-      this.currentPlayerIndex + 1 >= this.length()
-        ? 0
-        : this.currentPlayerIndex + 1;
-    this.currentPlayer.startTurn();
-  }
-
-  /* reset props on the specified player */
-  resetPlayer(id, ...keys) {
-    const i = this.getIndex(id);
-    this.players[i].reset(...keys);
-  }
-
-  /* set players' status, hand values */
-  evaluatePlayers() {
-    this.players.forEach(player => {
-      player.handValue = DeckStore.getHandValue(player.id);
-      player.setStatus();
-    });
-  }
-
-  finish(id) {
-    this.players[this.getIndex(id)].finish();
-  }
-
-  stay(id) {
-    this.players(this.getIndex(id)).stay();
-  }
-
-  currentPlayerStays() {
-    const i = this.currentPlayerIndex;
-    this.players[i].stay();
-  }
-  currentPlayerHits() {
-    const i = this.currentPlayerIndex;
-    this.players[i].hit();
-  }
-  currentPlayerStartsTurn() {
-    const i = this.currentPlayerIndex;
-    this.players[i].startTurn();
-  }
-  currentPlayerFinishes() {
-    const i = this.currentPlayerIndex;
-    this.players[i].finish();
-  }
-  currentPlayerBets(amount) {
-    const i = this.currentPlayerIndex;
-    this.players[i].bet(amount);
-  }
-  isCurrentPlayerNPC() {
-    const i = this.currentPlayerIndex;
-    // console.log(`this.players[${i}].isNPC === ${this.players[i].isNPC}`);
-    return this.players[i].isNPC;
-  }
-
-  allPlayersAnte(amount) {
-    this.players.forEach(player => {
-      player.ante(amount);
-    });
-  }
-
-  length() {
-    return this.players.length;
-  }
-
-  startTurn(id) {
-    this.players[this.getIndex(id)].turn = true;
-    this.players[this.getIndex(id)].isFinished = false;
-  }
-
-  newRound() {
-    /* reset all players' status props for new Round */
-    this.players.forEach(player => player.resetStatus());
-    this.currentPlayerIndex = 0;
-  }
-
-  newGame() {
-    /* reset all players' props for new Game */
-    this.players.forEach(player => player.resetAll());
-    this.currentPlayerIndex = 0;
-  }
-
-  allPlayersFinish() {
-    this.players.forEach(player => {
-      player.finish();
-    });
-  }
-
-  payout(index, amount) {
-    this.players[index].bank += amount;
-  }
-}
-
-
+import DeckStore from "./DeckStore";
 
 const CHANGE_EVENT = "playerStore";
-export const PlayerStore1 = Object.assign({}, EventEmitter.prototype, {
+const PlayerStore = Object.assign({}, EventEmitter.prototype, {
 
   // cached state
   store: new Store('PlayerStore', 'State'),
@@ -250,6 +113,22 @@ export const PlayerStore1 = Object.assign({}, EventEmitter.prototype, {
   },
 
   /**
+   * Return the name of the given player
+   * @param {number} id 
+   */
+  getPlayerName(id) {
+    let p = this.getPlayer(id);
+    return p.title;
+  },
+
+  /**
+   * Return the number of active players
+   */
+  length(){
+    return this.state.activePlayers.length
+  },
+
+  /**
    * set default player state for given id
    * @param {number} id 
    * @param {string} title 
@@ -260,6 +139,16 @@ export const PlayerStore1 = Object.assign({}, EventEmitter.prototype, {
     this.state.players[id] = Object.assign({ id, title, isNPC }, this.defaultPlayerState);
     // add new player to the active players list
     this.state.activePlayers.push(id);
+  },
+
+  /**
+   * set players' status, hand values
+   */
+  _evaluatePlayers() {
+    this.state.activePlayers.forEach(id => {
+      this.state.players[id].handValue = DeckStore.getHandValue(id);
+      this._setStatus(id);
+    })
   },
 
   /**
@@ -291,18 +180,6 @@ export const PlayerStore1 = Object.assign({}, EventEmitter.prototype, {
         this.state.players[id][prop] = this.defaultPlayerState[prop]
       }
     });
-  },
-
-  /**
-   * set the given player as having started their turn 
-   * @param {number} id 
-   */
-  _startTurn(id) {
-    let p = this.getPlayer(id);
-    p.turn = true;
-    p.isFinished = false;
-    p.lastAction = "startTurn";
-    console.log(`${p.title} started turn`);
   },
 
   /**
@@ -442,7 +319,8 @@ export const PlayerStore1 = Object.assign({}, EventEmitter.prototype, {
     let nextIndex = index + 1 >= (this.state.activePlayers.length)
       ? 0
       : index + 1;
-    this.currentPlayer.startTurn();
+      this.state.currentPlayerId = this.state.activePlayers[nextIndex];
+    this._startTurn(this.state.currentPlayerId);
   },
 
   /**
@@ -486,7 +364,13 @@ export const PlayerStore1 = Object.assign({}, EventEmitter.prototype, {
   _payout(id, amount) {
     let p = this.getPlayer(id);
     p.bank += amount;
-  }
+  },
+
+  // return true if the current player is an NPC
+  _isCurrentPlayerNPC() {
+    let p = this.getCurrentPlayer();
+    return p.isNPC;
+  },
 
 });
 
@@ -497,27 +381,43 @@ AppDispatcher.register(action => {
 
   switch (action.actionType) {
     case AppConstants.INITIALIZE_STORES:
-      PlayerStore1.initialize().then(() => {
+      PlayerStore.initialize().then(() => {
         console.timeEnd(`PlayerStore#initialize()`);
-        PlayerStore1.emitChange();
+        PlayerStore.emitChange();
       });
       break;
 
     case AppConstants.GAME_NEWPLAYER:
-      PlayerStore1.newPlayer(action.id, action.title, action.isNPC);
-      PlayerStore1.emitChange();
+      PlayerStore.newPlayer(action.id, action.title, action.isNPC);
+      PlayerStore.emitChange();
       break;
 
     case AppConstants.GAME_RESET:
-      PlayerStore1.newGame();
-      PlayerStore1.emitChange();
+      PlayerStore.newGame();
+      PlayerStore.emitChange();
       break;
 
     case AppConstants.GAME_NEWROUND:
-      PlayerStore1.newRound();
-      PlayerStore1.emitChange();
+      PlayerStore.newRound();
+      PlayerStore.emitChange();
       break;
 
+    case AppConstants.GAME_DEAL:
+      PlayerStore._startTurn(PlayerStore.state.currentPlayerId);
+      PlayerStore.emitChange();
+      break;
+
+    case AppConstants.GAME_HIT:
+      PlayerStore._hit(PlayerStore.state.currentPlayerId);
+      break;
+
+    case AppConstants.GAME_STAY:
+      PlayerStore._stay(PlayerStore.state.currentPlayerId);
+      break;
+
+    case AppConstants.GAME_BET:
+      PlayerStore._bet(PlayerStore.state.currentPlayerId, action.amount);
+      break;
 
 
     default:
@@ -527,3 +427,5 @@ AppDispatcher.register(action => {
 });
 
 /*  ========================================================  */
+
+export default PlayerStore;
