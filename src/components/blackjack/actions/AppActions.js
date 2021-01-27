@@ -144,7 +144,7 @@ const gameplayActions = {
     players.forEach(player => {
       AppDispatcher.dispatch({
         actionType: AppConstants.DECK_NEWPLAYERHAND,
-        id: player.id
+        ...player
       });
 
       /* add a new Player to the PlayerStore */
@@ -153,6 +153,7 @@ const gameplayActions = {
         ...player
       });
     });
+    
   },
   showMessageBar(text, type) {
     AppDispatcher.dispatch({

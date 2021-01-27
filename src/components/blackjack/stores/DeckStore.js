@@ -84,9 +84,9 @@ const DeckStore = Object.assign({}, EventEmitter.prototype, {
     return this.state.playerHands;
   },
   
-  getHandValue(playerId) {
+  getHandValue(key) {
     if (this.state.playerHands.length > 0) {
-      let index = this.state.playerHands.findIndex(player => player.id === playerId);
+      let index = this.state.playerHands.findIndex(player => player.key === key);
       // console.log(`getHandValue: playerHands[index]`);
       return this.state.playerHands[index].evaluate();
     } else {
@@ -172,8 +172,8 @@ const DeckStore = Object.assign({}, EventEmitter.prototype, {
     this.state.selected.splice(toDeselect, 1);
   },
 
-  newPlayerHand(playerId) {
-    this.state.playerHands.push(new PlayerHand(playerId));
+  newPlayerHand(playerId, playerKey) {
+    this.state.playerHands.push(new PlayerHand(playerId, playerKey));
   },
 
   clearHands() {
@@ -272,7 +272,7 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.DECK_NEWPLAYERHAND:
-      DeckStore.newPlayerHand(action.id);
+      DeckStore.newPlayerHand(action.id, action.key);
       DeckStore.emitChange();
       break;
 

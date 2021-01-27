@@ -1,6 +1,7 @@
 export class PlayerHand {
-    constructor(playerId) {
+    constructor(playerId, playerKey) {
         this.id = playerId;
+        this.key = playerKey;
         this.handValue = { aceAsOne: 0, aceAsEleven: 0 };
         this.hand = [];
     }

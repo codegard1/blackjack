@@ -10,6 +10,7 @@ import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.j
 
 // custom stuff
 import DeckStore from "./DeckStore";
+import { defaultPlayersObj, } from "../definitions";
 
 const CHANGE_EVENT = "playerStore";
 const PlayerStore = Object.assign({}, EventEmitter.prototype, {
@@ -19,15 +20,16 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
 
   // in-memory state
   state: {
-    players: {},
+    players: defaultPlayersObj,
     activePlayers: [],
-    currentPlayerId: 0,
+    currentPlayerKey: undefined,
     lastWriteTime: undefined,
   },
 
   // Default values for a player record
   defaultPlayerState: {
     // id: undefined,
+    // key: undefined,
     // isNPC: undefined,
     // title: undefined,
     bank: 1000,
@@ -95,10 +97,10 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
   },
 
   /**
-   * Lookup player by ID (key)
-   * @param {number} id 
+   * Lookup player by key
+   * @param {string} key
    */
-  getPlayer(id) { return this.state.players[id] },
+  getPlayer(key) { return this.state.players[key] },
 
   /**
    * Get all players
@@ -109,100 +111,99 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
    * Get the currently active player
    */
   getCurrentPlayer() {
-    return this.getPlayer(this.state.currentPlayerId);
+    return this.getPlayer(this.state.currentPlayerKey);
   },
 
   /**
    * Return the name of the given player
-   * @param {number} id 
+   * @param {string} key
    */
-  getPlayerName(id) {
-    let p = this.getPlayer(id);
+  getPlayerName(key) {
+    let p = this.getPlayer(key);
     return p.title;
   },
 
   /**
    * Return the number of active players
    */
-  length(){
+  length() {
     return this.state.activePlayers.length
   },
 
   /**
-   * set default player state for given id
-   * @param {number} id 
+   * set default player state for given key
+   * @param {string} key
    * @param {string} title 
    * @param {boolean} isNPC 
    */
-  newPlayer(id, title, isNPC) {
+  newPlayer(key, title, isNPC) {
     // Create new player record
-    this.state.players[id] = Object.assign({ id, title, isNPC }, this.defaultPlayerState);
+    this.state.players[key] = Object.assign({ key, title, isNPC }, this.defaultPlayerState);
     // add new player to the active players list
-    this.state.activePlayers.push(id);
+    this.state.activePlayers.push(key);
   },
 
   /**
    * set players' status, hand values
    */
   _evaluatePlayers() {
-    this.state.activePlayers.forEach(id => {
-      this.state.players[id].handValue = DeckStore.getHandValue(id);
-      this._setStatus(id);
+    this.state.activePlayers.forEach(key => {
+      this.state.players[key].handValue = DeckStore.getHandValue(key);
+      this._setStatus(key);
     })
   },
 
   /**
-   * reset gameplay variables for each player and set the current player ID to the first in the list
+   * reset gameplay variables for each player and set the current player key to the first in the list
    */
   newGame() {
-    this.state.activePlayers.forEach(id => this._resetPlayer(id));
-    this.state.currentPlayerId = this.state.activePlayers[0];
+    this.state.activePlayers.forEach(key => this._resetPlayer(key));
+    this.state.currentPlayerKey = this.state.activePlayers[0];
   },
 
   /**
    * Start a new round within the same game. reset all game vars per player except 'bank'
    */
   newRound() {
-    this.state.activePlayers.forEach(id => this._resetPlayer(id, "bank"));
-    this.state.currentPlayerId = this.state.activePlayers[0];
-    this._startTurn(this.state.currentPlayerId);
+    this.state.activePlayers.forEach(key => this._resetPlayer(key, "bank"));
+    this.state.currentPlayerKey = this.state.activePlayers[0];
+    this._startTurn(this.state.currentPlayerKey);
   },
 
   /**
    * reset properties that are bound to a single round of play
-   * @param {number} id 
-   * @param  {...string} omit 
+   * @param {string} key
+   * @param  {...string} omit properties to omit when resetting
    */
-  _resetPlayer(id, ...omit) {
+  _resetPlayer(key, ...omit) {
     const props = ["bet", "bank", "handValue", "hasBlackjack", "isBusted", "isFinished", "isStaying", "lastAction", "status", "turn"];
     props.forEach(prop => {
       if (!(prop in omit)) {
-        this.state.players[id][prop] = this.defaultPlayerState[prop]
+        this.state.players[key][prop] = this.defaultPlayerState[prop]
       }
     });
   },
 
   /**
    * cause the given player to bet the given amount (unused)
-   * @param {number} id 
+   * @param {string} key
    * @param {number} amount 
    */
-  _bet(id, amount) {
-    let p = this.getPlayer(id);
+  _bet(key, amount) {
+    let p = this.getPlayer(key);
     p.pot -= amount;
     p.bet = amount;
     p.lastAction = "bet";
-    debugger;
     console.log(`${p.title} bet ${amount}`);
   },
 
   /**
    * cause the given player to ante the given amount
-   * @param {number} id 
+   * @param {string} key
    * @param {number} amount 
    */
-  _ante(id, amount) {
-    let p = this.getPlayer(id);
+  _ante(key, amount) {
+    let p = this.getPlayer(key);
     p.bank -= amount;
     p.lastAction = "ante";
     console.log(`${p.title} ante ${amount}`);
@@ -214,16 +215,16 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
    */
   _allPlayersAnte(amount) {
     this.state.activePlayers.forEach(
-      id => this._ante(this.state.players[id], amount)
+      key => this._ante(this.state.players[key], amount)
     )
   },
 
   /**
    * cause the given player to hit
-   * @param {number} id 
+   * @param {string} key
    */
-  _hit(id) {
-    let p = this.getPlayer(id);
+  _hit(key) {
+    let p = this.getPlayer(key);
     p.lastAction = "hit";
     console.log(`${p.title} hit`);
   },
@@ -231,35 +232,35 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
   // cause the given player to become busted
   /**
    * 
-   * @param {*} id the id of the player to fetch
+   * @param {string} key the key of the player to fetch
    */
-  _bust(id) {
-    let p = this.getPlayer(id);
+  _bust(key) {
+    let p = this.getPlayer(key);
     p.isBusted = true;
-    this._finish(id);
+    this._finish(key);
     console.log(`${p.title} busted`);
   },
 
   /**
    * cause the given player to stay
-   * @param {number} id 
+   * @param {string} key
    */
-  _stay(id) {
-    let p = this.getPlayer(id);
+  _stay(key) {
+    let p = this.getPlayer(key);
     p.isStaying = true;
     p.lastAction = "stay";
-    this._finish(id);
+    this._finish(key);
     console.log(`${p.title} stayed`);
   },
 
   /**
    * when finished, the player can not perform any further actions
-   * @param {number} id 
+   * @param {string} key
    */
-  _finish(id) {
-    let p = this.getPlayer(id);
+  _finish(key) {
+    let p = this.getPlayer(key);
     p.isFinished = true;
-    this._endTurn(id);
+    this._endTurn(key);
     console.log(`${p.title} finished`);
   },
 
@@ -268,26 +269,26 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
    */
   _allPlayersFinish() {
     this.state.activePlayers.forEach(
-      id => this._finish(this.state.players[id])
+      key => this._finish(this.state.players[key])
     )
   },
 
   /**
    * cause the given player to have blackjack
-   * @param {number} id 
+   * @param {string} key
    */
-  _blackjack(id) {
-    let p = this.getPlayer(id);
+  _blackjack(key) {
+    let p = this.getPlayer(key);
     p.hasBlackjack = true;
     console.log(`${p.title} has blackjack`);
   },
 
   /**
    * cause the given player to start their turn
-   * @param {number} id 
+   * @param {string} key
    */
-  _startTurn(id) {
-    let p = this.getPlayer(id);
+  _startTurn(key) {
+    let p = this.getPlayer(key);
     p.turn = true;
     p.isFinished = false;
     p.lastAction = "startTurn";
@@ -296,59 +297,59 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
 
   /**
    * cause the given player's turn to end
-   * @param {number} id 
+   * @param {string} key
    */
-  _endTurn(id) {
-    let p = this.getPlayer(id);
+  _endTurn(key) {
+    let p = this.getPlayer(key);
     p.turn = false;
     p.lastAction = "endTurn";
     console.log(`${p.title} ended turn`);
   },
 
   /**
-   * cycle CurrentPlayerId
+   * cycle currentPlayerKey
    */
   _nextPlayer() {
-    // get id of current Player from state
-    let id = this.state.currentPlayerId;
+    // get key of current Player from state
+    let key = this.state.currentPlayerKey;
 
     // get index of current player in the activePlayers list
-    let index = this.state.activePlayers.findIndex(id);
+    let index = this.state.activePlayers.findIndex(key);
 
     // increment the index or go back to 0
     let nextIndex = index + 1 >= (this.state.activePlayers.length)
       ? 0
       : index + 1;
-      this.state.currentPlayerId = this.state.activePlayers[nextIndex];
-    this._startTurn(this.state.currentPlayerId);
+    this.state.currentPlayerKey = this.state.activePlayers[nextIndex];
+    this._startTurn(this.state.currentPlayerKey);
   },
 
   /**
    * calculate status for the given player
-   * @param {number} id 
+   * @param {string} key
    */
-  _setStatus(id) {
-    let p = this.getPlayer(id);
+  _setStatus(key) {
+    let p = this.getPlayer(key);
 
     /*   set busted status  */
     if (p.handValue.aceAsOne > 21 && p.handValue.aceAsEleven > 21) {
-      this._bust(id);
+      this._bust(key);
 
     } else if (
       /*   set blackjack status  */
       p.handValue.aceAsOne === 21 ||
       p.handValue.aceAsEleven === 21
     ) {
-      this._blackjack(id);
+      this._blackjack(key);
     }
   },
 
   /**
    * return the highest possible hand value for the given player
-   * @param {number} id 
+   * @param {string} key
    */
-  _getHigherHandValue(id) {
-    let p = this.getPlayer(id);
+  _getHigherHandValue(key) {
+    let p = this.getPlayer(key);
 
     let higherHandValue = p.handValue.aceAsOne > p.handValue.aceAsEleven
       ? p.handValue.aceAsOne
@@ -358,11 +359,11 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
 
   /**
    * add the given amount to the given player's bank
-   * @param {number} id 
+   * @param {string} key
    * @param {number} amount 
    */
-  _payout(id, amount) {
-    let p = this.getPlayer(id);
+  _payout(key, amount) {
+    let p = this.getPlayer(key);
     p.bank += amount;
   },
 
@@ -388,7 +389,7 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.GAME_NEWPLAYER:
-      PlayerStore.newPlayer(action.id, action.title, action.isNPC);
+      PlayerStore.newPlayer(...action);
       PlayerStore.emitChange();
       break;
 
@@ -403,20 +404,20 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.GAME_DEAL:
-      PlayerStore._startTurn(PlayerStore.state.currentPlayerId);
+      PlayerStore._startTurn(PlayerStore.state.currentPlayerKey);
       PlayerStore.emitChange();
       break;
 
     case AppConstants.GAME_HIT:
-      PlayerStore._hit(PlayerStore.state.currentPlayerId);
+      PlayerStore._hit(PlayerStore.state.currentPlayerKey);
       break;
 
     case AppConstants.GAME_STAY:
-      PlayerStore._stay(PlayerStore.state.currentPlayerId);
+      PlayerStore._stay(PlayerStore.state.currentPlayerKey);
       break;
 
     case AppConstants.GAME_BET:
-      PlayerStore._bet(PlayerStore.state.currentPlayerId, action.amount);
+      PlayerStore._bet(PlayerStore.state.currentPlayerKey, action.amount);
       break;
 
 
