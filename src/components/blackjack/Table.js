@@ -1,16 +1,38 @@
 import React from "react";
-import { Stack, MessageBar, MessageBarType, DefaultEffects, Icon } from '@fluentui/react';
+import {
+  ContextualMenu,
+  ContextualMenuItemType,
+  DefaultButton,
+  Dropdown, DropdownMenuItemType,
+  DefaultEffects,
+  Dialog,
+  DialogFooter,
+  DialogType,
+  Icon,
+  MessageBar,
+  MessageBarType,
+  PrimaryButton,
+  Spinner,
+  SpinnerSize,
+  Stack,
+} from '@fluentui/react';
 import { MotionAnimations } from '@fluentui/theme';
 import { initializeIcons } from "@uifabric/icons";
+
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
 import PlayerContainer from "./PlayerContainer";
 import DeckContainer from "./DeckContainer";
 import OptionsPanel from "./OptionsPanel";
-import { defaultPlayers } from "./definitions";
 import PotDisplay from "./PotDisplay";
 import ActivityLog from "./ActivityLog";
+import {
+  defaultPlayers,
+  defaultPlayersObj,
+  defaultPlayersDropdownOptions,
+  defaultSelectedPlayerKeys
+} from "./definitions";
 
 /* flux */
 import GameStore from "./stores/GameStore";
@@ -22,16 +44,23 @@ import AppActions from "./actions/AppActions";
 /* Initialize Fabric Icons */
 initializeIcons();
 
+
 export default class Table extends BaseComponent {
   constructor() {
     super();
     this.state = {
-      //DeckStore
+      // Table
+      isSpinnerVisible: true,
+      isDialogVisible: true,
+      selectedPlayers: defaultSelectedPlayerKeys,
+
+      // DeckStore
       deck: { cards: [] },
       drawn: [],
       selected: [],
       playerHands: [],
-      //GameStore
+
+      // GameStore
       dealerHasControl: false,
       gameStatus: 0,
       isMessageBarVisible: false,
@@ -46,10 +75,12 @@ export default class Table extends BaseComponent {
         text: "",
         isMultiLine: false
       },
+
       // PlayerStore
       players: [],
       activePlayers: [],
       currentPlayerId: 0,
+
       // ControlPanelStore
       isCardDescVisible: false,
       isDealerHandVisible: false,
@@ -61,7 +92,14 @@ export default class Table extends BaseComponent {
       isActivityLogVisible: false,
     };
 
-    this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame", "onChangePlayerStore");
+    this._bind(
+      "onChangeDeck",
+      "onChangeControlPanel",
+      "onChangeGame",
+      "onChangePlayerStore",
+      "onHideDialog",
+      "toggleHideDialog",
+    );
   }
 
   componentDidMount() {
@@ -74,9 +112,7 @@ export default class Table extends BaseComponent {
     // Fetch local data from stores
     AppActions.initializeStores();
 
-    /* start a new game with these players */
-    const selectedPlayers = defaultPlayers.filter(v => v.title === 'Chris' || v.title === "Dealer");
-    AppActions.newGame(selectedPlayers);
+    // debugger; 
   }
 
   componentWillUnmount() {
@@ -84,7 +120,9 @@ export default class Table extends BaseComponent {
     GameStore.removeChangeListener(this.onChangeGame);
     DeckStore.removeChangeListener(this.onChangeDeck);
     ControlPanelStore.removeChangeListener(this.onChangeControlPanel);
+    PlayerStore.removeChangeListener(this.onChangePlayerStore);
   }
+
 
   /* flux helpers */
   onChangeGame() {
@@ -107,6 +145,21 @@ export default class Table extends BaseComponent {
     });
     this.setState({ ...newState });
   }
+
+  /**
+   * Hide the splash screen
+   */
+  onHideDialog() {
+    this.setState({ isDialogVisible: false })
+  }
+
+  /**
+   * Toggle the splash screen
+   */
+  toggleHideDialog() {
+    this.setState({ isDialogVisible: !this.state.isDialogVisible })
+  }
+
 
   render() {
     // slice out the selected players (Chris and Dealer) and return PlayerContainers
@@ -137,10 +190,16 @@ export default class Table extends BaseComponent {
           </MessageBar>
         )}
 
-        <Stack horizontal horizontalAlign="space-between" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
-          <PotDisplay pot={this.state.pot} />
-          <Icon iconName="Settings" aria-label="Settings" onClick={AppActions.showOptionsPanel} />
-        </Stack>
+        {this.state.isSpinnerVisible &&
+          <Spinner size={SpinnerSize.large} label="Wait, wait..." ariaLive="assertive" labelPosition="right" />
+        }
+
+        {!this.state.isSpinnerVisible &&
+          <Stack horizontal horizontalAlign="space-between" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
+            <PotDisplay pot={this.state.pot} />
+            <Icon iconName="Settings" aria-label="Settings" onClick={AppActions.showOptionsPanel} />
+          </Stack>
+        }
 
         <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
           {selectedPlayersContainers}
@@ -173,6 +232,54 @@ export default class Table extends BaseComponent {
         />
 
         <OptionsPanel />
+
+        <Dialog
+          hidden={!this.state.isDialogVisible}
+          onDismiss={this.toggleHideDialog}
+          dialogContentProps={{
+            type: DialogType.normal,
+            title: 'Blackjack',
+            subText: 'This is the splash screen',
+          }}
+          modalProps={{
+            isBlocking: false,
+            styles: { main: { maxWidth: 450, top: 75 } },
+            isDraggable: false,
+            labelId: 'dialogLabel',
+            subTextId: 'subTextLabel',
+            isDarkOverlay: true,
+            topOffsetFixed: true,
+          }}
+        >
+          <Dropdown
+            placeholder="Choose"
+            label="Select at least two players"
+            multiSelect
+            onChange={(e, o, i) => {
+              const selectedPlayers = this.state.selectedPlayers;
+              if (o.selected && selectedPlayers.indexOf(o.key) === -1) {
+                selectedPlayers.push(o.key);
+              } else if (!o.selected && selectedPlayers.indexOf(o.key) !== -1) {
+                selectedPlayers.splice(selectedPlayers.indexOf(o.key), 1);
+              }
+              this.setState({ selectedPlayers });
+            }}
+            options={defaultPlayersDropdownOptions}
+            styles={{ width: 200 }}
+          />
+          <DialogFooter>
+            <PrimaryButton text="Start" onClick={e => {
+              const players = this.state.players;
+              const selectedPlayers = [];
+              for(let key in players){
+                if (players[key].selected === true){selectedPlayers.push(players[key])}
+              }
+
+              AppActions.newGame(selectedPlayers);
+              this.toggleHideDialog();
+            }} />
+          </DialogFooter>
+        </Dialog>
 
       </Stack>
     );

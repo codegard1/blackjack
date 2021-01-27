@@ -142,6 +142,7 @@ const gameplayActions = {
     });
 
     players.forEach(player => {
+      debugger;
       AppDispatcher.dispatch({
         actionType: AppConstants.DECK_NEWPLAYERHAND,
         ...player
