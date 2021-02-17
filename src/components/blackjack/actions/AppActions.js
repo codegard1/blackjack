@@ -135,6 +135,11 @@ const gameplayActions = {
       amount
     });
   },
+
+  /**
+   * Start a new game using a list of players
+   * @param {array} players array of players objects, including id, key, and title
+   */
   newGame(players) {
     /* create a new deck */
     AppDispatcher.dispatch({
@@ -142,12 +147,11 @@ const gameplayActions = {
     });
 
     players.forEach(player => {
-      debugger;
       AppDispatcher.dispatch({
         actionType: AppConstants.DECK_NEWPLAYERHAND,
         ...player
       });
-
+      
       /* add a new Player to the PlayerStore */
       AppDispatcher.dispatch({
         actionType: AppConstants.GAME_NEWPLAYER,
