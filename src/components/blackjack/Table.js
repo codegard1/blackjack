@@ -1,9 +1,7 @@
 import React from "react";
 import {
-  ContextualMenu,
-  ContextualMenuItemType,
   DefaultButton,
-  Dropdown, DropdownMenuItemType,
+  Dropdown,
   DefaultEffects,
   Dialog,
   DialogFooter,
@@ -99,6 +97,7 @@ export default class Table extends BaseComponent {
       "onChangePlayerStore",
       "onHideDialog",
       "toggleHideDialog",
+      "renderPlayerContainers",
     );
   }
 
@@ -111,8 +110,6 @@ export default class Table extends BaseComponent {
 
     // Fetch local data from stores
     AppActions.initializeStores();
-
-    // debugger; 
   }
 
   componentWillUnmount() {
@@ -160,15 +157,29 @@ export default class Table extends BaseComponent {
     this.setState({ isDialogVisible: !this.state.isDialogVisible })
   }
 
+  renderPlayerContainers() {
+    if (this.state.activePlayers.length > 0) {
+      return this.state.activePlayers.map(key =>
+        <Stack.Item align="stretch" verticalAlign="top" grow={2} key={`PlayerStack-${key}`}>
+          <PlayerContainer 
+            key={`PlayerContainer-${key}`} 
+            playerKey={key} 
+            {...this.state}
+            />
 
+        </Stack.Item>
+      );
+    } else {
+      return <Stack.Item>No players</Stack.Item>;
+    }
+  }
+
+  /**
+   * Make PlayerContainers
+   */
   render() {
     // slice out the selected players (Chris and Dealer) and return PlayerContainers
-    const selectedPlayersContainers = this.state.players.length > 0 ?
-      this.state.players.map(player => (
-        <Stack.Item align="stretch" verticalAlign="top" grow={2} key={`PlayerStack-${player.id}`}>
-          <PlayerContainer key={`Player-${player.id}`} playerId={player.id} />
-        </Stack.Item>
-      )) : <div />
+    const selectedPlayersContainers = this.renderPlayerContainers();
 
     // Ad-hod styles for the Table
     const tableStyles = {
@@ -179,7 +190,8 @@ export default class Table extends BaseComponent {
     }
 
     return (
-      <Stack vertical verticalAlign="start" wrap tokens={{ childrenGap: 5, padding: 10 }} style={tableStyles}>
+      <Stack vertical verticalAlign="start" wrap tokens={{ childrenGap: 10, padding: 10 }} style={tableStyles}>
+
         {this.state.isMessageBarVisible && (
           <MessageBar
             messageBarType={this.state.messageBarDefinition.type}
@@ -190,22 +202,24 @@ export default class Table extends BaseComponent {
           </MessageBar>
         )}
 
-        {this.state.isSpinnerVisible &&
+        {this.state.isDialogVisible &&
           <Spinner size={SpinnerSize.large} label="Wait, wait..." ariaLive="assertive" labelPosition="right" />
         }
 
-        {!this.state.isSpinnerVisible &&
+        {!this.state.isDialogVisible &&
           <Stack horizontal horizontalAlign="space-between" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
             <PotDisplay pot={this.state.pot} />
             <Icon iconName="Settings" aria-label="Settings" onClick={AppActions.showOptionsPanel} />
           </Stack>
         }
 
-        <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
-          {selectedPlayersContainers}
-        </Stack>
+        {!this.state.isDialogVisible &&
+          <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
+            {selectedPlayersContainers}
+          </Stack>
+        }
 
-        {this.state.isActivityLogVisible && <ActivityLog />}
+        <ActivityLog hidden={!this.state.isActivityLogVisible} />
 
         <DeckContainer
           deck={this.state.deck.cards}
@@ -259,6 +273,7 @@ export default class Table extends BaseComponent {
               const selectedPlayers = this.state.selectedPlayers;
               if (o.selected && selectedPlayers.indexOf(o.key) === -1) {
                 selectedPlayers.push(o.key);
+                
               } else if (!o.selected && selectedPlayers.indexOf(o.key) !== -1) {
                 selectedPlayers.splice(selectedPlayers.indexOf(o.key), 1);
               }
@@ -270,12 +285,15 @@ export default class Table extends BaseComponent {
           <DialogFooter>
             <PrimaryButton text="Start" onClick={e => {
               const players = this.state.players;
-              const selectedPlayers = [];
-              for(let key in players){
-                if (players[key].selected === true){selectedPlayers.push(players[key])}
-              }
+              const selectedPlayers = this.state.selectedPlayers;
 
-              AppActions.newGame(selectedPlayers);
+              // get the complete player object for AppActions that don't use playerKey yet
+              let pList = selectedPlayers.map(key=> players[key]);
+
+              // initiate a new game 
+              AppActions.newGame(pList);
+              
+              // hide the player selection modal 
               this.toggleHideDialog();
             }} />
           </DialogFooter>

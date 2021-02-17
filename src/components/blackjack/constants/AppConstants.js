@@ -44,9 +44,13 @@ export default keyMirror({
   // call initialize() on stores
   INITIALIZE_STORES: null,
 
+  // call clear() on stores
+  CLEAR_STORES: null,
+  
   /* StatsStore */
   STATS_UPDATE: null,
 
   /* ActivityLogStore */
   ACTIVITYLOG_NEW: null,
+
 });

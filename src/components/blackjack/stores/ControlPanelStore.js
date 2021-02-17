@@ -1,8 +1,10 @@
 import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
-import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-// import { Store, get, set } from 'idb-keyval';
+
+/* idb-keyval */
+// import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
+import { Store, get, set } from 'idb-keyval';
 
 /*  ========================================================  */
 

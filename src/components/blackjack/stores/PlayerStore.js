@@ -5,8 +5,8 @@ import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
 /* idb-keyval */
-import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-// import { Store, get, set } from 'idb-keyval';
+// import { Store, get, set, clear } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
+import { Store, get, set , clear} from 'idb-keyval';
 
 // custom stuff
 import DeckStore from "./DeckStore";
@@ -20,6 +20,7 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
 
   // in-memory state
   state: {
+    // players: {},
     players: defaultPlayersObj,
     activePlayers: [],
     currentPlayerKey: undefined,
@@ -97,6 +98,13 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
   },
 
   /**
+   * 
+   */
+  async clearStore() {
+    await clear(this.store);
+  },
+
+  /**
    * Lookup player by key
    * @param {string} key
    */
@@ -122,6 +130,8 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
     let p = this.getPlayer(key);
     return p.title;
   },
+
+  getPlayerId(key) { return this.getPlayer(key).id },
 
   /**
    * Return the number of active players
@@ -388,8 +398,12 @@ AppDispatcher.register(action => {
       });
       break;
 
+    case AppConstants.CLEAR_STORES:
+      PlayerStore.clearStore();
+      break;
+
     case AppConstants.GAME_NEWPLAYER:
-      PlayerStore.newPlayer(...action);
+      PlayerStore.newPlayer(action.key, action.title, action.isNPC);
       PlayerStore.emitChange();
       break;
 

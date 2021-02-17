@@ -27,15 +27,13 @@ export class PlayerContainer extends BaseComponent {
       gameStatus: 0,
       gameStatusFlag: true,
       handValue: { aceAsEleven: 0, aceAsOne: 0 },
-      id: this.props.playerId,
-      isCardDescVisible: false,
-      isDealerHandVisible: true,
-      isDeckCalloutVisible: false,
+      id: PlayerStore.getPlayerId(this.props.playerKey),
+      playerKey: this.props.playerKey,
       isHandValueVisible: true,
       isNPC: false,
       isStatusCalloutVisible: false,
       minimumBet: 0,
-      player: { empty: true },
+      player: PlayerStore.getPlayer(this.props.playerKey),
       playerStatusFlag: true,
       selectedFlag: false,
       stats: {
@@ -54,37 +52,34 @@ export class PlayerContainer extends BaseComponent {
     this._bind(
       "_hideDeckCallout",
       "_showDeckCallout",
-      "onChangeControlPanel",
       "onChangeDeck",
       "onChangeGame",
       "onChangeStats",
       "onChangePlayer"
     );
   }
+
   static propTypes = {
-    playerId: T.number.isRequired
+    playerKey: T.string.isRequired,
+    isDealerHandVisible: T.bool.isRequired,
+    isHandValueVisible: T.bool.isRequired,
+    isCardDescVisible: T.bool.isRequired,
   };
 
   componentDidMount() {
     /* callback when a change emits from GameStore*/
-    ControlPanelStore.addChangeListener(this.onChangeControlPanel);
     DeckStore.addChangeListener(this.onChangeDeck);
     GameStore.addChangeListener(this.onChangeGame);
     StatsStore.addChangeListener(this.onChangeStats);
     PlayerStore.addChangeListener(this.onChangePlayer);
-
-    // force initial update, in case saved data was loaded from IDB
-    this.onChangeGame();
-    this.onChangeControlPanel();
-    // this.onChangeStats();
   }
 
   componentWillUnmount() {
     /* remove change listeners */
-    ControlPanelStore.removeChangeListener(this.onChangeControlPanel);
     DeckStore.removeChangeListener(this.onChangeDeck);
     GameStore.removeChangeListener(this.onChangeGame);
     StatsStore.removeChangeListener(this.onChangeStats);
+    PlayerStore.removeChangeListener(this.onChangePlayer);
   }
 
   /**
@@ -119,27 +114,16 @@ export class PlayerContainer extends BaseComponent {
     });
   }
 
-  /* what to do when the game options change */
-  onChangeControlPanel() {
-    const newState = ControlPanelStore.getState();
-    this.setState({
-      isDealerHandVisible: newState.isDealerHandVisible,
-      isHandValueVisible: newState.isHandValueVisible,
-      isCardDescVisible: newState.isCardDescVisible
-    });
-  }
-
   /* What to do when the player stats change */
   async onChangeStats() {
-    const stats = await StatsStore.getStats(this.state.id);
+    const stats = await StatsStore.getStats(this.props.playerKey);
     // Don't update if getStats() returns false
     if (stats) this.setState({ stats });
   }
 
   /* What to do when the Player Store changes */
   onChangePlayer() {
-    const newState = PlayerStore.getState();
-    const thisPlayer = newState.players[this.state.id];
+    const thisPlayer = PlayerStore.getPlayer(this.props.playerKey);
 
     /* playerStatusFlag is TRUE when the player cannot play. */
     const playerStatusFlag =
@@ -148,13 +132,13 @@ export class PlayerContainer extends BaseComponent {
       thisPlayer.isStaying ||
       !thisPlayer.turn;
 
-      this.setState({
-        bank: thisPlayer.bank,
-        isNPC: thisPlayer.isNPC,
-        player: thisPlayer,
-        playerStatusFlag,
-        title: thisPlayer.title,
-      })
+    this.setState({
+      bank: thisPlayer.bank,
+      isNPC: thisPlayer.isNPC,
+      player: thisPlayer,
+      playerStatusFlag,
+      title: thisPlayer.title,
+    })
   }
 
   _showDeckCallout() {
@@ -193,43 +177,41 @@ export class PlayerContainer extends BaseComponent {
         <Stack verticalAlign horizontalAlign="space-between">
           {this.state.isNPC &&
             this.state.dealerHasControl && <Agent {...this.state} />}
-          {!this.state.isNPC && (
-            <Stack.Item>
-              <ControlPanel
-                gameStatus={this.state.gameStatus}
-                gameStatusFlag={this.state.gameStatusFlag}
-                hidden={false}
-                minimumBet={this.state.minimumBet}
-                player={this.state.player}
-                playerId={this.state.id}
-                playerStatusFlag={this.state.playerStatusFlag}
-                playerIsNPC={this.state.isNPC}
-                selectedFlag={this.state.selectedFlag}
-                showDeckCallout={this._showDeckCallout}
-              />
-            </Stack.Item>
-          )}
 
-          {this.state.deck.length > 0 && (
-            <Stack.Item className={`DeckCalloutTarget-${this.state.title}`}>
-              <DeckContainer
-                deck={this.state.deck}
-                gameStatus={this.state.gameStatus}
-                gameStatusFlag={this.gameStatusFlag}
-                handValue={this.state.handValue}
-                hidden={false}
-                isCardDescVisible={this.state.isCardDescVisible}
-                isDealerHandVisible={this.state.isDealerHandVisible}
-                isHandValueVisible={this.state.isHandValueVisible}
-                isNPC={this.state.isNPC}
-                isPlayerDeck
-                isSelectable
-                player={this.state.player}
-                title={this.state.title}
-                turnCount={this.state.turnCount}
-              />
-            </Stack.Item>
-          )}
+          <Stack.Item>
+            <ControlPanel
+              gameStatus={this.state.gameStatus}
+              gameStatusFlag={this.state.gameStatusFlag}
+              hidden={!this.state.isNPC}
+              minimumBet={this.state.minimumBet}
+              player={this.state.player}
+              playerId={this.state.id}
+              playerKey={this.props.playerKey}
+              playerStatusFlag={this.state.playerStatusFlag}
+              playerIsNPC={this.state.isNPC}
+              selectedFlag={this.state.selectedFlag}
+              showDeckCallout={this._showDeckCallout}
+            />
+          </Stack.Item>
+
+          <Stack.Item className={`DeckCalloutTarget-${this.state.title}`}>
+            <DeckContainer
+              deck={this.state.deck}
+              gameStatus={this.state.gameStatus}
+              gameStatusFlag={this.gameStatusFlag}
+              handValue={this.state.handValue}
+              hidden={!(this.state.deck.length > 0)}
+              isCardDescVisible={this.props.isCardDescVisible}
+              isDealerHandVisible={this.props.isDealerHandVisible}
+              isHandValueVisible={this.props.isHandValueVisible}
+              isNPC={this.state.isNPC}
+              isPlayerDeck
+              isSelectable
+              player={this.state.player}
+              title={this.state.title}
+              turnCount={this.state.turnCount}
+            />
+          </Stack.Item>
         </Stack>
         <DeckCallout
           player={this.state.player}

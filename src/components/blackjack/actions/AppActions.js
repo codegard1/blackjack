@@ -151,14 +151,14 @@ const gameplayActions = {
         actionType: AppConstants.DECK_NEWPLAYERHAND,
         ...player
       });
-      
+
       /* add a new Player to the PlayerStore */
       AppDispatcher.dispatch({
         actionType: AppConstants.GAME_NEWPLAYER,
         ...player
       });
     });
-    
+
   },
   showMessageBar(text, type) {
     AppDispatcher.dispatch({
@@ -202,6 +202,14 @@ const AppActions = {
   initializeStores() {
     AppDispatcher.dispatch({ actionType: AppConstants.INITIALIZE_STORES, });
   },
+
+
+  /**
+   * delete all entries from stores
+   */
+  clearStores() {
+    AppDispatcher.dispatch({ actionType: AppConstants.CLEAR_STORES, });
+  }
 };
 
 export default AppActions;

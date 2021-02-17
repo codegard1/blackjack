@@ -3,8 +3,8 @@ import { EventEmitter } from "events";
 import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 
 /* idb-keyval */
-import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-// import { Store, get, set } from 'idb-keyval';
+// import { Store, get, set, clear } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
+import { Store, get, set, clear } from 'idb-keyval';
 
 /* custom stuff */
 import PlayerStore from "./PlayerStore";
@@ -30,7 +30,6 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
     isMessageBarVisible: false,
     loser: -1,
     minimumBet: 25,
-    // players: PlayerStore.getPlayers(),
     pot: 0,
     round: 0,
     turnCount: 0,
@@ -40,13 +39,13 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
       text: "",
       isMultiLine: false
     },
-    lasWriteTime: undefined,
+    lastWriteTime: undefined,
   },
 
   /**
    * notify subscribers of a change in state
    */
-  emitChange() { this.emit(CHANGE_EVENT); },
+  emitChange() { this.emit(CHANGE_EVENT); console.log('GameStore#emitChange()'); },
 
   /**
    * subscribe to this Store
@@ -83,7 +82,7 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
   /**
    * hide the Message Bar
    */
-  hideMessageBar(){
+  hideMessageBar() {
     this.state.isMessageBarVisible = false;
   },
 
@@ -112,6 +111,11 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
       await set(key, this.state[key], this.store);
     }
   },
+
+  /**
+   * clear the IDB Store for this Store
+   */
+  async clearStore() { await clear(this.store) },
 
   /**
    * reset game state props
@@ -165,13 +169,12 @@ AppDispatcher.register(action => {
     case AppConstants.INITIALIZE_STORES:
       GameStore.initialize().then(() => {
         console.timeEnd(`GameStore#initialize()`);
-        PlayerStore.emitChange();
+        GameStore.emitChange();
       });
       break;
 
-    case AppConstants.GAME_NEWPLAYER:
-      // PlayerStore.newPlayer(action.id, action.title, action.isNPC);
-      GameStore.emitChange();
+    case AppConstants.CLEAR_STORES:
+      GameStore.clearStore();
       break;
 
     case AppConstants.GAME_RESET:

@@ -69,7 +69,9 @@ class OptionsPanel extends BaseComponent {
           >
             Shuffle Deck
           </CommandButton>
+        </Stack>
 
+        <Stack vertical verticalAlign="start" tokens={{ childrenGap: 2 }}>
           <Toggle
             checked={this.state.isDeckVisible}
             label="Show Deck"
@@ -128,6 +130,17 @@ class OptionsPanel extends BaseComponent {
             offText="Off"
             onChange={(e, checked) => AppActions.toggleActivityLogVisibility(checked)}
           />
+        </Stack>
+
+        <Stack vertical verticalAlign="start" tokens={{ childrenGap: 25 }}>
+          <CommandButton
+            iconProps={{ iconName: "Trash" }}
+            disabled={false}
+            checked={false}
+            onClick={AppActions.clearStores}
+          >
+            Clear Stores
+          </CommandButton>
 
         </Stack>
       </Panel>
