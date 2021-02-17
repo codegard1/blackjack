@@ -81,11 +81,11 @@ class ActivityLog extends BaseComponent {
     this.state = {
       activityItems: [],
       nextKey: 1,
+      hidden: false,
     };
 
     this._bind('onChangeLog', 'createActivityItems');
   }
-
 
   componentDidMount() {
     ActivityLogStore.addChangeListener(this.onChangeLog);
@@ -116,7 +116,7 @@ class ActivityLog extends BaseComponent {
       // the same date
 
       // format the timestamp as a date string e.g. '11/18/2020'
-      const datestamp = item.timestamp.toLocaleDateString('en-US'); 
+      const datestamp = item.timestamp.toLocaleDateString('en-US');
 
       // Check if the datestamp is in the memo
       if (-1 === datememo.indexOf(datestamp)) {
@@ -127,10 +127,10 @@ class ActivityLog extends BaseComponent {
             <div className={classNames.sticky}>{datestamp}</div>
           </Sticky>
         );
-        
+
         const filteredItems = arr.filter(v => v.timestamp.toLocaleDateString('en-US') === datestamp);
         // Loop through the items that occurred on the same date as timestamp
-        
+
         filteredItems.forEach((item1, index1) => {
           outputMemo.push(
             <ActivityItem
@@ -156,8 +156,8 @@ class ActivityLog extends BaseComponent {
   render() {
     const activityItems = this.createActivityItems();
 
-    return (
-      <div className={classNames.divRoot}>
+    return this.state.hidden ? <div id="ActivityLogHiddenRoot" /> : (
+      <div id="ActivityLogRoot" className={classNames.divRoot}>
         <Text block nowrap variant="xLarge">Activity Log</Text>
         <div className={classNames.wrapper}>
           <ScrollablePane styles={{ root: classNames.pane }}>{activityItems}</ScrollablePane>
