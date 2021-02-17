@@ -66,7 +66,10 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
     }
   },
 
-  // start tracking a new player
+  /**
+   * Start tracking a new player, or get an existing player's stats from IDB
+   * @param {string} playerKey 
+   */
   async new(playerKey) {
     // get saved data from IDB
     const stats = await get(playerKey, this.store)
