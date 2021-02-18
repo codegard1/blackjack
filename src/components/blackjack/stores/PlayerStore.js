@@ -6,7 +6,7 @@ import AppConstants from "../constants/AppConstants";
 
 /* idb-keyval */
 // import { Store, get, set, clear } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-import { Store, get, set , clear} from 'idb-keyval';
+import { Store, get, set, clear } from 'idb-keyval';
 
 // custom stuff
 import DeckStore from "./DeckStore";
@@ -76,13 +76,8 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
    */
   async initialize() {
     console.time(`PlayerStore#initialize()`);
-    for (let key in this.state) {
-      let val = await get(key, this.store);
-      if (val !== undefined) {
-        // console.log(`\tfetched ${key} :: ${val}`);
-        this.state[key] = val;
-      }
-    }
+    let val = await get("players", this.store);
+    this.state.players = (val !== undefined) ? val : defaultPlayersObj;
   },
 
   /**

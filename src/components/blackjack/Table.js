@@ -75,7 +75,7 @@ export default class Table extends BaseComponent {
       },
 
       // PlayerStore
-      players: [],
+      players: {},
       activePlayers: [],
       currentPlayerId: 0,
 
@@ -98,6 +98,8 @@ export default class Table extends BaseComponent {
       "onHideDialog",
       "toggleHideDialog",
       "renderPlayerContainers",
+      "onChangeDropDown",
+      "onClickStartButton",
     );
   }
 
@@ -135,12 +137,12 @@ export default class Table extends BaseComponent {
     this.setState({ ...newState });
   }
   onChangePlayerStore() {
-    const newState = PlayerStore.getState();
-    newState.activePlayers.forEach(id => {
-      const newHand = DeckStore.getHand(id);
-      newState.players[id].hand = newHand;
+    let { players, activePlayers, currentPlayerId } = PlayerStore.getState();
+    // get and set player hands; this is probably redundant
+    activePlayers.forEach(key => {
+      players[key].hand = DeckStore.getHand(key);
     });
-    this.setState({ ...newState });
+    this.setState({ players, activePlayers, currentPlayerId });
   }
 
   /**
@@ -157,15 +159,17 @@ export default class Table extends BaseComponent {
     this.setState({ isDialogVisible: !this.state.isDialogVisible })
   }
 
+  /**
+   * render PlayerContainers for players listed in PlayerStore.state.activePLayers
+   */
   renderPlayerContainers() {
     if (this.state.activePlayers.length > 0) {
       return this.state.activePlayers.map(key =>
         <Stack.Item align="stretch" verticalAlign="top" grow={2} key={`PlayerStack-${key}`}>
-          <PlayerContainer 
-            key={`PlayerContainer-${key}`} 
-            playerKey={key} 
-            {...this.state}
-            />
+          <PlayerContainer
+            key={`PlayerContainer-${key}`}
+            playerKey={key}
+          />
 
         </Stack.Item>
       );
@@ -173,6 +177,31 @@ export default class Table extends BaseComponent {
       return <Stack.Item>No players</Stack.Item>;
     }
   }
+
+  onChangeDropDown(e, o, i) {
+    const selectedPlayers = this.state.selectedPlayers;
+    if (o.selected && selectedPlayers.indexOf(o.key) === -1) {
+      selectedPlayers.push(o.key);
+    } else if (!o.selected && selectedPlayers.indexOf(o.key) !== -1) {
+      selectedPlayers.splice(selectedPlayers.indexOf(o.key), 1);
+    }
+    this.setState({ selectedPlayers });
+  }
+
+  onClickStartButton(e) {
+    const players = this.state.players;
+    const selectedPlayers = this.state.selectedPlayers;
+
+    // get the complete player object for AppActions that don't use playerKey yet
+    let pList = selectedPlayers.map(key => players[key]);
+
+    // initiate a new game 
+    AppActions.newGame(pList);
+
+    // hide the player selection modal 
+    this.toggleHideDialog();
+  }
+
 
   /**
    * Make PlayerContainers
@@ -203,11 +232,13 @@ export default class Table extends BaseComponent {
         )}
 
         {this.state.isDialogVisible &&
-          <Spinner size={SpinnerSize.large} label="Wait, wait..." ariaLive="assertive" labelPosition="right" />
+          <Stack horizontal horizontalAlign="space-between" disableShrink wrap tokens={{ childrenGap: 10, padding: 10, }}>
+            <Spinner size={SpinnerSize.large} label="Wait, wait..." ariaLive="assertive" labelPosition="right" />
+          </Stack>
         }
 
         {!this.state.isDialogVisible &&
-          <Stack horizontal horizontalAlign="space-between" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
+          <Stack horizontal horizontalAlign="space-between" disableShrink wrap tokens={{ childrenGap: 10, padding: 10, }}>
             <PotDisplay pot={this.state.pot} />
             <Icon iconName="Settings" aria-label="Settings" onClick={AppActions.showOptionsPanel} />
           </Stack>
@@ -269,33 +300,12 @@ export default class Table extends BaseComponent {
             placeholder="Choose"
             label="Select at least two players"
             multiSelect
-            onChange={(e, o, i) => {
-              const selectedPlayers = this.state.selectedPlayers;
-              if (o.selected && selectedPlayers.indexOf(o.key) === -1) {
-                selectedPlayers.push(o.key);
-                
-              } else if (!o.selected && selectedPlayers.indexOf(o.key) !== -1) {
-                selectedPlayers.splice(selectedPlayers.indexOf(o.key), 1);
-              }
-              this.setState({ selectedPlayers });
-            }}
+            onChange={this.onChangeDropDown}
             options={defaultPlayersDropdownOptions}
             styles={{ width: 200 }}
           />
           <DialogFooter>
-            <PrimaryButton text="Start" onClick={e => {
-              const players = this.state.players;
-              const selectedPlayers = this.state.selectedPlayers;
-
-              // get the complete player object for AppActions that don't use playerKey yet
-              let pList = selectedPlayers.map(key=> players[key]);
-
-              // initiate a new game 
-              AppActions.newGame(pList);
-              
-              // hide the player selection modal 
-              this.toggleHideDialog();
-            }} />
+            <PrimaryButton text="Start" onClick={this.onClickStartButton} />
           </DialogFooter>
         </Dialog>
 
