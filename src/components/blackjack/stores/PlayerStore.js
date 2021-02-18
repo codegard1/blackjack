@@ -166,7 +166,7 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
   /**
    * reset gameplay variables for each player and set the current player key to the first in the list
    */
-  newGame() {
+  reset() {
     this.state.activePlayers.forEach(key => this._resetPlayer(key));
     this.state.currentPlayerKey = this.state.activePlayers[0];
   },
@@ -408,7 +408,7 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.GAME_RESET:
-      PlayerStore.newGame();
+      PlayerStore.reset();
       PlayerStore.emitChange();
       break;
 
