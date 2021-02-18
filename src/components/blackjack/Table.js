@@ -169,6 +169,8 @@ export default class Table extends BaseComponent {
           <PlayerContainer
             key={`PlayerContainer-${key}`}
             playerKey={key}
+            player={this.state.players[key]}
+            {...this.state}
           />
 
         </Stack.Item>
