@@ -1,18 +1,11 @@
 import React from "react";
 import {
-  DefaultButton,
   Dropdown,
-  DefaultEffects,
   Dialog,
   DialogFooter,
   DialogType,
-  Icon,
   PrimaryButton,
-  Spinner,
-  SpinnerSize,
-  Stack,
 } from '@fluentui/react';
-import { MotionAnimations } from '@fluentui/theme';
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";

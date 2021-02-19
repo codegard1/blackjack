@@ -1,15 +1,9 @@
 import React from "react";
 import {
-  DefaultButton,
-  Dropdown,
   DefaultEffects,
-  Dialog,
-  DialogFooter,
-  DialogType,
   Icon,
   MessageBar,
   MessageBarType,
-  PrimaryButton,
   Spinner,
   SpinnerSize,
   Stack,
@@ -26,12 +20,6 @@ import OptionsPanel from "./OptionsPanel";
 import PotDisplay from "./PotDisplay";
 import ActivityLog from "./ActivityLog";
 import SplashScreen from "./SplashScreen";
-import {
-  defaultPlayers,
-  defaultPlayersObj,
-  defaultPlayersDropdownOptions,
-  defaultSelectedPlayerKeys
-} from "./definitions";
 
 /* flux */
 import GameStore from "./stores/GameStore";
@@ -51,8 +39,8 @@ export default class Table extends BaseComponent {
       // Table
       isSpinnerVisible: true,
       isDialogVisible: true,
-      selectedPlayers: defaultSelectedPlayerKeys,
       hasInitialized: false,
+      isDeckCalloutVisible: false,
 
       // DeckStore
       deck: { cards: [] },
@@ -125,8 +113,22 @@ export default class Table extends BaseComponent {
 
   /* flux helpers */
   onChangeGame() {
-    const newState = GameStore.getState();
-    this.setState({ ...newState });
+    const { dealerHasControl, gameStatus, isMessageBarVisible, loser, minimumBet, pot, round, turnCount, winner, messageBarDefinition } = GameStore.getState();
+    const gameStatusFlag = (gameStatus === 0 || gameStatus > 2);
+    this.setState({
+      dealerHasControl,
+      gameStatus,
+      gameStatusFlag,
+      isDeckCalloutVisible: true,
+      isMessageBarVisible,
+      loser,
+      messageBarDefinition,
+      minimumBet,
+      pot,
+      round,
+      turnCount,
+      winner,
+    });
   }
   onChangeDeck() {
     const newState = DeckStore.getState();
@@ -134,7 +136,7 @@ export default class Table extends BaseComponent {
   }
   onChangeControlPanel() {
     let {
-      isActivityLogVisible ,
+      isActivityLogVisible,
       isCardDescVisible,
       isDealerHandVisible,
       isDeckVisible,

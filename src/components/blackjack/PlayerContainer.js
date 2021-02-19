@@ -12,41 +12,20 @@ import Agent from "./Agent";
 import "./PlayerContainer.css";
 
 /* flux */
-import GameStore from "./stores/GameStore";
 import DeckStore from "./stores/DeckStore";
 import PlayerStore from "./stores/PlayerStore";
 import StatsStore from "./stores/StatsStore";
-
-
-// this.setState({
-//   dealerHasControl: newState.dealerHasControl,
-//   gameStatus: newState.gameStatus,
-//   gameStatusFlag,
-//   isDeckCalloutVisible: true,
-//   minimumBet: newState.minimumBet,
-//   turnCount: newState.turnCount,
-// });
-
-  
-  //     isNPC: thisPlayer.isNPC,
-  //     player: thisPlayer,
-  //     playerStatusFlag,
-  //     title: thisPlayer.title,
-
 
 export class PlayerContainer extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = {
       deck: [],
-      gameStatusFlag: true,
       handValue: { aceAsEleven: 0, aceAsOne: 0 },
       id: PlayerStore.getPlayerId(this.props.playerKey),
-      playerKey: this.props.playerKey,
       isHandValueVisible: true,
       isNPC: this.props.player.isNPC,
       isStatusCalloutVisible: false,
-      player: PlayerStore.getPlayer(this.props.playerKey),
       playerStatusFlag: (this.props.player.isBusted ||
         this.props.player.isFinished ||
         this.props.player.isStaying ||
@@ -80,35 +59,23 @@ export class PlayerContainer extends BaseComponent {
     isDealerHandVisible: T.bool.isRequired,
     isHandValueVisible: T.bool.isRequired,
     isCardDescVisible: T.bool.isRequired,
+    gameStatus: T.number.isRequired,
+    gameStatusFlag: T.bool.isRequired,
+    isDeckCalloutVisible: T.bool.isRequired,
   };
 
   componentDidMount() {
     /* callback when a change emits from GameStore*/
     DeckStore.addChangeListener(this.onChangeDeck);
-    GameStore.addChangeListener(this.onChangeGame);
     StatsStore.addChangeListener(this.onChangeStats);
   }
 
   componentWillUnmount() {
     /* remove change listeners */
     DeckStore.removeChangeListener(this.onChangeDeck);
-    GameStore.removeChangeListener(this.onChangeGame);
     StatsStore.removeChangeListener(this.onChangeStats);
   }
 
-  /**
-   * flux helpers
-   */
-
-  /* what to do when the game state changes */
-  onChangeGame() {
-    /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
-    const gameStatusFlag = this.props.gameStatus === 0 || this.props.gameStatus > 2;
-    this.setState({
-      gameStatusFlag,
-      isDeckCalloutVisible: true,
-    });
-  }
 
   /* what to do when the deck state changes */
   onChangeDeck() {
@@ -195,13 +162,13 @@ export class PlayerContainer extends BaseComponent {
             <DeckContainer
               deck={this.state.deck}
               gameStatus={this.props.gameStatus}
-              gameStatusFlag={this.gameStatusFlag}
+              gameStatusFlag={this.props.gameStatusFlag}
               handValue={this.state.handValue}
               hidden={!(this.state.deck.length > 0)}
               isCardDescVisible={this.props.isCardDescVisible}
               isDealerHandVisible={this.props.isDealerHandVisible}
               isHandValueVisible={this.props.isHandValueVisible}
-              isNPC={this.state.isNPC}
+              isNPC={this.props.player.isNPC}
               isPlayerDeck
               isSelectable
               player={this.props.player}
@@ -212,7 +179,7 @@ export class PlayerContainer extends BaseComponent {
         </Stack>
         <DeckCallout
           player={this.props.player}
-          isDeckCalloutVisible={this.state.isDeckCalloutVisible}
+          isDeckCalloutVisible={this.props.isDeckCalloutVisible}
           onHideCallout={this._hideDeckCallout}
           target={`.DeckCalloutTarget-${this.state.title}`}
         />
