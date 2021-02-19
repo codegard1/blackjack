@@ -34,7 +34,7 @@ export default class SplashScreen extends BaseComponent {
       players: defaultPlayersObj,
     }
 
-    this._bind("onChangeDropDown", "onClickStartButton", "onDismissDialog",);
+    this._bind("onChangeDropDown", "onClickStartButton",);
   }
 
   onChangeDropDown(e, o, i) {
