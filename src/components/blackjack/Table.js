@@ -25,6 +25,7 @@ import DeckContainer from "./DeckContainer";
 import OptionsPanel from "./OptionsPanel";
 import PotDisplay from "./PotDisplay";
 import ActivityLog from "./ActivityLog";
+import SplashScreen from "./SplashScreen";
 import {
   defaultPlayers,
   defaultPlayersObj,
@@ -51,6 +52,7 @@ export default class Table extends BaseComponent {
       isSpinnerVisible: true,
       isDialogVisible: true,
       selectedPlayers: defaultSelectedPlayerKeys,
+      hasInitialized: false,
 
       // DeckStore
       deck: { cards: [] },
@@ -98,8 +100,6 @@ export default class Table extends BaseComponent {
       "onHideDialog",
       "toggleHideDialog",
       "renderPlayerContainers",
-      "onChangeDropDown",
-      "onClickStartButton",
     );
   }
 
@@ -133,8 +133,28 @@ export default class Table extends BaseComponent {
     this.setState({ ...newState });
   }
   onChangeControlPanel() {
-    const newState = ControlPanelStore.getState();
-    this.setState({ ...newState });
+    let {
+      isActivityLogVisible ,
+      isCardDescVisible,
+      isDealerHandVisible,
+      isDeckVisible,
+      isDrawnVisible,
+      isHandValueVisible,
+      isOptionsPanelVisible,
+      isSelectedVisible,
+    } = ControlPanelStore.getState();
+    this.setState({
+      isActivityLogVisible,
+      isCardDescVisible,
+      isDealerHandVisible,
+      isDeckVisible,
+      isDrawnVisible,
+      isHandValueVisible,
+      isOptionsPanelVisible,
+      isSelectedVisible,
+
+      hasInitialized: true
+    });
   }
   onChangePlayerStore() {
     let { players, activePlayers, currentPlayerId } = PlayerStore.getState();
@@ -142,7 +162,7 @@ export default class Table extends BaseComponent {
     activePlayers.forEach(key => {
       players[key].hand = DeckStore.getHand(key);
     });
-    this.setState({ players, activePlayers, currentPlayerId });
+    this.setState({ players, activePlayers, currentPlayerId, hasInitialized: true });
   }
 
   /**
@@ -180,30 +200,6 @@ export default class Table extends BaseComponent {
     }
   }
 
-  onChangeDropDown(e, o, i) {
-    const selectedPlayers = this.state.selectedPlayers;
-    if (o.selected && selectedPlayers.indexOf(o.key) === -1) {
-      selectedPlayers.push(o.key);
-    } else if (!o.selected && selectedPlayers.indexOf(o.key) !== -1) {
-      selectedPlayers.splice(selectedPlayers.indexOf(o.key), 1);
-    }
-    this.setState({ selectedPlayers });
-  }
-
-  onClickStartButton(e) {
-    const players = this.state.players;
-    const selectedPlayers = this.state.selectedPlayers;
-
-    // get the complete player object for AppActions that don't use playerKey yet
-    let pList = selectedPlayers.map(key => players[key]);
-
-    // initiate a new game 
-    AppActions.newGame(pList);
-
-    // hide the player selection modal 
-    this.toggleHideDialog();
-  }
-
 
   /**
    * Make PlayerContainers
@@ -217,7 +213,7 @@ export default class Table extends BaseComponent {
       boxShadow: DefaultEffects.elevation16,
       borderRadius: DefaultEffects.roundedCorner6,
       backgroundColor: 'ghostwhite',
-      animation: MotionAnimations.fadeIn
+      // animation: MotionAnimations.fadeIn
     }
 
     return (
@@ -235,7 +231,18 @@ export default class Table extends BaseComponent {
 
         {this.state.isDialogVisible &&
           <Stack horizontal horizontalAlign="space-between" disableShrink wrap tokens={{ childrenGap: 10, padding: 10, }}>
-            <Spinner size={SpinnerSize.large} label="Wait, wait..." ariaLive="assertive" labelPosition="right" />
+            <Spinner
+              size={SpinnerSize.large}
+              label="Wait, wait..."
+              ariaLive="assertive"
+              labelPosition="right"
+              style={{ animation: MotionAnimations.scaleDownIn }}
+            />
+            <SplashScreen
+              players={this.state.players}
+              hidden={!this.state.hasInitialized}
+              toggleHideDialog={this.toggleHideDialog}
+            />
           </Stack>
         }
 
@@ -252,64 +259,42 @@ export default class Table extends BaseComponent {
           </Stack>
         }
 
-        <ActivityLog hidden={!this.state.isActivityLogVisible} />
-
-        <DeckContainer
-          deck={this.state.deck.cards}
-          title="Deck"
-          hidden={!this.state.isDeckVisible}
-          isSelectable={false}
-          isCardDescVisible={this.state.isCardDescVisible}
-        />
-
-        <DeckContainer
-          deck={this.state.drawn}
-          title="Drawn Cards"
-          hidden={!this.state.isDrawnVisible}
-          isSelectable={false}
-          isCardDescVisible={this.state.isCardDescVisible}
-        />
-
-        <DeckContainer
-          deck={this.state.selected}
-          title="Selected Cards"
-          hidden={!this.state.isSelectedVisible}
-          isSelectable={false}
-          isCardDescVisible={this.state.isCardDescVisible}
-        />
+        {!this.state.isDialogVisible &&
+          <Stack vertical verticalAlign="stretch" wrap tokens={{ childrenGap: 10, padding: 10 }}>
+            <Stack.Item>
+              <ActivityLog hidden={!this.state.isActivityLogVisible} />
+            </Stack.Item>
+            <Stack.Item>
+              <DeckContainer
+                deck={this.state.deck.cards}
+                title="Deck"
+                hidden={!this.state.isDeckVisible}
+                isSelectable={false}
+                isCardDescVisible={this.state.isCardDescVisible}
+              />
+            </Stack.Item>
+            <Stack.Item>
+              <DeckContainer
+                deck={this.state.drawn}
+                title="Drawn Cards"
+                hidden={!this.state.isDrawnVisible}
+                isSelectable={false}
+                isCardDescVisible={this.state.isCardDescVisible}
+              />
+            </Stack.Item>
+            <Stack.Item>
+              <DeckContainer
+                deck={this.state.selected}
+                title="Selected Cards"
+                hidden={!this.state.isSelectedVisible}
+                isSelectable={false}
+                isCardDescVisible={this.state.isCardDescVisible}
+              />
+            </Stack.Item>
+          </Stack>
+        }
 
         <OptionsPanel />
-
-        <Dialog
-          hidden={!this.state.isDialogVisible}
-          onDismiss={this.toggleHideDialog}
-          dialogContentProps={{
-            type: DialogType.normal,
-            title: 'Blackjack',
-            subText: 'This is the splash screen',
-          }}
-          modalProps={{
-            isBlocking: false,
-            styles: { main: { maxWidth: 450, top: 75 } },
-            isDraggable: false,
-            labelId: 'dialogLabel',
-            subTextId: 'subTextLabel',
-            isDarkOverlay: true,
-            topOffsetFixed: true,
-          }}
-        >
-          <Dropdown
-            placeholder="Choose"
-            label="Select at least two players"
-            multiSelect
-            onChange={this.onChangeDropDown}
-            options={defaultPlayersDropdownOptions}
-            styles={{ width: 200 }}
-          />
-          <DialogFooter>
-            <PrimaryButton text="Start" onClick={this.onClickStartButton} />
-          </DialogFooter>
-        </Dialog>
 
       </Stack>
     );
