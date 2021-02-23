@@ -14,86 +14,32 @@ import "./PlayerContainer.css";
 /* flux */
 import DeckStore from "./stores/DeckStore";
 import PlayerStore from "./stores/PlayerStore";
-import StatsStore from "./stores/StatsStore";
 
 export class PlayerContainer extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = {
-      deck: [],
-      handValue: { aceAsEleven: 0, aceAsOne: 0 },
-      id: PlayerStore.getPlayerId(this.props.playerKey),
-      isHandValueVisible: true,
-      isNPC: this.props.player.isNPC,
       isStatusCalloutVisible: false,
-      playerStatusFlag: (this.props.player.isBusted ||
-        this.props.player.isFinished ||
-        this.props.player.isStaying ||
-        !this.props.player.turn)
-      ,
-      selectedFlag: false,
-      stats: {
-        numberOfGamesLost: 0,
-        numberOfGamesPlayed: 0,
-        numberOfGamesWon: 0,
-        numberOfHandsPlayer: 0,
-        numberOfTimesBlackjack: 0,
-        numberOfTimesBusted: 0,
-        winLossRatio: "1.000"
-      },
-      title: this.props.player.title,
     };
 
     this._bind(
       "_hideDeckCallout",
       "_showDeckCallout",
-      "onChangeDeck",
-      "onChangeGame",
-      "onChangeStats",
-      "onChangePlayer"
     );
   }
 
   static propTypes = {
-    playerKey: T.string.isRequired,
-    isDealerHandVisible: T.bool.isRequired,
-    isHandValueVisible: T.bool.isRequired,
-    isCardDescVisible: T.bool.isRequired,
     gameStatus: T.number.isRequired,
     gameStatusFlag: T.bool.isRequired,
+    isCardDescVisible: T.bool.isRequired,
+    isDealerHandVisible: T.bool.isRequired,
     isDeckCalloutVisible: T.bool.isRequired,
+    isHandValueVisible: T.bool.isRequired,
+    player: T.object.isRequired,
+    playerHand: T.object,
+    playerKey: T.string.isRequired,
+    playerStats: T.object.isRequired,
   };
-
-  componentDidMount() {
-    /* callback when a change emits from GameStore*/
-    DeckStore.addChangeListener(this.onChangeDeck);
-    StatsStore.addChangeListener(this.onChangeStats);
-  }
-
-  componentWillUnmount() {
-    /* remove change listeners */
-    DeckStore.removeChangeListener(this.onChangeDeck);
-    StatsStore.removeChangeListener(this.onChangeStats);
-  }
-
-
-  /* what to do when the deck state changes */
-  onChangeDeck() {
-    /* selectedFlag is true if getSelected() returns an array */
-    const selectedFlag = !!DeckStore.getSelected(this.state.id);
-    this.setState({
-      deck: DeckStore.getHand(this.state.id),
-      handValue: DeckStore.getHandValue(this.state.id),
-      selectedFlag
-    });
-  }
-
-  /* What to do when the player stats change */
-  async onChangeStats() {
-    const stats = await StatsStore.getStats(this.props.playerKey);
-    // Don't update if getStats() returns false
-    if (stats) this.setState({ stats });
-  }
 
   _showDeckCallout() {
     this.setState({ isDeckCalloutVisible: true });
@@ -104,6 +50,8 @@ export class PlayerContainer extends BaseComponent {
   }
 
   render() {
+    const playerId = PlayerStore.getPlayerId(this.props.playerKey);
+
     /* style PlayerContainer conditionally */
     let playerContainerClass = "PlayerContainer ";
     if (!this.props.player.empty && this.props.player.turn) {
@@ -117,27 +65,38 @@ export class PlayerContainer extends BaseComponent {
       playerContainerClass += "staying ";
     }
 
+    const playerStatusFlag = (this.props.player.isBusted ||
+      this.props.player.isFinished ||
+      this.props.player.isStaying ||
+      !this.props.player.turn);
+
+    /* selectedFlag is true if getSelected() returns an array */
+    const selectedFlag = !!DeckStore.getSelected(playerId);
+
+    const handValue = DeckStore.getHandValue(playerId);
+
     return (
       <Stack verticalAlign className={playerContainerClass}>
 
-        <Stack horizontal horizontalAlign="space-between" style={{ padding: '5px' }} className={`${this.state.title}-titleBar playerContainerClass`}>
+        <Stack horizontal horizontalAlign="space-between" style={{ padding: '5px' }} className={`${this.props.player.title}-titleBar playerContainerClass`}>
           <Stack.Item align="start">
             <Text block nowrap variant="large">
-              {`${this.state.title} ($${this.props.player.bank || 0})  `}</Text>
+              {`${this.props.player.title} ($${this.props.player.bank || 0})  `}</Text>
           </Stack.Item>
           <Stack.Item>
-            <StatusDisplay player={this.props.player} stats={this.state.stats} />
+            <StatusDisplay player={this.props.player} stats={this.props.playerStats} />
           </Stack.Item>
         </Stack>
 
         <Stack verticalAlign horizontalAlign="space-between">
-          {this.state.isNPC && this.props.dealerHasControl &&
+          {this.props.player.isNPC && this.props.dealerHasControl &&
             <Stack.Item>
               <Agent
                 dealerHasControl={this.props.dealerHasControl}
                 gameStatus={this.props.gameStatus}
-                handvalue={this.state.handValue}
-                id={this.state.id}
+                handvalue={handValue}
+                id={playerId}
+                key={this.props.playerKey}
               />
             </Stack.Item>
           }
@@ -146,25 +105,26 @@ export class PlayerContainer extends BaseComponent {
             <ControlPanel
               gameStatus={this.props.gameStatus}
               gameStatusFlag={this.props.gameStatusFlag}
-              hidden={!this.state.isNPC}
+              hidden={!this.props.player.isNPC}
               minimumBet={this.props.minimumBet}
               player={this.props.player}
-              playerId={this.state.id}
+              playerId={playerId}
               playerKey={this.props.playerKey}
-              playerStatusFlag={this.state.playerStatusFlag}
-              playerIsNPC={this.state.isNPC}
-              selectedFlag={this.state.selectedFlag}
+              playerStatusFlag={playerStatusFlag}
+              playerIsNPC={this.props.player.isNPC}
+              selectedFlag={selectedFlag}
               showDeckCallout={this._showDeckCallout}
+              isDeckCalloutVisible={this.state.isDeckCalloutVisible}
             />
           </Stack.Item>
 
-          <Stack.Item className={`DeckCalloutTarget-${this.state.title}`}>
+          <Stack.Item className={`DeckCalloutTarget-${this.props.player.title}`}>
             <DeckContainer
-              deck={this.state.deck}
+              deck={this.props.playerHand}
               gameStatus={this.props.gameStatus}
               gameStatusFlag={this.props.gameStatusFlag}
-              handValue={this.state.handValue}
-              hidden={!(this.state.deck.length > 0)}
+              handValue={handValue}
+              hidden={!(this.props.playerHand.length > 0)}
               isCardDescVisible={this.props.isCardDescVisible}
               isDealerHandVisible={this.props.isDealerHandVisible}
               isHandValueVisible={this.props.isHandValueVisible}
@@ -172,7 +132,7 @@ export class PlayerContainer extends BaseComponent {
               isPlayerDeck
               isSelectable
               player={this.props.player}
-              title={this.state.title}
+              title={this.props.player.title}
               turnCount={this.props.turnCount}
             />
           </Stack.Item>
@@ -181,7 +141,7 @@ export class PlayerContainer extends BaseComponent {
           player={this.props.player}
           isDeckCalloutVisible={this.props.isDeckCalloutVisible}
           onHideCallout={this._hideDeckCallout}
-          target={`.DeckCalloutTarget-${this.state.title}`}
+          target={`.DeckCalloutTarget-${this.props.player.title}`}
         />
       </Stack>
     );

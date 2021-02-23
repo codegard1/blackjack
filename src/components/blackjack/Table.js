@@ -26,6 +26,7 @@ import GameStore from "./stores/GameStore";
 import DeckStore from "./stores/DeckStore";
 import ControlPanelStore from "./stores/ControlPanelStore";
 import PlayerStore from "./stores/PlayerStore";
+import StatsStore from "./stores/StatsStore";
 import AppActions from "./actions/AppActions";
 
 /* Initialize Fabric Icons */
@@ -78,6 +79,9 @@ export default class Table extends BaseComponent {
       isOptionsPanelVisible: false,
       isSelectedVisible: false,
       isActivityLogVisible: false,
+
+      // StatsStore
+      playerStats: {}
     };
 
     this._bind(
@@ -85,6 +89,7 @@ export default class Table extends BaseComponent {
       "onChangeControlPanel",
       "onChangeGame",
       "onChangePlayerStore",
+      "onChangeStatsStore",
       "onHideDialog",
       "toggleHideDialog",
       "renderPlayerContainers",
@@ -97,6 +102,7 @@ export default class Table extends BaseComponent {
     DeckStore.addChangeListener(this.onChangeDeck);
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
     PlayerStore.addChangeListener(this.onChangePlayerStore);
+    StatsStore.addChangeListener(this.onChangeStatsStore);
 
     // Fetch local data from stores
     AppActions.initializeStores();
@@ -108,6 +114,7 @@ export default class Table extends BaseComponent {
     DeckStore.removeChangeListener(this.onChangeDeck);
     ControlPanelStore.removeChangeListener(this.onChangeControlPanel);
     PlayerStore.removeChangeListener(this.onChangePlayerStore);
+    StatsStore.removeChangeListener(this.onChangeStatsStore);
   }
 
 
@@ -131,11 +138,11 @@ export default class Table extends BaseComponent {
     });
   }
   onChangeDeck() {
-    const newState = DeckStore.getState();
-    this.setState({ ...newState });
+    const { deck, drawn, selected, playerHands } = DeckStore.getState();
+    this.setState({ deck, drawn, selected, playerHands });
   }
   onChangeControlPanel() {
-    let {
+    const {
       isActivityLogVisible,
       isCardDescVisible,
       isDealerHandVisible,
@@ -154,17 +161,24 @@ export default class Table extends BaseComponent {
       isHandValueVisible,
       isOptionsPanelVisible,
       isSelectedVisible,
-
       hasInitialized: true
     });
   }
   onChangePlayerStore() {
-    let { players, activePlayers, currentPlayerId } = PlayerStore.getState();
+    const { players, activePlayers, currentPlayerId } = PlayerStore.getState();
     // get and set player hands; this is probably redundant
     activePlayers.forEach(key => {
       players[key].hand = DeckStore.getHand(key);
     });
     this.setState({ players, activePlayers, currentPlayerId, hasInitialized: true });
+  }
+  onChangeStatsStore() {
+    let playerStats = {};
+    for (let key in this.state.activePlayers){
+      playerStats[key] = StatsStore.getStats(key)
+    }
+    debugger;
+    this.setState({ playerStats });
   }
 
   /**
@@ -186,16 +200,20 @@ export default class Table extends BaseComponent {
    */
   renderPlayerContainers() {
     if (this.state.activePlayers.length > 0) {
-      return this.state.activePlayers.map(key =>
-        <Stack.Item align="stretch" verticalAlign="top" grow={2} key={`PlayerStack-${key}`}>
+      return this.state.activePlayers.map(key => {
+        const playerHand = this.state.playerHands.filter(v => v.key === key) || [];
+        const playerStats = this.state.playerStats[key] || {};
+        return <Stack.Item align="stretch" verticalAlign="top" grow={2} key={`PlayerStack-${key}`}>
           <PlayerContainer
             key={`PlayerContainer-${key}`}
             playerKey={key}
             player={this.state.players[key]}
+            playerHand={playerHand}
+            playerStats={playerStats}
             {...this.state}
           />
-
         </Stack.Item>
+      }
       );
     } else {
       return <Stack.Item>No players</Stack.Item>;
@@ -203,9 +221,6 @@ export default class Table extends BaseComponent {
   }
 
 
-  /**
-   * Make PlayerContainers
-   */
   render() {
     // slice out the selected players (Chris and Dealer) and return PlayerContainers
     const selectedPlayersContainers = this.renderPlayerContainers();
@@ -215,7 +230,7 @@ export default class Table extends BaseComponent {
       boxShadow: DefaultEffects.elevation16,
       borderRadius: DefaultEffects.roundedCorner6,
       backgroundColor: 'ghostwhite',
-      // animation: MotionAnimations.fadeIn
+      animation: MotionAnimations.fadeIn
     }
 
     return (
@@ -242,8 +257,9 @@ export default class Table extends BaseComponent {
             />
             <SplashScreen
               players={this.state.players}
-              hidden={!this.state.hasInitialized}
-              toggleHideDialog={this.toggleHideDialog}
+              hidden={!this.state.isDialogVisible}
+              toggleHide={this.toggleHideDialog}
+              onHide={this.onHideDialog}
             />
           </Stack>
         }

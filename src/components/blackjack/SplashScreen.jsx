@@ -1,4 +1,5 @@
 import React from "react";
+import * as T from "prop-types";
 import {
   Dropdown,
   Dialog,
@@ -14,7 +15,6 @@ import BaseComponent from "../BaseComponent";
 import AppActions from "./actions/AppActions";
 
 import {
-  defaultPlayersObj,
   defaultPlayersDropdownOptions,
   defaultSelectedPlayerKeys
 } from "./definitions";
@@ -24,10 +24,16 @@ export default class SplashScreen extends BaseComponent {
     super();
     this.state = {
       selectedPlayers: defaultSelectedPlayerKeys,
-      players: defaultPlayersObj,
     }
 
     this._bind("onChangeDropDown", "onClickStartButton",);
+  }
+
+  static propTypes = {
+    players: T.object.isRequired,
+    hidden: T.bool.isRequired,
+    toggleHide: T.func.isRequired,
+    onHide: T.func.isRequired,
   }
 
   onChangeDropDown(e, o, i) {
@@ -41,7 +47,8 @@ export default class SplashScreen extends BaseComponent {
   }
 
   onClickStartButton(e) {
-    const { players, selectedPlayers } = this.state;
+    const { players } = this.props;
+    const { selectedPlayers } = this.state;
 
     // get the complete player object for AppActions that don't use playerKey yet
     let pList = selectedPlayers.map(key => players[key]);
@@ -50,7 +57,7 @@ export default class SplashScreen extends BaseComponent {
     AppActions.newGame(pList);
 
     // hide the player selection modal 
-    this.props.toggleHideDialog();
+    this.props.onHide();
   }
 
   render() {

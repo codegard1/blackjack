@@ -81,7 +81,7 @@ class ActivityLog extends BaseComponent {
     this.state = {
       activityItems: [],
       nextKey: 1,
-      hidden: false,
+      hidden: this.props.hidden,
     };
 
     this._bind('onChangeLog', 'createActivityItems');

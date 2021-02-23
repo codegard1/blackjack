@@ -19,6 +19,7 @@ class ControlPanel extends Component {
     playerStatusFlag: T.bool.isRequired,
     selectedFlag: T.bool.isRequired,
     showDeckCallout: T.func.isRequired,
+    isDeckCalloutVisible: T.bool.isRequired,
   };
 
   render() {
@@ -31,7 +32,7 @@ class ControlPanel extends Component {
     /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
     const gameStatusFlag = this.props.gameStatusFlag;
     const playerStatusFlag = this.props.playerStatusFlag;
-    const npcFlag = this.props.playerIsNPC;
+    const npcFlag = this.props.player.isNPC;
 
     // const drawItems = [
     //   {
