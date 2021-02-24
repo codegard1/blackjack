@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import * as T from "prop-types";
-import { CommandBar, MessageBarType } from "@fluentui/react";
+import { CommandBar, MessageBarType, nullRender } from "@fluentui/react";
 
 /* Flux */
 import AppActions from "./actions/AppActions";
@@ -178,7 +178,7 @@ class ControlPanel extends Component {
     const overFlowItems = [];
 
     return this.props.hidden
-      ? <div className="player-controlpanel-hidden" /> :
+      ? nullRender() :
       <CommandBar
         isSearchBoxVisible={false}
         items={blackJackItems}

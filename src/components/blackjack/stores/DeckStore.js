@@ -88,7 +88,7 @@ const DeckStore = Object.assign({}, EventEmitter.prototype, {
    * @returns {array}
    */
   getHand(key) {
-    return this.state.playerHands[key];
+    return this.state.playerHands[key].hand;
   },
 
   /**
@@ -234,7 +234,7 @@ const DeckStore = Object.assign({}, EventEmitter.prototype, {
    * @returns {void}
    */
   newPlayerHand(playerKey) {
-    this.state.playerHands[playerKey] = Object.assign({}, this.defaultPlayerHandState)
+    this.state.playerHands[playerKey] = Object.assign({}, this.defaultPlayerHandState);
   },
 
   /**
@@ -390,7 +390,7 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.DECK_NEWPLAYERHAND:
-      DeckStore.newPlayerHand(action.playerKey);
+      DeckStore.newPlayerHand(action.key);
       DeckStore.emitChange();
       break;
 

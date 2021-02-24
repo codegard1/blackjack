@@ -6,6 +6,7 @@ import { Text } from '@fluentui/react';
 /* Flux */
 import AppActions from "./actions/AppActions";
 
+
 class Agent extends React.Component {
   constructor(props) {
     super(props);

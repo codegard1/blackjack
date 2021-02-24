@@ -292,6 +292,7 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
    * @param {string} key
    */
   _startTurn(key) {
+    debugger;
     let p = this.getPlayer(key);
     p.turn = true;
     p.isFinished = false;

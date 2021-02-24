@@ -13,7 +13,6 @@ import "./PlayerContainer.css";
 
 /* flux */
 import DeckStore from "./stores/DeckStore";
-import PlayerStore from "./stores/PlayerStore";
 
 export class PlayerContainer extends BaseComponent {
   constructor(props) {
@@ -37,7 +36,7 @@ export class PlayerContainer extends BaseComponent {
     isDeckCalloutVisible: T.bool.isRequired,
     isHandValueVisible: T.bool.isRequired,
     player: T.object.isRequired,
-    playerHand: T.array,
+    playerHand: T.object,
     playerKey: T.string.isRequired,
     playerStats: T.object.isRequired,
     minimumBet: T.number.isRequired,
@@ -122,11 +121,11 @@ export class PlayerContainer extends BaseComponent {
 
           <Stack.Item className={`DeckCalloutTarget-${player.title}`}>
             <DeckContainer
-              deck={playerHand}
+              deck={playerHand.hand}
               gameStatus={this.props.gameStatus}
               gameStatusFlag={this.props.gameStatusFlag}
               handValue={handValue}
-              hidden={!(playerHand.length > 0)}
+              hidden={false}
               isCardDescVisible={this.props.isCardDescVisible}
               isDealerHandVisible={this.props.isDealerHandVisible}
               isHandValueVisible={this.props.isHandValueVisible}

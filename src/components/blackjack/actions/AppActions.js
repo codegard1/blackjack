@@ -83,7 +83,7 @@ const deckActions = {
 const gameplayActions = {
   deal() {
     AppDispatcher.dispatch({ actionType: AppConstants.DECK_DEAL });
-    AppDispatcher.dispatch({ actionType: AppConstants.GAME_DEAL });
+    // AppDispatcher.dispatch({ actionType: AppConstants.GAME_DEAL });
   },
   hit(playerKey) {
     AppDispatcher.dispatch({ actionType: AppConstants.DECK_HIT, playerKey });
@@ -107,7 +107,7 @@ const gameplayActions = {
     players.forEach(player => {
       /* add a new Player to the PlayerStore */
       AppDispatcher.dispatch({ actionType: AppConstants.GLOBAL_NEWPLAYER, ...player });
-      // AppDispatcher.dispatch({ actionType: AppConstants.DECK_NEWPLAYERHAND, ...player });
+      AppDispatcher.dispatch({ actionType: AppConstants.DECK_NEWPLAYERHAND, ...player });
     });
 
   },
