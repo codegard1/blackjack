@@ -119,17 +119,16 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
 
   /**
    * Return the name of the given player
-   * @param {string} key
+   * @param {string} key key of the player to look up
    */
   getPlayerName(key) {
     let p = this.getPlayer(key);
     return p.title;
   },
 
-  getPlayerId(key) { return this.getPlayer(key).id },
-
   /**
    * Return the number of active players
+   * @returns {number}
    */
   length() {
     return this.state.activePlayers.length
@@ -397,7 +396,7 @@ AppDispatcher.register(action => {
       PlayerStore.clearStore();
       break;
 
-    case AppConstants.GAME_NEWPLAYER:
+    case AppConstants.GLOBAL_NEWPLAYER:
       PlayerStore.newPlayer(action.key, action.title, action.isNPC);
       PlayerStore.emitChange();
       break;

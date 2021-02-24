@@ -20,6 +20,7 @@ export class PlayerContainer extends BaseComponent {
     super(props);
     this.state = {
       isStatusCalloutVisible: false,
+      isDeckCalloutVisible: this.props.isDeckCalloutVisible,
     };
 
     this._bind(
@@ -36,9 +37,10 @@ export class PlayerContainer extends BaseComponent {
     isDeckCalloutVisible: T.bool.isRequired,
     isHandValueVisible: T.bool.isRequired,
     player: T.object.isRequired,
-    playerHand: T.object,
+    playerHand: T.array,
     playerKey: T.string.isRequired,
     playerStats: T.object.isRequired,
+    minimumBet: T.number.isRequired,
   };
 
   _showDeckCallout() {
@@ -50,53 +52,52 @@ export class PlayerContainer extends BaseComponent {
   }
 
   render() {
-    const playerId = PlayerStore.getPlayerId(this.props.playerKey);
+    const { player, playerStats, playerHand, playerKey } = this.props;
 
     /* style PlayerContainer conditionally */
     let playerContainerClass = "PlayerContainer ";
-    if (!this.props.player.empty && this.props.player.turn) {
+    if (player.turn) {
       playerContainerClass += "selected ";
     }
     if (
-      !this.props.player.empty &&
-      this.props.player.isStaying &&
-      !this.props.player.turn
+      !player.empty &&
+      player.isStaying &&
+      !player.turn
     ) {
       playerContainerClass += "staying ";
     }
 
-    const playerStatusFlag = (this.props.player.isBusted ||
-      this.props.player.isFinished ||
-      this.props.player.isStaying ||
-      !this.props.player.turn);
+    const playerStatusFlag = (player.isBusted ||
+      player.isFinished ||
+      player.isStaying ||
+      !player.turn);
 
     /* selectedFlag is true if getSelected() returns an array */
-    const selectedFlag = !!DeckStore.getSelected(playerId);
+    const selectedFlag = !!DeckStore.getSelected(playerKey);
 
-    const handValue = DeckStore.getHandValue(playerId);
+    const handValue = DeckStore.getHandValue(playerKey);
 
     return (
       <Stack verticalAlign className={playerContainerClass}>
 
-        <Stack horizontal horizontalAlign="space-between" style={{ padding: '5px' }} className={`${this.props.player.title}-titleBar playerContainerClass`}>
+        <Stack horizontal horizontalAlign="space-between" style={{ padding: '5px' }} className={`${player.title}-titleBar playerContainerClass`}>
           <Stack.Item align="start">
             <Text block nowrap variant="large">
-              {`${this.props.player.title} ($${this.props.player.bank || 0})  `}</Text>
+              {`${player.title} ($${player.bank || 0})  `}</Text>
           </Stack.Item>
           <Stack.Item>
-            <StatusDisplay player={this.props.player} stats={this.props.playerStats} />
+            <StatusDisplay player={player} stats={playerStats} />
           </Stack.Item>
         </Stack>
 
         <Stack verticalAlign horizontalAlign="space-between">
-          {this.props.player.isNPC && this.props.dealerHasControl &&
+          {player.isNPC && this.props.dealerHasControl &&
             <Stack.Item>
               <Agent
                 dealerHasControl={this.props.dealerHasControl}
                 gameStatus={this.props.gameStatus}
                 handvalue={handValue}
-                id={playerId}
-                key={this.props.playerKey}
+                key={playerKey}
               />
             </Stack.Item>
           }
@@ -105,43 +106,42 @@ export class PlayerContainer extends BaseComponent {
             <ControlPanel
               gameStatus={this.props.gameStatus}
               gameStatusFlag={this.props.gameStatusFlag}
-              hidden={!this.props.player.isNPC}
+              hidden={!player.isNPC}
               minimumBet={this.props.minimumBet}
-              player={this.props.player}
-              playerId={playerId}
-              playerKey={this.props.playerKey}
+              player={player}
+              playerKey={playerKey}
               playerStatusFlag={playerStatusFlag}
-              playerIsNPC={this.props.player.isNPC}
+              playerIsNPC={player.isNPC}
               selectedFlag={selectedFlag}
               showDeckCallout={this._showDeckCallout}
               isDeckCalloutVisible={this.state.isDeckCalloutVisible}
             />
           </Stack.Item>
 
-          <Stack.Item className={`DeckCalloutTarget-${this.props.player.title}`}>
+          <Stack.Item className={`DeckCalloutTarget-${player.title}`}>
             <DeckContainer
-              deck={this.props.playerHand}
+              deck={playerHand}
               gameStatus={this.props.gameStatus}
               gameStatusFlag={this.props.gameStatusFlag}
               handValue={handValue}
-              hidden={!(this.props.playerHand.length > 0)}
+              hidden={!(playerHand.length > 0)}
               isCardDescVisible={this.props.isCardDescVisible}
               isDealerHandVisible={this.props.isDealerHandVisible}
               isHandValueVisible={this.props.isHandValueVisible}
-              isNPC={this.props.player.isNPC}
+              isNPC={player.isNPC}
               isPlayerDeck
               isSelectable
-              player={this.props.player}
-              title={this.props.player.title}
+              player={player}
+              title={player.title}
               turnCount={this.props.turnCount}
             />
           </Stack.Item>
         </Stack>
         <DeckCallout
-          player={this.props.player}
-          isDeckCalloutVisible={this.props.isDeckCalloutVisible}
+          player={player}
+          isDeckCalloutVisible={this.state.isDeckCalloutVisible}
           onHideCallout={this._hideDeckCallout}
-          target={`.DeckCalloutTarget-${this.props.player.title}`}
+          target={`.DeckCalloutTarget-${player.title}`}
         />
       </Stack>
     );

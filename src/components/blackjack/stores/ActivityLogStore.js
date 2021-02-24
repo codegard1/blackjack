@@ -111,7 +111,7 @@ AppDispatcher.register(action => {
     case AppConstants.GAME_STAY:
       ActivityLogStore.new({
         description: "stayed",
-        name: PlayerStore.getPlayerName(action.playerId),
+        name: PlayerStore.getPlayerName(action.playerKey),
         iconName: "HandsFree",
       });
       break;
@@ -119,7 +119,7 @@ AppDispatcher.register(action => {
     case AppConstants.GAME_BET:
       ActivityLogStore.new({
         description: `bet $${action.amount}`,
-        name: PlayerStore.getPlayerName(action.playerId),
+        name: PlayerStore.getPlayerName(action.playerKey),
         iconName: "Money",
       });
       break;
@@ -127,7 +127,7 @@ AppDispatcher.register(action => {
     case AppConstants.DECK_HIT:
       ActivityLogStore.new({
         description: `hit`,
-        name: PlayerStore.getPlayerName(action.playerId),
+        name: PlayerStore.getPlayerName(action.playerKey),
         iconName: "CheckedOutByOther12",
       });
       break;

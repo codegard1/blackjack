@@ -1,11 +1,14 @@
 import keyMirror from "keymirror";
 
 export default keyMirror({
+  /* GLobal Actions */
+  // These constants map to actions that occur in multiple stores simultaneously
+  GLOBAL_NEWPLAYER: null,
+  
   /* Game */
   GAME_BET: null,
   GAME_DEAL: null,
   GAME_HIT: null,
-  GAME_NEWPLAYER: null,
   GAME_NEWROUND: null,
   GAME_RESET: null,
   GAME_STAY: null,
@@ -53,4 +56,4 @@ export default keyMirror({
   /* ActivityLogStore */
   ACTIVITYLOG_NEW: null,
 
-});
+});     

@@ -14,7 +14,6 @@ class ControlPanel extends Component {
     minimumBet: T.number.isRequired,
     player: T.object,
     playerIsNPC: T.bool.isRequired,
-    playerId: T.number,
     playerKey: T.string.isRequired,
     playerStatusFlag: T.bool.isRequired,
     selectedFlag: T.bool.isRequired,
@@ -23,16 +22,21 @@ class ControlPanel extends Component {
   };
 
   render() {
+    const {
+      gameStatusFlag,
+      playerStatusFlag,
+      playerKey,
+      playerIsNPC,
+    } = this.props;
+
     /* selectedFlag is true when the player has selected cards in his hand */
     // let selectedFlag = this.props.selectedFlag;
     /* Flag used by put / draw menu items */
     // let selectedCards = selectedFlag
-    //   ? DeckStore.getSelected(this.props.playerId)
+    // ? DeckStore.getSelected(playerKey)
     //   : [];
     /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
-    const gameStatusFlag = this.props.gameStatusFlag;
-    const playerStatusFlag = this.props.playerStatusFlag;
-    const npcFlag = this.props.player.isNPC;
+    const npcFlag = playerIsNPC;
 
     // const drawItems = [
     //   {
@@ -69,8 +73,8 @@ class ControlPanel extends Component {
     //     disabled: false,
     //     onClick: ev => {
     //       ev.preventDefault();
-    //       AppActions.putOnTopOfDeck(this.props.playerId, selectedCards);
-    //       AppActions.removeSelectedFromPlayerHand(selectedCards);
+    //       AppActions.putOnTopOfDeck(playerKey, selectedCards);
+    // AppActions.removeSelectedFromPlayerHand(playerKey,selectedCards);
     //     }
     //   },
     //   {
@@ -81,7 +85,7 @@ class ControlPanel extends Component {
     //     disabled: false,
     //     onClick: cards => {
     //       AppActions.putOnBottomOfDeck(cards);
-    //       AppActions.removeSelectedFromPlayerHand(cards);
+    //       AppActions.removeSelectedFromPlayerHand(playerKey,cards);
     //     }
     //   }
     // ];
@@ -94,7 +98,7 @@ class ControlPanel extends Component {
         disabled: gameStatusFlag || playerStatusFlag,
         onClick: ev => {
           ev.preventDefault();
-          AppActions.hit(this.props.playerId);
+          AppActions.hit(playerKey);
         }
       },
       // {
@@ -105,7 +109,7 @@ class ControlPanel extends Component {
       //   disabled: (gameStatusFlag || playerStatusFlag),
       //   onClick: (ev, target, playerIndex, amount) => {
       //     ev.preventDefault();
-      //     AppActions.bet(this.props.playerId, amount);
+      //     AppActions.bet(playerKey, amount);
       //   }
       // },
       {
@@ -114,7 +118,7 @@ class ControlPanel extends Component {
         ariaLabel: "Stay",
         iconProps: { iconName: "Forward" },
         disabled: gameStatusFlag || playerStatusFlag,
-        onClick: () => AppActions.stay(this.props.playerId),
+        onClick: () => AppActions.stay(playerKey),
       }
     ];
 

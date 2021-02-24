@@ -74,9 +74,7 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
     // get saved data from IDB
     const stats = await get(playerKey, this.store)
     // if saved data does not exist, create a new entry with defaults
-    if (stats) {
-      // console.log(`loaded saved stats for player #${playerKey}`);
-    } else {
+    if (!stats) {
       await set(playerKey, this.defaultStats, this.store);
     }
   },
@@ -90,7 +88,7 @@ AppDispatcher.register(action => {
       // console.log(`placeholder for initialize_stores`)
       break;
 
-    case AppConstants.GAME_NEWPLAYER:
+    case AppConstants.GLOBAL_NEWPLAYER:
       StatsStore.new(action.key).then(() => StatsStore.emitChange());
       break;
 

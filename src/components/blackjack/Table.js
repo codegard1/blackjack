@@ -68,7 +68,7 @@ export default class Table extends BaseComponent {
       // PlayerStore
       players: {},
       activePlayers: [],
-      currentPlayerId: 0,
+      currentPlayerKey: 0,
 
       // ControlPanelStore
       isCardDescVisible: false,
@@ -165,19 +165,18 @@ export default class Table extends BaseComponent {
     });
   }
   onChangePlayerStore() {
-    const { players, activePlayers, currentPlayerId } = PlayerStore.getState();
+    const { players, activePlayers, currentPlayerKey } = PlayerStore.getState();
     // get and set player hands; this is probably redundant
-    activePlayers.forEach(key => {
-      players[key].hand = DeckStore.getHand(key);
-    });
-    this.setState({ players, activePlayers, currentPlayerId, hasInitialized: true });
+    // activePlayers.forEach(key => {
+    // players[key].hand = DeckStore.getHand(key);
+    // });
+    this.setState({ players, activePlayers, currentPlayerKey, hasInitialized: true });
   }
   onChangeStatsStore() {
     let playerStats = {};
-    for (let key in this.state.activePlayers){
+    for (let key in this.state.activePlayers) {
       playerStats[key] = StatsStore.getStats(key)
     }
-    debugger;
     this.setState({ playerStats });
   }
 
@@ -201,16 +200,22 @@ export default class Table extends BaseComponent {
   renderPlayerContainers() {
     if (this.state.activePlayers.length > 0) {
       return this.state.activePlayers.map(key => {
-        const playerHand = this.state.playerHands.filter(v => v.key === key) || [];
+        const playerHand = this.state.playerHands[key] || {};
         const playerStats = this.state.playerStats[key] || {};
         return <Stack.Item align="stretch" verticalAlign="top" grow={2} key={`PlayerStack-${key}`}>
           <PlayerContainer
+            gameStatus={this.state.gameStatus}
+            gameStatusFlag={this.state.gameStatusFlag}
+            isCardDescVisible={this.state.isCardDescVisible}
+            isDealerHandVisible={this.state.isDealerHandVisible}
+            isDeckCalloutVisible={this.state.isDeckCalloutVisible}
+            isHandValueVisible={this.state.isHandValueVisible}
             key={`PlayerContainer-${key}`}
-            playerKey={key}
+            minimumBet={this.state.minimumBet}
             player={this.state.players[key]}
             playerHand={playerHand}
+            playerKey={key}
             playerStats={playerStats}
-            {...this.state}
           />
         </Stack.Item>
       }
