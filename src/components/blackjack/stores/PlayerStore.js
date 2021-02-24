@@ -154,7 +154,7 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
     this.state.activePlayers.forEach(key => {
       this.state.players[key].handValue = DeckStore.getHandValue(key);
       this._setStatus(key);
-    })
+    });
   },
 
   /**
@@ -426,6 +426,10 @@ AppDispatcher.register(action => {
 
     case AppConstants.GAME_BET:
       PlayerStore._bet(PlayerStore.state.currentPlayerKey, action.amount);
+      break;
+
+    case AppConstants.GLOBAL_EVALUATEGAME:
+      PlayerStore._evaluatePlayers();
       break;
 
 

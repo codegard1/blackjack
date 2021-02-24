@@ -4,6 +4,7 @@ export default keyMirror({
   /* GLobal Actions */
   // These constants map to actions that occur in multiple stores simultaneously
   GLOBAL_NEWPLAYER: null,
+  GLOBAL_EVALUATEGAME: null,
   
   /* Game */
   GAME_BET: null,

@@ -157,6 +157,16 @@ const AppActions = {
   ...deckActions,
   ...gameplayActions,
   ...storeActions,
+
+  /**
+   * (experimental) evaluate the game state outside of any single Store
+   * @param {number} statusCode current gameStatus code
+   */
+  evaluateGame(statusCode) {
+    // AppDispatcher.dispatch({actionType: AppConstants.GLOBAL_EVALUATEGAME});
+
+   
+  }
 };
 
 export default AppActions;

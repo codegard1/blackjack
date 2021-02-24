@@ -178,49 +178,31 @@ AppDispatcher.register(action => {
       break;
 
     case AppConstants.GAME_RESET:
-      /* prepare players for a new Game */
-      // PlayersStore.newGame();
       GameStore._gameReset();
       GameStore.emitChange();
       break;
 
     case AppConstants.GAME_DEAL:
-      // PlayerStore.currentPlayer.startTurn();
       GameStore._gameDeal();
       _evaluateGame(1);
       GameStore.emitChange();
       break;
 
     case AppConstants.GAME_HIT:
-      // PlayerStore.currentPlayer.hit();
       _evaluateGame(1);
       GameStore.emitChange();
       break;
 
     case AppConstants.GAME_STAY:
-      // PlayersStore.currentPlayer.stay();
-      /* player 0 is Dealer and game is not over*/
       GameStore._gameStay();
       GameStore.emitChange();
       break;
 
-    case AppConstants.GAME_BET:
-      // PlayersStore.currentPlayer.bet(action.amount);
-      // GameStore.emitChange();
-      break;
-
     /* This method is called after DECK_CLEARHANDS & DECK_DEAL */
     case AppConstants.GAME_NEWROUND:
-      /* prepare players for a new round */
-      // PlayersStore.newRound();
-
       GameStore._gameNewRound();
-      /**
-       * @todo clean this up 
-       */
       GameStore.state.gameStatus = 1;
       _evaluateGame(1);
-
       GameStore.emitChange();
       break;
 
@@ -232,6 +214,10 @@ AppDispatcher.register(action => {
     case AppConstants.GAME_HIDEMESSAGEBAR:
       GameStore.hideMessageBar();
       GameStore.emitChange();
+      break;
+
+    case AppConstants.GLOBAL_EVALUATEGAME:
+_evaluateGame();
       break;
 
     default:
@@ -248,7 +234,6 @@ let state = GameStore.state;
 
 /* method definitions */
 function _evaluateGame(statusCode) {
-  PlayerStore.evaluatePlayers();
 
   switch (statusCode) {
     case 1 /*   Game in progress; first play  */:

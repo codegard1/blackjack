@@ -53,6 +53,7 @@ export class PlayerContainer extends BaseComponent {
 
   render() {
     const { player, playerStats, playerHand, playerKey } = this.props;
+    const handValue = playerHand.handValue;
 
     /* style PlayerContainer conditionally */
     let playerContainerClass = "PlayerContainer ";
@@ -75,7 +76,6 @@ export class PlayerContainer extends BaseComponent {
     /* selectedFlag is true if getSelected() returns an array */
     const selectedFlag = !!DeckStore.getSelected(playerKey);
 
-    const handValue = DeckStore.getHandValue(playerKey);
 
     return (
       <Stack verticalAlign className={playerContainerClass}>
@@ -97,26 +97,28 @@ export class PlayerContainer extends BaseComponent {
                 dealerHasControl={this.props.dealerHasControl}
                 gameStatus={this.props.gameStatus}
                 handvalue={handValue}
-                key={playerKey}
+                playerKey={playerKey}
               />
             </Stack.Item>
           }
 
-          <Stack.Item>
-            <ControlPanel
-              gameStatus={this.props.gameStatus}
-              gameStatusFlag={this.props.gameStatusFlag}
-              hidden={!player.isNPC}
-              minimumBet={this.props.minimumBet}
-              player={player}
-              playerKey={playerKey}
-              playerStatusFlag={playerStatusFlag}
-              playerIsNPC={player.isNPC}
-              selectedFlag={selectedFlag}
-              showDeckCallout={this._showDeckCallout}
-              isDeckCalloutVisible={this.state.isDeckCalloutVisible}
-            />
-          </Stack.Item>
+          {!player.isNPC &&
+            <Stack.Item>
+              <ControlPanel
+                gameStatus={this.props.gameStatus}
+                gameStatusFlag={this.props.gameStatusFlag}
+                hidden={!player.isNPC}
+                minimumBet={this.props.minimumBet}
+                player={player}
+                playerKey={playerKey}
+                playerStatusFlag={playerStatusFlag}
+                playerIsNPC={player.isNPC}
+                selectedFlag={selectedFlag}
+                showDeckCallout={this._showDeckCallout}
+                isDeckCalloutVisible={this.state.isDeckCalloutVisible}
+              />
+            </Stack.Item>
+          }
 
           <Stack.Item className={`DeckCalloutTarget-${player.title}`}>
             <DeckContainer

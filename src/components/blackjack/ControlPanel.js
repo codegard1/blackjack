@@ -13,7 +13,6 @@ class ControlPanel extends Component {
     hidden: T.bool.isRequired,
     minimumBet: T.number.isRequired,
     player: T.object,
-    playerIsNPC: T.bool.isRequired,
     playerKey: T.string.isRequired,
     playerStatusFlag: T.bool.isRequired,
     selectedFlag: T.bool.isRequired,
@@ -26,8 +25,9 @@ class ControlPanel extends Component {
       gameStatusFlag,
       playerStatusFlag,
       playerKey,
-      playerIsNPC,
+      player
     } = this.props;
+    const npcFlag = player.isNPC;
 
     /* selectedFlag is true when the player has selected cards in his hand */
     // let selectedFlag = this.props.selectedFlag;
@@ -36,7 +36,6 @@ class ControlPanel extends Component {
     // ? DeckStore.getSelected(playerKey)
     //   : [];
     /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
-    const npcFlag = playerIsNPC;
 
     // const drawItems = [
     //   {
@@ -161,15 +160,6 @@ class ControlPanel extends Component {
     const farItems = npcFlag
       ? []
       : [
-        // Settings button moved to Table on 10.29.20
-        // {
-        //   key: "options",
-        //   name: "",
-        //   ariaLabel: "Options",
-        //   iconProps: { iconName: "Settings" },
-        //   disabled: npcFlag,
-        //   onClick: AppActions.showOptionsPanel
-        // }
         {
           key: "new-round",
           name: "Deal",
@@ -187,18 +177,15 @@ class ControlPanel extends Component {
     // const overFlowItems = selectedFlag ? [].concat(putMenu, drawMenu) : [];
     const overFlowItems = [];
 
-    return (
-      <div className="player-controlpanel">
-        {!this.props.hidden && (
-          <CommandBar
-            isSearchBoxVisible={false}
-            items={blackJackItems}
-            farItems={farItems}
-            overflowItems={overFlowItems}
-          />
-        )}
-      </div>
-    );
+    return this.props.hidden
+      ? <div className="player-controlpanel-hidden" /> :
+      <CommandBar
+        isSearchBoxVisible={false}
+        items={blackJackItems}
+        farItems={farItems}
+        overflowItems={overFlowItems}
+        className="player-controlpanel"
+      />
   }
 }
 

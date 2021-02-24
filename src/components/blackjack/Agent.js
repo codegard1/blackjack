@@ -17,8 +17,8 @@ class Agent extends React.Component {
   static propTypes = {
     dealerHasControl: T.bool.isRequired,
     gameStatus: T.number.isRequired,
-    handvalue: T.object,
-    id: T.number.isRequired,
+    handvalue: T.object.isRequired,
+    playerKey: T.string.isRequired,
   }
 
   componentDidMount() {
@@ -26,13 +26,12 @@ class Agent extends React.Component {
       console.log("in agent- dealer has control");
       // Agent acts on a 500 ms interval
       const intervalID = setInterval(() => {
-        const aceAsEleven = this.props.handValue.aceAsEleven,
-          aceAsOne = this.props.handValue.aceAsOne;
+        const { aceAsEleven, aceAsOne } = this.props.handValue;
 
         if (this.props.gameStatus !== 0) {
           /* when to hit */
           if (aceAsEleven <= 16 || aceAsOne <= 16) {
-            AppActions.hit(this.props.id);
+            AppActions.hit(this.props.playerKey);
             console.log("Agent hit");
             this.setState({ lastAction: "Hit" });
           }
