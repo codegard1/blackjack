@@ -1,6 +1,15 @@
 import React from "react";
 // import * as T from "prop-types";
-import { Stack, Panel, PanelType, Toggle, CommandButton } from "@fluentui/react";
+import {
+  CommandButton,
+  Link,
+  Panel,
+  PanelType,
+  Separator,
+  Stack,
+  Toggle,
+  Text,
+} from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
@@ -69,9 +78,9 @@ class OptionsPanel extends BaseComponent {
           >
             Shuffle Deck
           </CommandButton>
-        </Stack>
 
-        <Stack vertical verticalAlign="start" tokens={{ childrenGap: 2 }}>
+          <Separator tokens={{ chldrenGap: 12 }} />
+
           <Toggle
             checked={this.state.isDeckVisible}
             label="Show Deck"
@@ -130,9 +139,9 @@ class OptionsPanel extends BaseComponent {
             offText="Off"
             onChange={(e, checked) => AppActions.toggleActivityLogVisibility(checked)}
           />
-        </Stack>
 
-        <Stack vertical verticalAlign="start" tokens={{ childrenGap: 25 }}>
+          <Separator tokens={{ chldrenGap: 12 }} />
+
           <CommandButton
             iconProps={{ iconName: "Trash" }}
             disabled={false}
@@ -141,6 +150,19 @@ class OptionsPanel extends BaseComponent {
           >
             Clear Stores
           </CommandButton>
+
+          <Separator tokens={{ chldrenGap: 12 }} />
+
+          <Stack.Item>
+            <Text variant="medium">
+              <strong>Chris's Blackjack</strong>
+            </Text>
+            <Text variant="smallPlus" nowrap block>
+              &copy;2021 <Link href="https://github.com/codegard1/blackjack">Chris Odegard</Link>
+              <br />
+              Made in Brooklyn with <Link href="https://reactjs.org/">React</Link> and <Link href="https://developer.microsoft.com/en-us/fluentui">Fluent UI</Link>.
+            </Text>
+          </Stack.Item>
 
         </Stack>
       </Panel>
