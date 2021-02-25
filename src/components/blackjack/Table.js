@@ -2,12 +2,12 @@ import React from "react";
 import {
   DefaultEffects,
   Icon,
-
   MessageBar,
   MessageBarType,
   Spinner,
   SpinnerSize,
   Stack,
+  Text
 } from '@fluentui/react';
 import { MotionAnimations } from '@fluentui/theme';
 import { initializeIcons } from "@uifabric/icons";
@@ -18,7 +18,6 @@ import BaseComponent from "../BaseComponent";
 import PlayerContainer from "./PlayerContainer";
 import DeckContainer from "./DeckContainer";
 import OptionsPanel from "./OptionsPanel";
-import PotDisplay from "./PotDisplay";
 import ActivityLog from "./ActivityLog";
 import SplashScreen from "./SplashScreen";
 
@@ -255,7 +254,7 @@ export default class Table extends BaseComponent {
         )}
 
         {this.state.isDialogVisible &&
-          <Stack horizontal horizontalAlign="space-between" disableShrink wrap tokens={{ childrenGap: 10, padding: 10, }}>
+          <Stack horizontal horizontalAlign="center" tokens={{ childrenGap: 10, padding: 10, }}>
             <Spinner
               size={SpinnerSize.large}
               label="Wait, wait..."
@@ -274,7 +273,7 @@ export default class Table extends BaseComponent {
 
         {!this.state.isDialogVisible &&
           <Stack vertical verticalAlign="space-around" tokens={{ childrenGap: 10, padding: 10, }}>
-            {!this.state.gameStatusFlag && <PotDisplay pot={this.state.pot} />}
+            {!this.state.gameStatusFlag &&  <Text block nowrap variant="xLarge">Pot: ${this.state.pot}</Text>}
             <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
               {selectedPlayersContainers}
             </Stack>

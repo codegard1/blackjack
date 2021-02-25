@@ -36,7 +36,7 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
 
   // return stats for the given player
-  async getStats(playerKey) { return get(playerKey, this.store) },
+  async getStats(playerKey) { if (playerKey) return get(playerKey, this.store) },
 
   // return the win/loss ratio as a string
   calculateWinLossRatio(gamesWon, gamesLost) {

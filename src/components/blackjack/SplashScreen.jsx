@@ -71,7 +71,7 @@ export default class SplashScreen extends BaseComponent {
         }}
         modalProps={{
           isBlocking: true,
-          styles: { main: { maxWidth: 450, top: 75 } },
+          styles: { main: { maxWidth: 450, top: 125 } },
           isDraggable: true,
           labelId: 'dialogLabel',
           subTextId: 'subTextLabel',
