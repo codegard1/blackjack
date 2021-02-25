@@ -2,6 +2,7 @@ import React from "react";
 import {
   DefaultEffects,
   Icon,
+
   MessageBar,
   MessageBarType,
   Spinner,
@@ -203,7 +204,7 @@ export default class Table extends BaseComponent {
         return <Stack.Item align="stretch" verticalAlign="top" grow={2} key={`PlayerStack-${key}`}>
           <PlayerContainer
             gameStatus={this.state.gameStatus}
-            gameStatusFlag={this.state.gameStatusFlag === 0 || this.state.gameStatusFlag > 2 }
+            gameStatusFlag={this.state.gameStatusFlag === 0 || this.state.gameStatusFlag > 2}
             isCardDescVisible={this.state.isCardDescVisible}
             isDealerHandVisible={this.state.isDealerHandVisible}
             isDeckCalloutVisible={this.state.isDeckCalloutVisible}
@@ -239,6 +240,10 @@ export default class Table extends BaseComponent {
     return (
       <Stack vertical verticalAlign="start" wrap tokens={{ childrenGap: 10, padding: 10 }} style={tableStyles}>
 
+        <Stack horizontal horizontalAlign="end" disableShrink nowrap>
+          <Icon iconName="Settings" aria-label="Settings" style={{ fontSize: "24px" }} onClick={AppActions.showOptionsPanel} />
+        </Stack>
+
         {this.state.isMessageBarVisible && (
           <MessageBar
             messageBarType={this.state.messageBarDefinition.type}
@@ -268,15 +273,11 @@ export default class Table extends BaseComponent {
         }
 
         {!this.state.isDialogVisible &&
-          <Stack horizontal horizontalAlign="space-between" disableShrink wrap tokens={{ childrenGap: 10, padding: 10, }}>
-            <PotDisplay pot={this.state.pot} />
-            <Icon iconName="Settings" aria-label="Settings" onClick={AppActions.showOptionsPanel} />
-          </Stack>
-        }
-
-        {!this.state.isDialogVisible &&
-          <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
-            {selectedPlayersContainers}
+          <Stack vertical verticalAlign="space-around" tokens={{ childrenGap: 10, padding: 10, }}>
+            {!this.state.gameStatusFlag && <PotDisplay pot={this.state.pot} />}
+            <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
+              {selectedPlayersContainers}
+            </Stack>
           </Stack>
         }
 
