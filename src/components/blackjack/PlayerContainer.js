@@ -106,7 +106,7 @@ export class PlayerContainer extends BaseComponent {
               <ControlPanel
                 gameStatus={this.props.gameStatus}
                 gameStatusFlag={this.props.gameStatusFlag}
-                hidden={!player.isNPC}
+                hidden={player.isNPC}
                 minimumBet={this.props.minimumBet}
                 player={player}
                 playerKey={playerKey}

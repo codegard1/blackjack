@@ -121,11 +121,9 @@ export default class Table extends BaseComponent {
   /* flux helpers */
   onChangeGame() {
     const { dealerHasControl, gameStatus, isMessageBarVisible, loser, minimumBet, pot, round, turnCount, winner, messageBarDefinition } = GameStore.getState();
-    const gameStatusFlag = (gameStatus === 0 || gameStatus > 2);
     this.setState({
       dealerHasControl,
       gameStatus,
-      gameStatusFlag,
       isDeckCalloutVisible: true,
       isMessageBarVisible,
       loser,
@@ -205,7 +203,7 @@ export default class Table extends BaseComponent {
         return <Stack.Item align="stretch" verticalAlign="top" grow={2} key={`PlayerStack-${key}`}>
           <PlayerContainer
             gameStatus={this.state.gameStatus}
-            gameStatusFlag={this.state.gameStatusFlag}
+            gameStatusFlag={this.state.gameStatusFlag === 0 || this.state.gameStatusFlag > 2 }
             isCardDescVisible={this.state.isCardDescVisible}
             isDealerHandVisible={this.state.isDealerHandVisible}
             isDeckCalloutVisible={this.state.isDeckCalloutVisible}

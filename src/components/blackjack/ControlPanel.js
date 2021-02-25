@@ -165,7 +165,7 @@ class ControlPanel extends Component {
           name: "Deal",
           ariaLabel: "Deal",
           iconProps: { iconName: "Refresh" },
-          disabled: !gameStatusFlag,
+          disabled: gameStatusFlag,
           onClick: () => {
             AppActions.newDeck();
             AppActions.newRound();
