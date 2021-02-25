@@ -208,6 +208,7 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
    */
   _ante(key, amount) {
     let p = this.getPlayer(key);
+    debugger;
     p.bank -= amount;
     p.lastAction = "ante";
     console.log(`${p.title} ante ${amount}`);
@@ -218,9 +219,7 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
    * @param {number} amount 
    */
   _allPlayersAnte(amount) {
-    this.state.activePlayers.forEach(
-      key => this._ante(this.state.players[key], amount)
-    )
+    this.state.activePlayers.forEach(key => this._ante(key, amount))
   },
 
   /**
