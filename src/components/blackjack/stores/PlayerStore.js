@@ -108,7 +108,9 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
   /**
    * Get all players
    */
-  getPlayers() { return this.state.players },
+  getPlayers() { 
+    return this.state.activePlayers.map(key => this.state.players[key]);
+  },
 
   /**
    * Get the currently active player
@@ -171,6 +173,7 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
   newRound() {
     this.state.activePlayers.forEach(key => this._resetPlayer(key, "bank"));
     this.state.currentPlayerKey = this.state.activePlayers[0];
+    this._allPlayersAnte();
     this._startTurn(this.state.currentPlayerKey);
   },
 
@@ -208,7 +211,6 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
    */
   _ante(key, amount) {
     let p = this.getPlayer(key);
-    debugger;
     p.bank -= amount;
     p.lastAction = "ante";
     console.log(`${p.title} ante ${amount}`);
@@ -291,7 +293,6 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
    * @param {string} key
    */
   _startTurn(key) {
-    debugger;
     let p = this.getPlayer(key);
     p.turn = true;
     p.isFinished = false;
@@ -418,18 +419,27 @@ AppDispatcher.register(action => {
 
     case AppConstants.GAME_HIT:
       PlayerStore._hit(PlayerStore.state.currentPlayerKey);
+      PlayerStore.emitChange();
       break;
 
     case AppConstants.GAME_STAY:
       PlayerStore._stay(PlayerStore.state.currentPlayerKey);
+      PlayerStore.emitChange();
       break;
 
     case AppConstants.GAME_BET:
       PlayerStore._bet(PlayerStore.state.currentPlayerKey, action.amount);
+      PlayerStore.emitChange();
       break;
 
     case AppConstants.GLOBAL_EVALUATEGAME:
       PlayerStore._evaluatePlayers();
+      PlayerStore.emitChange();
+      break;
+
+    case AppConstants.GLOBAL_ENDGAME:
+      PlayerStore._allPlayersFinish();
+      PlayerStore.emitChange();
       break;
 
 

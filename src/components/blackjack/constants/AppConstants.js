@@ -5,7 +5,8 @@ export default keyMirror({
   // These constants map to actions that occur in multiple stores simultaneously
   GLOBAL_NEWPLAYER: null,
   GLOBAL_EVALUATEGAME: null,
-  
+  GLOBAL_ENDGAME: null,
+
   /* Game */
   GAME_BET: null,
   GAME_DEAL: null,
@@ -15,6 +16,7 @@ export default keyMirror({
   GAME_STAY: null,
   GAME_SHOWMESSAGEBAR: null,
   GAME_HIDEMESSAGEBAR: null,
+
 
   /* Deck */
   DECK_CLEARHANDS: null,
@@ -50,7 +52,7 @@ export default keyMirror({
 
   // call clear() on stores
   CLEAR_STORES: null,
-  
+
   /* StatsStore */
   STATS_UPDATE: null,
 

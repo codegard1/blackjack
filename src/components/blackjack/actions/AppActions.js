@@ -1,6 +1,10 @@
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
+
+
+
+
 /**
  *  CONTROL PANEL ACTIONS
  */
@@ -165,7 +169,10 @@ const AppActions = {
   evaluateGame(statusCode) {
     // AppDispatcher.dispatch({actionType: AppConstants.GLOBAL_EVALUATEGAME});
 
-   
+
+  },
+  endGame() {
+    AppDispatcher.dispatch({ actionType: AppConstants.GLOBAL_ENDGAME });
   }
 };
 
