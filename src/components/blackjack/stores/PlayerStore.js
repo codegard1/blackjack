@@ -108,7 +108,7 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
   /**
    * Get all players
    */
-  getPlayers() { 
+  getPlayers() {
     return this.state.activePlayers.map(key => this.state.players[key]);
   },
 
@@ -316,16 +316,16 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
    */
   _nextPlayer() {
     // get key of current Player from state
-    let key = this.state.currentPlayerKey;
+    const { currentPlayerKey, activePlayers } = this.state;
 
     // get index of current player in the activePlayers list
-    let index = this.state.activePlayers.findIndex(key);
+    const index = activePlayers.findIndex(key => key === currentPlayerKey);
 
     // increment the index or go back to 0
-    let nextIndex = index + 1 >= (this.state.activePlayers.length)
+    let nextIndex = index + 1 >= (activePlayers.length)
       ? 0
       : index + 1;
-    this.state.currentPlayerKey = this.state.activePlayers[nextIndex];
+    this.state.currentPlayerKey = activePlayers[nextIndex];
     this._startTurn(this.state.currentPlayerKey);
   },
 
