@@ -4,7 +4,7 @@ import AppConstants from "../constants/AppConstants";
 
 /* idb-keyval */
 // import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-import { Store, get, set } from 'idb-keyval';
+import { createStore, get, set } from 'idb-keyval';
 
 /*  ========================================================  */
 
@@ -12,7 +12,7 @@ import { Store, get, set } from 'idb-keyval';
 const CHANGE_EVENT = "controlPanel";
 const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
   // browser cache
-  store: new Store('ControlPanelStore', 'State'),
+  store: createStore('ControlPanelStore', 'State'),
 
   // in-memory state 
   state: {

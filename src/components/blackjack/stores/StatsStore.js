@@ -6,14 +6,14 @@ import AppConstants from "../constants/AppConstants";
 
 /* idb-keyval */
 // import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-import { Store, get, set } from 'idb-keyval';
+import { createStore, get, set } from 'idb-keyval';
 
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "playerstats";
 const StatsStore = Object.assign({}, EventEmitter.prototype, {
 
   // IDB Store holds state
-  store: new Store('StatsStore', 'State'),
+  store: createStore('StatsStore', 'State'),
 
   // default value of stats for each player
   defaultStats: {

@@ -6,7 +6,7 @@ import AppConstants from "../constants/AppConstants";
 
 /* idb-keyval */
 // import { Store, get, set, clear } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-import { Store, get, set, clear } from 'idb-keyval';
+import { get, set, clear, createStore } from 'idb-keyval';
 
 // custom stuff
 import DeckStore from "./DeckStore";
@@ -16,7 +16,7 @@ const CHANGE_EVENT = "playerStore";
 const PlayerStore = Object.assign({}, EventEmitter.prototype, {
 
   // cached state
-  store: new Store('PlayerStore', 'State'),
+  store: createStore('PlayerStore', 'State'),
 
   // in-memory state
   state: {

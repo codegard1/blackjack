@@ -4,7 +4,7 @@ import AppConstants from "../constants/AppConstants";
 
 /* idb-keyval */
 // import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-import { Store, get, set } from 'idb-keyval';
+import { createStore, get, set } from 'idb-keyval';
 
 import PlayerStore from './PlayerStore';
 
@@ -14,7 +14,7 @@ import PlayerStore from './PlayerStore';
 const CHANGE_EVENT = "activityLog";
 const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   // browser cache
-  store: new Store('ActivityLogStore', 'State'),
+  store: createStore('ActivityLogStore', 'State'),
 
   // in-memory state 
   state: {
