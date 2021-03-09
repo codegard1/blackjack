@@ -1,10 +1,10 @@
 import { EventEmitter } from "events";
 
-import { MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
+import { MessageBar, MessageBarType } from "@fluentui/react";
 
 /* idb-keyval */
 // import { Store, get, set, clear } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-import { Store, get, set, clear } from 'idb-keyval';
+import { get, set, clear, createStore } from 'idb-keyval';
 
 /* custom stuff */
 import PlayerStore from "./PlayerStore";
@@ -21,7 +21,7 @@ import ActivityLogStore from "./ActivityLogStore";
 const CHANGE_EVENT = "game";
 const GameStore = Object.assign({}, EventEmitter.prototype, {
   // Local storage
-  store: new Store('GameStore', 'State'),
+  store: createStore('GameStore', 'State'),
 
   // in-memory storage
   state: {
