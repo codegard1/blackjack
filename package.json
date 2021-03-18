@@ -10,8 +10,8 @@
   "main": "./src/index.js",
   "private": true,
   "dependencies": {
-    "@fluentui/react": "^8.1.6",
-    "@fluentui/react-icons": "^0.4.2",
+    "@fluentui/react": "^8.5.0",
+    "@fluentui/react-icons": "^1.1.110",
     "@fluentui/theme": "^2.0.2",
     "@uifabric/fluent-theme": "^7.4.20",
     "flux": "^4.0.1",
@@ -27,10 +27,10 @@
   "devDependencies": {
     "@types/react": "^17.0.3",
     "@types/react-dom": "^17.0.2",
-    "eslint": "^7.21.0",
+    "eslint": "^7.22.0",
     "eslint-config-defaults": "^9.0.0",
     "eslint-config-react-app": "^6.0.0",
-    "eslint-plugin-flowtype": "^5.3.1",
+    "eslint-plugin-flowtype": "^5.4.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-jsx-a11y": "^6.4.1",
     "eslint-plugin-react": "^7.22.0",
