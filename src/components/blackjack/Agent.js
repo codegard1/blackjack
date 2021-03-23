@@ -18,12 +18,13 @@ class Agent extends React.Component {
   static propTypes = {
     dealerHasControl: T.bool.isRequired,
     gameStatus: T.number.isRequired,
-    handvalue: T.object.isRequired,
+    handValue: T.object.isRequired,
     playerKey: T.string.isRequired,
   }
 
   componentDidMount() {
     if (this.props.dealerHasControl) {
+      debugger;
       console.log("in agent- dealer has control");
       // Agent acts on a 500 ms interval
       const intervalID = setInterval(() => {
@@ -42,12 +43,12 @@ class Agent extends React.Component {
             (aceAsOne >= 17 && aceAsOne <= 21) ||
             (aceAsEleven >= 17 && aceAsEleven <= 21)
           ) {
-            // console.log("Agent stayed");
+            console.log("Agent stayed");
             AppActions.stay(this.props.id);
             this.setState({ lastAction: "Stay" });
           }
         } else {
-          // console.log("Clear intervalID ", intervalID);
+          console.log("Clear intervalID ", intervalID);
           clearInterval(intervalID);
         }
       }, 500);

@@ -109,7 +109,7 @@ class OptionsPanel extends BaseComponent {
               checked={false}
               onClick={AppActions.shuffle}
               ariaLabel="Shuffle Deck"
-              aria-aria-describedby="tooltip-ShuffleDeck"
+              aria-describedby="tooltip-ShuffleDeck"
             >
               Shuffle Deck
           </ActionButton>

@@ -142,6 +142,7 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
    * @todo determine what this method does
    */
   _gameStay() {
+    console.log('_gameStay()')
     if (!this._evaluateGame(2) && this.state.gameStatus !== 0) {
       this.state.dealerHasControl = true;
     }

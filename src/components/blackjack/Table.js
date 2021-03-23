@@ -214,6 +214,7 @@ export default class Table extends BaseComponent {
             playerHand={playerHand}
             playerKey={key}
             playerStats={playerStats}
+            dealerHasControl={this.state.dealerHasControl}
           />
         </Stack.Item>
       }

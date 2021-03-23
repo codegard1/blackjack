@@ -95,7 +95,7 @@ export class PlayerContainer extends BaseComponent {
               <Agent
                 dealerHasControl={this.props.dealerHasControl}
                 gameStatus={this.props.gameStatus}
-                handvalue={handValue}
+                handValue={handValue}
                 playerKey={playerKey}
               />
             </Stack.Item>
