@@ -1,7 +1,13 @@
+[![Netlify Status](https://api.netlify.com/api/v1/badges/a4a75fa0-06a5-4074-b22d-6797ea093864/deploy-status)](https://app.netlify.com/sites/codegard1-blackjack/deploys)
+
 # Chris's Blackjack
 
 ### Introduction
 This project is an attempt to build a game of blackjack from scratch, as a way to practice implementing some of the web technologies I've been using at work. 
+
+
+![image](https://user-images.githubusercontent.com/5205131/112094450-a8884400-8b71-11eb-9853-0eaba33d5b23.png)
+blob:https://christopherodegard.com/a857e006-8d5a-4c8c-9980-7a7a6ac01d41
 
 ### How to Play
 1. Clone the repo 

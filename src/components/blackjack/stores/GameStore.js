@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 
-import { MessageBar, MessageBarType } from "@fluentui/react";
+import { MessageBarType } from "@fluentui/react";
 
 /* idb-keyval */
 // import { Store, get, set, clear } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
