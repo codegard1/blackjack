@@ -1,3 +1,4 @@
+import { MessageBarType } from "@fluentui/react"
 import { EventEmitter } from "events";
 
 import { MessageBar, MessageBarType } from "@fluentui/react";

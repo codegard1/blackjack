@@ -1,3 +1,5 @@
+[![Netlify Status](https://api.netlify.com/api/v1/badges/a4a75fa0-06a5-4074-b22d-6797ea093864/deploy-status)](https://app.netlify.com/sites/codegard1-blackjack/deploys)
+
 # Chris's Blackjack
 
 ### Introduction
@@ -30,3 +32,4 @@ This project is an attempt to build a game of blackjack from scratch, as a way t
 * Use CSS transitions to flip / move cards (6/13/17)
 * Convert entire project to TypeScript (9/6/2017) 
 * Show recommended moves to teach the human player good strategy (9/6/2017)
+
