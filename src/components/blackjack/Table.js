@@ -117,7 +117,7 @@ export default class Table extends BaseComponent {
     }
 
     return (
-      <Stack vertical verticalAlign="start" wrap tokens={{ childrenGap: 5, padding: 10 }} style={tableStyles}>
+      <Stack vertical verticalAlign="start" no-wrap tokens={{ childrenGap: 5, padding: 10 }} style={tableStyles}>
         {this.state.isMessageBarVisible && (
           <MessageBar
             messageBarType={this.state.messageBarDefinition.type}
