@@ -1,6 +1,18 @@
 import React from "react";
 // import * as T from "prop-types";
-import { Stack, Panel, PanelType, Toggle, CommandButton } from "@fluentui/react";
+import {
+  ActionButton,
+  Link,
+  Panel,
+  PanelType,
+  Separator,
+  Stack,
+  Toggle,
+  Text,
+  TooltipHost,
+  TooltipDelay,
+  DirectionalHint,
+} from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
@@ -31,7 +43,9 @@ class OptionsPanel extends BaseComponent {
     AppActions.hideOptionsPanel();
   }
 
+
   render() {
+    const tooltipCalloutProps = { gapSpace: 0, };
 
     return (
       <Panel
@@ -43,32 +57,84 @@ class OptionsPanel extends BaseComponent {
         isLightDismiss
       >
         <Stack vertical verticalAlign="start" tokens={{ childrenGap: 5 }}>
-          <CommandButton
-            iconProps={{ iconName: "StackIndicator" }}
-            disabled={false}
-            checked={false}
-            onClick={this.newDeal}
-          >
-            Deal
-          </CommandButton>
 
-          <CommandButton
-            iconProps={{ iconName: "Refresh" }}
-            disabled={false}
-            checked={false}
-            onClick={this.resetGame}
+          <TooltipHost
+            content="Start a new round with the selected players"
+            id="tooltip-NewDeal"
+            calloutProps={tooltipCalloutProps}
+            directionalHint={DirectionalHint.bottomLeftEdge}
+            delay={TooltipDelay.long}
           >
-            Reset Game
-          </CommandButton>
+            <ActionButton
+              iconProps={{ iconName: "StackIndicator" }}
+              disabled={false}
+              checked={false}
+              onClick={this.newDeal}
+              ariaLabel="Deal"
+              aria-describedby="tooltip-NewDeal"
+            >
+              Deal
+          </ActionButton>
+          </TooltipHost>
 
-          <CommandButton
-            iconProps={{ iconName: "Sync" }}
-            disabled={false}
-            checked={false}
-            onClick={AppActions.shuffle}
+          <TooltipHost
+            content="Reset the game with initial parameters"
+            id=""
+            calloutProps={tooltipCalloutProps}
+            directionalHint={DirectionalHint.bottomLeftEdge}
+            delay={TooltipDelay.long}
           >
-            Shuffle Deck
-          </CommandButton>
+            <ActionButton
+              iconProps={{ iconName: "Refresh" }}
+              disabled={false}
+              checked={false}
+              onClick={this.resetGame}
+              ariaLabel="Reset Game"
+              aria-describedby="tooltip-ResetGame"
+            >
+              Reset Game
+          </ActionButton>
+          </TooltipHost>
+
+          <TooltipHost
+            content="Reset the game with initial parameters"
+            id="tooltip-ShuffleDeck"
+            calloutProps={tooltipCalloutProps}
+            directionalHint={DirectionalHint.bottomLeftEdge}
+            delay={TooltipDelay.long}
+          >
+            <ActionButton
+              iconProps={{ iconName: "Sync" }}
+              disabled={false}
+              checked={false}
+              onClick={AppActions.shuffle}
+              ariaLabel="Shuffle Deck"
+              aria-describedby="tooltip-ShuffleDeck"
+            >
+              Shuffle Deck
+          </ActionButton>
+          </TooltipHost>
+
+          <TooltipHost
+            content="Clear application data stored locally in the browser"
+            id="tooltip-ClearStores"
+            calloutProps={tooltipCalloutProps}
+            directionalHint={DirectionalHint.bottomLeftEdge}
+            delay={TooltipDelay.zero}
+          >
+            <ActionButton
+              iconProps={{ iconName: "Trash" }}
+              disabled={false}
+              checked={false}
+              onClick={AppActions.clearStores}
+              ariaLabel="Clear Stores"
+              aria-describedby="tooltip-ClearStores"
+            >
+              Clear Stores
+          </ActionButton>
+          </TooltipHost>
+
+          <Separator tokens={{ chldrenGap: 12 }} />
 
           <Toggle
             checked={this.state.isDeckVisible}
@@ -129,8 +195,22 @@ class OptionsPanel extends BaseComponent {
             onChange={(e, checked) => AppActions.toggleActivityLogVisibility(checked)}
           />
 
+
+          <Separator tokens={{ chldrenGap: 12 }} />
+
+          <Stack.Item>
+            <Text variant="medium">
+              <strong>Chris's Blackjack</strong>
+            </Text>
+            <Text variant="smallPlus" nowrap block>
+              &copy;2021 <Link href="https://github.com/codegard1/blackjack">Chris Odegard</Link>
+              <br />
+              Made in Brooklyn with <Link href="https://reactjs.org/">React</Link> and <Link href="https://developer.microsoft.com/en-us/fluentui">Fluent UI</Link>.
+            </Text>
+          </Stack.Item>
+
         </Stack>
-      </Panel>
+      </Panel >
     );
   }
 }

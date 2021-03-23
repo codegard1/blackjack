@@ -1,10 +1,10 @@
 import React, { Component } from "react";
 import * as T from "prop-types";
-import { CommandBar, MessageBarType } from "@fluentui/react";
+import { CommandBar, MessageBarType, nullRender } from "@fluentui/react";
 
 /* Flux */
 import AppActions from "./actions/AppActions";
-// import { DeckStore } from "./stores/DeckStore";
+// import DeckStore from "./stores/DeckStore";
 
 class ControlPanel extends Component {
   static propTypes = {
@@ -13,24 +13,29 @@ class ControlPanel extends Component {
     hidden: T.bool.isRequired,
     minimumBet: T.number.isRequired,
     player: T.object,
-    playerIsNPC: T.bool.isRequired,
-    playerId: T.number.isRequired,
+    playerKey: T.string.isRequired,
     playerStatusFlag: T.bool.isRequired,
     selectedFlag: T.bool.isRequired,
     showDeckCallout: T.func.isRequired,
+    isDeckCalloutVisible: T.bool.isRequired,
   };
 
   render() {
+    const {
+      gameStatusFlag,
+      playerStatusFlag,
+      playerKey,
+      player
+    } = this.props;
+    const npcFlag = player.isNPC;
+
     /* selectedFlag is true when the player has selected cards in his hand */
     // let selectedFlag = this.props.selectedFlag;
     /* Flag used by put / draw menu items */
     // let selectedCards = selectedFlag
-    //   ? DeckStore.getSelected(this.props.playerId)
+    // ? DeckStore.getSelected(playerKey)
     //   : [];
     /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
-    const gameStatusFlag = this.props.gameStatusFlag;
-    const playerStatusFlag = this.props.playerStatusFlag;
-    const npcFlag = this.props.playerIsNPC;
 
     // const drawItems = [
     //   {
@@ -67,8 +72,8 @@ class ControlPanel extends Component {
     //     disabled: false,
     //     onClick: ev => {
     //       ev.preventDefault();
-    //       AppActions.putOnTopOfDeck(this.props.playerId, selectedCards);
-    //       AppActions.removeSelectedFromPlayerHand(selectedCards);
+    //       AppActions.putOnTopOfDeck(playerKey, selectedCards);
+    // AppActions.removeSelectedFromPlayerHand(playerKey,selectedCards);
     //     }
     //   },
     //   {
@@ -79,7 +84,7 @@ class ControlPanel extends Component {
     //     disabled: false,
     //     onClick: cards => {
     //       AppActions.putOnBottomOfDeck(cards);
-    //       AppActions.removeSelectedFromPlayerHand(cards);
+    //       AppActions.removeSelectedFromPlayerHand(playerKey,cards);
     //     }
     //   }
     // ];
@@ -92,7 +97,7 @@ class ControlPanel extends Component {
         disabled: gameStatusFlag || playerStatusFlag,
         onClick: ev => {
           ev.preventDefault();
-          AppActions.hit(this.props.playerId);
+          AppActions.hit(playerKey);
         }
       },
       // {
@@ -103,7 +108,7 @@ class ControlPanel extends Component {
       //   disabled: (gameStatusFlag || playerStatusFlag),
       //   onClick: (ev, target, playerIndex, amount) => {
       //     ev.preventDefault();
-      //     AppActions.bet(this.props.playerId, amount);
+      //     AppActions.bet(playerKey, amount);
       //   }
       // },
       {
@@ -112,7 +117,7 @@ class ControlPanel extends Component {
         ariaLabel: "Stay",
         iconProps: { iconName: "Forward" },
         disabled: gameStatusFlag || playerStatusFlag,
-        onClick: () => AppActions.stay(this.props.playerId),
+        onClick: () => AppActions.stay(playerKey),
       }
     ];
 
@@ -155,21 +160,12 @@ class ControlPanel extends Component {
     const farItems = npcFlag
       ? []
       : [
-        // Settings button moved to Table on 10.29.20
-        // {
-        //   key: "options",
-        //   name: "",
-        //   ariaLabel: "Options",
-        //   iconProps: { iconName: "Settings" },
-        //   disabled: npcFlag,
-        //   onClick: AppActions.showOptionsPanel
-        // }
         {
           key: "new-round",
           name: "Deal",
           ariaLabel: "Deal",
           iconProps: { iconName: "Refresh" },
-          disabled: !gameStatusFlag,
+          disabled: gameStatusFlag,
           onClick: () => {
             AppActions.newDeck();
             AppActions.newRound();
@@ -181,18 +177,15 @@ class ControlPanel extends Component {
     // const overFlowItems = selectedFlag ? [].concat(putMenu, drawMenu) : [];
     const overFlowItems = [];
 
-    return (
-      <div className="player-controlpanel">
-        {!this.props.hidden && (
-          <CommandBar
-            isSearchBoxVisible={false}
-            items={blackJackItems}
-            farItems={farItems}
-            overflowItems={overFlowItems}
-          />
-        )}
-      </div>
-    );
+    return this.props.hidden
+      ? nullRender() :
+      <CommandBar
+        isSearchBoxVisible={false}
+        items={blackJackItems}
+        farItems={farItems}
+        overflowItems={overFlowItems}
+        className="player-controlpanel"
+      />
   }
 }
 

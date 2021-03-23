@@ -1,10 +1,12 @@
 import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
-import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-// import { Store, get, set } from 'idb-keyval';
 
-import GameStore from './GameStore';
+/* idb-keyval */
+// import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
+import { createStore, get, set } from 'idb-keyval';
+
+import PlayerStore from './PlayerStore';
 
 /*  ========================================================  */
 
@@ -12,7 +14,7 @@ import GameStore from './GameStore';
 const CHANGE_EVENT = "activityLog";
 const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   // browser cache
-  store: new Store('ActivityLogStore', 'State'),
+  store: createStore('ActivityLogStore', 'State'),
 
   // in-memory state 
   state: {
@@ -61,13 +63,13 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
     console.time(`ActivityLogStore#initialize()`);
     for (let key in this.state) {
       let val = await get(key, this.store);
-      if(val !== undefined){
+      if (val !== undefined) {
         // console.log(`\tfetched ${key} :: ${val}`);
         this.state[key] = val;
       }
     }
   },
-  
+
   // save state to local storage
   async saveAll() {
     // console.log(`ActivityLogStore#saveAll`);
@@ -84,7 +86,7 @@ AppDispatcher.register(action => {
 
   switch (action.actionType) {
     case AppConstants.INITIALIZE_STORES:
-      ActivityLogStore.initialize().then(()=>{
+      ActivityLogStore.initialize().then(() => {
         console.timeEnd(`ActivityLogStore#initialize()`);
         ActivityLogStore.emitChange();
       })
@@ -109,7 +111,7 @@ AppDispatcher.register(action => {
     case AppConstants.GAME_STAY:
       ActivityLogStore.new({
         description: "stayed",
-        name: GameStore.getPlayerName(action.playerId),
+        name: PlayerStore.getPlayerName(action.playerKey),
         iconName: "HandsFree",
       });
       break;
@@ -117,7 +119,7 @@ AppDispatcher.register(action => {
     case AppConstants.GAME_BET:
       ActivityLogStore.new({
         description: `bet $${action.amount}`,
-        name: GameStore.getPlayerName(action.playerId),
+        name: PlayerStore.getPlayerName(action.playerKey),
         iconName: "Money",
       });
       break;
@@ -125,9 +127,13 @@ AppDispatcher.register(action => {
     case AppConstants.DECK_HIT:
       ActivityLogStore.new({
         description: `hit`,
-        name: GameStore.getPlayerName(action.playerId),
+        name: PlayerStore.getPlayerName(action.playerKey),
         iconName: "CheckedOutByOther12",
       });
+      break;
+
+    case AppConstants.CLEAR_STORES:
+      ActivityLogStore.clear();
       break;
 
     default:

@@ -1,42 +1,60 @@
 import React from "react";
-import { Stack, MessageBar, MessageBarType, DefaultEffects, Icon } from '@fluentui/react';
+import {
+  DefaultEffects,
+  Icon,
+  MessageBar,
+  MessageBarType,
+  Spinner,
+  SpinnerSize,
+  Stack,
+  Text
+} from '@fluentui/react';
 import { MotionAnimations } from '@fluentui/theme';
 import { initializeIcons } from "@uifabric/icons";
+
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
 import PlayerContainer from "./PlayerContainer";
 import DeckContainer from "./DeckContainer";
 import OptionsPanel from "./OptionsPanel";
-import { defaultPlayers } from "./definitions";
-import PotDisplay from "./PotDisplay";
 import ActivityLog from "./ActivityLog";
+import SplashScreen from "./SplashScreen";
 
 /* flux */
-import { GameStore } from "./stores/GameStore";
-import { DeckStore } from "./stores/DeckStore";
+import GameStore from "./stores/GameStore";
+import DeckStore from "./stores/DeckStore";
 import ControlPanelStore from "./stores/ControlPanelStore";
+import PlayerStore from "./stores/PlayerStore";
+import StatsStore from "./stores/StatsStore";
 import AppActions from "./actions/AppActions";
 
 /* Initialize Fabric Icons */
 initializeIcons();
 
+
 export default class Table extends BaseComponent {
   constructor() {
     super();
     this.state = {
-      //DeckStore
+      // Table
+      isSpinnerVisible: true,
+      isDialogVisible: true,
+      hasInitialized: false,
+      isDeckCalloutVisible: false,
+
+      // DeckStore
       deck: { cards: [] },
       drawn: [],
       selected: [],
       playerHands: [],
-      //GameStore
+
+      // GameStore
       dealerHasControl: false,
       gameStatus: 0,
       isMessageBarVisible: false,
       loser: -1,
       minimumBet: 25,
-      players: [], 
       pot: 0,
       round: 0,
       turnCount: 0,
@@ -46,6 +64,12 @@ export default class Table extends BaseComponent {
         text: "",
         isMultiLine: false
       },
+
+      // PlayerStore
+      players: {},
+      activePlayers: [],
+      currentPlayerKey: 0,
+
       // ControlPanelStore
       isCardDescVisible: false,
       isDealerHandVisible: false,
@@ -55,9 +79,21 @@ export default class Table extends BaseComponent {
       isOptionsPanelVisible: false,
       isSelectedVisible: false,
       isActivityLogVisible: false,
+
+      // StatsStore
+      playerStats: {}
     };
 
-    this._bind("onChangeDeck", "onChangeControlPanel", "onChangeGame");
+    this._bind(
+      "onChangeDeck",
+      "onChangeControlPanel",
+      "onChangeGame",
+      "onChangePlayerStore",
+      "onChangeStatsStore",
+      "onHideDialog",
+      "toggleHideDialog",
+      "renderPlayerContainers",
+    );
   }
 
   componentDidMount() {
@@ -65,13 +101,11 @@ export default class Table extends BaseComponent {
     GameStore.addChangeListener(this.onChangeGame);
     DeckStore.addChangeListener(this.onChangeDeck);
     ControlPanelStore.addChangeListener(this.onChangeControlPanel);
+    PlayerStore.addChangeListener(this.onChangePlayerStore);
+    StatsStore.addChangeListener(this.onChangeStatsStore);
 
     // Fetch local data from stores
     AppActions.initializeStores();
-
-    /* start a new game with these players */
-    const selectedPlayers = defaultPlayers.filter(v => v.title === 'Chris' || v.title === "Dealer");
-    AppActions.newGame(selectedPlayers);
   }
 
   componentWillUnmount() {
@@ -79,34 +113,121 @@ export default class Table extends BaseComponent {
     GameStore.removeChangeListener(this.onChangeGame);
     DeckStore.removeChangeListener(this.onChangeDeck);
     ControlPanelStore.removeChangeListener(this.onChangeControlPanel);
+    PlayerStore.removeChangeListener(this.onChangePlayerStore);
+    StatsStore.removeChangeListener(this.onChangeStatsStore);
   }
+
 
   /* flux helpers */
   onChangeGame() {
-    const newState = GameStore.getState();
-    newState.players.forEach(player => {
-      const newHand = DeckStore.getHand(player.id);
-      player.hand = newHand;
+    const { dealerHasControl, gameStatus, isMessageBarVisible, loser, minimumBet, pot, round, turnCount, winner, messageBarDefinition } = GameStore.getState();
+    this.setState({
+      dealerHasControl,
+      gameStatus,
+      isDeckCalloutVisible: true,
+      isMessageBarVisible,
+      loser,
+      messageBarDefinition,
+      minimumBet,
+      pot,
+      round,
+      turnCount,
+      winner,
     });
-    this.setState({ ...newState });
   }
   onChangeDeck() {
-    const newState = DeckStore.getState();
-    this.setState({ ...newState });
+    const { deck, drawn, selected, playerHands } = DeckStore.getState();
+    this.setState({ deck, drawn, selected, playerHands });
   }
   onChangeControlPanel() {
-    const newState = ControlPanelStore.getState();
-    this.setState({ ...newState });
+    const {
+      isActivityLogVisible,
+      isCardDescVisible,
+      isDealerHandVisible,
+      isDeckVisible,
+      isDrawnVisible,
+      isHandValueVisible,
+      // isOptionsPanelVisible,
+      isSelectedVisible,
+    } = ControlPanelStore.getState();
+    this.setState({
+      isActivityLogVisible,
+      isCardDescVisible,
+      isDealerHandVisible,
+      isDeckVisible,
+      isDrawnVisible,
+      isHandValueVisible,
+      // isOptionsPanelVisible,
+      isSelectedVisible,
+      hasInitialized: true
+    });
   }
+  onChangePlayerStore() {
+    const { players, activePlayers, currentPlayerKey } = PlayerStore.getState();
+    // get and set player hands; this is probably redundant
+    // activePlayers.forEach(key => {
+    // players[key].hand = DeckStore.getHand(key);
+    // });
+    this.setState({ players, activePlayers, currentPlayerKey, hasInitialized: true });
+  }
+  onChangeStatsStore() {
+    let playerStats = {};
+    for (let key in this.state.activePlayers) {
+      playerStats[key] = StatsStore.getStats(key)
+    }
+    this.setState({ playerStats });
+  }
+
+  /**
+   * Hide the splash screen
+   */
+  onHideDialog() {
+    this.setState({ isDialogVisible: false })
+  }
+
+  /**
+   * Toggle the splash screen
+   */
+  toggleHideDialog() {
+    this.setState({ isDialogVisible: !this.state.isDialogVisible })
+  }
+
+  /**
+   * render PlayerContainers for players listed in PlayerStore.state.activePLayers
+   */
+  renderPlayerContainers() {
+    if (this.state.activePlayers.length > 0) {
+      return this.state.activePlayers.map(key => {
+        const playerHand = this.state.playerHands[key] || {};
+        const playerStats = this.state.playerStats[key] || {};
+        return <Stack.Item align="stretch" verticalAlign="top" grow={2} key={`PlayerStack-${key}`}>
+          <PlayerContainer
+            gameStatus={this.state.gameStatus}
+            gameStatusFlag={this.state.gameStatusFlag === 0 || this.state.gameStatusFlag > 2}
+            isCardDescVisible={this.state.isCardDescVisible}
+            isDealerHandVisible={this.state.isDealerHandVisible}
+            isDeckCalloutVisible={this.state.isDeckCalloutVisible}
+            isHandValueVisible={this.state.isHandValueVisible}
+            key={`PlayerContainer-${key}`}
+            minimumBet={this.state.minimumBet}
+            player={this.state.players[key]}
+            playerHand={playerHand}
+            playerKey={key}
+            playerStats={playerStats}
+            dealerHasControl={this.state.dealerHasControl}
+          />
+        </Stack.Item>
+      }
+      );
+    } else {
+      return <Stack.Item>No players</Stack.Item>;
+    }
+  }
+
 
   render() {
     // slice out the selected players (Chris and Dealer) and return PlayerContainers
-    const selectedPlayersContainers = this.state.players.length > 0 ?
-      this.state.players.map(player => (
-        <Stack.Item align="stretch" verticalAlign="top" grow={2} key={`PlayerStack-${player.id}`}>
-          <PlayerContainer key={`Player-${player.id}`} playerId={player.id} />
-        </Stack.Item>
-      )) : <div />
+    const selectedPlayersContainers = this.renderPlayerContainers();
 
     // Ad-hod styles for the Table
     const tableStyles = {
@@ -117,7 +238,12 @@ export default class Table extends BaseComponent {
     }
 
     return (
-      <Stack vertical verticalAlign="start" no-wrap tokens={{ childrenGap: 5, padding: 10 }} style={tableStyles}>
+      <Stack vertical verticalAlign="start" wrap tokens={{ childrenGap: 10, padding: 10 }} style={tableStyles}>
+
+        <Stack horizontal horizontalAlign="end" disableShrink nowrap>
+          <Icon iconName="Settings" aria-label="Settings" style={{ fontSize: "24px" }} onClick={AppActions.showOptionsPanel} />
+        </Stack>
+
         {this.state.isMessageBarVisible && (
           <MessageBar
             messageBarType={this.state.messageBarDefinition.type}
@@ -128,40 +254,67 @@ export default class Table extends BaseComponent {
           </MessageBar>
         )}
 
-        <Stack horizontal horizontalAlign="space-between" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
-          <PotDisplay pot={this.state.pot} />
-          <Icon iconName="Settings" aria-label="Settings" onClick={AppActions.showOptionsPanel} />
-        </Stack>
+        {this.state.isDialogVisible &&
+          <Stack horizontal horizontalAlign="center" tokens={{ childrenGap: 10, padding: 10, }}>
+            <Spinner
+              size={SpinnerSize.large}
+              label="Wait, wait..."
+              ariaLive="assertive"
+              labelPosition="right"
+              style={{ animation: MotionAnimations.scaleDownIn }}
+            />
+            <SplashScreen
+              players={this.state.players}
+              hidden={!this.state.isDialogVisible}
+              toggleHide={this.toggleHideDialog}
+              onHide={this.onHideDialog}
+            />
+          </Stack>
+        }
 
-        <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
-          {selectedPlayersContainers}
-        </Stack>
+        {!this.state.isDialogVisible &&
+          <Stack vertical verticalAlign="space-around" tokens={{ childrenGap: 10, padding: 10, }}>
+            {!this.state.gameStatusFlag &&  <Text block nowrap variant="xLarge">Pot: ${this.state.pot}</Text>}
+            <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
+              {selectedPlayersContainers}
+            </Stack>
+          </Stack>
+        }
 
-        {this.state.isActivityLogVisible && <ActivityLog />}
-
-        <DeckContainer
-          deck={this.state.deck.cards}
-          title="Deck"
-          hidden={!this.state.isDeckVisible}
-          isSelectable={false}
-          isCardDescVisible={this.state.isCardDescVisible}
-        />
-
-        <DeckContainer
-          deck={this.state.drawn}
-          title="Drawn Cards"
-          hidden={!this.state.isDrawnVisible}
-          isSelectable={false}
-          isCardDescVisible={this.state.isCardDescVisible}
-        />
-
-        <DeckContainer
-          deck={this.state.selected}
-          title="Selected Cards"
-          hidden={!this.state.isSelectedVisible}
-          isSelectable={false}
-          isCardDescVisible={this.state.isCardDescVisible}
-        />
+        {!this.state.isDialogVisible &&
+          <Stack vertical verticalAlign="stretch" wrap tokens={{ childrenGap: 10, padding: 10 }}>
+            <Stack.Item>
+              <ActivityLog hidden={!this.state.isActivityLogVisible} />
+            </Stack.Item>
+            <Stack.Item>
+              <DeckContainer
+                deck={this.state.deck.cards}
+                title="Deck"
+                hidden={!this.state.isDeckVisible}
+                isSelectable={false}
+                isCardDescVisible={this.state.isCardDescVisible}
+              />
+            </Stack.Item>
+            <Stack.Item>
+              <DeckContainer
+                deck={this.state.drawn}
+                title="Drawn Cards"
+                hidden={!this.state.isDrawnVisible}
+                isSelectable={false}
+                isCardDescVisible={this.state.isCardDescVisible}
+              />
+            </Stack.Item>
+            <Stack.Item>
+              <DeckContainer
+                deck={this.state.selected}
+                title="Selected Cards"
+                hidden={!this.state.isSelectedVisible}
+                isSelectable={false}
+                isCardDescVisible={this.state.isCardDescVisible}
+              />
+            </Stack.Item>
+          </Stack>
+        }
 
         <OptionsPanel />
 

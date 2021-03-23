@@ -5,15 +5,15 @@ import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
 /* idb-keyval */
-import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-// import { Store, get, set } from 'idb-keyval';
+// import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
+import { createStore, get, set } from 'idb-keyval';
 
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "playerstats";
 const StatsStore = Object.assign({}, EventEmitter.prototype, {
 
   // IDB Store holds state
-  store: new Store('StatsStore', 'State'),
+  store: createStore('StatsStore', 'State'),
 
   // default value of stats for each player
   defaultStats: {
@@ -36,7 +36,7 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
 
   // return stats for the given player
-  getStats(playerId) { return get(playerId, this.store) },
+  async getStats(playerKey) { if (playerKey) return get(playerKey, this.store) },
 
   // return the win/loss ratio as a string
   calculateWinLossRatio(gamesWon, gamesLost) {
@@ -47,8 +47,8 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
   },
 
   // update stats for a given player
-  async update(playerId, statsFrame) {
-    let stats = await this.getStats(playerId);
+  async update(playerKey, statsFrame) {
+    let stats = await this.getStats(playerKey);
     if (stats) {
       for (let key in statsFrame) {
         /* add the value of stasFrame[key] to the corresponding key in statsstore */
@@ -59,25 +59,24 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
       /* recalculate win/loss ratio */
       stats.winLossRatio = this.calculateWinLossRatio(stats.numberOfGamesWon, stats.numberOfGamesLost);
       // save the new value
-      await set(playerId, stats, this.store);
-      await set(playerId, stats, this.store2);
-      
-      console.log(`Updated stats for player #${playerId}`);
+      await set(playerKey, stats, this.store);
+
+      console.log(`Updated stats for player #${playerKey}`);
       this.emitChange();
     }
   },
 
-  // start tracking a new player
-  async new(playerId) {
+  /**
+   * Start tracking a new player, or get an existing player's stats from IDB
+   * @param {string} playerKey 
+   */
+  async new(playerKey) {
     // get saved data from IDB
-    const stats = await this.getStats(playerId);
+    const stats = await get(playerKey, this.store)
     // if saved data does not exist, create a new entry with defaults
-    if (stats) {
-      // console.log(`loaded saved stats for player #${playerId}`);
-    } else {
-      await set(playerId, this.defaultStats, this.store);
+    if (!stats) {
+      await set(playerKey, this.defaultStats, this.store);
     }
-    this.emitChange();
   },
 });
 
@@ -85,12 +84,18 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
 AppDispatcher.register(action => {
 
   switch (action.actionType) {
-    case AppConstants.STATS_NEW:
-      StatsStore.new(action.playerId);
+    case AppConstants.INITIALIZE_STORES:
+      // console.log(`placeholder for initialize_stores`)
+      break;
+
+    case AppConstants.GLOBAL_NEWPLAYER:
+      StatsStore.new(action.key).then(() => StatsStore.emitChange());
       break;
 
     // redundant because GameStore calls StatsStore.update() directly
     case AppConstants.STATS_UPDATE:
+      StatsStore.update(action.key, action.statsFrame);
+      StatsStore.emitChange();
       break;
 
     default:
