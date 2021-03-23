@@ -5,6 +5,10 @@
 ### Introduction
 This project is an attempt to build a game of blackjack from scratch, as a way to practice implementing some of the web technologies I've been using at work. 
 
+
+![image](https://user-images.githubusercontent.com/5205131/112094450-a8884400-8b71-11eb-9853-0eaba33d5b23.png)
+blob:https://christopherodegard.com/a857e006-8d5a-4c8c-9980-7a7a6ac01d41
+
 ### How to Play
 1. Clone the repo 
 2. `cd` into the repo directory
@@ -32,4 +36,3 @@ This project is an attempt to build a game of blackjack from scratch, as a way t
 * Use CSS transitions to flip / move cards (6/13/17)
 * Convert entire project to TypeScript (9/6/2017) 
 * Show recommended moves to teach the human player good strategy (9/6/2017)
-
