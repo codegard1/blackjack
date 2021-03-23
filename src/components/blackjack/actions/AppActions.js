@@ -167,9 +167,7 @@ const AppActions = {
    * @param {number} statusCode current gameStatus code
    */
   evaluateGame(statusCode) {
-    // AppDispatcher.dispatch({actionType: AppConstants.GLOBAL_EVALUATEGAME});
-
-
+    AppDispatcher.dispatch({ actionType: AppConstants.GLOBAL_EVALUATEGAME, statusCode });
   },
   endGame() {
     AppDispatcher.dispatch({ actionType: AppConstants.GLOBAL_ENDGAME });
