@@ -19,7 +19,6 @@ blob:https://christopherodegard.com/a857e006-8d5a-4c8c-9980-7a7a6ac01d41
 #### Technologies Used
 * [React](https://facebook.github.io/react/)
 * [Office UI Fabric](https://dev.office.com/fabric)@2.34
-* [Masonry](https://masonry.desandro.com/) 
 * [node-shuffle](https://github.com/codegard1/node-shuffle) (forked)
 
 #### Project Status as of 10/27/2017

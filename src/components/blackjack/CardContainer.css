@@ -3,8 +3,8 @@ div.card {
     background-color: ghostwhite;
     box-sizing: content-box;
     display: flex;
-    height: 100px;
-    margin: 2px;
+    height: 100px;  
+    /* margin: 2px; */
     overflow: hidden;
     padding: 0.35em;
     width: 65px;

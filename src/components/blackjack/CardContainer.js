@@ -4,6 +4,19 @@ import * as T from "prop-types";
 import BaseComponent from "../BaseComponent";
 import "./CardContainer.css";
 
+/* fluent ui */
+import {
+  ActionButton,
+  Link,
+  Separator,
+  Stack,
+  Icon,
+  Text,
+  TooltipHost,
+  TooltipDelay,
+  DirectionalHint,
+} from "@fluentui/react";
+
 class CardContainer extends BaseComponent {
   constructor(props) {
     super(props);
@@ -95,25 +108,25 @@ class CardContainer extends BaseComponent {
     cardClass += this.props.isDescVisible ? " descripted" : " nondescript";
 
     return (
-      <div
-        className={cardClass}
-        onClick={this.props.isSelectable ? this._toggleSelect : undefined}
-      >
-        <p
-          className="ms-font-xl card-title top"
-          data-cardtitle={cardTitle}
-          data-cardicon={cardIcon}
-        />
-        {this.props.isDescVisible && (
-          <p className="ms-font-m card-description" data-p={description} />
-        )}
-        <p
-          className="ms-font-xl card-title bottom"
-          data-cardtitle={cardTitle}
-          data-cardicon={cardIcon}
-        />
-        {this.props.isBackFacing && <div className="card-back" />}
-      </div>
+      <Stack.Item
+        onClick={this.props.isSelectable ? this._toggleSelect : undefined}>
+        <div className={cardClass}>
+          <p
+            className="ms-font-xl card-title top"
+            data-cardtitle={cardTitle}
+            data-cardicon={cardIcon}
+          />
+          {this.props.isDescVisible && (
+            <p className="ms-font-m card-description" data-p={description} />
+          )}
+          <p
+            className="ms-font-xl card-title bottom"
+            data-cardtitle={cardTitle}
+            data-cardicon={cardIcon}
+          />
+          {this.props.isBackFacing && <div className="card-back" />}
+        </div>
+      </Stack.Item>
     );
   }
 }
