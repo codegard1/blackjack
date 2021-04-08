@@ -1,8 +1,10 @@
 import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
-import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-// import { Store, get, set } from 'idb-keyval';
+
+/* idb-keyval */
+// import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
+import { createStore, get, set } from 'idb-keyval';
 
 /*  ========================================================  */
 
@@ -10,7 +12,7 @@ import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.j
 const CHANGE_EVENT = "controlPanel";
 const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
   // browser cache
-  store: new Store('ControlPanelStore', 'State'),
+  store: createStore('ControlPanelStore', 'State'),
 
   // in-memory state 
   state: {

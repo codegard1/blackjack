@@ -1,16 +1,22 @@
 import keyMirror from "keymirror";
 
 export default keyMirror({
+  /* GLobal Actions */
+  // These constants map to actions that occur in multiple stores simultaneously
+  GLOBAL_NEWPLAYER: null,
+  GLOBAL_EVALUATEGAME: null,
+  GLOBAL_ENDGAME: null,
+
   /* Game */
   GAME_BET: null,
   GAME_DEAL: null,
   GAME_HIT: null,
-  GAME_NEWPLAYER: null,
   GAME_NEWROUND: null,
   GAME_RESET: null,
   GAME_STAY: null,
   GAME_SHOWMESSAGEBAR: null,
   GAME_HIDEMESSAGEBAR: null,
+
 
   /* Deck */
   DECK_CLEARHANDS: null,
@@ -44,10 +50,13 @@ export default keyMirror({
   // call initialize() on stores
   INITIALIZE_STORES: null,
 
+  // call clear() on stores
+  CLEAR_STORES: null,
+
   /* StatsStore */
-  STATS_NEW: null,
   STATS_UPDATE: null,
 
   /* ActivityLogStore */
   ACTIVITYLOG_NEW: null,
-});
+
+});     

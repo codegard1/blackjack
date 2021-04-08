@@ -12,140 +12,35 @@ import Agent from "./Agent";
 import "./PlayerContainer.css";
 
 /* flux */
-import { GameStore } from "./stores/GameStore";
-import { DeckStore } from "./stores/DeckStore";
-import StatsStore from "./stores/StatsStore";
-import ControlPanelStore from "./stores/ControlPanelStore";
+import DeckStore from "./stores/DeckStore";
 
 export class PlayerContainer extends BaseComponent {
   constructor(props) {
     super(props);
     this.state = {
-      dealerHasControl: false,
-      deck: [],
-      gameStatus: 0,
-      gameStatusFlag: true,
-      handValue: { aceAsEleven: 0, aceAsOne: 0 },
-      id: this.props.playerId,
-      isCardDescVisible: false,
-      isDealerHandVisible: true,
-      isDeckCalloutVisible: false,
-      isHandValueVisible: true,
-      isNPC: false,
       isStatusCalloutVisible: false,
-      minimumBet: 0,
-      player: { empty: true },
-      playerStatusFlag: true,
-      selectedFlag: false,
-      stats: {
-        numberOfGamesLost: 0,
-        numberOfGamesPlayed: 0,
-        numberOfGamesWon: 0,
-        numberOfHandsPlayer: 0,
-        numberOfTimesBlackjack: 0,
-        numberOfTimesBusted: 0,
-        winLossRatio: "1.000"
-      },
-      title: "",
-      turnCount: 0
+      isDeckCalloutVisible: this.props.isDeckCalloutVisible,
     };
 
     this._bind(
       "_hideDeckCallout",
       "_showDeckCallout",
-      "onChangeControlPanel",
-      "onChangeDeck",
-      "onChangeGame",
-      "onChangeStats"
     );
   }
+
   static propTypes = {
-    playerId: T.number.isRequired
+    gameStatus: T.number.isRequired,
+    gameStatusFlag: T.bool.isRequired,
+    isCardDescVisible: T.bool.isRequired,
+    isDealerHandVisible: T.bool.isRequired,
+    isDeckCalloutVisible: T.bool.isRequired,
+    isHandValueVisible: T.bool.isRequired,
+    player: T.object.isRequired,
+    playerHand: T.object,
+    playerKey: T.string.isRequired,
+    playerStats: T.object.isRequired,
+    minimumBet: T.number.isRequired,
   };
-
-  componentDidMount() {
-    /* callback when a change emits from GameStore*/
-    ControlPanelStore.addChangeListener(this.onChangeControlPanel);
-    DeckStore.addChangeListener(this.onChangeDeck);
-    GameStore.addChangeListener(this.onChangeGame);
-    StatsStore.addChangeListener(this.onChangeStats);
-
-    // force initial update, in case saved data was loaded from IDB
-    this.onChangeGame();
-    this.onChangeControlPanel();
-    // this.onChangeStats();
-  }
-
-  componentWillUnmount() {
-    /* remove change listeners */
-    ControlPanelStore.removeChangeListener(this.onChangeControlPanel);
-    DeckStore.removeChangeListener(this.onChangeDeck);
-    GameStore.removeChangeListener(this.onChangeGame);
-    StatsStore.removeChangeListener(this.onChangeStats);
-  }
-
-  /**
-   * flux helpers
-   */
-
-  /* what to do when the game state changes */
-  onChangeGame() {
-    const newState = GameStore.getState();
-    const thisPlayer = newState.players.find(
-      player => player.id === this.state.id
-    );
-
-    /* playerStatusFlag is TRUE when the player cannot play. */
-    const playerStatusFlag =
-      thisPlayer.isBusted ||
-      thisPlayer.isFinished ||
-      thisPlayer.isStaying ||
-      !thisPlayer.turn;
-    /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
-    const gameStatusFlag = newState.gameStatus === 0 || newState.gameStatus > 2;
-
-    this.setState({
-      bank: thisPlayer.bank,
-      dealerHasControl: newState.dealerHasControl,
-      gameStatus: newState.gameStatus,
-      gameStatusFlag,
-      isNPC: thisPlayer.isNPC,
-      minimumBet: newState.minimumBet,
-      player: thisPlayer,
-      playerStatusFlag,
-      title: thisPlayer.title,
-      turnCount: newState.turnCount,
-      isDeckCalloutVisible: true,
-    });
-  }
-
-  /* what to do when the deck state changes */
-  onChangeDeck() {
-    /* selectedFlag is true if getSelected() returns an array */
-    const selectedFlag = !!DeckStore.getSelected(this.state.id);
-    this.setState({
-      deck: DeckStore.getHand(this.state.id),
-      handValue: DeckStore.getHandValue(this.state.id),
-      selectedFlag
-    });
-  }
-
-  /* what to do when the game options change */
-  onChangeControlPanel() {
-    const newState = ControlPanelStore.getState();
-    this.setState({
-      isDealerHandVisible: newState.isDealerHandVisible,
-      isHandValueVisible: newState.isHandValueVisible,
-      isCardDescVisible: newState.isCardDescVisible
-    });
-  }
-
-  /* What to do when the player stats change */
-  async onChangeStats() {
-    const stats = await StatsStore.getStats(this.state.id);
-    // Don't update if getStats() returns false
-    if (stats) this.setState({ stats });
-  }
 
   _showDeckCallout() {
     this.setState({ isDeckCalloutVisible: true });
@@ -156,76 +51,98 @@ export class PlayerContainer extends BaseComponent {
   }
 
   render() {
+    const { player, playerStats, playerHand, playerKey } = this.props;
+    const handValue = playerHand.handValue;
+
     /* style PlayerContainer conditionally */
     let playerContainerClass = "PlayerContainer ";
-    if (!this.state.player.empty && this.state.player.turn) {
+    if (player.turn) {
       playerContainerClass += "selected ";
     }
     if (
-      !this.state.player.empty &&
-      this.state.player.isStaying &&
-      !this.state.player.turn
+      !player.empty &&
+      player.isStaying &&
+      !player.turn
     ) {
       playerContainerClass += "staying ";
     }
 
+    const playerStatusFlag = (player.isBusted ||
+      player.isFinished ||
+      player.isStaying ||
+      !player.turn);
+
+    /* selectedFlag is true if getSelected() returns an array */
+    const selectedFlag = !!DeckStore.getSelected(playerKey);
+
+
     return (
       <Stack verticalAlign className={playerContainerClass}>
-        <Stack horizontal horizontalAlign="space-between" style={{ padding: '5px' }} className={`${this.state.title}-titleBar playerContainerClass`}>
+
+        <Stack horizontal horizontalAlign="space-between" style={{ padding: '5px' }} className={`${player.title}-titleBar playerContainerClass`}>
           <Stack.Item align="start">
             <Text block nowrap variant="large">
-              {`${this.state.title} ($${this.state.bank || 0})  `}</Text>
+              {`${player.title} ($${player.bank || 0})  `}</Text>
           </Stack.Item>
           <Stack.Item>
-            <StatusDisplay player={this.state.player} stats={this.state.stats} />
+            <StatusDisplay player={player} stats={playerStats} />
           </Stack.Item>
         </Stack>
+
         <Stack verticalAlign horizontalAlign="space-between">
-          {this.state.isNPC &&
-            this.state.dealerHasControl && <Agent {...this.state} />}
-          {!this.state.isNPC && (
+          {player.isNPC && this.props.dealerHasControl &&
+            <Stack.Item>
+              <Agent
+                dealerHasControl={this.props.dealerHasControl}
+                gameStatus={this.props.gameStatus}
+                handValue={handValue}
+                playerKey={playerKey}
+              />
+            </Stack.Item>
+          }
+
+          {!player.isNPC &&
             <Stack.Item>
               <ControlPanel
-                gameStatus={this.state.gameStatus}
-                gameStatusFlag={this.state.gameStatusFlag}
-                hidden={false}
-                minimumBet={this.state.minimumBet}
-                player={this.state.player}
-                playerId={this.state.id}
-                playerStatusFlag={this.state.playerStatusFlag}
-                playerIsNPC={this.state.isNPC}
-                selectedFlag={this.state.selectedFlag}
+                gameStatus={this.props.gameStatus}
+                gameStatusFlag={this.props.gameStatusFlag}
+                hidden={player.isNPC}
+                minimumBet={this.props.minimumBet}
+                player={player}
+                playerKey={playerKey}
+                playerStatusFlag={playerStatusFlag}
+                playerIsNPC={player.isNPC}
+                selectedFlag={selectedFlag}
                 showDeckCallout={this._showDeckCallout}
+                isDeckCalloutVisible={this.state.isDeckCalloutVisible}
               />
             </Stack.Item>
-          )}
+          }
 
-          {this.state.deck.length > 0 && (
-            <Stack.Item className={`DeckCalloutTarget-${this.state.title}`}>
-              <DeckContainer
-                deck={this.state.deck}
-                gameStatus={this.state.gameStatus}
-                gameStatusFlag={this.gameStatusFlag}
-                handValue={this.state.handValue}
-                hidden={false}
-                isCardDescVisible={this.state.isCardDescVisible}
-                isDealerHandVisible={this.state.isDealerHandVisible}
-                isHandValueVisible={this.state.isHandValueVisible}
-                isNPC={this.state.isNPC}
-                isPlayerDeck
-                isSelectable
-                player={this.state.player}
-                title={this.state.title}
-                turnCount={this.state.turnCount}
-              />
-            </Stack.Item>
-          )}
+          <Stack.Item className={`DeckCalloutTarget-${player.title}`}>
+            <DeckContainer
+              deck={playerHand.hand}
+              gameStatus={this.props.gameStatus}
+              gameStatusFlag={this.props.gameStatusFlag}
+              handValue={handValue}
+              hidden={false}
+              isCardDescVisible={this.props.isCardDescVisible}
+              isDealerHandVisible={this.props.isDealerHandVisible}
+              isHandValueVisible={this.props.isHandValueVisible}
+              isNPC={player.isNPC}
+              isPlayerDeck
+              isSelectable
+              player={player}
+              title={player.title}
+              turnCount={this.props.turnCount}
+            />
+          </Stack.Item>
         </Stack>
         <DeckCallout
-          player={this.state.player}
+          player={player}
           isDeckCalloutVisible={this.state.isDeckCalloutVisible}
           onHideCallout={this._hideDeckCallout}
-          target={`.DeckCalloutTarget-${this.state.title}`}
+          target={`.DeckCalloutTarget-${player.title}`}
         />
       </Stack>
     );

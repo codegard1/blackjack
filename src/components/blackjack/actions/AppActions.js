@@ -1,6 +1,10 @@
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
+
+
+
+
 /**
  *  CONTROL PANEL ACTIONS
  */
@@ -43,9 +47,7 @@ const controlPanelActions = {
  */
 const deckActions = {
   newDeck() {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_NEWDECK
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_NEWDECK });
   },
   draw(num) {
     AppDispatcher.dispatch({ actionType: AppConstants.DECK_DRAW, num });
@@ -54,50 +56,28 @@ const deckActions = {
     AppDispatcher.dispatch({ actionType: AppConstants.DECK_DRAWRANDOM, num });
   },
   drawFromBottomOfDeck(num) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_DRAWFROMBOTTOMOFDECK,
-      num
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_DRAWFROMBOTTOMOFDECK, num });
   },
   shuffle() {
     AppDispatcher.dispatch({ actionType: AppConstants.DECK_SHUFFLE });
   },
   putOnTopOfDeck(cards) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_PUTONTOPOFDECK,
-      cards
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_PUTONTOPOFDECK, cards });
   },
   putOnBottomOfDeck(cards) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_PUTONBOTTOMOFDECK,
-      cards
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_PUTONBOTTOMOFDECK, cards });
   },
-  removeSelectedFromPlayerHand(playerId, cards) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_REMOVESELECTEDFROMPLAYERHAND,
-      playerId,
-      cards
-    });
+  removeSelectedFromPlayerHand(playerKey, cards) {
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_REMOVESELECTEDFROMPLAYERHAND, playerKey, cards });
   },
   removeSelectedFromDrawn(cards) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_REMOVESELECTEDFROMDRAWN,
-      cards
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_REMOVESELECTEDFROMDRAWN, cards });
   },
   select(cardAttributes) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_SELECT,
-      cardAttributes
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_SELECT, cardAttributes });
   },
   deselect(cardAttributes) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_DESELECT,
-      cardAttributes
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_DESELECT, cardAttributes });
   },
 };
 
@@ -106,81 +86,44 @@ const deckActions = {
   */
 const gameplayActions = {
   deal() {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_DEAL
-    });
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_DEAL
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_DEAL });
+    // AppDispatcher.dispatch({ actionType: AppConstants.GAME_DEAL });
   },
-  hit(playerId) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_HIT,
-      playerId
-    });
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_HIT
-    });
+  hit(playerKey) {
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_HIT, playerKey });
+    AppDispatcher.dispatch({ actionType: AppConstants.GAME_HIT });
   },
-  stay(playerId) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_STAY,
-      playerId
-    });
+  stay(playerKey) {
+    AppDispatcher.dispatch({ actionType: AppConstants.GAME_STAY, playerKey });
   },
-  bet(playerId, amount) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_BET,
-      playerId,
-      amount
-    });
+  bet(playerKey, amount) {
+    AppDispatcher.dispatch({ actionType: AppConstants.GAME_BET, playerKey, amount });
   },
+
+  /**
+   * Start a new game using a list of players
+   * @param {array} players array of players objects, including id, key, and title
+   */
   newGame(players) {
     /* create a new deck */
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_NEWDECK
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_NEWDECK });
 
     players.forEach(player => {
-      AppDispatcher.dispatch({
-        actionType: AppConstants.DECK_NEWPLAYERHAND,
-        id: player.id
-      });
-
-      /* add a new Player to the players array */
-      AppDispatcher.dispatch({
-        actionType: AppConstants.GAME_NEWPLAYER,
-        id: player.id,
-        title: player.title,
-        isNPC: player.isNPC
-      });
-
-      /* Create a Stats object for the player */
-      AppDispatcher.dispatch({
-        actionType: AppConstants.STATS_NEW,
-        playerId: player.id
-      });
+      /* add a new Player to the PlayerStore */
+      AppDispatcher.dispatch({ actionType: AppConstants.GLOBAL_NEWPLAYER, ...player });
+      AppDispatcher.dispatch({ actionType: AppConstants.DECK_NEWPLAYERHAND, ...player });
     });
+
   },
   showMessageBar(text, type) {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_SHOWMESSAGEBAR,
-      text,
-      type
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.GAME_SHOWMESSAGEBAR, text, type });
   },
   hideMessageBar() {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_HIDEMESSAGEBAR
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.GAME_HIDEMESSAGEBAR });
   },
   reset() {
-    AppDispatcher.dispatch({
-      actionType: AppConstants.DECK_CLEARHANDS
-    });
-    AppDispatcher.dispatch({
-      actionType: AppConstants.GAME_RESET
-    });
+    AppDispatcher.dispatch({ actionType: AppConstants.DECK_CLEARHANDS });
+    AppDispatcher.dispatch({ actionType: AppConstants.GAME_RESET });
   },
   newRound() {
     AppDispatcher.dispatch({ actionType: AppConstants.DECK_CLEARHANDS });
@@ -190,11 +133,10 @@ const gameplayActions = {
   },
 };
 
-const AppActions = {
-  ...controlPanelActions,
-  ...deckActions,
-  ...gameplayActions,
-
+/**
+ * STORE ACTIONS
+ */
+const storeActions = {
   // Add a new entry to the Activity Log Store
   newActivityLogItem(name, description, iconName) {
     AppDispatcher.dispatch({ actionType: AppConstants.ACTIVITYLOG_NEW, name, description, iconName });
@@ -204,6 +146,32 @@ const AppActions = {
   initializeStores() {
     AppDispatcher.dispatch({ actionType: AppConstants.INITIALIZE_STORES, });
   },
+
+
+  /**
+   * delete all entries from stores
+   */
+  clearStores() {
+    AppDispatcher.dispatch({ actionType: AppConstants.CLEAR_STORES, });
+  }
+};
+
+const AppActions = {
+  ...controlPanelActions,
+  ...deckActions,
+  ...gameplayActions,
+  ...storeActions,
+
+  /**
+   * (experimental) evaluate the game state outside of any single Store
+   * @param {number} statusCode current gameStatus code
+   */
+  evaluateGame(statusCode) {
+    AppDispatcher.dispatch({ actionType: AppConstants.GLOBAL_EVALUATEGAME, statusCode });
+  },
+  endGame() {
+    AppDispatcher.dispatch({ actionType: AppConstants.GLOBAL_ENDGAME });
+  }
 };
 
 export default AppActions;
