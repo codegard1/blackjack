@@ -2,20 +2,63 @@ import React from "react";
 import * as T from "prop-types";
 
 import BaseComponent from "../BaseComponent";
-import "./CardContainer.css";
 
 /* fluent ui */
 import {
-  ActionButton,
-  Link,
-  Separator,
+  DefaultPalette,
+  mergeStyles,
   Stack,
-  Icon,
   Text,
-  TooltipHost,
-  TooltipDelay,
-  DirectionalHint,
 } from "@fluentui/react";
+import {
+  MotionAnimations,
+} from '@fluentui/theme';
+
+
+// Fluent UI styles
+const cardStyles = {
+  root: {
+    animation: MotionAnimations.slideUpIn,
+    height: 100,
+    overflow: "hidden",
+    width: 65,
+    borderRadius: "5px",
+    padding: "2px"
+  },
+  cardTitleTop: {
+    // border: "1px solid orange",
+  },
+  cardTitleBottom: {
+    // border: "1px solid green",
+  },
+  cardDescription: {
+    textAlign: "center",
+    fontWeight: "light",
+  },
+  hearts: { color: DefaultPalette.red },
+  diamonds: { color: DefaultPalette.red },
+  spades: { color: DefaultPalette.neutralDark },
+  clubs: { color: DefaultPalette.neutralDark },
+  selectable: { cursor: "pointer" },
+  unselectable: { cursor: "default" },
+  unselected: {
+    boxShadow: "2px 2px 2px rgba(25, 25, 25, 0.2)",
+    border: "1px solid #ddd",
+  },
+  selected: {
+    border: "1px solid" + DefaultPalette.blue,
+    boxShadow: "4px 4px 10px rgba(25, 25, 25, 0.2)",
+  },
+  frontFacing: {
+    backgroundColor: DefaultPalette.neutralLighterAlt,
+  },
+  backFacing: {
+    backgroundColor: DefaultPalette.blueLight,
+    backgroundImage: "radial-gradient(closest-side, transparent 98%, rgba(10, 10, 90, .3) 99%), radial-gradient(closest-side, transparent 98%, rgba(10, 10, 90, .3) 99%)",
+    backgroundSize: "80px 80px",
+    backgroundPosition: "0 0, 40px 40px",
+  }
+};
 
 class CardContainer extends BaseComponent {
   constructor(props) {
@@ -55,7 +98,8 @@ class CardContainer extends BaseComponent {
 
   render() {
     const description = this.props.description + " of " + this.props.suit + "s";
-    let cardTitle = "";
+
+    let cardTitle;
     switch (this.props.sort) {
       case 14:
         cardTitle = "A";
@@ -78,55 +122,67 @@ class CardContainer extends BaseComponent {
         break;
     }
 
-    let cardIcon = "";
+    let cardIcon, cardTitleClass;
     switch (this.props.suit) {
       case "Heart":
-        cardIcon += "\u2665";
+        cardIcon = "\u2665";
+        cardTitleClass = cardStyles.hearts;
         break;
 
       case "Spade":
-        cardIcon += "\u2660";
+        cardIcon = "\u2660";
+        cardTitleClass = cardStyles.spades;
         break;
 
       case "Diamond":
-        cardIcon += "\u2666";
+        cardIcon = "\u2666";
+        cardTitleClass = cardStyles.diamonds;
         break;
 
       case "Club":
-        cardIcon += "\u2663";
+        cardIcon = "\u2663";
+        cardTitleClass = cardStyles.clubs;
         break;
 
       default:
         break;
     }
 
-    let cardClass = "card ";
-    cardClass += this.props.suit.toLowerCase() + "s ";
-    cardClass += this.props.isSelectable ? "selectable " : "unselectable";
-    cardClass += this.state.isSelected ? " selected " : "";
-    cardClass += this.props.isBackFacing ? " backfacing" : "";
-    cardClass += this.props.isDescVisible ? " descripted" : " nondescript";
+    let cardClass = this.props.isBackFacing ? [cardStyles.root, cardStyles.backFacing] : [cardStyles.root, cardStyles.frontFacing];
+    cardClass.push(this.props.isSelectable ? cardStyles.selectable : cardStyles.unselectable);
+    cardClass.push(this.state.isSelected ? cardStyles.selected : cardStyles.unselected);
+
 
     return (
-      <Stack.Item
-        onClick={this.props.isSelectable ? this._toggleSelect : undefined}>
-        <div className={cardClass}>
-          <p
-            className="ms-font-xl card-title top"
-            data-cardtitle={cardTitle}
-            data-cardicon={cardIcon}
-          />
-          {this.props.isDescVisible && (
-            <p className="ms-font-m card-description" data-p={description} />
-          )}
-          <p
-            className="ms-font-xl card-title bottom"
-            data-cardtitle={cardTitle}
-            data-cardicon={cardIcon}
-          />
-          {this.props.isBackFacing && <div className="card-back" />}
-        </div>
-      </Stack.Item>
+      <Stack
+        verticalAlign="space-between"
+        className={mergeStyles(cardClass)}
+        onClick={this.props.isSelectable ? this._toggleSelect : undefined}
+      >
+        {!this.props.isBackFacing &&
+          <Stack.Item align="start">
+            <Text variant="large" block nowrap className={mergeStyles(cardTitleClass, cardStyles.cardTitleTop)}>
+              {cardTitle}{cardIcon}
+            </Text>
+          </Stack.Item>
+        }
+
+        {!this.props.isBackFacing && this.props.isDescVisible &&
+          <Stack.Item>
+            <Text variant="small" block wrap className={cardStyles.cardDescription}>
+              {description}
+            </Text>
+          </Stack.Item>
+        }
+
+        {!this.props.isBackFacing &&
+          <Stack.Item align="end">
+            <Text variant="large" block nowrap className={mergeStyles(cardTitleClass, cardStyles.cardTitleTop)}>
+              {cardTitle}{cardIcon}
+            </Text>
+          </Stack.Item>
+        }
+      </Stack>
     );
   }
 }
