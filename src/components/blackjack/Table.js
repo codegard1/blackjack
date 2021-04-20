@@ -147,7 +147,7 @@ export default class Table extends BaseComponent {
       isDeckVisible,
       isDrawnVisible,
       isHandValueVisible,
-      isOptionsPanelVisible,
+      // isOptionsPanelVisible,
       isSelectedVisible,
     } = ControlPanelStore.getState();
     this.setState({
@@ -157,7 +157,7 @@ export default class Table extends BaseComponent {
       isDeckVisible,
       isDrawnVisible,
       isHandValueVisible,
-      isOptionsPanelVisible,
+      // isOptionsPanelVisible,
       isSelectedVisible,
       hasInitialized: true
     });
@@ -214,6 +214,7 @@ export default class Table extends BaseComponent {
             playerHand={playerHand}
             playerKey={key}
             playerStats={playerStats}
+            dealerHasControl={this.state.dealerHasControl}
           />
         </Stack.Item>
       }

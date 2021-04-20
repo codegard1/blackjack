@@ -1,11 +1,17 @@
 import React from "react";
 import * as T from "prop-types";
-import Masonry from "react-masonry-component";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
-import "./DeckContainer.css";
 import CardContainer from "./CardContainer";
+
+/* fluent ui */
+import {
+  Separator,
+  Stack,
+  Icon,
+  Text
+} from "@fluentui/react";
 
 /* flux */
 import AppActions from "./actions/AppActions";
@@ -44,18 +50,9 @@ class DeckContainer extends BaseComponent {
   }
 
   render() {
-    // Options passed into the Masonry component
-    const masonryOptions = {
-      transitionDuration: "0.3s",
-      itemSelector: ".card",
-      columnWidth: ".card",
-      fitWidth: true
-    };
-
     // Create CardContainers to display cards
-    let cardElements = [];
-    if (this.props.deck && this.props.deck.length > 0) {
-      cardElements = this.props.deck.map((card, index) => (
+    const cardElements = (this.props.deck && this.props.deck.length > 0) ?
+      this.props.deck.map((card, index) =>
         <CardContainer
           key={card.suit + "-" + card.description}
           {...card}
@@ -65,15 +62,14 @@ class DeckContainer extends BaseComponent {
           isBackFacing={index === 0 && !this.props.isDealerHandVisible && this.props.isNPC}
           isDescVisible={this.props.isCardDescVisible}
         />
-      ))
-    }
+      ) : [];
 
     // Set toggle icon for Deck titles
     const toggleIcon = this.state.isDeckVisible ? (
-      <i className="ms-Icon ms-Icon--ChevronUp" aria-hidden="true" />
+      <Icon iconName="ChevronUp" />
     ) : (
-        <i className="ms-Icon ms-Icon--ChevronDown" aria-hidden="true" />
-      );
+      <Icon iconName="ChevronDown" />
+    );
 
     /* Deck Title */
     const deckTitleString = `${this.props.title} (${this.props.deck &&
@@ -90,33 +86,32 @@ class DeckContainer extends BaseComponent {
       }
     }
 
+    // Style tokens for Fluent UI Stacks
+    const tokens = {
+      sectionStack: {
+        childrenGap: 10,
+      },
+      cardStack: {
+        childrenGap: 5,
+        padding: 5
+      },
+    };
+
     return this.props.hidden ? nullRender() : (
-      <div className="DeckContainer">
+      <Stack verticalAlign="stretch" tokens={tokens.sectionStack}>
         {!this.props.isPlayerDeck && (
-          <span
-            data-title={deckTitleString}
-            className="ms-font-m"
-            onClick={this._toggleDeck}
-          >
-            {toggleIcon}
-          </span>
+          <Text variant="mediumPlus" nowrap block onClick={this._toggleDeck}>
+            {deckTitleString}&nbsp;{toggleIcon}
+          </Text>
         )}
         {this.props.isPlayerDeck &&
           this.props.isHandValueVisible && (
-            <span data-title={handValueString} className="ms-font-l" />
+            <Text variant="large">{handValueString}</Text>
           )}
-        {this.state.isDeckVisible && (
-          <Masonry
-            className={"deck"}
-            elementType={"div"}
-            disableImagesLoaded={false}
-            updateOnEachImageLoad={false} // default false and works only if disableImagesLoaded is false
-            options={masonryOptions}
-          >
-            {cardElements}
-          </Masonry>
-        )}
-      </div>
+        <Stack horizontal horizontalAlign="start" tokens={tokens.cardStack} wrap>
+          {this.state.isDeckVisible && (cardElements)}
+        </Stack>
+      </Stack>
     );
   }
 }

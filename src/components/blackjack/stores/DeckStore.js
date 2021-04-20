@@ -104,9 +104,9 @@ const DeckStore = Object.assign({}, EventEmitter.prototype, {
    * @param {string} key 
    */
   getHandValue(key) {
-    return this.state.playerHands[key] ? 
-    this.evaluateHand(key) : 
-    this.defaultPlayerHandState.getHandValue;
+    return (this.state.playerHands[key]) ?
+      this.evaluateHand(key) :
+      this.defaultPlayerHandState.getHandValue;
   },
 
   /**

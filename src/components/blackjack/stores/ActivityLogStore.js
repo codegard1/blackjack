@@ -132,6 +132,10 @@ AppDispatcher.register(action => {
       });
       break;
 
+    case AppConstants.CLEAR_STORES:
+      ActivityLogStore.clear();
+      break;
+
     default:
       /* do nothing */
       break;

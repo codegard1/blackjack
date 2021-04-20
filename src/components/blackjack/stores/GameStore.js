@@ -1,7 +1,6 @@
-import { MessageBarType } from "@fluentui/react"
 import { EventEmitter } from "events";
 
-import { MessageBar, MessageBarType } from "@fluentui/react";
+import { MessageBarType } from "@fluentui/react";
 
 /* idb-keyval */
 // import { Store, get, set, clear } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
@@ -143,6 +142,7 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
    * @todo determine what this method does
    */
   _gameStay() {
+    console.log('_gameStay()')
     if (!this._evaluateGame(2) && this.state.gameStatus !== 0) {
       this.state.dealerHasControl = true;
     }
@@ -226,10 +226,10 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
           name: "Dealer",
           iconName: "Crown",
         });
-
+debugger;
         this.state.winner = players[1].key;
         this.state.loser = players[0].key;
-        PlayerStore._payout(1, pot);
+        PlayerStore._payout(players[1].key, pot);
         GameStore._endGame();
         break;
 
@@ -240,10 +240,11 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
     this.state.turnCount++;
   },
 
+  // Run after every action affecting game state, 
+  // to check for endgame conditions
   _endGameTrap() {
     let nextGameStatus;
     const players = PlayerStore.getPlayers();
-
     /* Set next game status */
     if (players[1].hasBlackJack) {
       nextGameStatus = 7; // Dealer has blackjack ; dealer wins
@@ -253,8 +254,8 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
       nextGameStatus = 4; // Dealer is busted; Player 0 wins
     } else if (players[1].isStaying) {
       if (
-        players[1].getHigherHandValue() >
-        players[0].getHigherHandValue()
+        PlayerStore._getHigherHandValue(players[1].key) >
+        PlayerStore._getHigherHandValue(players[0].key)
       ) {
         nextGameStatus = 7; // Dealer has higher hand ; dealer wins
       } else {

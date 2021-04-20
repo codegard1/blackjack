@@ -1,9 +1,0 @@
-.DeckContainer {
-  cursor: default;
-  margin-top: 1em;
-}
-
-  .DeckContainer > span::after {
-      content: attr(data-title);
-      padding-left: 0.5em;
-  }

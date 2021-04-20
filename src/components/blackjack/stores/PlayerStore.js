@@ -146,7 +146,9 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
     // Create new player record
     this.state.players[key] = Object.assign({ key, title, isNPC }, this.defaultPlayerState);
     // add new player to the active players list
-    this.state.activePlayers.push(key);
+    if (!(key in this.state.activePlayers)) {
+      this.state.activePlayers.push(key);
+    }
   },
 
   /**
@@ -182,13 +184,13 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
    * @param {string} key
    * @param  {...string} omit properties to omit when resetting
    */
-  _resetPlayer(key, ...omit) {
+  _resetPlayer(key, omit) {
     const props = ["bet", "bank", "handValue", "hasBlackjack", "isBusted", "isFinished", "isStaying", "lastAction", "status", "turn"];
     props.forEach(prop => {
-      if (!(prop in omit)) {
+      if (prop !== omit) {
         this.state.players[key][prop] = this.defaultPlayerState[prop]
       }
-    });
+    })
   },
 
   /**
