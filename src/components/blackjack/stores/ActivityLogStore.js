@@ -60,7 +60,6 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   // Load data from local storage, if available
   // ideally this should be in the constructor
   async initialize() {
-    console.time(`ActivityLogStore#initialize()`);
     for (let key in this.state) {
       let val = await get(key, this.store);
       if (val !== undefined) {
@@ -87,7 +86,6 @@ AppDispatcher.register(action => {
   switch (action.actionType) {
     case AppConstants.INITIALIZE_STORES:
       ActivityLogStore.initialize().then(() => {
-        console.timeEnd(`ActivityLogStore#initialize()`);
         ActivityLogStore.emitChange();
       })
       break;

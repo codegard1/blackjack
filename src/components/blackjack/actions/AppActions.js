@@ -1,20 +1,10 @@
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
-
-
-
-
 /**
  *  CONTROL PANEL ACTIONS
  */
 const controlPanelActions = {
-  hideOptionsPanel() {
-    AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_HIDEOPTIONSPANEL });
-  },
-  showOptionsPanel() {
-    AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_SHOWOPTIONSPANEL });
-  },
   toggleDeckVisibility(bool) {
     AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLEDECKVISIBILITY, bool });
   },
@@ -25,19 +15,15 @@ const controlPanelActions = {
     AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLESELECTEDVISIBLITY, bool });
   },
   toggleDealerHandVisibility(bool) {
-    // console.log(`toggleDealerHandVisibility( ${bool} )`);
     AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLEDEALERHANDVISIBILITY, bool });
   },
   toggleHandValueVisibility(bool) {
-    // console.log(`toggleHandValueVisibility( ${bool} )`);
     AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLEHANDVALUEVISIBILITY, bool });
   },
   toggleCardTitleVisibility(bool) {
-    // console.log(`toggleCardTitleVisibility( ${bool} )`);
     AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLECARDTITLEVISIBILITY, bool });
   },
   toggleActivityLogVisibility(bool) {
-    // console.log(`toggleActivityLogVisibility( ${bool} )`);
     AppDispatcher.dispatch({ actionType: AppConstants.CONTROLPANEL_TOGGLEACTIVITYLOGVISIBILITY, bool });
   },
 };

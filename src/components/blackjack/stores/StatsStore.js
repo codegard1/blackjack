@@ -61,7 +61,7 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
       // save the new value
       await set(playerKey, stats, this.store);
 
-      console.log(`Updated stats for player #${playerKey}`);
+      // console.log(`Updated stats for player #${playerKey}`);
       this.emitChange();
     }
   },
