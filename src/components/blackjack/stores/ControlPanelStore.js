@@ -16,14 +16,13 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
 
   // in-memory state 
   state: {
+    isActivityLogVisible: false,
     isCardDescVisible: false,
     isDealerHandVisible: false,
     isDeckVisible: false,
     isDrawnVisible: false,
     isHandValueVisible: false,
-    isOptionsPanelVisible: false,
     isSelectedVisible: false,
-    isActivityLogVisible: false,
   },
 
   // return state to a subscriber
@@ -42,11 +41,9 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
 
   async initialize() {
-    console.time(`ControlPanelStore#initialize()`);
     for (let key in this.state) {
       let val = await get(key, this.store);
       if (val !== undefined) {
-        // console.log(`\tfetched ${key} :: ${val}`);
         this.state[key] = val;
       }
     }
@@ -54,9 +51,7 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
 
   // save state to local storage
   async saveAll() {
-    // console.log(`ControlPanelStore#saveAll`);
     for (let key in this.state) {
-      // console.log(`${key} :: ${this.state[key]}`);
       await set(key, this.state[key], this.store);
     }
   },
@@ -69,19 +64,8 @@ AppDispatcher.register(action => {
   switch (action.actionType) {
     case AppConstants.INITIALIZE_STORES:
       ControlPanelStore.initialize().then(() => {
-        console.timeEnd(`ControlPanelStore#initialize()`);
         ControlPanelStore.emitChange();
       });
-      break;
-
-    case AppConstants.CONTROLPANEL_HIDEOPTIONSPANEL:
-      ControlPanelStore.state.isOptionsPanelVisible = false;
-      ControlPanelStore.emitChange();
-      break;
-
-    case AppConstants.CONTROLPANEL_SHOWOPTIONSPANEL:
-      ControlPanelStore.state.isOptionsPanelVisible = true;
-      ControlPanelStore.emitChange();
       break;
 
     case AppConstants.CONTROLPANEL_TOGGLEDECKVISIBILITY:

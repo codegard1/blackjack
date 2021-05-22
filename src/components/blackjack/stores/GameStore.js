@@ -91,7 +91,6 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
  * Deprecated; this Store does not really need to persist state currently
  */
   async initialize() {
-    console.time(`GameStore#initialize()`);
 
     // for (let key in this.state) {
     // let val = await get(key, this.store);
@@ -299,7 +298,6 @@ AppDispatcher.register(action => {
   switch (action.actionType) {
     case AppConstants.INITIALIZE_STORES:
       GameStore.initialize().then(() => {
-        console.timeEnd(`GameStore#initialize()`);
         GameStore.emitChange();
       });
       break;

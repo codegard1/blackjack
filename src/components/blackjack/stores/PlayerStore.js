@@ -75,7 +75,6 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
    * Load saved state from IDB, if available
    */
   async initialize() {
-    console.time(`PlayerStore#initialize()`);
     let val = await get("players", this.store);
     this.state.players = (val !== undefined) ? val : defaultPlayersObj;
   },
@@ -390,7 +389,6 @@ AppDispatcher.register(action => {
   switch (action.actionType) {
     case AppConstants.INITIALIZE_STORES:
       PlayerStore.initialize().then(() => {
-        console.timeEnd(`PlayerStore#initialize()`);
         PlayerStore.emitChange();
       });
       break;

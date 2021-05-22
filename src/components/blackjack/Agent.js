@@ -50,7 +50,6 @@ class Agent extends React.Component {
             AppActions.stay(this.props.playerKey));
           }
         } else {
-          console.log("Clear intervalID ", intervalID);
           this.setState({spinnerLabel:"Okay, that's it!"})
           clearInterval(intervalID);
         }

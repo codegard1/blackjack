@@ -34,29 +34,4 @@ export const defaultPlayersDropdownOptions = defaultPlayers.map(v => { return { 
 //   { key: 'ralph', text: 'Ralph', isNPC: false, disabled: true, isSelected: false, },
 // ];
 
-
-
 export const defaultSelectedPlayerKey = "chris";
-
-export const defaults = {
-  selectedPlayerKey: defaultSelectedPlayerKey,
-  players: defaultPlayers,
-  // default state of ControlPanelStore
-  controlPanelStore: {
-    isCardDescVisible: false,
-    isDealerHandVisible: false,
-    isDeckVisible: false,
-    isDrawnVisible: false,
-    isHandValueVisible: false,
-    isMessageBarVisible: false,
-    isOptionsPanelVisible: false,
-    isSelectedVisible: false,
-    players: defaultPlayers,
-    selectedPlayerKey: defaultSelectedPlayerKey,
-    newPlayerFieldValue: "",
-    isNewPlayerFieldEmpty: true,
-    isNewPlayerSaveButtonDisabled: false,
-  }
-}
-
-
