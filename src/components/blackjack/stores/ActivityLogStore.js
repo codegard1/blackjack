@@ -71,9 +71,7 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
 
   // save state to local storage
   async saveAll() {
-    // console.log(`ActivityLogStore#saveAll`);
     for (let key in this.state) {
-      // console.log(`${key} :: ${this.state[key]}`);
       await set(key, this.state[key], this.store);
     }
   },

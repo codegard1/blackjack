@@ -1,4 +1,5 @@
 import React from "react";
+import * as T from "prop-types";
 import {
   ActivityItem,
   DefaultEffects,
@@ -9,6 +10,7 @@ import {
   Sticky,
   StickyPositionType,
   Text,
+  nullRender
 } from '@fluentui/react';
 import { MotionAnimations } from '@fluentui/theme';
 
@@ -81,10 +83,13 @@ class ActivityLog extends BaseComponent {
     this.state = {
       activityItems: [],
       nextKey: 1,
-      hidden: this.props.hidden,
     };
 
     this._bind('onChangeLog', 'createActivityItems');
+  }
+
+  static propTypes = {
+    hidden: T.bool.isRequired
   }
 
   componentDidMount() {
@@ -154,13 +159,11 @@ class ActivityLog extends BaseComponent {
   }
 
   render() {
-    const activityItems = this.createActivityItems();
-
-    return this.state.hidden ? <div id="ActivityLogHiddenRoot" /> : (
+    return this.props.hidden ? nullRender() : (
       <div id="ActivityLogRoot" className={classNames.divRoot}>
         <Text block nowrap variant="xLarge">Activity Log</Text>
         <div className={classNames.wrapper}>
-          <ScrollablePane styles={{ root: classNames.pane }}>{activityItems}</ScrollablePane>
+          <ScrollablePane styles={{ root: classNames.pane }}>{this.createActivityItems()}</ScrollablePane>
         </div>
       </div>
     );

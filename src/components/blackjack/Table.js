@@ -141,32 +141,13 @@ export default class Table extends BaseComponent {
     this.setState({ deck, drawn, selected, playerHands });
   }
   onChangeControlPanel() {
-    const {
-      isActivityLogVisible,
-      isCardDescVisible,
-      isDealerHandVisible,
-      isDeckVisible,
-      isDrawnVisible,
-      isHandValueVisible,
-      isSelectedVisible,
-    } = ControlPanelStore.getState();
     this.setState({
-      isActivityLogVisible,
-      isCardDescVisible,
-      isDealerHandVisible,
-      isDeckVisible,
-      isDrawnVisible,
-      isHandValueVisible,
-      isSelectedVisible,
+      ...ControlPanelStore.getState(),
       hasInitialized: true
     });
   }
   onChangePlayerStore() {
     const { players, activePlayers, currentPlayerKey } = PlayerStore.getState();
-    // get and set player hands; this is probably redundant
-    // activePlayers.forEach(key => {
-    // players[key].hand = DeckStore.getHand(key);
-    // });
     this.setState({ players, activePlayers, currentPlayerKey, hasInitialized: true });
   }
   onChangeStatsStore() {
@@ -291,7 +272,11 @@ export default class Table extends BaseComponent {
         {!this.state.isDialogVisible &&
           <Stack vertical verticalAlign="stretch" wrap tokens={{ childrenGap: 10, padding: 10 }}>
             <Stack.Item>
-              <ActivityLog hidden={!this.state.isActivityLogVisible} />
+
+              <ActivityLog
+                hidden={!this.state.isActivityLogVisible}
+              />
+
             </Stack.Item>
             <Stack.Item>
               <DeckContainer
@@ -323,7 +308,7 @@ export default class Table extends BaseComponent {
           </Stack>
         }
 
-        <OptionsPanel 
+        <OptionsPanel
           isCardDescVisible={this.state.isCardDescVisible}
           isDealerHandVisible={this.state.isDealerHandVisible}
           isDeckVisible={this.state.isDeckVisible}
