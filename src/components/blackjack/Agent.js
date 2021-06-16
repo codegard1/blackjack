@@ -33,7 +33,6 @@ class Agent extends React.Component {
       const intervalID = setInterval(() => {
         AppActions.evaluateGame(this.props.gameStatus);
         const { aceAsEleven, aceAsOne } = this.props.handValue;
-        debugger;
         if (this.props.gameStatus !== 0) {
           /* when to hit */
           if (aceAsEleven <= 16 || aceAsOne <= 16) {
@@ -50,8 +49,8 @@ class Agent extends React.Component {
             AppActions.stay(this.props.playerKey));
           }
         } else {
-          this.setState({spinnerLabel:"Okay, that's it!"})
-          clearInterval(intervalID);
+          this.setState({spinnerLabel:"Okay, that's it!"},
+          clearInterval(intervalID))
         }
       }, intervalInMilliseconds);
     } else {

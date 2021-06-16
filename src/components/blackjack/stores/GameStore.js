@@ -185,6 +185,7 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
       case 1 /*   Game in progress; first play  */:
         /*   all players bet the minimum to start  */
         if (turnCount === 0) this._ante();
+        this.state.turnCount++;
         this._endGameTrap();
         break;
 
@@ -200,12 +201,12 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
         }
         break;
 
+      case 5 /*   Game Over */:
+
+        break;
+
       case 4 /*   Human Player Wins       */:
         const winningPlayerTitle = players[0].title;
-        const messageBarText = players[0].hasBlackJack
-          ? `${winningPlayerTitle} wins with Blackjack!`
-          : `${winningPlayerTitle} wins!`;
-        this.setMessageBar(messageBarText, MessageBarType.success);
         ActivityLogStore.new({
           description: "wins!",
           name: winningPlayerTitle,
@@ -219,13 +220,11 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
         break;
 
       case 7 /*   Dealer wins   */:
-        GameStore.setMessageBar(`Dealer wins!`);
         ActivityLogStore.new({
           description: "wins!",
           name: "Dealer",
           iconName: "Crown",
         });
-debugger;
         this.state.winner = players[1].key;
         this.state.loser = players[0].key;
         PlayerStore._payout(players[1].key, pot);
@@ -235,8 +234,6 @@ debugger;
       default:
         break;
     }
-
-    this.state.turnCount++;
   },
 
   // Run after every action affecting game state, 
@@ -244,6 +241,9 @@ debugger;
   _endGameTrap() {
     let nextGameStatus;
     const players = PlayerStore.getPlayers();
+
+
+
     /* Set next game status */
     if (players[1].hasBlackJack) {
       nextGameStatus = 7; // Dealer has blackjack ; dealer wins

@@ -157,6 +157,9 @@ const AppActions = {
   },
   endGame() {
     AppDispatcher.dispatch({ actionType: AppConstants.GLOBAL_ENDGAME });
+  },
+  endGameTrap(players){
+
   }
 };
 
