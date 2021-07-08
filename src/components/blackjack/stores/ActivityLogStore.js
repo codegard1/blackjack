@@ -2,8 +2,8 @@ import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
-/* idb-keyval */
-import { createStore, get, set } from 'idb-keyval';
+/* IndexedDB State Manager */
+import { State } from '../../../lib/State';
 
 import PlayerStore from './PlayerStore';
 
@@ -12,14 +12,17 @@ import PlayerStore from './PlayerStore';
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "activityLog";
 const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
-  // browser cache
-  store: createStore('ActivityLogStore', 'State'),
-
-  // in-memory state 
+  // in-memory (default) state 
   state: {
     activityItems: [],
     nextKey: 1,
   },
+
+  /* IndexedDB */
+  stateManager: new State(["ActivityLogStore"], (name, value) => {
+    console.log(`${name} was updated`);
+  }),
+
 
   // return state to a subscriber
   getState() { return this.state },
@@ -59,20 +62,12 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   // Load data from local storage, if available
   // ideally this should be in the constructor
   async initialize() {
-    for (let key in this.state) {
-      let val = await get(key, this.store);
-      if (val !== undefined) {
-        // console.log(`\tfetched ${key} :: ${val}`);
-        this.state[key] = val;
-      }
-    }
+    this.state = await this.stateManager.get("ActivityLogStore") || this.state;
   },
-
+  
   // save state to local storage
   async saveAll() {
-    for (let key in this.state) {
-      await set(key, this.state[key], this.store);
-    }
+    this.stateManager.set("ActivityLogStore", this.state);
   },
 });
 
