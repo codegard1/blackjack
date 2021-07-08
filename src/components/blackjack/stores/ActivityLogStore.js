@@ -3,7 +3,6 @@ import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
 /* idb-keyval */
-// import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
 import { createStore, get, set } from 'idb-keyval';
 
 import PlayerStore from './PlayerStore';
