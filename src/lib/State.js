@@ -4,9 +4,9 @@ import { IndexedDB } from './IndexedDB';
 
 export class State {
 
-  static dbName = 'stateDB';
+  static dbName = 'BlackJackDB';
   static dbVersion = 1;
-  static storeName = 'state';
+  static storeName = 'Stores';
   static DB = null;
   static target = new EventTarget();
 
