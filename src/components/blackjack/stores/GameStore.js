@@ -225,7 +225,7 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
           name: "Dealer",
           iconName: "Crown",
         });
-debugger;
+
         this.state.winner = players[1].key;
         this.state.loser = players[0].key;
         PlayerStore._payout(players[1].key, pot);
