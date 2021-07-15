@@ -31,7 +31,7 @@ class StatusDisplay extends BaseComponent {
     let playerInfo = [],
       playerStats = [];
 
-    for (let key in this.props.player) {
+    for (const key in this.props.player) {
       if (this.props.player.hasOwnProperty(key)) {
         playerInfo.push(
           <li key={`statusdisplay-${key}`}>{`${key}: ${this.props.player[key]
@@ -40,7 +40,7 @@ class StatusDisplay extends BaseComponent {
       }
     }
 
-    for (let key in this.props.stats) {
+    for (const key in this.props.stats) {
       if (this.props.stats.hasOwnProperty(key)) {
         playerStats.push(
           <li key={`statusdisplay-${key}`}>{`${key}: ${this.props.stats[key]

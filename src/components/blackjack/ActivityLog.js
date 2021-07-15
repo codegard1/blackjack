@@ -110,8 +110,8 @@ class ActivityLog extends BaseComponent {
 
   createActivityItems() {
     // memos for the loop 
-    let datememo = [];
-    let outputMemo = [];
+    const datememo = [];
+    const outputMemo = [];
 
     // Loop through ActivityItems
     this.state.activityItems.forEach((item, index, arr) => {

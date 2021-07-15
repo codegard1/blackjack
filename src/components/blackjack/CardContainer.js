@@ -148,7 +148,7 @@ class CardContainer extends BaseComponent {
         break;
     }
 
-    let cardClass = this.props.isBackFacing ? [cardStyles.root, cardStyles.backFacing] : [cardStyles.root, cardStyles.frontFacing];
+    const cardClass = this.props.isBackFacing ? [cardStyles.root, cardStyles.backFacing] : [cardStyles.root, cardStyles.frontFacing];
     cardClass.push(this.props.isSelectable ? cardStyles.selectable : cardStyles.unselectable);
     cardClass.push(this.state.isSelected ? cardStyles.selected : cardStyles.unselected);
 

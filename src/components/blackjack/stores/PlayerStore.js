@@ -85,7 +85,7 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
   async saveAll() {
     this.state.lastWriteTime = new Date().toISOString();
     console.log(`PlayerStore#saveAll`);
-    for (let key in this.state) {
+    for (const key in this.state) {
       // console.log(`${key} :: ${this.state[key]}`);
       await set(key, this.state[key], this.store);
     }
@@ -434,7 +434,7 @@ AppDispatcher.register(action => {
 
     case AppConstants.GLOBAL_EVALUATEGAME:
       PlayerStore._evaluatePlayers();
-      PlayerStore.emitChange();
+      // PlayerStore.emitChange();
       break;
 
     case AppConstants.GLOBAL_ENDGAME:

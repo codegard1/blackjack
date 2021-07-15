@@ -92,7 +92,7 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
  */
   async initialize() {
 
-    // for (let key in this.state) {
+    // for (const key in this.state) {
     // let val = await get(key, this.store);
     // if (val !== undefined) {
     // console.log(`\tfetched ${key} :: ${val}`);
@@ -107,7 +107,7 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
   async saveAll() {
     this.state.lastWriteTime = new Date().toISOString();
     console.log(`GameStore#saveAll`);
-    for (let key in this.state) {
+    for (const key in this.state) {
       // console.log(`${key} :: ${this.state[key]}`);
       await set(key, this.state[key], this.store);
     }

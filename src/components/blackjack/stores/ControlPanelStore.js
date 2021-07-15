@@ -40,8 +40,8 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
 
   async initialize() {
-    for (let key in this.state) {
-      let val = await get(key, this.store);
+    for (const key in this.state) {
+      const val = await get(key, this.store);
       if (val !== undefined) {
         this.state[key] = val;
       }
@@ -50,7 +50,7 @@ const ControlPanelStore = Object.assign({}, EventEmitter.prototype, {
 
   // save state to local storage
   async saveAll() {
-    for (let key in this.state) {
+    for (const key in this.state) {
       await set(key, this.state[key], this.store);
     }
   },

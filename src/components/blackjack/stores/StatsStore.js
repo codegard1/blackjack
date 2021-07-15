@@ -51,9 +51,9 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
 
   // update stats for a given player
   async update(playerKey, statsFrame) {
-    let stats = this.state[playerKey];
+    const stats = this.state[playerKey];
     if (stats) {
-      for (let key in statsFrame) {
+      for (const key in statsFrame) {
         /* add the value of stasFrame[key] to the corresponding key in statsstore */
         if (stats.hasOwnProperty(key)) stats[key] += statsFrame[key];
       }

@@ -152,7 +152,7 @@ export default class Table extends BaseComponent {
   }
   onChangeStatsStore() {
     let playerStats = {};
-    for (let key in this.state.activePlayers) {
+    for (const key in this.state.activePlayers) {
       playerStats[key] = StatsStore.getStats(key)
     }
     this.setState({ playerStats });
