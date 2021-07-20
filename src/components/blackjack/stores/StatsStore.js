@@ -9,12 +9,13 @@ import { State } from '../../../lib/State';
 
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "playerstats";
+const STORE_NAME = "StatsStore";
 const StatsStore = Object.assign({}, EventEmitter.prototype, {
   // default state
   state: {},
 
   // IndexedDB 
-  stateManager: new State(["StatsStore"], (name, value) => {
+  stateManager: new State([STORE_NAME], (name, value) => {
     console.log(`${name} was updated`);
   }),
 
@@ -76,12 +77,12 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
   // Load data from local storage, if available
   // ideally this should be in the constructor
   async initialize() {
-    this.state = await this.stateManager.get("StatsStore") || this.state;
+    this.state = await this.stateManager.get(STORE_NAME) || this.state;
   },
 
   // save state to local storage
   async saveAll() {
-    this.stateManager.set("StatsStore", this.state);
+    this.stateManager.set(STORE_NAME, this.state);
   },
 });
 

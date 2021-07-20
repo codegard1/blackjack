@@ -11,7 +11,6 @@ import PlayingCard from "./PlayingCard";
 const CHANGE_EVENT = "deck";
 const DeckStore = Object.assign({}, EventEmitter.prototype, {
 
-  // in-memory state
   state: {
     deck: [],
     drawn: [],

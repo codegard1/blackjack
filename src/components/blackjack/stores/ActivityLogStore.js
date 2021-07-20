@@ -11,6 +11,7 @@ import PlayerStore from './PlayerStore';
 
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "activityLog";
+const STORE_NAME = "ActivityLogStore";
 const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   // in-memory (default) state 
   state: {
@@ -19,7 +20,7 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   },
 
   /* IndexedDB */
-  stateManager: new State(["ActivityLogStore"], (name, value) => {
+  stateManager: new State([STORE_NAME], (name, value) => {
     console.log(`${name} was updated`);
   }),
 
@@ -62,12 +63,12 @@ const ActivityLogStore = Object.assign({}, EventEmitter.prototype, {
   // Load data from local storage, if available
   // ideally this should be in the constructor
   async initialize() {
-    this.state = await this.stateManager.get("ActivityLogStore") || this.state;
+    this.state = await this.stateManager.get(STORE_NAME) || this.state;
   },
   
   // save state to local storage
   async saveAll() {
-    this.stateManager.set("ActivityLogStore", this.state);
+    this.stateManager.set(STORE_NAME, this.state);
   },
 });
 
