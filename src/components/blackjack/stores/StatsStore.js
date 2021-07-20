@@ -4,16 +4,20 @@ import { EventEmitter } from "events";
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
-/* idb-keyval */
-// import { Store, get, set } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-import { createStore, get, set } from 'idb-keyval';
+/* IndexedDB State Manager */
+import { State } from '../../../lib/State';
 
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "playerstats";
+const STORE_NAME = "StatsStore";
 const StatsStore = Object.assign({}, EventEmitter.prototype, {
+  // default state
+  state: {},
 
-  // IDB Store holds state
-  store: createStore('StatsStore', 'State'),
+  // IndexedDB 
+  stateManager: new State([STORE_NAME], (name, value) => {
+    console.log(`${name} was updated`);
+  }),
 
   // default value of stats for each player
   defaultStats: {
@@ -27,7 +31,7 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
   },
 
   // tell subscribers that a change has occurred in state
-  emitChange() { this.emit(CHANGE_EVENT); },
+  emitChange() { this.emit(CHANGE_EVENT); this.saveAll(); },
 
   // subscribe to this store
   addChangeListener(callback) { this.on(CHANGE_EVENT, callback) },
@@ -36,7 +40,7 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
   removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
 
   // return stats for the given player
-  async getStats(playerKey) { if (playerKey) return get(playerKey, this.store) },
+  async getStats(playerKey) { return this.state[playerKey] || false },
 
   // return the win/loss ratio as a string
   calculateWinLossRatio(gamesWon, gamesLost) {
@@ -48,21 +52,14 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
 
   // update stats for a given player
   async update(playerKey, statsFrame) {
-    let stats = await this.getStats(playerKey);
+    const stats = this.state[playerKey];
     if (stats) {
-      for (let key in statsFrame) {
+      for (const key in statsFrame) {
         /* add the value of stasFrame[key] to the corresponding key in statsstore */
-        if (stats.hasOwnProperty(key)) {
-          stats[key] += statsFrame[key];
-        }
+        if (stats.hasOwnProperty(key)) stats[key] += statsFrame[key];
       }
       /* recalculate win/loss ratio */
       stats.winLossRatio = this.calculateWinLossRatio(stats.numberOfGamesWon, stats.numberOfGamesLost);
-      // save the new value
-      await set(playerKey, stats, this.store);
-
-      // console.log(`Updated stats for player #${playerKey}`);
-      this.emitChange();
     }
   },
 
@@ -70,13 +67,22 @@ const StatsStore = Object.assign({}, EventEmitter.prototype, {
    * Start tracking a new player, or get an existing player's stats from IDB
    * @param {string} playerKey 
    */
-  async new(playerKey) {
-    // get saved data from IDB
-    const stats = await get(playerKey, this.store)
+  new(playerKey) {
     // if saved data does not exist, create a new entry with defaults
-    if (!stats) {
-      await set(playerKey, this.defaultStats, this.store);
+    if (!this.state.hasOwnProperty(playerKey)) {
+      this.state[playerKey] = this.defaultStats;
     }
+  },
+
+  // Load data from local storage, if available
+  // ideally this should be in the constructor
+  async initialize() {
+    this.state = await this.stateManager.get(STORE_NAME) || this.state;
+  },
+
+  // save state to local storage
+  async saveAll() {
+    this.stateManager.set(STORE_NAME, this.state);
   },
 });
 
@@ -85,17 +91,21 @@ AppDispatcher.register(action => {
 
   switch (action.actionType) {
     case AppConstants.INITIALIZE_STORES:
-      // console.log(`placeholder for initialize_stores`)
+      StatsStore.initialize().then(() => {
+        StatsStore.emitChange();
+      })
       break;
 
     case AppConstants.GLOBAL_NEWPLAYER:
-      StatsStore.new(action.key).then(() => StatsStore.emitChange());
+      StatsStore.new(action.key);
+      StatsStore.emitChange();
       break;
 
     // redundant because GameStore calls StatsStore.update() directly
     case AppConstants.STATS_UPDATE:
-      StatsStore.update(action.key, action.statsFrame);
-      StatsStore.emitChange();
+      StatsStore.update(action.key, action.statsFrame).then(() => {
+        StatsStore.emitChange();
+      });
       break;
 
     default:

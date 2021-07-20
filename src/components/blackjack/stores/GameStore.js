@@ -2,9 +2,8 @@ import { EventEmitter } from "events";
 
 import { MessageBarType } from "@fluentui/react";
 
-/* idb-keyval */
-// import { Store, get, set, clear } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-import { get, set, clear, createStore } from 'idb-keyval';
+/* IndexedDB State Manager */
+import { State } from '../../../lib/State';
 
 /* custom stuff */
 import PlayerStore from "./PlayerStore";
@@ -16,12 +15,14 @@ import StatsStore from "./StatsStore";
 import ActivityLogStore from "./ActivityLogStore";
 
 
-
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "game";
+const STORE_NAME = "GameStore"
 const GameStore = Object.assign({}, EventEmitter.prototype, {
-  // Local storage
-  store: createStore('GameStore', 'State'),
+    // IndexedDB 
+    stateManager: new State([STORE_NAME], (name, value) => {
+      console.log(`${name} was updated`);
+    }),
 
   // in-memory storage
   state: {
@@ -45,7 +46,7 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
   /**
    * notify subscribers of a change in state
    */
-  emitChange() { this.emit(CHANGE_EVENT); console.log('GameStore#emitChange()'); },
+  emitChange() { this.emit(CHANGE_EVENT); this.saveAll(); },
 
   /**
    * subscribe to this Store
@@ -90,33 +91,20 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
  * Load saved state from IDB, if available
  * Deprecated; this Store does not really need to persist state currently
  */
-  async initialize() {
-
-    // for (let key in this.state) {
-    // let val = await get(key, this.store);
-    // if (val !== undefined) {
-    // console.log(`\tfetched ${key} :: ${val}`);
-    // this.state[key] = val;
-    // }
-    // }
-  },
+  async initialize() {},
 
   /**
   * save state to local storage
   */
   async saveAll() {
     this.state.lastWriteTime = new Date().toISOString();
-    console.log(`GameStore#saveAll`);
-    for (let key in this.state) {
-      // console.log(`${key} :: ${this.state[key]}`);
-      await set(key, this.state[key], this.store);
-    }
+    this.stateManager.set(STORE_NAME, this.state);
   },
 
   /**
    * clear the IDB Store for this Store
    */
-  async clearStore() { await clear(this.store) },
+  clearStore() { this._gameReset() },
 
   /**
    * reset game state props

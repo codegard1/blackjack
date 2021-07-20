@@ -11,7 +11,6 @@ import PlayingCard from "./PlayingCard";
 const CHANGE_EVENT = "deck";
 const DeckStore = Object.assign({}, EventEmitter.prototype, {
 
-  // in-memory state
   state: {
     deck: [],
     drawn: [],
@@ -242,7 +241,7 @@ const DeckStore = Object.assign({}, EventEmitter.prototype, {
    * @returns {void}
    */
   clearHands() {
-    for (let key in this.state.playerHands) { this.newPlayerHand(key) }
+    for (const key in this.state.playerHands) { this.newPlayerHand(key) }
   },
 
   /**
@@ -266,7 +265,7 @@ const DeckStore = Object.assign({}, EventEmitter.prototype, {
    * @returns {void}
    */
   deal() {
-    for (let key in this.state.playerHands) {
+    for (const key in this.state.playerHands) {
       this.state.playerHands[key].hand = this.draw(2);
       this.evaluateHand(key);
     }
