@@ -16,7 +16,6 @@
     "@uifabric/fluent-theme": "^7.4.20",
     "flux": "^4.0.1",
     "fs": "0.0.1-security",
-    "immutable": "^4.0.0-rc.12",
     "keymirror": "^0.1.1",
     "prop-types": "^15.7.2",
     "react": "^17.0.1",
