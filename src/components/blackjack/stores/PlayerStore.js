@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 
-/* flux */
+
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
@@ -9,6 +9,7 @@ import { State } from '../../../lib/State';
 
 // custom stuff
 import DeckStore from "./DeckStore";
+import StatsStore from "./StatsStore";
 import { defaultPlayersObj, } from "../definitions";
 
 /* Data, Getter method, Event Notifier */
@@ -159,25 +160,25 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
     });
 
     let anyPlayerisBusted, allPlayersStaying;
-    for (let key in players) {
+    for (let key in this.state.players) {
       if (key in this.state.activePlayers) {
-        anyPlayerisBusted = players[key].isBusted;
-        allPlayersStaying = players[key].isStaying;
+        anyPlayerisBusted = this.state.players[key].isBusted;
+        allPlayersStaying = this.state.players[key].isStaying;
       }
     }
 
     const nextGameStatus = anyPlayerisBusted || allPlayersStaying ? 5 : 1;
 
     if (nextGameStatus > 2) {
-      for (let key in players) {
+      for (let key in this.state.players) {
         if (key in this.state.activePlayers) {
 
           StatsStore.update(key, {
             numberOfGamesLost: (key === this.state.loser ? 1 : 0),
             numberOfGamesPlayed: 1,
             numberOfGamesWon: (key === this.state.winner ? 1 : 0),
-            numberOfTimesBlackjack: (players[key].hasBlackJack ? 1 : 0),
-            numberOfTimesBusted: (players[key].isBusted ? 1 : 0),
+            numberOfTimesBlackjack: (this.state.players[key].hasBlackJack ? 1 : 0),
+            numberOfTimesBusted: (this.state.players[key].isBusted ? 1 : 0),
             totalWinnings: (key === this.state.winner ? this.state.pot : 0)
           });
 
