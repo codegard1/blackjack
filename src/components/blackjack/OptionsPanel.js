@@ -1,46 +1,55 @@
 import React from "react";
-// import * as T from "prop-types";
+import * as T from "prop-types";
+
 import {
   ActionButton,
+  DirectionalHint,
   Link,
   Panel,
   PanelType,
   Separator,
   Stack,
-  Toggle,
   Text,
-  TooltipHost,
+  Toggle,
   TooltipDelay,
-  DirectionalHint,
+  TooltipHost,
 } from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
 
-/* Flux */
+
 import AppActions from "./actions/AppActions";
-import ControlPanelStore from "./stores/ControlPanelStore";
 
 class OptionsPanel extends BaseComponent {
   constructor(props) {
     super(props);
 
-    // get default state from the Store
-    this.state = ControlPanelStore.getState();
-
     this._bind("newDeal", "resetGame");
+  }
+
+  static propTypes = {
+    isActivityLogVisible: T.bool.isRequired,
+    isCardDescVisible: T.bool.isRequired,
+    isDealerHandVisible: T.bool.isRequired,
+    isDeckVisible: T.bool.isRequired,
+    isDrawnVisible: T.bool.isRequired,
+    isHandValueVisible: T.bool.isRequired,
+    isOptionsPanelVisible: T.bool.isRequired,
+    isSelectedVisible: T.bool.isRequired,
+    toggleOptionsPanel: T.func.isRequired
   }
 
   resetGame() {
     AppActions.reset();
     AppActions.newDeck();
     AppActions.showMessageBar("Game Reset");
-    AppActions.hideOptionsPanel();
+    this.props.toggleOptionsPanel();
   }
 
   newDeal() {
     AppActions.deal();
-    AppActions.hideOptionsPanel();
+    this.props.toggleOptionsPanel();
   }
 
 
@@ -50,8 +59,8 @@ class OptionsPanel extends BaseComponent {
     return (
       <Panel
         id="OptionsPanel"
-        isOpen={this.state.isOptionsPanelVisible}
-        onDismiss={AppActions.hideOptionsPanel}
+        isOpen={this.props.isOptionsPanelVisible}
+        onDismiss={this.props.toggleOptionsPanel}
         type={PanelType.smallFixedFar}
         headerText="Options"
         isLightDismiss
@@ -137,7 +146,7 @@ class OptionsPanel extends BaseComponent {
           <Separator tokens={{ chldrenGap: 12 }} />
 
           <Toggle
-            checked={this.state.isDeckVisible}
+            checked={this.props.isDeckVisible}
             label="Show Deck"
             ariaLabel="The deck is visible. Press to hide it."
             onText="On"
@@ -146,7 +155,7 @@ class OptionsPanel extends BaseComponent {
             value
           />
           <Toggle
-            checked={this.state.isDrawnVisible}
+            checked={this.props.isDrawnVisible}
             label="Show Drawn"
             ariaLabel="The Drawn cards are visible. Press to hide it."
             onText="On"
@@ -154,7 +163,7 @@ class OptionsPanel extends BaseComponent {
             onChange={(e, checked) => AppActions.toggleDrawnVisibility(checked)}
           />
           <Toggle
-            checked={this.state.isSelectedVisible}
+            checked={this.props.isSelectedVisible}
             label="Show Selected"
             ariaLabel="The Selected cards are visible. Press to hide it."
             onText="On"
@@ -162,7 +171,7 @@ class OptionsPanel extends BaseComponent {
             onChange={(e, checked) => AppActions.toggleSelectedVisibility(checked)}
           />
           <Toggle
-            checked={this.state.isDealerHandVisible}
+            checked={this.props.isDealerHandVisible}
             label="Show Dealer Hand"
             ariaLabel="The dealer's hand is visible. Press to hide it."
             onText="On"
@@ -171,7 +180,7 @@ class OptionsPanel extends BaseComponent {
               AppActions.toggleDealerHandVisibility(checked)}
           />
           <Toggle
-            checked={this.state.isHandValueVisible}
+            checked={this.props.isHandValueVisible}
             label="Show Hand Value"
             ariaLabel="The hand value display is visible. Press to hide it."
             onText="On"
@@ -179,7 +188,7 @@ class OptionsPanel extends BaseComponent {
             onChange={(e, checked) => AppActions.toggleHandValueVisibility(checked)}
           />
           <Toggle
-            checked={this.state.isCardDescVisible}
+            checked={this.props.isCardDescVisible}
             label="Show Card Titles"
             ariaLabel="The card titles are visible. Press to hide them."
             onText="On"
@@ -187,7 +196,7 @@ class OptionsPanel extends BaseComponent {
             onChange={(e, checked) => AppActions.toggleCardTitleVisibility(checked)}
           />
           <Toggle
-            checked={this.state.isActivityLogVisible}
+            checked={this.props.isActivityLogVisible}
             label="Show Activity Log"
             ariaLabel="The Activity Log visible. Press to hide it."
             onText="On"
@@ -210,7 +219,7 @@ class OptionsPanel extends BaseComponent {
           </Stack.Item>
 
         </Stack>
-      </Panel >
+      </Panel>
     );
   }
 }

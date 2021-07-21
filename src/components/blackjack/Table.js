@@ -21,7 +21,7 @@ import OptionsPanel from "./OptionsPanel";
 import ActivityLog from "./ActivityLog";
 import SplashScreen from "./SplashScreen";
 
-/* flux */
+
 import GameStore from "./stores/GameStore";
 import DeckStore from "./stores/DeckStore";
 import ControlPanelStore from "./stores/ControlPanelStore";
@@ -42,6 +42,7 @@ export default class Table extends BaseComponent {
       isDialogVisible: true,
       hasInitialized: false,
       isDeckCalloutVisible: false,
+      isOptionsPanelVisible: false,
 
       // DeckStore
       deck: { cards: [] },
@@ -76,7 +77,6 @@ export default class Table extends BaseComponent {
       isDeckVisible: false,
       isDrawnVisible: false,
       isHandValueVisible: false,
-      isOptionsPanelVisible: false,
       isSelectedVisible: false,
       isActivityLogVisible: false,
 
@@ -93,6 +93,7 @@ export default class Table extends BaseComponent {
       "onHideDialog",
       "toggleHideDialog",
       "renderPlayerContainers",
+      "toggleOptionsPanel"
     );
   }
 
@@ -118,7 +119,6 @@ export default class Table extends BaseComponent {
   }
 
 
-  /* flux helpers */
   onChangeGame() {
     const { dealerHasControl, gameStatus, isMessageBarVisible, loser, minimumBet, pot, round, turnCount, winner, messageBarDefinition } = GameStore.getState();
     this.setState({
@@ -140,39 +140,18 @@ export default class Table extends BaseComponent {
     this.setState({ deck, drawn, selected, playerHands });
   }
   onChangeControlPanel() {
-    const {
-      isActivityLogVisible,
-      isCardDescVisible,
-      isDealerHandVisible,
-      isDeckVisible,
-      isDrawnVisible,
-      isHandValueVisible,
-      // isOptionsPanelVisible,
-      isSelectedVisible,
-    } = ControlPanelStore.getState();
     this.setState({
-      isActivityLogVisible,
-      isCardDescVisible,
-      isDealerHandVisible,
-      isDeckVisible,
-      isDrawnVisible,
-      isHandValueVisible,
-      // isOptionsPanelVisible,
-      isSelectedVisible,
+      ...ControlPanelStore.getState(),
       hasInitialized: true
     });
   }
   onChangePlayerStore() {
     const { players, activePlayers, currentPlayerKey } = PlayerStore.getState();
-    // get and set player hands; this is probably redundant
-    // activePlayers.forEach(key => {
-    // players[key].hand = DeckStore.getHand(key);
-    // });
     this.setState({ players, activePlayers, currentPlayerKey, hasInitialized: true });
   }
   onChangeStatsStore() {
     let playerStats = {};
-    for (let key in this.state.activePlayers) {
+    for (const key in this.state.activePlayers) {
       playerStats[key] = StatsStore.getStats(key)
     }
     this.setState({ playerStats });
@@ -190,6 +169,14 @@ export default class Table extends BaseComponent {
    */
   toggleHideDialog() {
     this.setState({ isDialogVisible: !this.state.isDialogVisible })
+  }
+
+  /**
+   * Toggle the Options Panel visibility
+   * @returns void
+   */
+  toggleOptionsPanel() {
+    this.setState({ isOptionsPanelVisible: !this.state.isOptionsPanelVisible })
   }
 
   /**
@@ -241,7 +228,7 @@ export default class Table extends BaseComponent {
       <Stack vertical verticalAlign="start" wrap tokens={{ childrenGap: 10, padding: 10 }} style={tableStyles}>
 
         <Stack horizontal horizontalAlign="end" disableShrink nowrap>
-          <Icon iconName="Settings" aria-label="Settings" style={{ fontSize: "24px" }} onClick={AppActions.showOptionsPanel} />
+          <Icon iconName="Settings" aria-label="Settings" style={{ fontSize: "24px" }} onClick={this.toggleOptionsPanel} />
         </Stack>
 
         {this.state.isMessageBarVisible && (
@@ -274,7 +261,7 @@ export default class Table extends BaseComponent {
 
         {!this.state.isDialogVisible &&
           <Stack vertical verticalAlign="space-around" tokens={{ childrenGap: 10, padding: 10, }}>
-            {!this.state.gameStatusFlag &&  <Text block nowrap variant="xLarge">Pot: ${this.state.pot}</Text>}
+            {!this.state.gameStatusFlag && <Text block nowrap variant="xLarge">Pot: ${this.state.pot}</Text>}
             <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
               {selectedPlayersContainers}
             </Stack>
@@ -284,7 +271,11 @@ export default class Table extends BaseComponent {
         {!this.state.isDialogVisible &&
           <Stack vertical verticalAlign="stretch" wrap tokens={{ childrenGap: 10, padding: 10 }}>
             <Stack.Item>
-              <ActivityLog hidden={!this.state.isActivityLogVisible} />
+
+              <ActivityLog
+                hidden={!this.state.isActivityLogVisible}
+              />
+
             </Stack.Item>
             <Stack.Item>
               <DeckContainer
@@ -316,7 +307,17 @@ export default class Table extends BaseComponent {
           </Stack>
         }
 
-        <OptionsPanel />
+        <OptionsPanel
+          isCardDescVisible={this.state.isCardDescVisible}
+          isDealerHandVisible={this.state.isDealerHandVisible}
+          isDeckVisible={this.state.isDeckVisible}
+          isDrawnVisible={this.state.isDrawnVisible}
+          isHandValueVisible={this.state.isHandValueVisible}
+          isSelectedVisible={this.state.isSelectedVisible}
+          isActivityLogVisible={this.state.isActivityLogVisible}
+          isOptionsPanelVisible={this.state.isOptionsPanelVisible}
+          toggleOptionsPanel={this.toggleOptionsPanel}
+        />
 
       </Stack>
     );

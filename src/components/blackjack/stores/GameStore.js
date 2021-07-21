@@ -2,26 +2,27 @@ import { EventEmitter } from "events";
 
 import { MessageBarType } from "@fluentui/react";
 
-/* idb-keyval */
-// import { Store, get, set, clear } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-import { get, set, clear, createStore } from 'idb-keyval';
+/* IndexedDB State Manager */
+import { State } from '../../../lib/State';
 
 /* custom stuff */
 import PlayerStore from "./PlayerStore";
 
-/* flux */
+
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 import StatsStore from "./StatsStore";
 import ActivityLogStore from "./ActivityLogStore";
 
 
-
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "game";
+const STORE_NAME = "GameStore"
 const GameStore = Object.assign({}, EventEmitter.prototype, {
-  // Local storage
-  store: createStore('GameStore', 'State'),
+    // IndexedDB 
+    stateManager: new State([STORE_NAME], (name, value) => {
+      console.log(`${name} was updated`);
+    }),
 
   // in-memory storage
   state: {
@@ -45,7 +46,7 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
   /**
    * notify subscribers of a change in state
    */
-  emitChange() { this.emit(CHANGE_EVENT); console.log('GameStore#emitChange()'); },
+  emitChange() { this.emit(CHANGE_EVENT); this.saveAll(); },
 
   /**
    * subscribe to this Store
@@ -90,34 +91,20 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
  * Load saved state from IDB, if available
  * Deprecated; this Store does not really need to persist state currently
  */
-  async initialize() {
-    console.time(`GameStore#initialize()`);
-
-    // for (let key in this.state) {
-    // let val = await get(key, this.store);
-    // if (val !== undefined) {
-    // console.log(`\tfetched ${key} :: ${val}`);
-    // this.state[key] = val;
-    // }
-    // }
-  },
+  async initialize() {},
 
   /**
   * save state to local storage
   */
   async saveAll() {
     this.state.lastWriteTime = new Date().toISOString();
-    console.log(`GameStore#saveAll`);
-    for (let key in this.state) {
-      // console.log(`${key} :: ${this.state[key]}`);
-      await set(key, this.state[key], this.store);
-    }
+    this.stateManager.set(STORE_NAME, this.state);
   },
 
   /**
    * clear the IDB Store for this Store
    */
-  async clearStore() { await clear(this.store) },
+  clearStore() { this._gameReset() },
 
   /**
    * reset game state props
@@ -186,6 +173,7 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
       case 1 /*   Game in progress; first play  */:
         /*   all players bet the minimum to start  */
         if (turnCount === 0) this._ante();
+        this.state.turnCount++;
         this._endGameTrap();
         break;
 
@@ -201,12 +189,12 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
         }
         break;
 
+      case 5 /*   Game Over */:
+
+        break;
+
       case 4 /*   Human Player Wins       */:
         const winningPlayerTitle = players[0].title;
-        const messageBarText = players[0].hasBlackJack
-          ? `${winningPlayerTitle} wins with Blackjack!`
-          : `${winningPlayerTitle} wins!`;
-        this.setMessageBar(messageBarText, MessageBarType.success);
         ActivityLogStore.new({
           description: "wins!",
           name: winningPlayerTitle,
@@ -220,13 +208,11 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
         break;
 
       case 7 /*   Dealer wins   */:
-        GameStore.setMessageBar(`Dealer wins!`);
         ActivityLogStore.new({
           description: "wins!",
           name: "Dealer",
           iconName: "Crown",
         });
-debugger;
         this.state.winner = players[1].key;
         this.state.loser = players[0].key;
         PlayerStore._payout(players[1].key, pot);
@@ -236,8 +222,6 @@ debugger;
       default:
         break;
     }
-
-    this.state.turnCount++;
   },
 
   // Run after every action affecting game state, 
@@ -245,6 +229,9 @@ debugger;
   _endGameTrap() {
     let nextGameStatus;
     const players = PlayerStore.getPlayers();
+
+
+
     /* Set next game status */
     if (players[1].hasBlackJack) {
       nextGameStatus = 7; // Dealer has blackjack ; dealer wins
@@ -299,7 +286,6 @@ AppDispatcher.register(action => {
   switch (action.actionType) {
     case AppConstants.INITIALIZE_STORES:
       GameStore.initialize().then(() => {
-        console.timeEnd(`GameStore#initialize()`);
         GameStore.emitChange();
       });
       break;

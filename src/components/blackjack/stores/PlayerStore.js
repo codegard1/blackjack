@@ -1,31 +1,33 @@
 import { EventEmitter } from "events";
 
-/* flux */
+
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 
-/* idb-keyval */
-// import { Store, get, set, clear } from '../../../idb-keyval/idb-keyval-cjs-compat.min.js';
-import { get, set, clear, createStore } from 'idb-keyval';
+/* IndexedDB State Manager */
+import { State } from '../../../lib/State';
 
 // custom stuff
 import DeckStore from "./DeckStore";
+import StatsStore from "./StatsStore";
 import { defaultPlayersObj, } from "../definitions";
 
-const CHANGE_EVENT = "playerStore";
+/* Data, Getter method, Event Notifier */
+const CHANGE_EVENT = "PlayerStore";
+const STORE_NAME = "PlayerStore";
 const PlayerStore = Object.assign({}, EventEmitter.prototype, {
-
-  // cached state
-  store: createStore('PlayerStore', 'State'),
-
   // in-memory state
   state: {
-    // players: {},
     players: defaultPlayersObj,
     activePlayers: [],
     currentPlayerKey: undefined,
     lastWriteTime: undefined,
   },
+
+  // IndexedDB 
+  stateManager: new State([STORE_NAME], (name, value) => {
+    console.log(`${name} was updated`);
+  }),
 
   // Default values for a player record
   defaultPlayerState: {
@@ -69,15 +71,15 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
    * unsubscribe from this store
    * @param {function} callback 
    */
-  removeChangeListener(callback) { this.removeListener(CHANGE_EVENT, callback) },
+  removeChangeListener(callback) { this.removeListener(STORE_NAME, callback) },
 
   /**
    * Load saved state from IDB, if available
    */
   async initialize() {
-    console.time(`PlayerStore#initialize()`);
-    let val = await get("players", this.store);
-    this.state.players = (val !== undefined) ? val : defaultPlayersObj;
+    this.state = await this.stateManager.get(STORE_NAME) || this.state;
+    // this.state.players = defaultPlayersObj;
+    this.state.activePlayers = [];
   },
 
   /**
@@ -85,18 +87,15 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
    */
   async saveAll() {
     this.state.lastWriteTime = new Date().toISOString();
-    console.log(`PlayerStore#saveAll`);
-    for (let key in this.state) {
-      // console.log(`${key} :: ${this.state[key]}`);
-      await set(key, this.state[key], this.store);
-    }
+    this.stateManager.set(STORE_NAME, this.state);
   },
 
   /**
    * 
    */
-  async clearStore() {
-    await clear(this.store);
+  clearStore() {
+    this.state.players = defaultPlayersObj;
+    this.saveAll();
   },
 
   /**
@@ -159,6 +158,33 @@ const PlayerStore = Object.assign({}, EventEmitter.prototype, {
       this.state.players[key].handValue = DeckStore.getHandValue(key);
       this._setStatus(key);
     });
+
+    let anyPlayerisBusted, allPlayersStaying;
+    for (let key in this.state.players) {
+      if (key in this.state.activePlayers) {
+        anyPlayerisBusted = this.state.players[key].isBusted;
+        allPlayersStaying = this.state.players[key].isStaying;
+      }
+    }
+
+    const nextGameStatus = anyPlayerisBusted || allPlayersStaying ? 5 : 1;
+
+    if (nextGameStatus > 2) {
+      for (let key in this.state.players) {
+        if (key in this.state.activePlayers) {
+
+          StatsStore.update(key, {
+            numberOfGamesLost: (key === this.state.loser ? 1 : 0),
+            numberOfGamesPlayed: 1,
+            numberOfGamesWon: (key === this.state.winner ? 1 : 0),
+            numberOfTimesBlackjack: (this.state.players[key].hasBlackJack ? 1 : 0),
+            numberOfTimesBusted: (this.state.players[key].isBusted ? 1 : 0),
+            totalWinnings: (key === this.state.winner ? this.state.pot : 0)
+          });
+
+        }
+      }
+    }
   },
 
   /**
@@ -390,7 +416,6 @@ AppDispatcher.register(action => {
   switch (action.actionType) {
     case AppConstants.INITIALIZE_STORES:
       PlayerStore.initialize().then(() => {
-        console.timeEnd(`PlayerStore#initialize()`);
         PlayerStore.emitChange();
       });
       break;
@@ -436,7 +461,7 @@ AppDispatcher.register(action => {
 
     case AppConstants.GLOBAL_EVALUATEGAME:
       PlayerStore._evaluatePlayers();
-      PlayerStore.emitChange();
+      // PlayerStore.emitChange();
       break;
 
     case AppConstants.GLOBAL_ENDGAME:
