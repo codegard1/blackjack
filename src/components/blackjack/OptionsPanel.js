@@ -18,7 +18,7 @@ import {
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
 
-/* Flux */
+
 import AppActions from "./actions/AppActions";
 
 class OptionsPanel extends BaseComponent {

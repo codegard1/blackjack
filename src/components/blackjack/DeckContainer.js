@@ -13,7 +13,7 @@ import {
   Text
 } from "@fluentui/react";
 
-/* flux */
+
 import AppActions from "./actions/AppActions";
 import { nullRender } from "@fluentui/react";
 

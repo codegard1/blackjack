@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 
-/* flux */
+
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 

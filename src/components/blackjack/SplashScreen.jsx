@@ -11,7 +11,7 @@ import {
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
 
-/* flux */
+
 import AppActions from "./actions/AppActions";
 
 import {

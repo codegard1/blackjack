@@ -8,7 +8,7 @@ import { State } from '../../../lib/State';
 /* custom stuff */
 import PlayerStore from "./PlayerStore";
 
-/* flux */
+
 import AppDispatcher from "../dispatcher/AppDispatcher";
 import AppConstants from "../constants/AppConstants";
 import StatsStore from "./StatsStore";

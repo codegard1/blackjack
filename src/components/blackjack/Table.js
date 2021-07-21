@@ -21,7 +21,7 @@ import OptionsPanel from "./OptionsPanel";
 import ActivityLog from "./ActivityLog";
 import SplashScreen from "./SplashScreen";
 
-/* flux */
+
 import GameStore from "./stores/GameStore";
 import DeckStore from "./stores/DeckStore";
 import ControlPanelStore from "./stores/ControlPanelStore";
@@ -119,7 +119,6 @@ export default class Table extends BaseComponent {
   }
 
 
-  /* flux helpers */
   onChangeGame() {
     const { dealerHasControl, gameStatus, isMessageBarVisible, loser, minimumBet, pot, round, turnCount, winner, messageBarDefinition } = GameStore.getState();
     this.setState({

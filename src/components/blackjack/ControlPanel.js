@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import * as T from "prop-types";
 import { CommandBar, MessageBarType, nullRender } from "@fluentui/react";
 
-/* Flux */
+
 import AppActions from "./actions/AppActions";
 // import DeckStore from "./stores/DeckStore";
 

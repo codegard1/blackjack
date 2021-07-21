@@ -11,7 +11,7 @@ import StatusDisplay from "./StatusDisplay";
 import Agent from "./Agent";
 import "./PlayerContainer.css";
 
-/* flux */
+
 import DeckStore from "./stores/DeckStore";
 
 export class PlayerContainer extends BaseComponent {
