@@ -43,7 +43,6 @@ class OptionsPanel extends BaseComponent {
   resetGame() {
     AppActions.reset();
     AppActions.newDeck();
-    AppActions.showMessageBar("Game Reset");
     this.props.toggleOptionsPanel();
   }
 

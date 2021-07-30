@@ -1,7 +1,5 @@
 import { EventEmitter } from "events";
 
-import { MessageBarType } from "@fluentui/react";
-
 /* IndexedDB State Manager */
 import { State } from '../../../lib/State';
 
@@ -28,18 +26,12 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
   state: {
     dealerHasControl: false,
     gameStatus: 0,
-    isMessageBarVisible: false,
     loser: -1,
     minimumBet: 25,
     pot: 0,
     round: 0,
     turnCount: 0,
     winner: -1,
-    messageBarDefinition: {
-      type: MessageBarType.info,
-      text: "",
-      isMultiLine: false
-    },
     lastWriteTime: undefined,
   },
 
@@ -69,23 +61,6 @@ const GameStore = Object.assign({}, EventEmitter.prototype, {
    * return game status
    */
   getStatus() { return this.state.gameStatus },
-
-  /**
-   * set message bar text
-   * @param {string} text 
-   * @param {MessageBarType} type 
-   */
-  setMessageBar(text, type = MessageBarType.info) {
-    this.state.messageBarDefinition = { text, type, isMultiLine: false };
-    this.state.isMessageBarVisible = true;
-  },
-
-  /**
-   * hide the Message Bar
-   */
-  hideMessageBar() {
-    this.state.isMessageBarVisible = false;
-  },
 
   /**
  * Load saved state from IDB, if available
@@ -320,16 +295,6 @@ AppDispatcher.register(action => {
       GameStore._gameNewRound();
       // GameStore.state.gameStatus = 1;
       GameStore._evaluateGame(GameStore.getStatus);
-      GameStore.emitChange();
-      break;
-
-    case AppConstants.GAME_SHOWMESSAGEBAR:
-      GameStore.setMessageBar(action.text, action.type);
-      GameStore.emitChange();
-      break;
-
-    case AppConstants.GAME_HIDEMESSAGEBAR:
-      GameStore.hideMessageBar();
       GameStore.emitChange();
       break;
 

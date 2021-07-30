@@ -2,8 +2,6 @@ import React from "react";
 import {
   DefaultEffects,
   Icon,
-  MessageBar,
-  MessageBarType,
   Spinner,
   SpinnerSize,
   Stack,
@@ -53,18 +51,12 @@ export default class Table extends BaseComponent {
       // GameStore
       dealerHasControl: false,
       gameStatus: 0,
-      isMessageBarVisible: false,
       loser: -1,
       minimumBet: 25,
       pot: 0,
       round: 0,
       turnCount: 0,
       winner: -1,
-      messageBarDefinition: {
-        type: MessageBarType.info,
-        text: "",
-        isMultiLine: false
-      },
 
       // PlayerStore
       players: {},
@@ -120,14 +112,12 @@ export default class Table extends BaseComponent {
 
 
   onChangeGame() {
-    const { dealerHasControl, gameStatus, isMessageBarVisible, loser, minimumBet, pot, round, turnCount, winner, messageBarDefinition } = GameStore.getState();
+    const { dealerHasControl, gameStatus, loser, minimumBet, pot, round, turnCount, winner } = GameStore.getState();
     this.setState({
       dealerHasControl,
       gameStatus,
       isDeckCalloutVisible: true,
-      isMessageBarVisible,
       loser,
-      messageBarDefinition,
       minimumBet,
       pot,
       round,
@@ -230,16 +220,6 @@ export default class Table extends BaseComponent {
         <Stack horizontal horizontalAlign="end" disableShrink nowrap>
           <Icon iconName="Settings" aria-label="Settings" style={{ fontSize: "24px" }} onClick={this.toggleOptionsPanel} />
         </Stack>
-
-        {this.state.isMessageBarVisible && (
-          <MessageBar
-            messageBarType={this.state.messageBarDefinition.type}
-            isMultiline={this.state.messageBarDefinition.isMultiLine}
-            onDismiss={AppActions.hideMessageBar}
-          >
-            {this.state.messageBarDefinition.text}
-          </MessageBar>
-        )}
 
         {this.state.isDialogVisible &&
           <Stack horizontal horizontalAlign="center" tokens={{ childrenGap: 10, padding: 10, }}>
