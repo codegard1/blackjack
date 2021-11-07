@@ -101,12 +101,6 @@ const gameplayActions = {
     });
 
   },
-  showMessageBar(text, type) {
-    AppDispatcher.dispatch({ actionType: AppConstants.GAME_SHOWMESSAGEBAR, text, type });
-  },
-  hideMessageBar() {
-    AppDispatcher.dispatch({ actionType: AppConstants.GAME_HIDEMESSAGEBAR });
-  },
   reset() {
     AppDispatcher.dispatch({ actionType: AppConstants.DECK_CLEARHANDS });
     AppDispatcher.dispatch({ actionType: AppConstants.GAME_RESET });

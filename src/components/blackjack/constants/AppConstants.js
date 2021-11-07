@@ -14,8 +14,6 @@ export default keyMirror({
   GAME_NEWROUND: null,
   GAME_RESET: null,
   GAME_STAY: null,
-  GAME_SHOWMESSAGEBAR: null,
-  GAME_HIDEMESSAGEBAR: null,
 
 
   /* Deck */
