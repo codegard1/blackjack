@@ -1,5 +1,5 @@
 // React
-import * as React from 'react';
+import React from 'react';
 
 // Fluent UI
 import {
