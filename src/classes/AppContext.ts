@@ -11,14 +11,6 @@ export interface AppContextProps {
   gameStatus?: number; // GameStore
 }
 
-const AppContext = React.createContext<AppContextProps>({
-  deck: new PlayingCardDeck(),
-  isCardDescVisible: false,
-  isDealerHandVisible: false,
-  isHandValueVisible: false, // ControlPanelStore
-  gameStatus: 0,
-  gameStatusFlag: false,
-  player: '',
-});
+const AppContext = React.createContext<AppContextProps>({ deck: new PlayingCardDeck() });
 
 export default AppContext;
