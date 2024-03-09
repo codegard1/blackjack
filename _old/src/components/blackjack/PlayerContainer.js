@@ -4,7 +4,7 @@ import { Stack, Text } from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
-import DeckContainer from "./DeckContainer";
+import DeckContainer from "../../../../src/components/DeckContainer";
 import DeckCallout from "./DeckCallout";
 import ControlPanel from "./ControlPanel";
 import StatusDisplay from "./StatusDisplay";

@@ -1,0 +1,45 @@
+body {
+  background: linear-gradient(63deg, teal 23%, transparent 23%) 7px 0, linear-gradient(63deg, transparent 74%, teal 78%), linear-gradient(63deg, transparent 34%, teal 38%, teal 58%, transparent 62%), #333;
+  background-size: 16px 48px;
+  margin: 16px;
+}
+
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
