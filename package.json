@@ -9,21 +9,26 @@
   },
   "dependencies": {
     "@fluentui/react": "^8.115.6",
-    "@fluentui/react-icons": "^2.0.232",
     "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
+    "@testing-library/react": "^12.1.5",
     "@testing-library/user-event": "^13.5.0",
+    "@types/jest": "^28.1.8",
+    "@types/node": "^14.18.63",
+    "@types/react": "^17.0.2",
+    "@types/react-dom": "^17.0.2",
+    "@types/throttle-debounce": "^5.0.0",
+    "@types/webpack-env": "1.15.2",
     "keymirror": "^0.1.1",
     "lodash": "^4.17.21",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "react-scripts": "5.0.1",
     "throttle-debounce": "^5.0.0",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },
   "resolutions": {
-    "@types/react": "^18.2.0"
+    "@types/react": "^17.0.2"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -51,14 +56,10 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.23.10",
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/plugin-transform-private-property-in-object": "^7.23.4",
-    "@types/node": "^16.18.38",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "@types/throttle-debounce": "^5.0.0",
-    "@types/webpack-env": "1.15.2",
-    "eslint": "8.7.0",
-    "eslint-plugin-react-hooks": "4.3.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "ts-node": "^10.9.1"
   },
   "engines": {
