@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Blackjack",
+  "name": "Chris Odegard's Blackjack",
+  "description": "Simple game of blackjack implemented in React",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,18 +9,31 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
+      "src": "favicon-16.png",
+      "sizes": "16x16",
+      "type": "image/png"
     },
     {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
+      "src": "favicon-48.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon-150.png",
+      "sizes": "150x150",
+      "type": "image/png"
     }
   ],
-  "start_url": ".",
+  "background_color": "#ffffff",
   "display": "standalone",
+  "dir":"ltr",
+  "lang": "en-US",
+  "start_url": ".",
   "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "orientation": "landscape"
 }
