@@ -1,5 +1,7 @@
+// React
 import React from "react";
-import * as T from "prop-types";
+
+// Fluent UI
 import {
   ActivityItem,
   DefaultEffects,
@@ -14,11 +16,12 @@ import {
 } from '@fluentui/react';
 import { MotionAnimations } from '@fluentui/theme';
 
-// Custom Components 
-import BaseComponent from '../BaseComponent';
+
+import AppContext from "../classes/AppContext";
+import { IActivityLogProps } from "../interfaces/IActivityLogProps";
 
 // Flux Store
-import ActivityLogStore from './stores/ActivityLogStore';
+// import ActivityLogStore from '../../_old/src/components/blackjack/stores/ActivityLogStore';
 
 // Get Fluent UI theme
 const theme = getTheme();
@@ -76,45 +79,42 @@ const classNames = mergeStyleSets({
   },
 });
 
-class ActivityLog extends BaseComponent {
-  constructor(props) {
-    super(props);
+export const ActivityLog: React.FC<IActivityLogProps> = (props) => {
 
-    this.state = {
-      activityItems: [],
-      nextKey: 1,
-    };
+  // Context
+  const {
+    isActivityLogVisible
+  } = React.useContext(AppContext);
 
-    this._bind('onChangeLog', 'createActivityItems');
-  }
+  // State
+  const [activityItems, setActivityItems] = React.useState<any>([]);
+  const [nextKey, setNextKey] = React.useState<number>(1);
 
-  static propTypes = {
-    hidden: T.bool.isRequired
-  }
 
-  componentDidMount() {
-    ActivityLogStore.addChangeListener(this.onChangeLog);
+  // componentDidMount() {
+  //   ActivityLogStore.addChangeListener(this.onChangeLog);
 
-    // immediately call onChangeLog to load any pre-existing state from IDB
-    this.onChangeLog();
-  }
+  //   // immediately call onChangeLog to load any pre-existing state from IDB
+  //   this.onChangeLog();
+  // }
 
-  componentWillUnmount() {
-    ActivityLogStore.removeChangeListener(this.onChangeLog);
-  }
+  // componentWillUnmount() {
+  //   ActivityLogStore.removeChangeListener(this.onChangeLog);
+  // }
 
-  onChangeLog() {
-    const newState = ActivityLogStore.getState();
-    this.setState({ ...newState });
-  }
+  // onChangeLog() {
+  //   const newState = ActivityLogStore.getState();
+  //   this.setState({ ...newState });
+  // }
 
-  createActivityItems() {
+  const createActivityItems = () => {
     // memos for the loop 
     const datememo = [];
     const outputMemo = [];
 
     // Loop through ActivityItems
-    this.state.activityItems.forEach((item, index, arr) => {
+    const _items = activityItems.slice();
+    _items.forEach((item, index, arr) => {
 
       // If the datememo does not contain the current item's timestamp
       // then add it as a Sticky and also add activity items from 
@@ -158,16 +158,12 @@ class ActivityLog extends BaseComponent {
     return outputMemo;
   }
 
-  render() {
-    return this.props.hidden ? nullRender() : (
-      <div id="ActivityLogRoot" className={classNames.divRoot}>
-        <Text block nowrap variant="xLarge">Activity Log</Text>
-        <div className={classNames.wrapper}>
-          <ScrollablePane styles={{ root: classNames.pane }}>{this.createActivityItems()}</ScrollablePane>
-        </div>
+  return props.hidden ? nullRender() : (
+    <div id="ActivityLogRoot" className={classNames.divRoot}>
+      <Text block nowrap variant="xLarge">Activity Log</Text>
+      <div className={classNames.wrapper}>
+        <ScrollablePane styles={{ root: classNames.pane }}>{this.createActivityItems()}</ScrollablePane>
       </div>
-    );
-  }
+    </div>
+  );
 }
-
-export default ActivityLog;
