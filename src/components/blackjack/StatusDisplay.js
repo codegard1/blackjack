@@ -4,7 +4,6 @@ import { Stack, Callout, Text, Icon, mergeStyleSets, getTheme, FontWeights } fro
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
-import "./StatusDisplay.css";
 
 class StatusDisplay extends BaseComponent {
   constructor(props) {
@@ -32,12 +31,26 @@ class StatusDisplay extends BaseComponent {
       playerStats = [];
 
     for (const key in this.props.player) {
-      if (this.props.player.hasOwnProperty(key)) {
-        playerInfo.push(
-          <li key={`statusdisplay-${key}`}>{`${key}: ${this.props.player[key]
-            }`}</li>
-        );
+      let val = this.props.player[key];
+
+      switch (typeof this.props.player[key]) {
+        case 'object':
+          val = JSON.stringify(val);
+          break;
+
+        case 'boolean':
+          val = val ? 'Yes' : 'No';
+          break;
+
+        default:
+          break;
       }
+
+      playerInfo.push(
+        <li key={`statusdisplay-${this.props.player.key}-${key}`}>
+          <strong>{key}</strong>:&nbsp;&nbsp;{val}
+        </li>
+      );
     }
 
     for (const key in this.props.stats) {
@@ -51,19 +64,8 @@ class StatusDisplay extends BaseComponent {
 
     const theme = getTheme();
     const styles = mergeStyleSets({
-      buttonArea: {
-        verticalAlign: 'top',
-        display: 'inline-block',
-        textAlign: 'center',
-        // margin: '0 100px',
-        // minWidth: 130,
-        // height: 32,
-      },
       callout: {
-        maxWidth: 300,
-      },
-      header: {
-        padding: '18px 24px 12px',
+        padding: '5px',
       },
       title: [
         theme.fonts.large,
@@ -72,10 +74,6 @@ class StatusDisplay extends BaseComponent {
           fontWeight: FontWeights.semilight,
         },
       ],
-      inner: {
-        height: '100%',
-        padding: '0 10px 20px',
-      },
       subtext: [
         theme.fonts.small,
         {
@@ -83,11 +81,18 @@ class StatusDisplay extends BaseComponent {
           fontWeight: FontWeights.semilight,
         },
       ],
+      nakedList: [
+        {
+          margin: 0,
+          listStyleType: 'none',
+          padding: 0,
+        }
+      ]
     });
 
     const labelId = `${this.props.player.title}-statsCalloutLabel`;
     const descriptionId = `${this.props.player.title}-statsCalloutDescription`;
-    const targetClass = `InfoButton-${this.props.player.id}`
+    const targetClass = `InfoButton-${this.props.player.key}`
 
     return (
       <Stack.Item align="center">
@@ -108,12 +113,11 @@ class StatusDisplay extends BaseComponent {
                 Stats &amp; Variables
               </Text>
             </div>
-            <div className={styles.inner}>
-              <Text className={styles.subtext} id={descriptionId}>
-                <ul className="playerStats">{playerStats}</ul>
-                <ul className="playerInfo">{playerInfo}</ul>
-              </Text>
-            </div>
+            <Text className={styles.subtext} id={descriptionId}>
+
+              <ul className={styles.nakedList}>{playerStats}</ul>
+              <ul className={styles.nakedList}>{playerInfo}</ul>
+            </Text>
           </Callout>
         }
       </Stack.Item>

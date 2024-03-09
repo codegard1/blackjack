@@ -1,6 +1,6 @@
 import React from "react";
 import * as T from "prop-types";
-import { Stack, Text } from "@fluentui/react";
+import { Stack, Text, Icon, mergeStyleSets, getTheme, FontWeights } from "@fluentui/react";
 
 /* custom stuff */
 import BaseComponent from "../BaseComponent";
@@ -9,9 +9,6 @@ import DeckCallout from "./DeckCallout";
 import ControlPanel from "./ControlPanel";
 import StatusDisplay from "./StatusDisplay";
 import Agent from "./Agent";
-import "./PlayerContainer.css";
-
-
 import DeckStore from "./stores/DeckStore";
 
 export class PlayerContainer extends BaseComponent {
@@ -54,18 +51,7 @@ export class PlayerContainer extends BaseComponent {
     const { player, playerStats, playerHand, playerKey } = this.props;
     const handValue = playerHand.handValue;
 
-    /* style PlayerContainer conditionally */
-    let playerContainerClass = "PlayerContainer ";
-    if (player.turn) {
-      playerContainerClass += "selected ";
-    }
-    if (
-      !player.empty &&
-      player.isStaying &&
-      !player.turn
-    ) {
-      playerContainerClass += "staying ";
-    }
+
 
     const playerStatusFlag = (player.isBusted ||
       player.isFinished ||
@@ -75,11 +61,45 @@ export class PlayerContainer extends BaseComponent {
     /* selectedFlag is true if getSelected() returns an array */
     const selectedFlag = !!DeckStore.getSelected(playerKey);
 
+    const theme = getTheme();
+    const styles = mergeStyleSets({
+      playerContainer: {
+        backgroundColor: 'whitesmoke',
+        borderRadius: '0.25em',
+        transition: 'all 300ms ease-in',
+        border: '1px solid rgba(25, 25, 25, 0.1)',
+      },
+      playerTitleBar: {
+        marginLeft: '1.5em',
+        marginTop: '1em',
+      },
+      selected: {
+        boxShadow: '15px 15px 20px -9px rgba(184, 184, 184, 1)',
+        border: '2px solid blue',
+      },
+      staying: {
+        border: '2px solid green',
+        backgroundColor: 'ghostwhite',
+      },
+      redBorder: {
+        border: '3px solid red'
+      },
+    });
+
+    /* style PlayerContainer conditionally */
+    let playerContainerStyles = [styles.PlayerContainer];
+    if (player.turn) {
+      playerContainerStyles.push(styles.selected);
+    }
+    if (player.isStaying && !player.turn) {
+      playerContainerStyles.push(styles.staying);
+    }
+
 
     return (
-      <Stack verticalAlign className={playerContainerClass}>
+      <Stack verticalAlign className={playerContainerStyles}>
 
-        <Stack horizontal horizontalAlign="space-between" style={{ padding: '5px' }} className={`${player.title}-titleBar playerContainerClass`}>
+        <Stack horizontal horizontalAlign="space-between" style={{ padding: '5px' }} className={styles.playerTitleBar}>
           <Stack.Item align="start">
             <Text block nowrap variant="large">
               {`${player.title} ($${player.bank || 0})  `}</Text>
@@ -119,7 +139,7 @@ export class PlayerContainer extends BaseComponent {
             </Stack.Item>
           }
 
-          <Stack.Item className={`DeckCalloutTarget-${player.title}`}>
+          <Stack.Item className={`DeckCalloutTarget-${player.key}`}>
             <DeckContainer
               deck={playerHand.hand}
               gameStatus={this.props.gameStatus}

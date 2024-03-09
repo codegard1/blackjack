@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import * as T from "prop-types";
-import { CommandBar, MessageBarType, nullRender } from "@fluentui/react";
+import { CommandBar, nullRender } from "@fluentui/react";
 
 
 import AppActions from "./actions/AppActions";
@@ -169,7 +169,6 @@ class ControlPanel extends Component {
           onClick: () => {
             AppActions.newDeck();
             AppActions.newRound();
-            AppActions.showMessageBar("New Round", MessageBarType.info);
           }
         }
       ];
