@@ -1,5 +1,5 @@
 import AppDispatcher from "../dispatcher/AppDispatcher";
-import AppConstants from "../constants/AppConstants";
+import AppConstants from "../../../../../src/classes/AppConstants";
 
 /**
  *  CONTROL PANEL ACTIONS
