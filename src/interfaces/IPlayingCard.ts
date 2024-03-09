@@ -1,6 +1,4 @@
-import { PlayingCardSort } from "../classes/PlayingCardSort";
-import { PlayingCardSuit } from "../classes/PlayingCardSuit";
-import { Suit } from "../types";
+import { PlayingCardSort, PlayingCardSuit } from '../classes';
 
 export interface IPlayingCard {
   suit: PlayingCardSuit;

@@ -1,4 +1,4 @@
-import PlayingCard from "../classes/PlayingCard";
+import { PlayingCard } from "../classes";
 
 export interface IPlayingCardDeck {
   cards: PlayingCard[];
