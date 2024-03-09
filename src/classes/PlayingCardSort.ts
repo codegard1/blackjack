@@ -1,4 +1,4 @@
-import { IPlayingCardSort } from "../types/IPlayingCardSort";
+import { IPlayingCardSort } from "../interfaces";
 
 export class PlayingCardSort implements IPlayingCardSort {
   public value: number;

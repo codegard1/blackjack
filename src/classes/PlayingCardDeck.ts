@@ -1,12 +1,12 @@
 /*  adapted from node-shuffle 
     https://github.com/codegard1/node-shuffle.git */
 
-import { IPlayingCardDeck } from "../types/IPlayingCardDeck";
-import { TSuit } from "../types/TSuit";
-import PlayingCard from "./PlayingCard";
-import { Suit } from "./Suit";
+import { IPlayingCardDeck } from "../interfaces";
+import { Suit, SuitType } from "../types";
+import {PlayingCard} from "./PlayingCard";
+import { PlayingCardSuit } from "./PlayingCardSuit";
 
-class PlayingCardDeck implements IPlayingCardDeck {
+export class PlayingCardDeck implements IPlayingCardDeck {
   public cards: PlayingCard[] = [];
 
   constructor() {
@@ -26,14 +26,14 @@ class PlayingCardDeck implements IPlayingCardDeck {
       { name: "Ace", value: 14 },
     ];
 
-    const cardSuits = Suit.suits();
+    const cardSuits = PlayingCardSuit.suits();
 
     let _cards: PlayingCard[] = [];
-    cardSuits.forEach((suit: TSuit) =>
+    cardSuits.forEach((suit: Suit) =>
       cardTuples.forEach((desc) =>
         _cards.push(
           new PlayingCard(
-            new Suit(suit),
+            new PlayingCardSuit(suit),
             desc.name,
             desc.value
           )
@@ -135,5 +135,3 @@ class PlayingCardDeck implements IPlayingCardDeck {
   }
 
 }
-
-export default PlayingCardDeck;

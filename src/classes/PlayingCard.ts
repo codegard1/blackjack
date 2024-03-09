@@ -1,17 +1,15 @@
-/*  adapted from node-shuffle 
-    https://github.com/codegard1/node-shuffle.git */
+import { IPlayingCard } from "../interfaces";
+import { PlayingCardSort, PlayingCardSuit } from "./";
 
-import { IPlayingCard } from "../types/IPlayingCard";
-import { PlayingCardSort } from "./PlayingCardSort";
-import { Suit } from "./Suit";
-
-
-class PlayingCard implements IPlayingCard {
-  public suit: Suit;
+/**
+ * A single playing card
+ */
+export class PlayingCard implements IPlayingCard {
+  public suit: PlayingCardSuit;
   public description: string;
   public sort: PlayingCardSort;
 
-  constructor(suit: Suit, description: string, sort: number) {
+  constructor(suit: PlayingCardSuit, description: string, sort: number) {
     this.suit = suit;
     this.description = description;
     this.sort = new PlayingCardSort(sort);
@@ -32,5 +30,3 @@ class PlayingCard implements IPlayingCard {
     return this.toString();
   }
 }
-
-export default PlayingCard;
