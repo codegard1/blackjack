@@ -1,3 +1,3 @@
 import { PlayingCardSuit } from "../classes/PlayingCardSuit";
 
-export type SuitType = PlayingCardSuit['single'];
+export type SuitKey = PlayingCardSuit['single'];

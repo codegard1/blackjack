@@ -1,2 +1,3 @@
 export type { Suit } from './Suit';
-export type { SuitType } from './SuitType';
+export type { SuitKey } from './SuitKey';
+export type { SuitCollection, SuitCollectionKey } from './SuitCollection';
