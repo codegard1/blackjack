@@ -1,5 +1,5 @@
 import { IPlayingCardSuit } from "../interfaces";
-import { Suit, SuitType } from "../types";
+import { Suit, SuitKey } from "../types";
 
 /**
  * All the playing cards in a pack bearing the same symbol

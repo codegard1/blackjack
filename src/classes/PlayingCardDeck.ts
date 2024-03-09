@@ -2,7 +2,7 @@
     https://github.com/codegard1/node-shuffle.git */
 
 import { IPlayingCardDeck } from "../interfaces";
-import { Suit, SuitType } from "../types";
+import { Suit, SuitKey } from "../types";
 import {PlayingCard} from "./PlayingCard";
 import { PlayingCardSuit } from "./PlayingCardSuit";
 
