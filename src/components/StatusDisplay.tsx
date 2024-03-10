@@ -3,13 +3,9 @@ import { Stack, Callout, Text, Icon, mergeStyleSets, getTheme, FontWeights } fro
 
 /* custom stuff */
 import "./StatusDisplay.css";
+import { IStatusDisplayProps } from "../interfaces";
 
-export interface IStatusDisplayProps {
-  player: any;
-  stats: any;
-}
-
-const StatusDisplay: React.FC<IStatusDisplayProps> = (props) => {
+export const StatusDisplay: React.FC<IStatusDisplayProps> = (props) => {
 
   // State
   const [isCalloutVisible, setCalloutVisible] = React.useState<boolean>(false);
@@ -110,5 +106,3 @@ const StatusDisplay: React.FC<IStatusDisplayProps> = (props) => {
     </Stack.Item>
   );
 }
-
-export default StatusDisplay;
