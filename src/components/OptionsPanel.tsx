@@ -31,7 +31,7 @@ export interface IOptionsPanelProps {
   toggleOptionsPanel: () => any;
 }
 
-const OptionsPanel: React.FC<IOptionsPanelProps> = (props) => {
+export const OptionsPanel: React.FC<IOptionsPanelProps> = (props) => {
 
   const {
     isActivityLogVisible,
@@ -229,6 +229,3 @@ const OptionsPanel: React.FC<IOptionsPanelProps> = (props) => {
     </Panel>
   );
 }
-
-
-export default OptionsPanel;
