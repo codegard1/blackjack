@@ -6,14 +6,14 @@ import { Stack, Text } from "@fluentui/react";
 
 /* custom stuff */
 import { DeckContainer, DeckCallout, ControlPanel, StatusDisplay } from './';
-import Agent from "../../_old/src/components/blackjack/Agent";
+import Agent from "./Agent";
 import { IPlayerContainerProps } from "../interfaces";
 
 // Styles
 import "./PlayerContainer.css";
 
 // Context
-import DeckStore from "../../_old/src/components/blackjack/stores/DeckStore";
+import DeckStore from "../stores/DeckStore";
 import AppContext from "../classes/AppContext";
 
 // Component
