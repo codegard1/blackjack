@@ -5,466 +5,366 @@ import { State } from '../../../lib/State';
 import DeckStore from "./DeckStore";
 import StatsStore from "./StatsStore";
 import { defaultPlayersObj, } from "../definitions";
-import { Player, PlayerKey } from '../types';
-import { PlayingCard } from '../classes';
+import { PlayerKey } from '../types';
+import { PlayerCollection } from '../types/PlayerCollection';
+import { IPlayerStore } from '../interfaces/IPlayerStore';
+import { Player } from '../classes/Player';
+import { PlayerAction } from '../types/PlayerAction';
 
 /* Data, Getter method, Event Notifier */
 const CHANGE_EVENT = "PlayerStore";
 const STORE_NAME = "PlayerStore";
 
-export interface IPlayerStore {
-  public players: PlayerCollection;
-  activePlayers: PlayerKey[];
-  currentPlayerKey: PlayerKey;
-  lastWriteTime: string;
+export interface IPlayerStoreState {
+  private players: PlayerCollection;
+  private activePlayerKeys: PlayerKey[];
+  private currentPlayerKey: null | PlayerKey;
+  private lastWriteTime: string;
 }
-
-export interface IPlayer {
-  id: number;
-  key: PlayerKey;
-  isNPC: boolean;
-  title: string;
-  bank: number;
-  bet: number;
-  hand: PlayerHand;
-  isFinished: boolean;
-  isStaying: boolean;
-  lastAction: string;
-  status: string;
-  turn: boolean;
-}
-
-export type PlayerHand = {
-  cards: PlayingCard[];
-  handValue: { aceAsOne: number, aceAsEleven: number },
-  hasBlackjack: boolean;
-  isBusted: boolean;
-}
-
-export type PlayerHandValue = {
-  aceAsEleven: number;
-  aceAsOne: number;
-}
-
-export class Player implements IPlayer {
-  public key: PlayerKey;
-  public title: string;
-  public isNPC: boolean;
-  hand: PlayerHand;
-
-  constructor(key: PlayerKey, title: string, isNPC: boolean) {
-    this.key = key;
-    this.title = title;
-    this.isNPC = isNPC;
-    this.hand = {
-      cards: [],
-      handValue: { aceAsEleven: 0, aceAsOne: 0 },
-      hasBlackjack: false,
-      isBusted: false,
-    }
-  }
-
-
-  public get cards(): PlayingCard[] {
-    return this.hand.cards;
-  }
-
-  public set cards(v: PlayingCard[]) {
-    this.hand.cards = v;
-  }
-
-  public get hasBlackjack(): boolean {
-    return this.hand.hasBlackjack;
-  }
-
-  public get isBusted(): boolean {
-    return this.hand.isBusted;
-  }
-
-  public get handValue(): PlayerHandValue {
-    return this.hand.handValue;
-  }
-}
-
-export type PlayerCollection = {
-  [index: PlayerKey]: Player;
-}
-
 
 export class PlayerStore implements IPlayerStore {
-  public players: PlayerCollection;
-  public activePlayers: PlayerKey[];
+  private players: PlayerCollection = {};
+  private activePlayerKeys: PlayerKey[] = [];
+  private currentPlayerKey = null;
+  private lastWriteTime = '';
 
   constructor() {
-    this.players = {};
-    this.activePlayers = [];
     this.initialize();
   }
 
-
-  static newPlayer(key: PlayerKey, title: string, isNPC: boolean) {
-    // Create new player record
-    this.players[key] = new Player(key, title, isNPC);
-    // add new player to the active players list
-    if (!(key in this.state.activePlayers)) {
-      this.activePlayers.push(key);
+  /**
+   * Return the internal state of the class 
+   */
+  public get state(): IPlayerStoreState {
+    return {
+      players: this.players,
+      activePlayerKeys: this.activePlayerKeys,
+      currentPlayerKey: this.currentPlayerKey,
+      lastWriteTime: this.lastWriteTime,
     }
   }
-}
 
+  public newPlayer(key: PlayerKey, title: string, isNPC: boolean, id?: number, bank?: number, bet?: number): void {
+    // Create new player record
+    const _newPlayer = new Player(key, title, isNPC, id, bank, bet);
 
+    // Add the new Player to the players collection
+    if (!(key in this.players)) this.players[key] = _newPlayer;
 
-
-
-// IndexedDB 
-stateManager: new State([STORE_NAME], (name, value) => {
-  console.log(`${name} was updated`);
-}),
-
-  // Default values for a player record
-  defaultPlayerState: {
-  // id: undefined,
-  // key: undefined,
-  // isNPC: undefined,
-  // title: undefined,
-  bank: 1000,
-    bet: 0,
-      handValue: { aceAsOne: 0, aceAsEleven: 0 },
-  hasBlackjack: false,
-    isBusted: false,
-      isFinished: false,
-        isStaying: false,
-          lastAction: "none",
-            status: "ok",
-              turn: false,
-  },
-
-
-getState() { return this.state },
-
-/**
- * notify subscribers of a state change
- */
-emitChange() {
-  this.emit(CHANGE_EVENT);
-  this.saveAll();
-},
+    // add new player to the active players list
+    if (!(key in this.activePlayerKeys)) this.activePlayerKeys.push(key);
+  }
 
   /**
-   * save state to local storage
+ * save state to local storage
+ */
+  public async saveAll(): Promise<void> {
+    this.lastWriteTime = new Date().toISOString();
+    // this.stateManager.set(STORE_NAME, this.state);
+  }
+
+  public clearStore() {
+    this.players = {};
+    this.saveAll();
+  }
+
+  /**
+   * Lookup player by key
+   * @param {PlayerKey} key
    */
-  async saveAll() {
-  this.state.lastWriteTime = new Date().toISOString();
-  this.stateManager.set(STORE_NAME, this.state);
-},
+  public player(key: PlayerKey): Player { return this.players[key] }
 
-/**
- * 
+  /**
+ * Get all active players
  */
-clearStore() {
-  this.state.players = defaultPlayersObj;
-  this.saveAll();
-},
+  public get all(): Player[] {
+    return this.activePlayerKeys.map(key => this.players[key]);
+  }
 
-/**
- * Lookup player by key
- * @param {string} key
- */
-getPlayer(key) { return this.state.players[key] },
-
-/**
- * Get all players
- */
-getPlayers() {
-  return this.state.activePlayers.map(key => this.state.players[key]);
-},
-
-/**
- * Get the currently active player
- */
-getCurrentPlayer() {
-  return this.getPlayer(this.state.currentPlayerKey);
-},
-
-/**
+  /**
  * Return the name of the given player
  * @param {string} key key of the player to look up
  */
-getPlayerName(key) {
-  let p = this.getPlayer(key);
-  return p.title;
-},
-
-/**
- * Return the number of active players
- * @returns {number}
- */
-length() {
-  return this.state.activePlayers.length
-},
-
-
-/**
- * set players' status, hand values
- */
-_evaluatePlayers() {
-  this.state.activePlayers.forEach(key => {
-    this.state.players[key].handValue = DeckStore.getHandValue(key);
-    this._setStatus(key);
-  });
-
-  let anyPlayerisBusted, allPlayersStaying;
-  for (let key in this.state.players) {
-    if (key in this.state.activePlayers) {
-      anyPlayerisBusted = this.state.players[key].isBusted;
-      allPlayersStaying = this.state.players[key].isStaying;
-    }
+  public get playerName(key: PlayerKey): string {
+    return this.player(key).title;
   }
 
-  const nextGameStatus = anyPlayerisBusted || allPlayersStaying ? 5 : 1;
-
-  if (nextGameStatus > 2) {
-    for (let key in this.state.players) {
-      if (key in this.state.activePlayers) {
-
-        StatsStore.update(key, {
-          numberOfGamesLost: (key === this.state.loser ? 1 : 0),
-          numberOfGamesPlayed: 1,
-          numberOfGamesWon: (key === this.state.winner ? 1 : 0),
-          numberOfTimesBlackjack: (this.state.players[key].hasBlackJack ? 1 : 0),
-          numberOfTimesBusted: (this.state.players[key].isBusted ? 1 : 0),
-          totalWinnings: (key === this.state.winner ? this.state.pot : 0)
-        });
-
-      }
-    }
+  public get length(): number {
+    return this.activePlayerKeys.length;
   }
-},
 
-/**
+  /**
  * reset gameplay variables for each player and set the current player key to the first in the list
  */
-reset() {
-  this.state.activePlayers.forEach(key => this._resetPlayer(key));
-  this.state.currentPlayerKey = this.state.activePlayers[0];
-},
+  public reset(): void {
+    this.activePlayerKeys.forEach(key => this._resetPlayer(key));
+    this.currentPlayerKey = this.length > 0 ? this.activePlayerKeys[0] : null;
+  }
 
-/**
+  /**
  * Start a new round within the same game. reset all game vars per player except 'bank'
  */
-newRound() {
-  this.state.activePlayers.forEach(key => this._resetPlayer(key, "bank"));
-  this.state.currentPlayerKey = this.state.activePlayers[0];
-  this._allPlayersAnte();
-  this._startTurn(this.state.currentPlayerKey);
-},
+  public newRound() {
+    this.activePlayerKeys.forEach(key => this._resetPlayer(key, "bank"));
+    this.currentPlayerKey = this.state.activePlayerKeys[0];
+    this._allPlayersAnte();
+    this._startTurn(this.currentPlayerKey);
+  }
 
-/**
+  /**
  * reset properties that are bound to a single round of play
  * @param {string} key
  * @param  {...string} omit properties to omit when resetting
  */
-_resetPlayer(key, omit) {
-  const props = ["bet", "bank", "handValue", "hasBlackjack", "isBusted", "isFinished", "isStaying", "lastAction", "status", "turn"];
-  props.forEach(prop => {
-    if (prop !== omit) {
-      this.state.players[key][prop] = this.defaultPlayerState[prop]
-    }
-  })
-},
+  public _resetPlayer(key: PlayerKey, omit: string) {
+    const props = ["bet", "bank", "handValue", "hasBlackjack", "isBusted", "isFinished", "isStaying", "lastAction", "status", "turn"];
+    props.forEach(prop => {
+      if (prop !== omit) {
+        this.state.players[key][prop] = this.defaultPlayerState[prop]
+      }
+    })
+  }
 
-/**
- * cause the given player to bet the given amount (unused)
- * @param {string} key
- * @param {number} amount 
- */
-_bet(key, amount) {
-  let p = this.getPlayer(key);
-  p.pot -= amount;
-  p.bet = amount;
-  p.lastAction = "bet";
-  console.log(`${p.title} bet ${amount}`);
-},
+  /**
+   * cause the given player to bet the given amount (unused)
+   * @param {string} key
+   * @param {number} amount 
+   */
+  public _bet(key: PlayerKey, amount: number) {
+    let p = this.player(key);
+    // p.pot -= amount;
+    p.bet = amount;
+    p.lastAction = PlayerAction.Bet;
+    console.log(`${p.title} bet ${amount}`);
+  }
 
-/**
- * cause the given player to ante the given amount
- * @param {string} key
- * @param {number} amount 
- */
-_ante(key, amount) {
-  let p = this.getPlayer(key);
-  p.bank -= amount;
-  p.lastAction = "ante";
-  console.log(`${p.title} ante ${amount}`);
-},
+  /**
+   * cause the given player to ante the given amount
+   * @param {string} key
+   * @param {number} amount 
+   */
+  public _ante(key: PlayerKey, amount: number) {
+    let p = this.player(key);
+    p.bank -= amount;
+    p.lastAction = PlayerAction.Ante;
+    console.log(`${p.title} ante ${amount}`);
+  }
 
-/**
+  /**
  * cause all players to ante
  * @param {number} amount 
  */
-_allPlayersAnte(amount) {
-  this.state.activePlayers.forEach(key => this._ante(key, amount))
-},
+  public _allPlayersAnte(amount: number) {
+    this.activePlayerKeys.forEach(key => this._ante(key, amount))
+  }
 
-/**
+  /**
  * cause the given player to hit
- * @param {string} key
+ * @param {PlayerKey} key
  */
-_hit(key) {
-  let p = this.getPlayer(key);
-  p.lastAction = "hit";
-  console.log(`${p.title} hit`);
-},
+  public _hit(key: PlayerKey) {
+    let p = this.player(key);
+    p.lastAction = PlayerAction.Hit;
+    console.log(`${p.title} hit`);
+  }
 
-// cause the given player to become busted
-/**
- * 
- * @param {string} key the key of the player to fetch
- */
-_bust(key) {
-  let p = this.getPlayer(key);
-  p.isBusted = true;
-  this._finish(key);
-  console.log(`${p.title} busted`);
-},
+  // cause the given player to become busted
+  /**
+   * 
+   * @param {string} key the key of the player to fetch
+   */
+  public _bust(key: PlayerKey) {
+    let p = this.player(key);
+    p.status = 'busted';
+    this._finish(key);
+    console.log(`${p.title} busted`);
+  }
 
-/**
+
+  /**
  * cause the given player to stay
  * @param {string} key
  */
-_stay(key) {
-  let p = this.getPlayer(key);
-  p.isStaying = true;
-  p.lastAction = "stay";
-  this._finish(key);
-  console.log(`${p.title} stayed`);
-},
+  public _stay(key: PlayerKey) {
+    let p = this.player(key);
+    p.isStaying = true;
+    p.lastAction = PlayerAction.Stand;
+    this._finish(key);
+    console.log(`${p.title} stayed`);
+  }
 
-/**
+  /**
  * when finished, the player can not perform any further actions
  * @param {string} key
  */
-_finish(key) {
-  let p = this.getPlayer(key);
-  p.isFinished = true;
-  this._endTurn(key);
-  console.log(`${p.title} finished`);
-},
+  public _finish(key: PlayerKey) {
+    let p = this.player(key);
+    p.isFinished = true;
+    this._endTurn(key);
+    console.log(`${p.title} finished`);
+  }
 
-/**
+  /**
  * cause all players to finish
  */
-_allPlayersFinish() {
-  this.state.activePlayers.forEach(
-    key => this._finish(this.state.players[key])
-  )
-},
+  public _allPlayersFinish() {
+    this.activePlayerKeys.forEach(
+      key => this._finish(this.state.players[key])
+    )
+  }
 
-/**
+  /**
  * cause the given player to have blackjack
  * @param {string} key
  */
-_blackjack(key) {
-  let p = this.getPlayer(key);
-  p.hasBlackjack = true;
-  console.log(`${p.title} has blackjack`);
-},
+  public _blackjack(key: PlayerKey): boolean {
+    let p = this.player(key);
+    console.log(`${p.title} blackjack : ${p.hasBlackjack}`);
+    return p.hasBlackjack
+  }
 
-/**
+  /**
  * cause the given player to start their turn
  * @param {string} key
  */
-_startTurn(key) {
-  let p = this.getPlayer(key);
-  p.turn = true;
-  p.isFinished = false;
-  p.lastAction = "startTurn";
-  console.log(`${p.title} started turn`);
-},
+  public _startTurn(key: PlayerKey) {
+    let p = this.player(key);
+    p.turn = true;
+    p.isFinished = false;
+    p.lastAction = PlayerAction.StartTurn;
+    console.log(`${p.title} started turn`);
+  }
 
-/**
+  /**
  * cause the given player's turn to end
  * @param {string} key
  */
-_endTurn(key) {
-  let p = this.getPlayer(key);
-  p.turn = false;
-  p.lastAction = "endTurn";
-  console.log(`${p.title} ended turn`);
-},
+  public _endTurn(key: PlayerKey) {
+    let p = this.player(key);
+    p.turn = false;
+    p.lastAction = PlayerAction.EndTurn;
+    console.log(`${p.title} ended turn`);
+  }
 
-/**
+  /**
  * cycle currentPlayerKey
  */
-_nextPlayer() {
-  // get key of current Player from state
-  const { currentPlayerKey, activePlayers } = this.state;
+  public _nextPlayer() {
+    // get key of current Player from state
+    const { currentPlayerKey, activePlayerKeys } = this.state;
 
-  // get index of current player in the activePlayers list
-  const index = activePlayers.findIndex(key => key === currentPlayerKey);
+    // get index of current player in the activePlayers list
+    const index = activePlayerKeys.findIndex(key => key === currentPlayerKey);
 
-  // increment the index or go back to 0
-  let nextIndex = index + 1 >= (activePlayers.length)
-    ? 0
-    : index + 1;
-  this.state.currentPlayerKey = activePlayers[nextIndex];
-  this._startTurn(this.state.currentPlayerKey);
-},
-
-/**
- * calculate status for the given player
- * @param {string} key
- */
-_setStatus(key) {
-  let p = this.getPlayer(key);
-
-  /*   set busted status  */
-  if (p.handValue.aceAsOne > 21 && p.handValue.aceAsEleven > 21) {
-    this._bust(key);
-
-  } else if (
-    /*   set blackjack status  */
-    p.handValue.aceAsOne === 21 ||
-    p.handValue.aceAsEleven === 21
-  ) {
-    this._blackjack(key);
+    // increment the index or go back to 0
+    let nextIndex = index + 1 >= (this.length)
+      ? 0
+      : index + 1;
+    this.state.currentPlayerKey = activePlayers[nextIndex];
+    this._startTurn(this.currentPlayerKey);
   }
-},
 
-/**
+  /**
+   * calculate status for the given player
+   * @param {string} key
+   */
+  public _setStatus(key: PlayerKey) {
+    let p = this.player(key);
+
+    /*   set busted status  */
+    if (p.handValue.aceAsOne > 21 && p.handValue.aceAsEleven > 21) {
+      this._bust(key);
+
+    } else if (
+      /*   set blackjack status  */
+      p.handValue.aceAsOne === 21 ||
+      p.handValue.aceAsEleven === 21
+    ) {
+      this._blackjack(key);
+    }
+  }
+
+  /**
  * return the highest possible hand value for the given player
  * @param {string} key
  */
-_getHigherHandValue(key) {
-  let p = this.getPlayer(key);
+  public _getHigherHandValue(key: PlayerKey) {
+    let p = this.player(key);
 
-  let higherHandValue = p.handValue.aceAsOne > p.handValue.aceAsEleven
-    ? p.handValue.aceAsOne
-    : p.handValue.aceAsEleven;
-  return higherHandValue;
-},
+    let higherHandValue = p.handValue.aceAsOne > p.handValue.aceAsEleven
+      ? p.handValue.aceAsOne
+      : p.handValue.aceAsEleven;
+    return higherHandValue;
+  }
 
-/**
+  /**
  * add the given amount to the given player's bank
  * @param {string} key
  * @param {number} amount 
  */
-_payout(key, amount) {
-  let p = this.getPlayer(key);
-  p.bank += amount;
-},
+  public _payout(key: PlayerKey, amount: number) {
+    let p = this.player(key);
+    p.bank += amount;
+  }
 
-// return true if the current player is an NPC
-_isCurrentPlayerNPC() {
-  let p = this.getCurrentPlayer();
-  return p.isNPC;
-},
+  public get currentPlayer() {
+    return null === this.currentPlayerKey ? null : this.players[this.currentPlayerKey];
+  }
 
-});
+  // return true if the current player is an NPC
+  public get _isCurrentPlayerNPC() {
+    return null === this.currentPlayer ? null : this.currentPlayer.isNPC;
+  }
+
+  /**
+ * set players' status, hand values
+ */
+  _evaluatePlayers() {
+    this.activePlayerKeys.forEach(key => {
+      this.state.players[key].handValue = DeckStore.getHandValue(key);
+      this._setStatus(key);
+    });
+
+    let anyPlayerisBusted, allPlayersStaying;
+    for (let key in this.state.players) {
+      if (key in this.state.activePlayers) {
+        anyPlayerisBusted = this.state.players[key].isBusted;
+        allPlayersStaying = this.state.players[key].isStaying;
+      }
+    }
+
+    const nextGameStatus = anyPlayerisBusted || allPlayersStaying ? 5 : 1;
+
+    if (nextGameStatus > 2) {
+      for (let key in this.state.players) {
+        if (key in this.activePlayerKeys) {
+
+          StatsStore.update(key, {
+            numberOfGamesLost: (key === this.state.loser ? 1 : 0),
+            numberOfGamesPlayed: 1,
+            numberOfGamesWon: (key === this.state.winner ? 1 : 0),
+            numberOfTimesBlackjack: (this.state.players[key].hasBlackJack ? 1 : 0),
+            numberOfTimesBusted: (this.state.players[key].isBusted ? 1 : 0),
+            totalWinnings: (key === this.state.winner ? this.state.pot : 0)
+          });
+
+        }
+      }
+    }
+  }
+}
 
 
-/*  ========================================================  */
-/* register methods */
+// IndexedDB 
+/*
+stateManager: new State([STORE_NAME], (name, value) => {
+  console.log(`${name} was updated`);
+})
+*/
+
+
+
+/*
 AppDispatcher.register(action => {
 
   switch (action.actionType) {
@@ -522,10 +422,4 @@ AppDispatcher.register(action => {
       PlayerStore._allPlayersFinish();
       PlayerStore.emitChange();
       break;
-
-
-    default:
-      // do nothing
-      break;
-  }
-});
+*/
