@@ -1,6 +1,6 @@
 // simple state handler
 // Source: https://github.com/craigbuckler/asayer-idbstate/blob/main/js/lib/state.js
-import { IndexedDB } from '../../../../src/classes/IndexedDB';
+import { IndexedDB } from './IndexedDB';
 
 export class State {
 
