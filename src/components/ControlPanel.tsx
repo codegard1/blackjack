@@ -7,8 +7,6 @@ import { CommandBar, ICommandBarItemProps, MessageBarType, nullRender } from "@f
 // Local Resources
 import { IControlPanelProps } from "../interfaces";
 import AppContext from "../classes/AppContext";
-// import AppActions from "./actions/AppActions";
-// import DeckStore from "./stores/DeckStore";
 
 // Component
 export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
@@ -85,7 +83,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   //     }
   //   }
   // ];
-  let blackJackItems:ICommandBarItemProps[] = [
+  let blackJackItems: ICommandBarItemProps[] = [
     {
       key: "hit",
       name: "Hit",
@@ -114,7 +112,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
       ariaLabel: "Stay",
       iconProps: { iconName: "Forward" },
       disabled: gameStatusFlag || playerStatusFlag,
-      onClick: () => playerKey ? gamePlayActions.stay(playerKey) : null,
+      onClick: () => playerKey ? gamePlayActions?.stay(playerKey) : null,
     }
   ];
 
@@ -154,7 +152,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   //   }
   // ];
 
-  const farItems:ICommandBarItemProps[]  = npcFlag
+  const farItems: ICommandBarItemProps[] = npcFlag
     ? []
     : [
       {
@@ -164,15 +162,15 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
         iconProps: { iconName: "Refresh" },
         disabled: gameStatusFlag,
         onClick: () => {
-          deckActions.newDeck();
-          gamePlayActions.newRound();
-          gamePlayActions.showMessageBar("New Round", MessageBarType.info);
+          deckActions?.newDeck();
+          gamePlayActions?.newRound();
+          gamePlayActions?.showMessageBar("New Round", MessageBarType.info);
         }
       }
     ];
 
   // const overFlowItems = selectedFlag ? [].concat(putMenu, drawMenu) : [];
-  const overFlowItems:ICommandBarItemProps[]  = [];
+  const overFlowItems: ICommandBarItemProps[] = [];
 
   return props.hidden ? nullRender() :
     <CommandBar
