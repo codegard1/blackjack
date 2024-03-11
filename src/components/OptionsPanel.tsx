@@ -1,5 +1,7 @@
+// React
 import React from "react";
 
+// Fluent UI
 import {
   ActionButton,
   DirectionalHint,
@@ -16,22 +18,10 @@ import {
   TooltipHost,
 } from "@fluentui/react";
 
-/* custom stuff */
+// Context
 import AppContext from "../classes/AppContext";
 
-export interface IOptionsPanelProps {
-  isActivityLogVisible: boolean;
-  isCardDescVisible: boolean;
-  isDealerHandVisible: boolean;
-  isDeckVisible: boolean;
-  isDrawnVisible: boolean;
-  isHandValueVisible: boolean;
-  isOptionsPanelVisible: boolean;
-  isSelectedVisible: boolean;
-  toggleOptionsPanel: () => any;
-}
-
-export const OptionsPanel: React.FC<IOptionsPanelProps> = (props) => {
+export const OptionsPanel: React.FC = () => {
 
   const {
     isActivityLogVisible,
@@ -49,17 +39,21 @@ export const OptionsPanel: React.FC<IOptionsPanelProps> = (props) => {
   } = React.useContext(AppContext);
 
 
+  const closeOptionsPanel = () => settingActions?.setOptionsPanelVisible(false);
+
+  /**
+   * Reset the game from the Options Panel
+   */
   const resetGame = () => {
     gamePlayActions?.reset();
     deckActions?.newDeck();
     gamePlayActions?.showMessageBar('Game Reset', MessageBarType.info);
-    // AppActions.showMessageBar("Game Reset");
-    props.toggleOptionsPanel();
+    closeOptionsPanel();
   }
 
   const newDeal = () => {
     // AppActions.deal();
-    props.toggleOptionsPanel();
+    closeOptionsPanel();
   }
 
   const tooltipCalloutProps = { gapSpace: 0, };
@@ -67,8 +61,8 @@ export const OptionsPanel: React.FC<IOptionsPanelProps> = (props) => {
   return (
     <Panel
       id="OptionsPanel"
-      isOpen={props.isOptionsPanelVisible}
-      onDismiss={props.toggleOptionsPanel}
+      isOpen={isOptionsPanelVisible}
+      onDismiss={closeOptionsPanel}
       type={PanelType.smallFixedFar}
       headerText="Options"
       isLightDismiss
@@ -219,7 +213,7 @@ export const OptionsPanel: React.FC<IOptionsPanelProps> = (props) => {
             <strong>Chris's Blackjack</strong>
           </Text>
           <Text variant="smallPlus" nowrap block>
-            &copy;2021 <Link href="https://github.com/codegard1/blackjack">Chris Odegard</Link>
+            &copy;2024 <Link href="https://github.com/codegard1/blackjack">Chris Odegard</Link>
             <br />
             Made in Brooklyn with <Link href="https://reactjs.org/">React</Link> and <Link href="https://developer.microsoft.com/en-us/fluentui">Fluent UI</Link>.
           </Text>

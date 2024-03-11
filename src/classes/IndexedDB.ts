@@ -1,5 +1,13 @@
 // IndexedDB wrapper class
 // Source: https://github.com/craigbuckler/asayer-idbstate/blob/main/js/lib/indexeddb.js
+
+export interface IIndexedDB {
+  db: IDBDatabase;
+  connection: IDBDatabase;
+  get: (storeName: string, key: IDBValidKey) => void;
+  set: () => void;
+}
+
 export class IndexedDB {
   public db!: IDBDatabase;
 
@@ -31,6 +39,25 @@ export class IndexedDB {
     return this.db;
   }
 
+  // get named item
+  public async get(storeName: string, key: IDBValidKey) {
+
+    try {
+      // new transaction
+      const
+        transaction = this.db.transaction(storeName, 'readonly'),
+        store = transaction.objectStore(storeName),
+
+        // read record
+        request = await store.get(key);
+      if (request) return request.result;
+
+    } catch (error) {
+      console.log(error);
+    }
+
+  };
+
   // store item
   public async set(storeName: string, key: IDBValidKey, value: string) {
 
@@ -51,22 +78,4 @@ export class IndexedDB {
     }
   };
 
-  // get named item
-  public async get(storeName: string, key: IDBValidKey) {
-
-    try {
-      // new transaction
-      const
-        transaction = this.db.transaction(storeName, 'readonly'),
-        store = transaction.objectStore(storeName),
-
-        // read record
-        request = await store.get(key);
-      if (request) return request.result;
-
-    } catch (error) {
-      console.log(error);
-    }
-
-  };
 }
