@@ -1,5 +1,5 @@
 import { Player } from '../classes/Player';
-import { IPlayerStoreState } from '../stores/PlayerStore';
+import { IPlayerStoreState } from './IPlayerStoreState';
 import { PlayerCollection, PlayerKey, } from '../types';
 
 /**
