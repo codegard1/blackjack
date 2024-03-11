@@ -4,15 +4,15 @@ import React from 'react';
 
 export interface IAppContextProps {
   deck: PlayingCardDeck;
-  isCardDescVisible?: boolean; // ControlPanelStore
-  isDealerHandVisible?: boolean; // ControlPanelStore 
-  isHandValueVisible?: boolean; // ControlPanelStore
-  isDeckVisible?: boolean;
-  isDrawnVisible?: boolean;
-  isOptionsPanelVisible?: boolean;
-  isSelectedVisible?: boolean;
-  isCardTitleVisible?: boolean;
-  isActivityLogVisible?: boolean;
+  isCardDescVisible: boolean; // ControlPanelStore
+  isDealerHandVisible: boolean; // ControlPanelStore 
+  isHandValueVisible: boolean; // ControlPanelStore
+  isDeckVisible: boolean;
+  isDrawnVisible: boolean;
+  isOptionsPanelVisible: boolean;
+  isSelectedVisible: boolean;
+  isCardTitleVisible: boolean;
+  isActivityLogVisible: boolean;
   player?: any; // GameStore
   gameStatusFlag?: boolean; // props
   gameStatus?: number; // GameStore
@@ -24,7 +24,7 @@ export interface IAppContextProps {
     setSelectedVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setCardTitleVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setActivityLogVisible: React.Dispatch<React.SetStateAction<boolean>>;
-    setOptionsPanelVile: React.Dispatch<React.SetStateAction<boolean>>;
+    setOptionsPanelVisible: React.Dispatch<React.SetStateAction<boolean>>;
   }
   deckActions?: {
     newDeck: () => PlayingCardDeck;
