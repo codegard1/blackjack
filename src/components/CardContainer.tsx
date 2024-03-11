@@ -129,15 +129,6 @@ export const CardContainer: React.FC<ICardContainerProps> = (props) => {
           </Text>
         </Stack.Item>
       }
-
-      {
-        !props.isBackFacing &&
-        <Stack.Item align='end' >
-          <Text variant='large' block nowrap className={mergeStyles(cardTitleClassName, cardStyles.cardTitleTop)} >
-            {cardTitle}{cardIcon}
-          </Text>
-        </Stack.Item>
-      }
     </Stack>
   );
 }
