@@ -2,6 +2,7 @@ export type { IActivityLogProps } from './IActivityLogProps';
 export type { IAgentProps } from './IAgentProps';
 export type { IAppContextProps } from './IAppContextProps';
 export type { ICardContainerProps } from './ICardContainerProps';
+export type { ICardStackProps } from './ICardStackProps';
 export type { IControlPanelProps } from './IControlPanelProps';
 export type { IControlPanelStore } from './IControlPanelStore';
 export type { IControlPanelState } from './IControlPanelState';

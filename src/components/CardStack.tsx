@@ -1,10 +1,8 @@
 // React
-import React from 'react';
+import React, { Props } from 'react';
 
-
-/* fluent ui */
+// Fluent UI
 import {
-  Separator,
   Stack,
   Icon,
   Text,
@@ -12,13 +10,16 @@ import {
 } from "@fluentui/react";
 
 /* custom stuff */
-import { CardContainer } from './';
-
-// import AppActions from "../../_old/src/components/blackjack/actions/AppActions";
-import { IDeckContainerProps } from '../interfaces/IDeckContainerProps';
+import { CardContainer } from '.';
+import { ICardStackProps } from '../interfaces';
 import AppContext from '../classes/AppContext';
 
-export const DeckContainer: React.FC<IDeckContainerProps> = (props) => {
+/**
+ * A visual component that displays PlayingCards
+ * @param props 
+ * @returns 
+ */
+export const CardStack: React.FC<ICardStackProps> = (props) => {
 
   // Context props
   const {
@@ -37,15 +38,12 @@ export const DeckContainer: React.FC<IDeckContainerProps> = (props) => {
   }
 
   // Create CardContainers to display cards
-  const cardElements = (deck && deck.length > 0) ?
+  const cardElements = (props.player && props.player.cards.length > 0) ?
     deck.cards.map((card, index) =>
       <CardContainer
-        key={card.suit + "-" + card.description}
         {...card}
-        // select={cardAttributes => AppActions.select(cardAttributes)}
-        // deselect={cardAttributes => AppActions.deselect(cardAttributes)}
         isSelectable={props.isSelectable}
-        isBackFacing={index === 0 && !isDealerHandVisible && props.isNPC}
+        isBackFacing={index === 0 && !isDealerHandVisible && props.player.isNPC}
         isDescVisible={isCardDescVisible}
       />
     ) : [];
@@ -59,11 +57,11 @@ export const DeckContainer: React.FC<IDeckContainerProps> = (props) => {
 
   /* Hand Value (if it's a player deck) */
   let handValueString;
-  if (props.handValue) {
-    if (!props.isNPC || (props.isNPC && isDealerHandVisible)) {
-      handValueString = `Hand Value: ${props.handValue.aceAsOne} `;
-      if (props.handValue.aceAsOne !== props.handValue.aceAsEleven) {
-        handValueString += " / " + props.handValue.aceAsEleven;
+  if (props.player.handValue.highest) {
+    if (!props.player.isNPC || (props.player.isNPC && isDealerHandVisible)) {
+      handValueString = `Hand Value: ${props.player.handValue.aceAsOne} `;
+      if (props.player.handValue.aceAsOne !== props.player.handValue.aceAsEleven) {
+        handValueString += " / " + props.player.handValue.aceAsEleven;
       }
     }
   }
@@ -81,12 +79,12 @@ export const DeckContainer: React.FC<IDeckContainerProps> = (props) => {
 
   return props.hidden ? nullRender() : (
     <Stack verticalAlign="stretch" tokens={tokens.sectionStack}>
-      {!props.isPlayerDeck && (
+      {props.player.isNPC && (
         <Text variant="mediumPlus" nowrap block onClick={_toggleDeck}>
           {deckTitleString}&nbsp;{toggleIcon}
         </Text>
       )}
-      {props.isPlayerDeck &&
+      {!props.player.isNPC &&
         isHandValueVisible && (
           <Text variant="large">{handValueString}</Text>
         )}
