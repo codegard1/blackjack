@@ -2,15 +2,18 @@
     https://github.com/codegard1/node-shuffle.git */
 
 import { IPlayingCardDeck } from "../interfaces";
-import { Suit, SuitKey } from "../types";
-import {PlayingCard} from "./PlayingCard";
+import { Suit, CardTuple } from "../types";
+import { PlayingCard } from "./PlayingCard";
 import { PlayingCardSuit } from "./PlayingCardSuit";
 
+/**
+ * A set of 52 Playing Cards in random order
+ */
 export class PlayingCardDeck implements IPlayingCardDeck {
   public cards: PlayingCard[] = [];
 
   constructor() {
-    const cardTuples = [
+    const cardTuples: CardTuple[] = [
       { name: "Two", value: 2 },
       { name: "Three", value: 3 },
       { name: "Four", value: 4 },
@@ -30,12 +33,12 @@ export class PlayingCardDeck implements IPlayingCardDeck {
 
     let _cards: PlayingCard[] = [];
     cardSuits.forEach((suit: Suit) =>
-      cardTuples.forEach((desc) =>
+      cardTuples.forEach((t) =>
         _cards.push(
           new PlayingCard(
             new PlayingCardSuit(suit),
-            desc.name,
-            desc.value
+            t.name,
+            t.value
           )
         )
       )

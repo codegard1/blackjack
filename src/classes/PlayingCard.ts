@@ -8,11 +8,13 @@ export class PlayingCard implements IPlayingCard {
   public suit: PlayingCardSuit;
   public description: string;
   public sort: PlayingCardSort;
+  public key: string;
 
   constructor(suit: PlayingCardSuit, description: string, sort: number) {
     this.suit = suit;
     this.description = description;
     this.sort = new PlayingCardSort(sort);
+    this.key = [suit.single, '_', sort].join();
   }
 
   public toString() {
