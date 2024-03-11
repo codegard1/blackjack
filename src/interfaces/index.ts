@@ -11,3 +11,4 @@ export type { IStatusDisplayProps } from './IStatusDisplayProps';
 export type { IActivityLogProps } from './IActivityLogProps';
 export type { IPlayer } from './IPlayer';
 export type { IPlayerStore } from './IPlayerStore';
+export type { IAgentProps } from './IAgentProps';

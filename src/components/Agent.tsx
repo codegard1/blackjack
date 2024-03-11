@@ -5,17 +5,11 @@ import React from "react";
 import { Spinner, SpinnerSize } from '@fluentui/react';
 import { MotionAnimations } from '@fluentui/theme';
 
-
 // Context
-// import AppActions from "./actions/AppActions";
 import AppContext from "../classes/AppContext";
 
-export interface IAgentProps {
-  dealerHasControl: Boolean;
-  gameStatus: Number;
-  handValue: any;
-  playerKey: string;
-}
+// Local Resources
+import { IAgentProps } from "../interfaces/IAgentProps";
 
 export const Agent: React.FC<IAgentProps> = (props) => {
 
@@ -25,23 +19,23 @@ export const Agent: React.FC<IAgentProps> = (props) => {
   } = React.useContext(AppContext);
 
   // State
-  const [lastAction, setLastAction] = React.useState < string > ('');
-  const [spinnerLabel, setSpinnerLabel] = React.useState < string > ('Thinking');
+  const [lastAction, setLastAction] = React.useState<string>('');
+  const [spinnerLabel, setSpinnerLabel] = React.useState<string>('Thinking');
 
 
-  if (this.props.dealerHasControl) {
+  if (props.dealerHasControl) {
     console.log("in agent- dealer has control");
     // Agent acts on a partially random interval
     const intervalInMilliseconds = Math.floor(Math.random() * (new Date().getMilliseconds()))
     const intervalID = setInterval(() => {
-      AppActions.evaluateGame(this.props.gameStatus);
-      const { aceAsEleven, aceAsOne } = this.props.handValue;
+      AppActions.evaluateGame(props.gameStatus);
+      const { aceAsEleven, aceAsOne } = props.handValue;
 
-      if (this.props.gameStatus !== 0) {
+      if (props.gameStatus !== 0) {
         /* when to hit */
         if (aceAsEleven <= 16 || aceAsOne <= 16) {
-          this.setState({ spinnerLabel: "Hit" },
-            AppActions.hit(this.props.playerKey));
+          setSpinnerLabel("Hit");
+          AppActions.hit(props.playerKey)
         }
 
         /* when to stay */
@@ -49,12 +43,12 @@ export const Agent: React.FC<IAgentProps> = (props) => {
           (aceAsOne >= 17 && aceAsOne <= 21) ||
           (aceAsEleven >= 17 && aceAsEleven <= 21)
         ) {
-          this.setState({ spinnerLabel: "Stay" },
-            AppActions.stay(this.props.playerKey));
+          setSpinnerLabel("Stay");
+          AppActions.stay(props.playerKey);
         }
       } else {
-        this.setState({ spinnerLabel: "Okay, that's it!" },
-          clearInterval(intervalID))
+        setSpinnerLabel("Okay, that's it!");
+        clearInterval(intervalID);
       }
     }, intervalInMilliseconds);
   } else {
@@ -64,7 +58,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
   return (
     <Spinner
       size={SpinnerSize.large}
-      label={this.state.spinnerLabel}
+      label={spinnerLabel}
       ariaLive="assertive"
       labelPosition="right"
       style={{ animation: MotionAnimations.scaleDownIn }}
