@@ -44,15 +44,15 @@ const classNames = mergeStyleSets({
   activityItemRoot: {
     animation: MotionAnimations.slideLeftIn,
     marginTop: '10px',
-    color: theme.palette.neutral,
+    color: theme.palette.neutralPrimary,
   },
   nameText: {
     fontWeight: 'bold',
-    color: theme.palette.neutral,
+    color: theme.palette.neutralPrimary,
   },
   descriptionText: {
     fontWeight: 'normal',
-    color: theme.palette.neutral,
+    color: theme.palette.neutralPrimary,
   },
   timestamp: {
     fontWeight: 'light',
