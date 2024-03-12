@@ -80,7 +80,7 @@ export class Player implements IPlayer {
   }
 
   // update stats for a given player
-  public updateStats(playerKey: PlayerKey, statsFrame: PlayerStats) {
+  public updateStats(statsFrame: PlayerStats) {
     for (const key in statsFrame) {
       /* add the value of stasFrame[key] to the corresponding key in statsstore */
       if (this.stats[key]) this.stats[key] += statsFrame[key];
