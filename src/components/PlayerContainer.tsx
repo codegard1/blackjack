@@ -12,7 +12,6 @@ import { IPlayerContainerProps } from "../interfaces";
 import "./PlayerContainer.css";
 
 // Context
-// import DeckStore from "../../_old/stores/DeckStore";
 import AppContext from "../classes/AppContext";
 
 // Component

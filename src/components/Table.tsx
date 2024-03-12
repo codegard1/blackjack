@@ -16,16 +16,10 @@ import {
 
 /* custom stuff */
 import {
-  ActivityLog,
-  // PlayerContainer,
   CardStack,
-  OptionsPanel,
-  // ActivityLog,
-  // SplashScreen,
 } from ".";
 
 // import GameStore from "../../_old/stores/GameStore";
-// import DeckStore from "../../_old/stores/DeckStore";
 // import PlayerStore from "../../_old/stores/PlayerStore";
 // import StatsStore from "../../_old/stores/StatsStore";
 

@@ -1,4 +1,5 @@
 import { PlayingCard } from "../classes";
+import { PlayingCardKey } from "../types";
 
 export interface IPlayingCardDeck {
   cards: PlayingCard[];
@@ -11,4 +12,10 @@ export interface IPlayingCardDeck {
   putOnTopOfDeck: (cards: PlayingCard[]) => void;
   reset: () => void;
   shuffle: () => void;
+  drawn: PlayingCard[];
+  selected: PlayingCardKey[];
+  select: (key: PlayingCardKey) => void;
+  unselect: (key: PlayingCardKey) => void;
+  drawnCardKeys: PlayingCardKey[];
+  deckCardKeys: PlayingCardKey[];
 }

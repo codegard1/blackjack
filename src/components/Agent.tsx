@@ -10,7 +10,6 @@ import AppContext from "../classes/AppContext";
 
 // Local Resources
 import { IAgentProps } from "../interfaces/IAgentProps";
-import DeckStore from "../classes/DeckStore";
 
 export const Agent: React.FC<IAgentProps> = (props) => {
 
