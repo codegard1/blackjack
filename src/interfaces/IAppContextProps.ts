@@ -1,7 +1,7 @@
-import { MessageBarType } from '@fluentui/react';
-import { Player, PlayingCard, PlayingCardDeck } from '../classes';
 import React from 'react';
-import { PlayerCollection } from '../types';
+import { Player, PlayingCard, PlayingCardDeck } from '../classes';
+import { MessageBarDefinition, PlayerCollection, PlayerKey } from '../types';
+import { GameStatus } from '../enums/GameStatus';
 
 export interface IAppContextProps {
   deck: PlayingCardDeck;
@@ -29,6 +29,35 @@ export interface IAppContextProps {
     setOptionsPanelVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setSplashScreenVisible: React.Dispatch<React.SetStateAction<boolean>>;
   }
+  gameStore: {
+    deal: (key: PlayerKey) => void;
+    hit: (key: PlayerKey) => void;
+    stay: (key: PlayerKey) => void;
+    bet: (key: PlayerKey, amount: number) => void;
+    newGame: (keys: PlayerKey[]) => void;
+    showMessageBar: (d: MessageBarDefinition) => void;
+    hideMessageBar: () => void;
+    resetGame: () => void;
+    newRound: () => void;
+    dealerHasControl: boolean;
+    lastWriteTime: string;
+    loser: PlayerKey | undefined;
+    messageBarDefinition: MessageBarDefinition;
+    minimumBet: number;
+    pot: number;
+    round: number;
+    setDealerHasControl: React.Dispatch<React.SetStateAction<boolean>>;
+    setLastWriteTime: React.Dispatch<React.SetStateAction<string>>;
+    setLoser: React.Dispatch<React.SetStateAction<PlayerKey | undefined>>;
+    setMessageBarDefinition: React.Dispatch<React.SetStateAction<MessageBarDefinition>>;
+    setMinimumBet: React.Dispatch<React.SetStateAction<number>>;
+    setPot: React.Dispatch<React.SetStateAction<number>>;
+    setRound: React.Dispatch<React.SetStateAction<number>>;
+    setTurnCount: React.Dispatch<React.SetStateAction<number>>;
+    setWinner: React.Dispatch<React.SetStateAction<PlayerKey | undefined>>;
+    turnCount: number;
+    winner: PlayerKey | undefined;
+  }
   deckActions?: {
     newDeck: () => PlayingCardDeck;
     draw: (num: number) => void;
@@ -41,24 +70,13 @@ export interface IAppContextProps {
     removeSelectedFromDrawn: (cards: PlayingCard[]) => void;
     select: (cardAttributes: any) => void;
     deselect: (cardAttributes: any) => void;
-  },
-  gamePlayActions?: {
-    deal: () => void;
-    hit: (playerKey: string) => void;
-    stay: (playerKey: string) => void;
-    bet: (playerKey: string, amount: number) => void;
-    newGame: (players: any) => void;
-    showMessageBar: (text: string, type: MessageBarType) => void;
-    hideMessageBar: () => void;
-    reset: () => void;
-    newRound: () => void;
-  },
+  }
   storeActions?: {
     newActivityLogItem: (name: string, description: string, iconName: string) => void;
     initializeStores: () => void;
     clearStores: () => void;
-    evaluateGame: (statusCode: number) => void;
+    evaluateGame: (statusCode: GameStatus) => void;
     endGame: () => void;
-    endGameTrap: (players: any) => void;
+    endGameTrap: () => boolean;
   }
 }
