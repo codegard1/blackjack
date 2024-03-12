@@ -1,5 +1,6 @@
 import { BasePlayer } from '../types';
-import { PlayerAction } from '../types/PlayerAction';
+import { PlayerAction } from '../enums/PlayerAction';
+import { PlayerStatus } from '../enums/PlayerStatus';
 
 export interface IPlayer extends BasePlayer {
   bet: number;
@@ -7,6 +8,6 @@ export interface IPlayer extends BasePlayer {
   isSelected: boolean;
   isStaying: boolean;
   lastAction: PlayerAction;
-  status: string;
+  status: PlayerStatus;
   turn: boolean;
 }
