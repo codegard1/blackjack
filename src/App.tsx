@@ -10,13 +10,11 @@ import {
 
 // Local Resources
 import './App.css';
-import { ActivityLog, CardStack, OptionsPanel } from './components';
-import { IndexedDB, Player, PlayingCard, PlayingCardDeck, } from './classes';
 import AppContext from './classes/AppContext';
-import { SplashScreen } from './components/SplashScreen';
+import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
+import { IndexedDB, PlayingCard, PlayingCardDeck, PlayerStore } from './classes';
 import { defaultPlayers } from './definitions';
-import { Table } from './components/Table';
-import { PlayerStore } from './classes/PlayerStore';
+import { PlayingCardKey } from './types';
 
 // Necessary in order for Fluent Icons to render on the page
 initializeIcons();
@@ -92,8 +90,8 @@ const App = () => {
   const putOnBottomOfDeck = (cards: PlayingCard[]) => deck.putOnBottomOfDeck(cards);
   const removeSelectedFromPlayerHand = (playerKey: string, cards: PlayingCard[]) => { };
   const removeSelectedFromDrawn = (cards: PlayingCard[]) => { };
-  const select = (cardAttributes: any) => { };
-  const deselect = (cardAttributes: any) => { };
+  const select = (key: PlayingCardKey) => deck.select(key);
+  const deselect = (key: PlayingCardKey) => deck.unselect(key);
 
   /**
    *  GAME ACTIONS
@@ -129,6 +127,13 @@ const App = () => {
       console.log('Deck effect');
     }
   }, [deck]);
+
+
+  React.useEffect(() => {
+    if (null !== players) {
+      console.log('Players effect');
+    }
+  }, [players]);
 
   React.useEffect(() => {
     if (null !== settingStore) {
