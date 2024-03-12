@@ -1,5 +1,3 @@
-/* IndexedDB State Manager */
-import { State } from '../../../lib/State';
 
 // custom stuff
 import DeckStore from "./DeckStore";
@@ -10,17 +8,7 @@ import { PlayerCollection } from '../types/PlayerCollection';
 import { IPlayerStore } from '../interfaces/IPlayerStore';
 import { Player } from '../classes/Player';
 import { PlayerAction } from '../types/PlayerAction';
-
-/* Data, Getter method, Event Notifier */
-const CHANGE_EVENT = "PlayerStore";
-const STORE_NAME = "PlayerStore";
-
-export interface IPlayerStoreState {
-  private players: PlayerCollection;
-  private activePlayerKeys: PlayerKey[];
-  private currentPlayerKey: null | PlayerKey;
-  private lastWriteTime: string;
-}
+import { IPlayerStoreState } from '../interfaces/IPlayerStoreState';
 
 export class PlayerStore implements IPlayerStore {
   private players: PlayerCollection = {};
