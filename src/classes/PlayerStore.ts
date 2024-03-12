@@ -1,23 +1,20 @@
 
 // custom stuff
-import DeckStore from "./DeckStore";
-import StatsStore from "./StatsStore";
-import { defaultPlayersObj, } from "../definitions";
-import { PlayerKey } from '../types';
+import { PlayerKey, PlayerStats } from '../types';
 import { PlayerCollection } from '../types/PlayerCollection';
 import { IPlayerStore } from '../interfaces/IPlayerStore';
 import { Player } from '../classes/Player';
-import { PlayerAction } from '../types/PlayerAction';
+import { PlayerAction } from '../enums/PlayerAction';
 import { IPlayerStoreState } from '../interfaces/IPlayerStoreState';
 
 export class PlayerStore implements IPlayerStore {
   private players: PlayerCollection = {};
   private activePlayerKeys: PlayerKey[] = [];
-  private currentPlayerKey = null;
+  private currentPlayerKey: PlayerKey | null = null;
   private lastWriteTime = '';
 
   constructor() {
-    this.initialize();
+    // this.initialize();
   }
 
   /**
@@ -73,7 +70,7 @@ export class PlayerStore implements IPlayerStore {
  * Return the name of the given player
  * @param {string} key key of the player to look up
  */
-  public get playerName(key: PlayerKey): string {
+  public playerName(key: PlayerKey): string {
     return this.player(key).title;
   }
 
@@ -85,7 +82,7 @@ export class PlayerStore implements IPlayerStore {
  * reset gameplay variables for each player and set the current player key to the first in the list
  */
   public reset(): void {
-    this.activePlayerKeys.forEach(key => this._resetPlayer(key));
+    this.activePlayerKeys.forEach(key => this._resetPlayer(key, 'bank'));
     this.currentPlayerKey = this.length > 0 ? this.activePlayerKeys[0] : null;
   }
 
@@ -95,7 +92,7 @@ export class PlayerStore implements IPlayerStore {
   public newRound() {
     this.activePlayerKeys.forEach(key => this._resetPlayer(key, "bank"));
     this.currentPlayerKey = this.state.activePlayerKeys[0];
-    this._allPlayersAnte();
+    this._allPlayersAnte(20);
     this._startTurn(this.currentPlayerKey);
   }
 
@@ -105,12 +102,13 @@ export class PlayerStore implements IPlayerStore {
  * @param  {...string} omit properties to omit when resetting
  */
   public _resetPlayer(key: PlayerKey, omit: string) {
-    const props = ["bet", "bank", "handValue", "hasBlackjack", "isBusted", "isFinished", "isStaying", "lastAction", "status", "turn"];
-    props.forEach(prop => {
-      if (prop !== omit) {
-        this.state.players[key][prop] = this.defaultPlayerState[prop]
-      }
-    })
+    const player = this.players[key];
+    player.bet = 0;
+    player.bank = 1000;
+    player.isFinished = false;
+    player.isStaying = false;
+    player.lastAction = PlayerAction.Init;
+    player.turn = false;
   }
 
   /**
@@ -162,10 +160,9 @@ export class PlayerStore implements IPlayerStore {
    * @param {string} key the key of the player to fetch
    */
   public _bust(key: PlayerKey) {
-    let p = this.player(key);
-    p.status = 'busted';
+    let p = this.playerName(key);
     this._finish(key);
-    console.log(`${p.title} busted`);
+    console.log(`${p} busted`);
   }
 
 
@@ -179,6 +176,12 @@ export class PlayerStore implements IPlayerStore {
     p.lastAction = PlayerAction.Stand;
     this._finish(key);
     console.log(`${p.title} stayed`);
+  }
+
+
+  public _stats(key: PlayerKey) {
+    let p = this.player(key);
+    return p.stats;
   }
 
   /**
@@ -197,7 +200,7 @@ export class PlayerStore implements IPlayerStore {
  */
   public _allPlayersFinish() {
     this.activePlayerKeys.forEach(
-      key => this._finish(this.state.players[key])
+      key => this._finish(key)
     )
   }
 
@@ -248,41 +251,8 @@ export class PlayerStore implements IPlayerStore {
     let nextIndex = index + 1 >= (this.length)
       ? 0
       : index + 1;
-    this.state.currentPlayerKey = activePlayers[nextIndex];
+    this.currentPlayerKey = this.activePlayerKeys[nextIndex];
     this._startTurn(this.currentPlayerKey);
-  }
-
-  /**
-   * calculate status for the given player
-   * @param {string} key
-   */
-  public _setStatus(key: PlayerKey) {
-    let p = this.player(key);
-
-    /*   set busted status  */
-    if (p.handValue.aceAsOne > 21 && p.handValue.aceAsEleven > 21) {
-      this._bust(key);
-
-    } else if (
-      /*   set blackjack status  */
-      p.handValue.aceAsOne === 21 ||
-      p.handValue.aceAsEleven === 21
-    ) {
-      this._blackjack(key);
-    }
-  }
-
-  /**
- * return the highest possible hand value for the given player
- * @param {string} key
- */
-  public _getHigherHandValue(key: PlayerKey) {
-    let p = this.player(key);
-
-    let higherHandValue = p.handValue.aceAsOne > p.handValue.aceAsEleven
-      ? p.handValue.aceAsOne
-      : p.handValue.aceAsEleven;
-    return higherHandValue;
   }
 
   /**
@@ -308,106 +278,32 @@ export class PlayerStore implements IPlayerStore {
  * set players' status, hand values
  */
   _evaluatePlayers() {
-    this.activePlayerKeys.forEach(key => {
-      this.state.players[key].handValue = DeckStore.getHandValue(key);
-      this._setStatus(key);
-    });
 
     let anyPlayerisBusted, allPlayersStaying;
-    for (let key in this.state.players) {
-      if (key in this.state.activePlayers) {
-        anyPlayerisBusted = this.state.players[key].isBusted;
-        allPlayersStaying = this.state.players[key].isStaying;
+    for (let key in this.players) {
+      if (key in this.activePlayerKeys) {
+        anyPlayerisBusted = this.players[key].isBusted;
+        allPlayersStaying = this.players[key].isStaying;
       }
     }
 
     const nextGameStatus = anyPlayerisBusted || allPlayersStaying ? 5 : 1;
 
-    if (nextGameStatus > 2) {
-      for (let key in this.state.players) {
-        if (key in this.activePlayerKeys) {
+    // if (nextGameStatus > 2) {
+    //   for (let key in this.state.players) {
+    //     if (key in this.activePlayerKeys) {
 
-          StatsStore.update(key, {
-            numberOfGamesLost: (key === this.state.loser ? 1 : 0),
-            numberOfGamesPlayed: 1,
-            numberOfGamesWon: (key === this.state.winner ? 1 : 0),
-            numberOfTimesBlackjack: (this.state.players[key].hasBlackJack ? 1 : 0),
-            numberOfTimesBusted: (this.state.players[key].isBusted ? 1 : 0),
-            totalWinnings: (key === this.state.winner ? this.state.pot : 0)
-          });
+    //       StatsStore.update(key, {
+    //         numberOfGamesLost: (key === this.state.loser ? 1 : 0),
+    //         numberOfGamesPlayed: 1,
+    //         numberOfGamesWon: (key === this.state.winner ? 1 : 0),
+    //         numberOfTimesBlackjack: (this.state.players[key].hasBlackJack ? 1 : 0),
+    //         numberOfTimesBusted: (this.state.players[key].isBusted ? 1 : 0),
+    //         totalWinnings: (key === this.state.winner ? this.state.pot : 0)
+    //       });
 
-        }
-      }
-    }
+    //     }
+    //   }
+    // }
   }
 }
-
-
-// IndexedDB 
-/*
-stateManager: new State([STORE_NAME], (name, value) => {
-  console.log(`${name} was updated`);
-})
-*/
-
-
-
-/*
-AppDispatcher.register(action => {
-
-  switch (action.actionType) {
-    case AppConstants.INITIALIZE_STORES:
-      PlayerStore.initialize().then(() => {
-        PlayerStore.emitChange();
-      });
-      break;
-
-    case AppConstants.CLEAR_STORES:
-      PlayerStore.clearStore();
-      break;
-
-    case AppConstants.GLOBAL_NEWPLAYER:
-      PlayerStore.newPlayer(action.key, action.title, action.isNPC);
-      PlayerStore.emitChange();
-      break;
-
-    case AppConstants.GAME_RESET:
-      PlayerStore.reset();
-      PlayerStore.emitChange();
-      break;
-
-    case AppConstants.GAME_NEWROUND:
-      PlayerStore.newRound();
-      PlayerStore.emitChange();
-      break;
-
-    case AppConstants.GAME_DEAL:
-      PlayerStore._startTurn(PlayerStore.state.currentPlayerKey);
-      PlayerStore.emitChange();
-      break;
-
-    case AppConstants.GAME_HIT:
-      PlayerStore._hit(PlayerStore.state.currentPlayerKey);
-      PlayerStore.emitChange();
-      break;
-
-    case AppConstants.GAME_STAY:
-      PlayerStore._stay(PlayerStore.state.currentPlayerKey);
-      PlayerStore.emitChange();
-      break;
-
-    case AppConstants.GAME_BET:
-      PlayerStore._bet(PlayerStore.state.currentPlayerKey, action.amount);
-      PlayerStore.emitChange();
-      break;
-
-    case AppConstants.GLOBAL_EVALUATEGAME:
-      PlayerStore._evaluatePlayers();
-      // PlayerStore.emitChange();
-      break;
-
-    case AppConstants.GLOBAL_ENDGAME:
-      PlayerStore._allPlayersFinish();
-      PlayerStore.emitChange();
-      break;
-*/

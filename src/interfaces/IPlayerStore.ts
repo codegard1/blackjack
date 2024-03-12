@@ -1,6 +1,6 @@
 import { Player } from '../classes/Player';
 import { IPlayerStoreState } from './IPlayerStoreState';
-import { PlayerCollection, PlayerKey, } from '../types';
+import { PlayerKey, PlayerStats, } from '../types';
 
 /**
  * Class that tracks and manipulates Player objects
@@ -12,7 +12,7 @@ export interface IPlayerStore {
   clearStore: () => void;
   player: (key: PlayerKey) => Player;
   all: Player[];
-  playerName: string;
+  playerName: (key: PlayerKey) => string;
   length: number;
   reset: () => void;
   newRound: () => void;
@@ -27,13 +27,12 @@ export interface IPlayerStore {
   _hit: (key: PlayerKey) => void;
   _nextPlayer: () => void;
   _resetPlayer: (key: PlayerKey, omit: string) => void;
-  _setStatus: (key: PlayerKey) => void;
-  _getHigherHandValue: (key: PlayerKey) => void;
   _payout: (key: PlayerKey, amount: number) => void;
   _startTurn: (key: PlayerKey) => void;
   _stay: (key: PlayerKey) => void;
-  currentPlayer: Player;
-  _isCurrentPlayerNPC: boolean;
+  _stats: (key: PlayerKey) => PlayerStats;
+  currentPlayer: null | Player;
+  _isCurrentPlayerNPC: null | boolean;
 }
 
 

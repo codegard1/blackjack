@@ -4,6 +4,7 @@ import { PlayingCard } from "./PlayingCard";
 import { PlayingCardDeck } from "./PlayingCardDeck";
 import { PlayingCardSort } from "./PlayingCardSort";
 import { PlayingCardSuit } from "./PlayingCardSuit";
+import { PlayerStore } from "./PlayerStore";
 
 export {
   IndexedDB,
@@ -12,4 +13,5 @@ export {
   PlayingCardDeck,
   PlayingCardSort,
   PlayingCardSuit,
+  PlayerStore,
 }
