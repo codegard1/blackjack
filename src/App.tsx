@@ -16,7 +16,7 @@ import AppContext from './classes/AppContext';
 import { SplashScreen } from './components/SplashScreen';
 import { defaultPlayers } from './definitions';
 import { Table } from './components/Table';
-// import { PlayerStore } from './stores/PlayerStore';
+import { PlayerStore } from './classes/PlayerStore';
 
 // Necessary in order for Fluent Icons to render on the page
 initializeIcons();
@@ -33,6 +33,9 @@ const App = () => {
       }
     }
   });
+
+  // PlayerStore
+  const players = new PlayerStore();
 
 
   // State
