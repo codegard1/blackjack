@@ -2,27 +2,21 @@
 import React from 'react';
 
 // FluentUI
-import { Stack, Text, Link, FontWeights, IStackTokens, IStackStyles, ITextStyles, PrimaryButton } from '@fluentui/react';
-import { initializeIcons } from '@fluentui/react';
-
+import {
+  Stack,
+  Layer,
+  initializeIcons
+} from '@fluentui/react';
 
 // Local Resources
 import './App.css';
-import { DeckContainer, OptionsPanel } from './components';
-import { IndexedDB, PlayingCard, PlayingCardDeck, } from './classes';
+import { ActivityLog, CardStack, OptionsPanel } from './components';
+import { IndexedDB, Player, PlayingCard, PlayingCardDeck, } from './classes';
 import AppContext from './classes/AppContext';
+import { SplashScreen } from './components/SplashScreen';
+import { defaultPlayers } from './definitions';
+import { Table } from './components/Table';
 // import { PlayerStore } from './stores/PlayerStore';
-
-const boldStyle: Partial<ITextStyles> = { root: { fontWeight: FontWeights.semibold } };
-const stackTokens: IStackTokens = { childrenGap: 15 };
-const stackStyles: Partial<IStackStyles> = {
-  root: {
-    width: '960px',
-    margin: '0 auto',
-    textAlign: 'center',
-    color: '#605e5c',
-  },
-};
 
 // Necessary in order for Fluent Icons to render on the page
 initializeIcons();
@@ -31,45 +25,62 @@ initializeIcons();
 const App = () => {
 
   // IDB  
-  const db = new IndexedDB(
-    'BlackJackDB',
-    1,
-    (db, oldVersion, newVersion) => {
-      // upgrade database
-      switch (oldVersion) {
-        case 0: {
-          db.createObjectStore('App');
-        }
+  const db = new IndexedDB('BlackJackDB', 1, (db, oldVersion, newVersion) => {
+    // upgrade database
+    switch (oldVersion) {
+      case 0: {
+        db.createObjectStore('App');
       }
-    });
-
-  // Stores
-  // const playerStore = new PlayerStore();
+    }
+  });
 
 
   // State
+  // TODO: determine if State and "Actions" should all be defined here in App
   const [deck, setDeck] = React.useState<PlayingCardDeck>(new PlayingCardDeck());
-  const [isCardDescVisible, setCardDescVisible] = React.useState<boolean>(false);
   const [gameStatus, setGameStatus] = React.useState<number>(0);
-
-
-  /**
-   *  CONTROL PANEL ACTIONS
-  */
+  const [isActivityLogVisible, setActivityLogVisible] = React.useState<boolean>(false);
+  const [isCardDescVisible, setCardDescVisible] = React.useState<boolean>(false);
+  const [isCardTitleVisible, setCardTitleVisible] = React.useState<boolean>(false);
   const [isDealerHandVisible, setDealerHandVisible] = React.useState<boolean>(false);
-  const [isHandValueVisible, setHandValueVisible] = React.useState<boolean>(false);
   const [isDeckVisible, setDeckVisible] = React.useState<boolean>(true);
   const [isDrawnVisible, setDrawnVisible] = React.useState<boolean>(false);
-  const [isSelectedVisible, setSelectedVisible] = React.useState<boolean>(false);
-  const [isCardTitleVisible, setCardTitleVisible] = React.useState<boolean>(false);
-  const [isActivityLogVisible, setActivityLogVisible] = React.useState<boolean>(false);
+  const [isHandValueVisible, setHandValueVisible] = React.useState<boolean>(false);
   const [isOptionsPanelVisible, setOptionsPanelVisible] = React.useState<boolean>(false);
+  const [isSelectedVisible, setSelectedVisible] = React.useState<boolean>(false);
+  const [isSplashScreenVisible, setSplashScreenVisible] = React.useState<boolean>(false);
+
+  /**
+   * All state variables related to App settings
+   */
+  const settingStore = {
+    isActivityLogVisible,
+    isCardDescVisible,
+    isCardTitleVisible,
+    isDealerHandVisible,
+    isDeckVisible,
+    isDrawnVisible,
+    isHandValueVisible,
+    isOptionsPanelVisible,
+    isSelectedVisible,
+    isSplashScreenVisible,
+    setActivityLogVisible,
+    setCardDescVisible,
+    setCardTitleVisible,
+    setDealerHandVisible,
+    setDeckVisible,
+    setDrawnVisible,
+    setHandValueVisible,
+    setOptionsPanelVisible,
+    setSelectedVisible,
+    setSplashScreenVisible,
+  };
 
 
   /**
    *  DECK ACTIONS
    */
-  const newDeck = () => new PlayingCardDeck();
+  const newDeck = (): PlayingCardDeck => { setDeck(new PlayingCardDeck()); return deck; }
   const draw = (num: number) => deck.draw(num);
   const drawRandom = (num: number) => deck.drawRandom(num);
   const drawFromBottomOfDeck = (num: number) => deck.drawFromBottomOfDeck(num);
@@ -116,29 +127,19 @@ const App = () => {
     }
   }, [deck]);
 
+  React.useEffect(() => {
+    if (null !== settingStore) {
+      console.log('settingStore effect', JSON.stringify(settingStore));
+      db.set('settingStore', 'settingStore', JSON.stringify(settingStore));
+    }
+  }, [settingStore]);
+
   return (
     <AppContext.Provider value={{
       deck,
-      isCardDescVisible,
-      isDealerHandVisible,
-      isHandValueVisible,
+      players: defaultPlayers,
       gameStatus,
-      isDeckVisible,
-      isDrawnVisible,
-      isSelectedVisible,
-      isCardTitleVisible,
-      isActivityLogVisible,
-      isOptionsPanelVisible,
-      settingActions: {
-        setDealerHandVisible,
-        setHandValueVisible,
-        setDeckVisible,
-        setDrawnVisible,
-        setSelectedVisible,
-        setCardTitleVisible,
-        setActivityLogVisible,
-        setOptionsPanelVisible,
-      },
+      settingStore,
       deckActions: {
         newDeck,
         draw,
@@ -172,25 +173,13 @@ const App = () => {
         endGameTrap,
       }
     }}>
-      <Stack tokens={stackTokens} styles={stackStyles} horizontal wrap horizontalAlign='space-between' verticalAlign='space-evenly' verticalFill>
-
-        <PrimaryButton
-          label='Options'
-          onClick={() => setOptionsPanelVisible(true)}
-        />
-
+      <Layer>
+        <SplashScreen />
         <OptionsPanel />
-
-        <DeckContainer
-          hidden={false}
-          handValue={''}
-          isNPC={false}
-          isPlayerDeck={false}
-          isSelectable
-          player={''}
-          title={'Deck 1'}
-          turnCount={0}
-        />
+      </Layer>
+      <Stack tokens={{ childrenGap: 15 }} horizontalAlign='space-between' verticalAlign='space-evenly'>
+        <Table />
+        <ActivityLog hidden={!settingStore.isActivityLogVisible} />
       </Stack>
     </AppContext.Provider>
   );
