@@ -10,12 +10,19 @@ import AppContext from "../classes/AppContext";
 
 // Local Resources
 import { IAgentProps } from "../interfaces/IAgentProps";
+import DeckStore from "../classes/DeckStore";
 
 export const Agent: React.FC<IAgentProps> = (props) => {
 
   // Context
   const {
-
+    settingStore,
+    gamePlayActions,
+    gameStatus,
+    gameStatusFlag,
+    storeActions,
+    deckActions,
+    deck,
   } = React.useContext(AppContext);
 
   // State
@@ -28,14 +35,14 @@ export const Agent: React.FC<IAgentProps> = (props) => {
     // Agent acts on a partially random interval
     const intervalInMilliseconds = Math.floor(Math.random() * (new Date().getMilliseconds()))
     const intervalID = setInterval(() => {
-      AppActions.evaluateGame(props.gameStatus);
+      storeActions?.evaluateGame(gameStatus!);
       const { aceAsEleven, aceAsOne } = props.handValue;
 
       if (props.gameStatus !== 0) {
         /* when to hit */
         if (aceAsEleven <= 16 || aceAsOne <= 16) {
           setSpinnerLabel("Hit");
-          AppActions.hit(props.playerKey)
+          gamePlayActions?.hit(props.playerKey)
         }
 
         /* when to stay */
@@ -44,7 +51,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
           (aceAsEleven >= 17 && aceAsEleven <= 21)
         ) {
           setSpinnerLabel("Stay");
-          AppActions.stay(props.playerKey);
+          gamePlayActions?.stay(props.playerKey);
         }
       } else {
         setSpinnerLabel("Okay, that's it!");

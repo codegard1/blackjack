@@ -5,15 +5,14 @@ import React from "react";
 import { Stack, Text } from "@fluentui/react";
 
 /* custom stuff */
-import { DeckContainer, DeckCallout, ControlPanel, StatusDisplay } from './';
-import Agent from "./Agent";
+import { Agent, CardStack, DeckCallout, ControlPanel, StatusDisplay } from '.';
 import { IPlayerContainerProps } from "../interfaces";
 
 // Styles
 import "./PlayerContainer.css";
 
 // Context
-import DeckStore from "../stores/DeckStore";
+// import DeckStore from "../../_old/stores/DeckStore";
 import AppContext from "../classes/AppContext";
 
 // Component
@@ -21,7 +20,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
   // Context
   const {
-
+    gameStatusFlag,
   } = React.useContext(AppContext);
 
   // State
@@ -53,8 +52,8 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
     !player.turn);
 
   /* selectedFlag is true if getSelected() returns an array */
-  const selectedFlag = !!DeckStore.getSelected(playerKey);
-
+  // const selectedFlag = !!DeckStore.getSelected(playerKey);
+  const selectedFlag = false;
 
   return (
     <Stack className={playerContainerClass}>
@@ -85,13 +84,11 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
           <Stack.Item>
             <ControlPanel
               gameStatus={props.gameStatus}
-              gameStatusFlag={props.gameStatusFlag}
               hidden={player.isNPC}
               minimumBet={props.minimumBet}
               player={player}
               playerKey={playerKey}
               playerStatusFlag={playerStatusFlag}
-              playerIsNPC={player.isNPC}
               selectedFlag={selectedFlag}
               showDeckCallout={_showDeckCallout}
               isDeckCalloutVisible={isDeckCalloutVisible}
@@ -100,21 +97,12 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
         }
 
         <Stack.Item className={`DeckCalloutTarget-${player.title}`}>
-          <DeckContainer
-            deck={playerHand.hand}
-            gameStatus={props.gameStatus}
-            gameStatusFlag={props.gameStatusFlag}
-            handValue={handValue}
+          <CardStack
+            cards={playerHand.hand}
             hidden={false}
-            isCardDescVisible={props.isCardDescVisible}
-            isDealerHandVisible={props.isDealerHandVisible}
-            isHandValueVisible={props.isHandValueVisible}
-            isNPC={player.isNPC}
-            isPlayerDeck
             isSelectable
             player={player}
             title={player.title}
-            turnCount={props.turnCount}
           />
         </Stack.Item>
       </Stack>

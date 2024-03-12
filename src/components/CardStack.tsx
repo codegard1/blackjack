@@ -24,29 +24,23 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
   // Context props
   const {
     deck,
-    isCardDescVisible,
-    gameStatus,
-    isDealerHandVisible,
-    isHandValueVisible,
+    settingStore,
   } = React.useContext(AppContext);
 
   // State
   const [isDeckVisible, setVisible] = React.useState<boolean>(!props.hidden);
 
-  const _toggleDeck = () => {
-    setVisible(!isDeckVisible);
-  }
+  const _toggleDeck = () => setVisible(!isDeckVisible);
 
   // Create CardContainers to display cards
-  const cardElements = (props.player && props.player.cards.length > 0) ?
-    deck.cards.map((card, index) =>
-      <CardContainer
-        {...card}
-        isSelectable={props.isSelectable}
-        isBackFacing={index === 0 && !isDealerHandVisible && props.player.isNPC}
-        isDescVisible={isCardDescVisible}
-      />
-    ) : [];
+  const cardElements = props.cards.map((card, index) =>
+    <CardContainer
+      {...card}
+      isSelectable={props.isSelectable}
+      isBackFacing={index === 0 && !settingStore.isDealerHandVisible && props.player?.isNPC}
+      isDescVisible={settingStore.isCardDescVisible}
+    />
+  );
 
   // Set toggle icon for Deck titles
   const toggleIcon = <Icon iconName={isDeckVisible ? "ChevronUp" : "ChevronDown"} />
@@ -57,8 +51,8 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
 
   /* Hand Value (if it's a player deck) */
   let handValueString;
-  if (props.player.handValue.highest) {
-    if (!props.player.isNPC || (props.player.isNPC && isDealerHandVisible)) {
+  if (props.player?.handValue.highest) {
+    if (!props.player.isNPC || (props.player.isNPC && settingStore.isDealerHandVisible)) {
       handValueString = `Hand Value: ${props.player.handValue.aceAsOne} `;
       if (props.player.handValue.aceAsOne !== props.player.handValue.aceAsEleven) {
         handValueString += " / " + props.player.handValue.aceAsEleven;
@@ -79,17 +73,17 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
 
   return props.hidden ? nullRender() : (
     <Stack verticalAlign="stretch" tokens={tokens.sectionStack}>
-      {props.player.isNPC && (
+      {props.player?.isNPC && (
         <Text variant="mediumPlus" nowrap block onClick={_toggleDeck}>
           {deckTitleString}&nbsp;{toggleIcon}
         </Text>
       )}
-      {!props.player.isNPC &&
-        isHandValueVisible && (
+      {!props.player?.isNPC &&
+        settingStore.isHandValueVisible && (
           <Text variant="large">{handValueString}</Text>
         )}
       <Stack horizontal horizontalAlign="start" tokens={tokens.cardStack} wrap>
-        {isDeckVisible && (cardElements)}
+        {isDeckVisible ? (cardElements) : nullRender}
       </Stack>
     </Stack>
   );

@@ -22,24 +22,14 @@ import {
 import AppContext from "../classes/AppContext";
 
 export const OptionsPanel: React.FC = () => {
-
   const {
-    isActivityLogVisible,
-    isCardDescVisible,
-    isDealerHandVisible,
-    isDeckVisible,
-    isDrawnVisible,
-    isHandValueVisible,
-    isOptionsPanelVisible,
-    isSelectedVisible,
     deckActions,
     gamePlayActions,
     storeActions,
-    settingActions,
+    settingStore,
   } = React.useContext(AppContext);
 
-
-  const closeOptionsPanel = () => settingActions?.setOptionsPanelVisible(false);
+  const closeOptionsPanel = () => settingStore.setOptionsPanelVisible(false);
 
   /**
    * Reset the game from the Options Panel
@@ -61,7 +51,7 @@ export const OptionsPanel: React.FC = () => {
   return (
     <Panel
       id="OptionsPanel"
-      isOpen={isOptionsPanelVisible}
+      isOpen={settingStore.isOptionsPanelVisible}
       onDismiss={closeOptionsPanel}
       type={PanelType.smallFixedFar}
       headerText="Options"
@@ -148,61 +138,61 @@ export const OptionsPanel: React.FC = () => {
         <Separator />
 
         <Toggle
-          checked={isDeckVisible}
+          checked={settingStore.isDeckVisible}
           label="Show Deck"
           ariaLabel="The deck is visible. Press to hide it."
           onText="On"
           offText="Off"
-          onChange={(e, checked) => settingActions?.setDeckVisible(checked ? checked : true)}
+          onChange={(e, checked) => settingStore.setDeckVisible(checked ? checked : true)}
         />
         <Toggle
-          checked={isDrawnVisible}
+          checked={settingStore.isDrawnVisible}
           label="Show Drawn"
           ariaLabel="The Drawn cards are visible. Press to hide it."
           onText="On"
           offText="Off"
-          onChange={(e, checked) => settingActions?.setDrawnVisible(checked ? checked : false)}
+          onChange={(e, checked) => settingStore.setDrawnVisible(checked ? checked : false)}
         />
         <Toggle
-          checked={isSelectedVisible}
+          checked={settingStore.isSelectedVisible}
           label="Show Selected"
           ariaLabel="The Selected cards are visible. Press to hide it."
           onText="On"
           offText="Off"
-          onChange={(e, checked) => settingActions?.setSelectedVisible(checked ? checked : false)}
+          onChange={(e, checked) => settingStore.setSelectedVisible(checked ? checked : false)}
         />
         <Toggle
-          checked={isDealerHandVisible}
+          checked={settingStore.isDealerHandVisible}
           label="Show Dealer Hand"
           ariaLabel="The dealer's hand is visible. Press to hide it."
           onText="On"
           offText="Off"
           onChange={(e, checked) =>
-            settingActions?.setDealerHandVisible(checked ? checked : false)}
+            settingStore.setDealerHandVisible(checked ? checked : false)}
         />
         <Toggle
-          checked={isHandValueVisible}
+          checked={settingStore.isHandValueVisible}
           label="Show Hand Value"
           ariaLabel="The hand value display is visible. Press to hide it."
           onText="On"
           offText="Off"
-          onChange={(e, checked) => settingActions?.setHandValueVisible(checked ? checked : false)}
+          onChange={(e, checked) => settingStore.setHandValueVisible(checked ? checked : false)}
         />
         <Toggle
-          checked={isCardDescVisible}
+          checked={settingStore.isCardDescVisible}
           label="Show Card Titles"
           ariaLabel="The card titles are visible. Press to hide them."
           onText="On"
           offText="Off"
-          onChange={(e, checked) => settingActions?.setCardTitleVisible(checked ? checked : false)}
+          onChange={(e, checked) => settingStore.setCardTitleVisible(checked ? checked : false)}
         />
         <Toggle
-          checked={isActivityLogVisible}
+          checked={settingStore.isActivityLogVisible}
           label="Show Activity Log"
           ariaLabel="The Activity Log visible. Press to hide it."
           onText="On"
           offText="Off"
-          onChange={(e, checked) => settingActions?.setActivityLogVisible(checked ? checked : false)}
+          onChange={(e, checked) => settingStore.setActivityLogVisible(checked ? checked : false)}
         />
 
 

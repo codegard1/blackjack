@@ -83,38 +83,21 @@ export const ActivityLog: React.FC<IActivityLogProps> = (props) => {
 
   // Context
   const {
-    isActivityLogVisible
+    settingStore
   } = React.useContext(AppContext);
 
   // State
   const [activityItems, setActivityItems] = React.useState<any>([]);
   const [nextKey, setNextKey] = React.useState<number>(1);
 
-
-  // componentDidMount() {
-  //   ActivityLogStore.addChangeListener(this.onChangeLog);
-
-  //   // immediately call onChangeLog to load any pre-existing state from IDB
-  //   this.onChangeLog();
-  // }
-
-  // componentWillUnmount() {
-  //   ActivityLogStore.removeChangeListener(this.onChangeLog);
-  // }
-
-  // onChangeLog() {
-  //   const newState = ActivityLogStore.getState();
-  //   this.setState({ ...newState });
-  // }
-
   const createActivityItems = () => {
     // memos for the loop 
-    const datememo = [];
-    const outputMemo = [];
+    let datememo: string[] = [];
+    let outputMemo: JSX.Element[] = [];
 
     // Loop through ActivityItems
     const _items = activityItems.slice();
-    _items.forEach((item, index, arr) => {
+    _items.forEach((item: any, index: number, arr: any[]) => {
 
       // If the datememo does not contain the current item's timestamp
       // then add it as a Sticky and also add activity items from 
@@ -162,7 +145,7 @@ export const ActivityLog: React.FC<IActivityLogProps> = (props) => {
     <div id="ActivityLogRoot" className={classNames.divRoot}>
       <Text block nowrap variant="xLarge">Activity Log</Text>
       <div className={classNames.wrapper}>
-        <ScrollablePane styles={{ root: classNames.pane }}>{this.createActivityItems()}</ScrollablePane>
+        <ScrollablePane styles={{ root: classNames.pane }}>{createActivityItems()}</ScrollablePane>
       </div>
     </div>
   );
