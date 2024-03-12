@@ -8,3 +8,4 @@ export type { Suit } from './Suit';
 export type { SuitCollection, SuitCollectionKey } from './SuitCollection';
 export type { SuitKey } from './SuitKey';
 export type { PlayerStats, PlayerStatsKey } from './PlayerStats';
+export type { MessageBarDefinition } from './MessageBarDefinition';
