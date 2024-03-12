@@ -4,6 +4,4 @@ import { PlayerHandValue } from './PlayerHandValue';
 export type PlayerHand = {
   cards: PlayingCard[];
   handValue: PlayerHandValue
-  hasBlackjack: boolean;
-  isBusted: boolean;
 };
