@@ -1,22 +1,24 @@
 import { MessageBarType } from '@fluentui/react';
-import { PlayingCard, PlayingCardDeck } from '../classes';
+import { Player, PlayingCard, PlayingCardDeck } from '../classes';
 import React from 'react';
+import { PlayerCollection } from '../types';
 
 export interface IAppContextProps {
   deck: PlayingCardDeck;
-  isCardDescVisible: boolean; // ControlPanelStore
-  isDealerHandVisible: boolean; // ControlPanelStore 
-  isHandValueVisible: boolean; // ControlPanelStore
-  isDeckVisible: boolean;
-  isDrawnVisible: boolean;
-  isOptionsPanelVisible: boolean;
-  isSelectedVisible: boolean;
-  isCardTitleVisible: boolean;
-  isActivityLogVisible: boolean;
-  player?: any; // GameStore
-  gameStatusFlag?: boolean; // props
-  gameStatus?: number; // GameStore
-  settingActions?: {
+  players: PlayerCollection | Player[];
+  gameStatusFlag?: boolean;
+  gameStatus?: number;
+  settingStore: {
+    isCardDescVisible: boolean;
+    isDealerHandVisible: boolean;
+    isHandValueVisible: boolean;
+    isDeckVisible: boolean;
+    isDrawnVisible: boolean;
+    isOptionsPanelVisible: boolean;
+    isSelectedVisible: boolean;
+    isCardTitleVisible: boolean;
+    isActivityLogVisible: boolean;
+    isSplashScreenVisible: boolean;
     setDealerHandVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setHandValueVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setDeckVisible: React.Dispatch<React.SetStateAction<boolean>>;
@@ -25,6 +27,7 @@ export interface IAppContextProps {
     setCardTitleVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setActivityLogVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setOptionsPanelVisible: React.Dispatch<React.SetStateAction<boolean>>;
+    setSplashScreenVisible: React.Dispatch<React.SetStateAction<boolean>>;
   }
   deckActions?: {
     newDeck: () => PlayingCardDeck;
