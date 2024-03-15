@@ -13,7 +13,7 @@ import {
 import './App.css';
 import AppContext from './classes/AppContext';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
-import { IndexedDB, PlayingCard, PlayingCardDeck, PlayerStore } from './classes';
+import { IndexedDB, PlayingCard, PlayingCardDeck, PlayerStore, Player } from './classes';
 import { defaultPlayers } from './definitions';
 import { MessageBarDefinition, PlayerKey, PlayerStats, PlayingCardKey } from './types';
 import { GameStatus } from './enums/GameStatus';
@@ -35,13 +35,14 @@ const App = () => {
   });
 
   // PlayerStore
-  const players = new PlayerStore();
+  const playerStore = new PlayerStore();
 
 
   // State
   // TODO: determine if State and "Actions" should all be defined here in App
   const [deck, setDeck] = React.useState<PlayingCardDeck>(new PlayingCardDeck());
   const [gameStatus, setGameStatus] = React.useState<GameStatus>(0);
+  const [gameStatusFlag, setGameStatusFlag] = React.useState<boolean>(false);
   const [isActivityLogVisible, setActivityLogVisible] = React.useState<boolean>(false);
   const [isCardDescVisible, setCardDescVisible] = React.useState<boolean>(false);
   const [isCardTitleVisible, setCardTitleVisible] = React.useState<boolean>(false);
@@ -74,7 +75,7 @@ const App = () => {
    * delete all entries from stores
    */
   const clearStores = () => { };
-  const evaluateGame = (statusCode: number) => { };
+  const evaluateGame = (statusCode: number) => { _evaluateGame(statusCode) };
   const endGame = () => { };
   const endGameTrap = (): boolean => {
 
@@ -82,22 +83,22 @@ const App = () => {
     let nextGameStatus: GameStatus = GameStatus.InProgress;
 
     /* Set next game status */
-    if (players.all[1].hasBlackjack) {
+    if (playerStore.all[1].hasBlackjack) {
       nextGameStatus = GameStatus.DealerWins; // Dealer has blackjack ; dealer wins
-    } else if (players.all[0].isBusted) {
+    } else if (playerStore.all[0].isBusted) {
       nextGameStatus = GameStatus.DealerWins; // Player 0 busted ; dealer wins
-    } else if (players.all[1].isBusted) {
+    } else if (playerStore.all[1].isBusted) {
       nextGameStatus = GameStatus.HumanWins; // Dealer is busted; Player 0 wins
-    } else if (players.all[1].isStaying) {
+    } else if (playerStore.all[1].isStaying) {
       if (
-        players.all[1].highestValue > players.all[0].highestValue
+        playerStore.all[1].highestValue > playerStore.all[0].highestValue
       ) {
         nextGameStatus = GameStatus.DealerWins; // Dealer has higher hand ; dealer wins
       } else {
         nextGameStatus = GameStatus.HumanWins; // Player 0 has higher hand ; Player 0 wins
       }
     } else {
-      if (players.currentPlayer?.isNPC) {
+      if (playerStore.currentPlayer?.isNPC) {
         ret = true;
       } else {
         /* player 0 is not Dealer */
@@ -110,7 +111,7 @@ const App = () => {
     if (nextGameStatus > 2) {
       _evaluateGame(nextGameStatus);
 
-      players.all.forEach(player => {
+      playerStore.all.forEach(player => {
         /* set properties to increment */
         const statsFrame: PlayerStats = {
           numberOfGamesLost: (player.key === loser ? 1 : 0),
@@ -185,7 +186,11 @@ const App = () => {
   const hit = (playerKey: string) => { }
   const stay = (playerKey: string) => { };
   const bet = (playerKey: string, amount: number) => { };
-  const newGame = (players: any) => { };
+  const newGame = (players: PlayerKey[]) => {
+    newDeck();
+    playerStore.all.forEach((p) => p.cards.push(...deck.draw(2)));
+    newRound();
+  };
   const showMessageBar = (d: MessageBarDefinition) => {
     setMessageBarDefinition(d);
     setMessageBarVisible(true);
@@ -231,7 +236,7 @@ const App = () => {
         /* If endgame conditions not met   */
         if (!endGameTrap()) {
           /* increment currentPlayerIndex */
-          players._nextPlayer();
+          playerStore._nextPlayer();
           setGameStatus(GameStatus.InProgress)
           endGameTrap();
         } else {
@@ -246,21 +251,21 @@ const App = () => {
 
       case GameStatus.HumanWins:
         console.log('Game Status: HumanWins');
-        const winningPlayerTitle = players.all[0].title;
+        const winningPlayerTitle = playerStore.all[0].title;
         newActivityLogItem(winningPlayerTitle, 'wins!', 'Crown');
 
-        setWinner(players.all[0].key);
-        setLoser(players.all[1].key);
-        players._payout(players.all[0].key, pot);
+        setWinner(playerStore.all[0].key);
+        setLoser(playerStore.all[1].key);
+        playerStore._payout(playerStore.all[0].key, pot);
         endGame();
         break;
 
       case GameStatus.DealerWins:
         console.log('Game Status: DealerWins');
-        setWinner(players.all[1].key);
-        setLoser(players.all[0].key);
-        players._payout(players.all[1].key, pot);
-        newActivityLogItem(players.all[1].title, 'wins!', 'Crown');
+        setWinner(playerStore.all[1].key);
+        setLoser(playerStore.all[0].key);
+        playerStore._payout(playerStore.all[1].key, pot);
+        newActivityLogItem(playerStore.all[1].title, 'wins!', 'Crown');
         endGame();
         break;
 
@@ -274,8 +279,8 @@ const App = () => {
     }
   }
   const _ante = (amount: number) => {
-    players._allPlayersAnte(amount);
-    setPot(pot + amount * players.length);
+    playerStore._allPlayersAnte(amount);
+    setPot(pot + amount * playerStore.length);
     newActivityLogItem('All players', `ante $${amount}`, 'Money');
   }
 
@@ -311,10 +316,10 @@ const App = () => {
 
 
   React.useEffect(() => {
-    if (null !== players) {
+    if (null !== playerStore) {
       console.log('Players effect');
     }
-  }, [players]);
+  }, [playerStore]);
 
   React.useEffect(() => {
     if (null !== settingStore) {
@@ -323,11 +328,19 @@ const App = () => {
     }
   }, [settingStore]);
 
+  React.useEffect(() => {
+    console.log('initial effect');
+    // Set players
+    defaultPlayers.forEach((p) => playerStore.newPlayer(p.key, p.title, p.isNPC, p.id, p.bank, p.bet));
+    newGame(playerStore.all.map((v) => v.key));
+
+  }, []);
+
   return (
     <AppContext.Provider value={{
       deck,
-      players: defaultPlayers,
       gameStatus,
+      gameStatusFlag,
       settingStore,
       deckActions: {
         newDeck,
@@ -343,6 +356,7 @@ const App = () => {
         deselect,
       },
       gameStore,
+      playerStore,
       storeActions: {
         newActivityLogItem,
         initializeStores,
