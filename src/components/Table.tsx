@@ -11,23 +11,20 @@ import {
   StackItem,
   Text,
   MotionAnimations,
+  nullRender,
 } from '@fluentui/react';
 
 
-/* custom stuff */
+// Local Resources
 import {
-  CardStack,
+  CardStack, PlayerContainer,
 } from ".";
-
-// import GameStore from "../../_old/stores/GameStore";
-// import PlayerStore from "../../_old/stores/PlayerStore";
-// import StatsStore from "../../_old/stores/StatsStore";
+import { PlayerKey } from "../types";
+import { PlayingCard } from "../classes";
+import { defaultSelectedPlayerKeys } from "../definitions";
 
 // Context
 import AppContext from "../classes/AppContext";
-import { PlayingCard } from "../classes";
-import { PlayerKey } from "../types";
-import { defaultSelectedPlayerKeys } from "../definitions";
 
 export interface ITableProps {
 
@@ -41,7 +38,7 @@ export const Table: React.FC<ITableProps> = (props) => {
     deckActions,
     gameStore,
     gameStatus,
-    players,
+    playerStore,
     gameStatusFlag,
     settingStore,
     storeActions,
@@ -49,8 +46,8 @@ export const Table: React.FC<ITableProps> = (props) => {
 
   // State
   const [hasInitialized, setInitialized] = React.useState<boolean>(false);
-  const [isSpinnerVisible, setSpinnerVisible] = React.useState<boolean>(true);
-  const [isDialogVisible, setDialogVisible] = React.useState<boolean>(true);
+  const [isSpinnerVisible, setSpinnerVisible] = React.useState<boolean>(false);
+  const [isDialogVisible, setDialogVisible] = React.useState<boolean>(false);
   const [isDeckCalloutVisible, setDeckCalloutVisible] = React.useState<boolean>(false);
   const [drawn, setDrawn] = React.useState<PlayingCard[]>([]);
   const [selected, setSelected] = React.useState<PlayingCard[]>([]);
@@ -122,34 +119,24 @@ export const Table: React.FC<ITableProps> = (props) => {
   /**
    * render PlayerContainers for players listed in PlayerStore.state.activePLayers
    */
-  // const renderPlayerContainers = () => {
-  //   if (playerStore.activePlayers.length > 0) {
-  //     return this.state.activePlayers.map(key => {
-  //       const playerHand = this.state.playerHands[key] || {};
-  //       const playerStats = this.state.playerStats[key] || {};
-  //       return <StackItem align="stretch" verticalAlign="top" grow={2} key={`PlayerStack-${key}`}>
-  //         <PlayerContainer
-  //           gameStatus={this.state.gameStatus}
-  //           gameStatusFlag={this.state.gameStatusFlag === 0 || this.state.gameStatusFlag > 2}
-  //           isCardDescVisible={this.state.isCardDescVisible}
-  //           isDealerHandVisible={this.state.isDealerHandVisible}
-  //           isDeckCalloutVisible={this.state.isDeckCalloutVisible}
-  //           isHandValueVisible={this.state.isHandValueVisible}
-  //           key={`PlayerContainer-${key}`}
-  //           minimumBet={this.state.minimumBet}
-  //           player={this.state.players[key]}
-  //           playerHand={playerHand}
-  //           playerKey={key}
-  //           playerStats={playerStats}
-  //           dealerHasControl={this.state.dealerHasControl}
-  //         />
-  //       </StackItem>
-  //     }
-  //     );
-  //   } else {
-  //     return <StackItem>No players</StackItem>;
-  //   }
-  // }
+  const renderPlayerContainers = () => {
+    if (playerStore.length > 0) {
+      return playerStore.all.map(pl =>
+        <StackItem align="stretch" grow={2} key={`PlayerStack-${pl.key}`}>
+          <PlayerContainer
+            isDeckCalloutVisible={isDeckCalloutVisible}
+            key={`PlayerContainer-${pl.key}`}
+            minimumBet={minimumBet}
+            player={pl}
+            playerKey={pl.key}
+            dealerHasControl={dealerHasControl}
+          />
+        </StackItem>
+      );
+    } else {
+      return <StackItem>No players</StackItem>;
+    }
+  }
 
 
   // slice out the selected players (Chris and Dealer) and return PlayerContainers
@@ -165,23 +152,25 @@ export const Table: React.FC<ITableProps> = (props) => {
 
   return (
     <Stack verticalAlign="start" wrap tokens={{ childrenGap: 10, padding: 10 }} style={tableStyles}>
-      <Spinner
-        size={SpinnerSize.large}
-        label="Wait, wait..."
-        ariaLive="assertive"
-        labelPosition="right"
-        style={{ animation: MotionAnimations.scaleDownIn }}
-      />
 
       <Stack horizontal horizontalAlign="end" disableShrink>
         <Icon iconName="Settings" aria-label="Settings" style={{ fontSize: "24px" }} onClick={toggleOptionsPanel} />
       </Stack>
 
+      {!isSpinnerVisible ? nullRender() :
+        <Spinner
+          size={SpinnerSize.large}
+          label="Wait, wait..."
+          ariaLive="assertive"
+          labelPosition="right"
+          style={{ animation: MotionAnimations.scaleDownIn }}
+        />}
+
       {!isDialogVisible &&
         <Stack verticalAlign="space-around" tokens={{ childrenGap: 10, padding: 10, }}>
           {!gameStatusFlag && <Text block nowrap variant="xLarge">Pot: ${pot}</Text>}
           <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
-            {/* {selectedPlayersContainers} */}
+            {renderPlayerContainers}
           </Stack>
         </Stack>
       }
