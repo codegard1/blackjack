@@ -1,13 +1,13 @@
 import React from 'react';
-import { Player, PlayingCard, PlayingCardDeck } from '../classes';
+import { Player, PlayerStore, PlayingCard, PlayingCardDeck } from '../classes';
 import { MessageBarDefinition, PlayerCollection, PlayerKey } from '../types';
 import { GameStatus } from '../enums/GameStatus';
 
 export interface IAppContextProps {
   deck: PlayingCardDeck;
-  players: PlayerCollection | Player[];
-  gameStatusFlag?: boolean;
-  gameStatus?: number;
+  playerStore: PlayerStore;
+  gameStatusFlag: boolean;
+  gameStatus: GameStatus;
   settingStore: {
     isCardDescVisible: boolean;
     isDealerHandVisible: boolean;

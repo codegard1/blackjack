@@ -1,13 +1,16 @@
 import React from 'react';
-import { PlayingCardDeck } from './';
+import { PlayerStore, PlayingCardDeck } from './';
 import { IAppContextProps } from '../interfaces';
 import { defaultPlayers } from '../definitions';
 import { MessageBarType } from '@fluentui/react';
 import { PlayerKey } from '../types';
+import { GameStatus } from '../enums/GameStatus';
 
 const AppContext = React.createContext<IAppContextProps>({
   deck: new PlayingCardDeck(),
-  players: defaultPlayers,
+  playerStore: new PlayerStore(),
+  gameStatus: GameStatus.Init,
+  gameStatusFlag: false,
   settingStore: {
     isActivityLogVisible: false,
     isCardDescVisible: false,

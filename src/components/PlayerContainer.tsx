@@ -20,6 +20,10 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   // Context
   const {
     gameStatusFlag,
+    settingStore,
+    gameStatus,
+    playerStore,
+
   } = React.useContext(AppContext);
 
   // State
@@ -29,8 +33,8 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   const _showDeckCallout = () => setDeckCalloutVisible(true);
   const _hideDeckCallout = () => setDeckCalloutVisible(false);
 
-  const { player, playerStats, playerHand, playerKey } = props;
-  const handValue = playerHand.handValue;
+  const { player, playerKey } = props;
+  const handValue = player.hand.handValue;
 
   /* style PlayerContainer conditionally */
   let playerContainerClass = "PlayerContainer ";
@@ -63,7 +67,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
             {`${player.title} ($${player.bank || 0})  `}</Text>
         </Stack.Item>
         <Stack.Item>
-          <StatusDisplay player={player} stats={playerStats} />
+          <StatusDisplay player={player} stats={player.stats} />
         </Stack.Item>
       </Stack>
 
@@ -72,7 +76,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
           <Stack.Item>
             <Agent
               dealerHasControl={props.dealerHasControl}
-              gameStatus={props.gameStatus}
+              gameStatus={gameStatus}
               handValue={handValue}
               playerKey={playerKey}
             />
@@ -82,7 +86,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
         {!player.isNPC &&
           <Stack.Item>
             <ControlPanel
-              gameStatus={props.gameStatus}
+              gameStatus={gameStatus}
               hidden={player.isNPC}
               minimumBet={props.minimumBet}
               player={player}
@@ -97,7 +101,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
         <Stack.Item className={`DeckCalloutTarget-${player.title}`}>
           <CardStack
-            cards={playerHand.hand}
+            cards={player.hand}
             hidden={false}
             isSelectable
             player={player}
@@ -113,6 +117,4 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
       />
     </Stack>
   );
-
 }
-
