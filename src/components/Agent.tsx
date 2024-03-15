@@ -16,7 +16,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
   // Context
   const {
     settingStore,
-    gamePlayActions,
+    gameStore,
     gameStatus,
     gameStatusFlag,
     storeActions,
@@ -41,7 +41,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
         /* when to hit */
         if (aceAsEleven <= 16 || aceAsOne <= 16) {
           setSpinnerLabel("Hit");
-          gamePlayActions?.hit(props.playerKey)
+          gameStore?.hit(props.playerKey)
         }
 
         /* when to stay */
@@ -50,7 +50,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
           (aceAsEleven >= 17 && aceAsEleven <= 21)
         ) {
           setSpinnerLabel("Stay");
-          gamePlayActions?.stay(props.playerKey);
+          gameStore?.stay(props.playerKey);
         }
       } else {
         setSpinnerLabel("Okay, that's it!");

@@ -14,7 +14,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const {
     gameStatusFlag,
     deckActions,
-    gamePlayActions,
+    gameStore,
   } = React.useContext(AppContext);
 
   const {
@@ -92,7 +92,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
       disabled: gameStatusFlag || playerStatusFlag,
       onClick: (ev: any) => {
         ev.preventDefault();
-        gamePlayActions?.hit(playerKey)
+        gameStore?.hit(playerKey)
       }
     },
     // {
@@ -112,7 +112,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
       ariaLabel: "Stay",
       iconProps: { iconName: "Forward" },
       disabled: gameStatusFlag || playerStatusFlag,
-      onClick: () => playerKey ? gamePlayActions?.stay(playerKey) : null,
+      onClick: () => playerKey ? gameStore?.stay(playerKey) : null,
     }
   ];
 
@@ -163,8 +163,8 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
         disabled: gameStatusFlag,
         onClick: () => {
           deckActions?.newDeck();
-          gamePlayActions?.newRound();
-          gamePlayActions?.showMessageBar("New Round", MessageBarType.info);
+          gameStore?.newRound();
+          gameStore?.showMessageBar({ text: "New Round", type: MessageBarType.info, isMultiLine: false });
         }
       }
     ];

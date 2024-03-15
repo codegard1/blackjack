@@ -24,7 +24,7 @@ import AppContext from "../classes/AppContext";
 export const OptionsPanel: React.FC = () => {
   const {
     deckActions,
-    gamePlayActions,
+    gameStore,
     storeActions,
     settingStore,
   } = React.useContext(AppContext);
@@ -35,9 +35,9 @@ export const OptionsPanel: React.FC = () => {
    * Reset the game from the Options Panel
    */
   const resetGame = () => {
-    gamePlayActions?.reset();
+    gameStore?.resetGame();
     deckActions?.newDeck();
-    gamePlayActions?.showMessageBar('Game Reset', MessageBarType.info);
+    gameStore?.showMessageBar({ text: 'Game Reset', type: MessageBarType.info, isMultiLine: false });
     closeOptionsPanel();
   }
 

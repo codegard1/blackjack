@@ -26,7 +26,7 @@ export const SplashScreen: React.FC = () => {
   // Context
   const {
     deckActions,
-    gamePlayActions,
+    gameStore,
     gameStatus,
     settingStore,
   } = React.useContext(AppContext);
@@ -55,7 +55,7 @@ export const SplashScreen: React.FC = () => {
     //   // let pList = selectedPlayers.map(key => players[key]);
 
     //   // initiate a new game 
-    //   // gamePlayActions.newGame(pList);
+    //   // gameStore.newGame(pList);
 
     //   // hide the player selection modal 
     //   props.onHide();

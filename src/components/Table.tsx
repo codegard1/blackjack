@@ -39,7 +39,7 @@ export const Table: React.FC<ITableProps> = (props) => {
   const {
     deck,
     deckActions,
-    gamePlayActions,
+    gameStore,
     gameStatus,
     players,
     gameStatusFlag,
