@@ -12,10 +12,10 @@ import AppContext from "../classes/AppContext";
 export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
 
   const {
-    gameStatusFlag,
-    deckActions,
+    deckStore,
     gameStore,
   } = React.useContext(AppContext);
+  const { gameStatusFlag } = gameStore;
 
   const {
     playerStatusFlag,
@@ -162,9 +162,9 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
         iconProps: { iconName: "Refresh" },
         disabled: gameStatusFlag,
         onClick: () => {
-          deckActions?.newDeck();
-          gameStore?.newRound();
-          gameStore?.showMessageBar({ text: "New Round", type: MessageBarType.info, isMultiLine: false });
+          deckStore.newDeck();
+          gameStore.newRound();
+          gameStore.showMessageBar({ text: "New Round", type: MessageBarType.info, isMultiLine: false });
         }
       }
     ];

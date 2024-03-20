@@ -34,14 +34,10 @@ export const Table: React.FC<ITableProps> = (props) => {
 
   // Context
   const {
-    deck,
-    deckActions,
-    gameStore,
-    gameStatus,
     playerStore,
-    gameStatusFlag,
     settingStore,
-    storeActions,
+    deckStore,
+    gameStore,
   } = React.useContext(AppContext);
 
   // State
@@ -168,7 +164,7 @@ export const Table: React.FC<ITableProps> = (props) => {
 
       {!isDialogVisible &&
         <Stack verticalAlign="space-around" tokens={{ childrenGap: 10, padding: 10, }}>
-          {!gameStatusFlag && <Text block nowrap variant="xLarge">Pot: ${pot}</Text>}
+          {!gameStore.gameStatusFlag && <Text block nowrap variant="xLarge">Pot: ${pot}</Text>}
           <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
             {renderPlayerContainers}
           </Stack>
@@ -182,7 +178,7 @@ export const Table: React.FC<ITableProps> = (props) => {
           </StackItem>
           <StackItem>
             <CardStack
-              cards={deck.cards}
+              cards={deckStore.deck.cards}
               title="Deck"
               hidden={!settingStore.isDeckVisible}
               isSelectable={false}

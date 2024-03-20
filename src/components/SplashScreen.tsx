@@ -25,9 +25,7 @@ export const SplashScreen: React.FC = () => {
 
   // Context
   const {
-    deckActions,
     gameStore,
-    gameStatus,
     settingStore,
   } = React.useContext(AppContext);
 

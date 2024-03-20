@@ -19,11 +19,9 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
   // Context
   const {
-    gameStatusFlag,
     settingStore,
-    gameStatus,
     playerStore,
-
+    gameStore,
   } = React.useContext(AppContext);
 
   // State
@@ -76,7 +74,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
           <Stack.Item>
             <Agent
               dealerHasControl={props.dealerHasControl}
-              gameStatus={gameStatus}
+              gameStatus={gameStore.gameStatus}
               handValue={handValue}
               playerKey={playerKey}
             />
@@ -86,7 +84,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
         {!player.isNPC &&
           <Stack.Item>
             <ControlPanel
-              gameStatus={gameStatus}
+              gameStatus={gameStore.gameStatus}
               hidden={player.isNPC}
               minimumBet={props.minimumBet}
               player={player}

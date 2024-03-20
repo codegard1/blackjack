@@ -23,10 +23,10 @@ import AppContext from "../classes/AppContext";
 
 export const OptionsPanel: React.FC = () => {
   const {
-    deckActions,
+    deckStore,
     gameStore,
-    storeActions,
     settingStore,
+    clearStores,
   } = React.useContext(AppContext);
 
   const closeOptionsPanel = () => settingStore.setOptionsPanelVisible(false);
@@ -36,7 +36,7 @@ export const OptionsPanel: React.FC = () => {
    */
   const resetGame = () => {
     gameStore?.resetGame();
-    deckActions?.newDeck();
+    deckStore?.newDeck();
     gameStore?.showMessageBar({ text: 'Game Reset', type: MessageBarType.info, isMultiLine: false });
     closeOptionsPanel();
   }
@@ -108,7 +108,7 @@ export const OptionsPanel: React.FC = () => {
             iconProps={{ iconName: "Sync" }}
             disabled={false}
             checked={false}
-            onClick={deckActions?.shuffle}
+            onClick={deckStore?.shuffle}
             ariaLabel="Shuffle Deck"
             aria-describedby="tooltip-ShuffleDeck"
           >
@@ -127,7 +127,7 @@ export const OptionsPanel: React.FC = () => {
             iconProps={{ iconName: "Trash" }}
             disabled={false}
             checked={false}
-            onClick={storeActions?.clearStores}
+            onClick={() => clearStores()}
             ariaLabel="Clear Stores"
             aria-describedby="tooltip-ClearStores"
           >

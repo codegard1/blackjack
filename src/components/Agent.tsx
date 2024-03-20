@@ -15,13 +15,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
 
   // Context
   const {
-    settingStore,
     gameStore,
-    gameStatus,
-    gameStatusFlag,
-    storeActions,
-    deckActions,
-    deck,
   } = React.useContext(AppContext);
 
   // State
@@ -34,7 +28,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
     // Agent acts on a partially random interval
     const intervalInMilliseconds = Math.floor(Math.random() * (new Date().getMilliseconds()))
     const intervalID = setInterval(() => {
-      storeActions?.evaluateGame(gameStatus!);
+      gameStore.evaluateGame(gameStore.gameStatus!);
       const { aceAsEleven, aceAsOne } = props.handValue;
 
       if (props.gameStatus !== 0) {

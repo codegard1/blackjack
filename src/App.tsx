@@ -11,12 +11,13 @@ import {
 
 // Local Resources
 import './App.css';
-import AppContext from './classes/AppContext';
+import { IAppContextProps, IDeckStoreProps, IGameStoreProps, ISettingStoreProps } from './interfaces';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
 import { IndexedDB, PlayingCard, PlayingCardDeck, PlayerStore, Player } from './classes';
 import { defaultPlayers } from './definitions';
 import { MessageBarDefinition, PlayerKey, PlayerStats, PlayingCardKey } from './types';
 import { GameStatus } from './enums/GameStatus';
+import AppContext from './classes/AppContext';
 
 // Necessary in order for Fluent Icons to render on the page
 initializeIcons();
@@ -132,35 +133,6 @@ const App = () => {
 
 
   /**
-   * All state variables related to App settings
-   */
-  const settingStore = {
-    isActivityLogVisible,
-    isCardDescVisible,
-    isCardTitleVisible,
-    isDealerHandVisible,
-    isDeckVisible,
-    isDrawnVisible,
-    isHandValueVisible,
-    isMessageBarVisible,
-    isOptionsPanelVisible,
-    isSelectedVisible,
-    isSplashScreenVisible,
-    setActivityLogVisible,
-    setCardDescVisible,
-    setCardTitleVisible,
-    setDealerHandVisible,
-    setDeckVisible,
-    setDrawnVisible,
-    setHandValueVisible,
-    setMessageBarVisible,
-    setOptionsPanelVisible,
-    setSelectedVisible,
-    setSplashScreenVisible,
-  };
-
-
-  /**
    *  DECK ACTIONS
    */
   const newDeck = (): PlayingCardDeck => { setDeck(new PlayingCardDeck()); return deck; }
@@ -174,7 +146,6 @@ const App = () => {
   const removeSelectedFromDrawn = (cards: PlayingCard[]) => { };
   const select = (key: PlayingCardKey) => deck.select(key);
   const deselect = (key: PlayingCardKey) => deck.unselect(key);
-
 
   /**
    *  GAME ACTIONS
@@ -285,35 +256,80 @@ const App = () => {
   }
 
 
+  /**
+   * All state variables related to App settings
+   */
+  const settingStore: ISettingStoreProps = {
+    isActivityLogVisible, setActivityLogVisible,
+    isCardDescVisible, setCardDescVisible,
+    isCardTitleVisible, setCardTitleVisible,
+    isDealerHandVisible, setDealerHandVisible,
+    isDeckVisible, setDeckVisible,
+    isDrawnVisible, setDrawnVisible,
+    isHandValueVisible, setHandValueVisible,
+    isMessageBarVisible, setMessageBarVisible,
+    isOptionsPanelVisible, setOptionsPanelVisible,
+    isSelectedVisible, setSelectedVisible,
+    isSplashScreenVisible, setSplashScreenVisible,
+  };
+
+  const deckStore: IDeckStoreProps = {
+    deck,
+    newDeck,
+    draw,
+    drawRandom,
+    drawFromBottomOfDeck,
+    shuffle,
+    putOnTopOfDeck,
+    putOnBottomOfDeck,
+    removeSelectedFromPlayerHand,
+    removeSelectedFromDrawn,
+    select,
+    deselect,
+  };
+
   // All variables and functions related to Game state
-  const gameStore = {
-    deal,
-    hit,
-    stay,
+  const gameStore: IGameStoreProps = {
     bet,
-    newGame,
-    showMessageBar,
-    hideMessageBar,
-    resetGame,
-    newRound,
-    loser, setLoser,
-    winner, setWinner,
+    deal,
     dealerHasControl, setDealerHasControl,
-    minimumBet, setMinimumBet,
-    pot, setPot,
-    round, setRound,
-    turnCount, setTurnCount,
+    endGame,
+    endGameTrap,
+    evaluateGame,
+    gameStatus,
+    gameStatusFlag,
+    hideMessageBar,
+    hit,
     lastWriteTime, setLastWriteTime,
+    loser, setLoser,
     messageBarDefinition, setMessageBarDefinition,
+    minimumBet, setMinimumBet,
+    newActivityLogItem,
+    newGame,
+    newRound,
+    pot, setPot,
+    resetGame,
+    round, setRound,
+    showMessageBar,
+    stay,
+    turnCount, setTurnCount,
+    winner, setWinner,
   }
 
+  const contextDefaults: IAppContextProps = {
+    initializeStores: () => { },
+    clearStores: () => { },
+    playerStore,
+    settingStore,
+    gameStore,
+    deckStore,
+  };
 
   React.useEffect(() => {
     if (null !== deck) {
       console.log('Deck effect');
     }
   }, [deck]);
-
 
   React.useEffect(() => {
     if (null !== playerStore) {
@@ -337,35 +353,7 @@ const App = () => {
   }, []);
 
   return (
-    <AppContext.Provider value={{
-      deck,
-      gameStatus,
-      gameStatusFlag,
-      settingStore,
-      deckActions: {
-        newDeck,
-        draw,
-        drawRandom,
-        drawFromBottomOfDeck,
-        shuffle,
-        putOnTopOfDeck,
-        putOnBottomOfDeck,
-        removeSelectedFromPlayerHand,
-        removeSelectedFromDrawn,
-        select,
-        deselect,
-      },
-      gameStore,
-      playerStore,
-      storeActions: {
-        newActivityLogItem,
-        initializeStores,
-        clearStores,
-        evaluateGame,
-        endGame,
-        endGameTrap,
-      }
-    }}>
+    <AppContext.Provider value={contextDefaults}>
       <Layer>
         <SplashScreen />
         <OptionsPanel />

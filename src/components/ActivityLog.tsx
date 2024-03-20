@@ -16,9 +16,8 @@ import {
 } from '@fluentui/react';
 import { MotionAnimations } from '@fluentui/theme';
 
-
-import AppContext from "../classes/AppContext";
 import { IActivityLogProps } from "../interfaces/IActivityLogProps";
+import AppContext from "../classes/AppContext";
 
 // Flux Store
 // import ActivityLogStore from '../../_old/src/components/blackjack/stores/ActivityLogStore';
