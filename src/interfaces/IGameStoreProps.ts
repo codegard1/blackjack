@@ -13,6 +13,7 @@ export interface IGameStoreProps {
   gameStatusFlag: boolean;
   hideMessageBar: () => void;
   hit: (key: PlayerKey) => void;
+  isSpinnerVisible: boolean;
   lastWriteTime: string;
   loser: PlayerKey | undefined;
   messageBarDefinition: MessageBarDefinition;
@@ -30,6 +31,7 @@ export interface IGameStoreProps {
   setMinimumBet: React.Dispatch<React.SetStateAction<number>>;
   setPot: React.Dispatch<React.SetStateAction<number>>;
   setRound: React.Dispatch<React.SetStateAction<number>>;
+  setSpinnerVisible: React.Dispatch<React.SetStateAction<boolean>>;
   setTurnCount: React.Dispatch<React.SetStateAction<number>>;
   setWinner: React.Dispatch<React.SetStateAction<PlayerKey | undefined>>;
   showMessageBar: (d: MessageBarDefinition) => void;
