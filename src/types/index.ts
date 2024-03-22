@@ -1,6 +1,6 @@
 export * from './CardTuple';
 export * from './MessageBarDefinition';
-export * from './Player';
+export * from './BasePlayer';
 export * from './PlayerCollection';
 export * from './PlayerHand';
 export * from './PlayerHandValue';

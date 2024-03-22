@@ -1,15 +1,18 @@
 import { PlayerHand } from ".";
 
+/**
+ * Basic properties of a Player class
+ */
 export type BasePlayer = {
   bank: number;
-  id: number;
-  disabled?: boolean;
+  disabled: boolean;
   hand: PlayerHand;
+  hasBlackjack: boolean;
+  id: number;
+  isBusted: boolean;
   isNPC: boolean;
   key: string;
   title: string;
-  hasBlackjack: boolean;
-  isBusted: boolean;
 }
 
 export type PlayerKey = BasePlayer['key'];
