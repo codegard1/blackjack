@@ -1,5 +1,5 @@
-import { PlayerStore, } from '../classes';
-import { ISettingStoreProps, IGameStoreProps, IDeckStoreProps } from '.';
+import { PlayerStore, PlayingCardDeck, } from '../classes';
+import { ISettingStoreProps, IGameStoreProps } from '.';
 
 export interface IAppContextProps {
   initializeStores: () => void;
@@ -7,5 +7,5 @@ export interface IAppContextProps {
   playerStore: PlayerStore;
   settingStore: ISettingStoreProps;
   gameStore: IGameStoreProps;
-  deckStore: IDeckStoreProps;
+  deck: PlayingCardDeck;
 }
