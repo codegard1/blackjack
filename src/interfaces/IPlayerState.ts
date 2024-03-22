@@ -1,14 +1,14 @@
 import { PlayerStats } from "../types";
-import { IPlayer } from "./IPlayer";
+import { IPlayer } from ".";
 
 
 /**
- * additional properties that are set by gameplay
+ * Additional Player properties that are set during gameplay
  */
 export interface IPlayerState extends IPlayer {
   totalBet: number;
   stats: PlayerStats;
-  isFinished?: boolean;
-  isSelected?: boolean;
-  isStaying?: boolean;
+  isFinished: boolean;
+  isSelected: boolean;
+  isStaying: boolean;
 }
