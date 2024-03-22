@@ -7,7 +7,6 @@ export type { IControlPanelProps } from './IControlPanelProps';
 export type { IControlPanelState } from './IControlPanelState';
 export type { IControlPanelStore } from './IControlPanelStore';
 export type { IDeckCalloutProps } from './IDeckCalloutProps';
-export type { IDeckStoreProps } from './IDeckStoreProps';
 export type { IGameStoreProps } from './IGameStoreProps';
 export type { IPlayer } from './IPlayer';
 export type { IPlayerContainerProps } from './IPlayerContainerProps';
