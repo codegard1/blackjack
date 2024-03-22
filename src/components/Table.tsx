@@ -14,23 +14,16 @@ import {
   nullRender,
 } from '@fluentui/react';
 
-
 // Local Resources
 import {
   CardStack, PlayerContainer,
 } from ".";
-import { PlayerKey } from "../types";
 import { PlayingCard } from "../classes";
-import { defaultSelectedPlayerKeys } from "../definitions";
 
 // Context
 import AppContext from "../classes/AppContext";
 
-export interface ITableProps {
-
-}
-
-export const Table: React.FC<ITableProps> = (props) => {
+export const Table: React.FC = () => {
 
   // Context
   const {
@@ -41,65 +34,9 @@ export const Table: React.FC<ITableProps> = (props) => {
   } = React.useContext(AppContext);
 
   // State
-  const [hasInitialized, setInitialized] = React.useState<boolean>(false);
   const [isSpinnerVisible, setSpinnerVisible] = React.useState<boolean>(false);
   const [isDialogVisible, setDialogVisible] = React.useState<boolean>(false);
   const [isDeckCalloutVisible, setDeckCalloutVisible] = React.useState<boolean>(false);
-  const [drawn, setDrawn] = React.useState<PlayingCard[]>([]);
-  const [selected, setSelected] = React.useState<PlayingCard[]>([]);
-  const [playerHands, setPlayerHands] = React.useState<PlayingCard[]>([]);
-  const [dealerHasControl, setDealerHasControl] = React.useState<boolean>(false);
-  const [loser, setLoser] = React.useState<number>(1);
-  const [minimumBet, setminimumBet] = React.useState<number>(25);
-  const [pot, setPot] = React.useState<number>(0);
-  const [round, setRound] = React.useState<number>(0);
-  const [turnCount, setTurnCount] = React.useState<number>(0);
-  const [winner, setWinner] = React.useState<PlayerKey>();
-  const [activePlayers, setActivePlayers] = React.useState<PlayerKey[]>(defaultSelectedPlayerKeys);
-  const [currentPlayerKey, setCurrentPlayerKey] = React.useState<number>(0);
-  const [playerStats, setPlayerStats] = React.useState<any>({});
-
-  // const onChangeGame = () => {
-  //   const { dealerHasControl, gameStatus, loser, minimumBet, pot, round, turnCount, winner } = GameStore.getState();
-  //   Object.assign(state, {
-  //     dealerHasControl,
-  //     gameStatus,
-  //     isDeckCalloutVisible: true,
-  //     loser,
-  //     minimumBet,
-  //     pot,
-  //     round,
-  //     turnCount,
-  //     winner,
-  //   })
-  // }
-
-  // const onChangeDeck = () => {
-  //   const { deck, drawn, selected, playerHands } = DeckStore.getState();
-  //   this.setState({ deck, drawn, selected, playerHands });
-  // }
-
-  // const onChangeControlPanel = () => {
-  //   this.setState({
-  //     ...ControlPanelStore.getState(),
-  //     hasInitialized: true
-  //   });
-  // }
-
-  // const onChangePlayerStore = () => {
-  //   const { players, activePlayers, currentPlayerKey } = PlayerStore.getState();
-  //   this.setState({ players, activePlayers, currentPlayerKey, hasInitialized: true });
-  // }
-
-  // const onChangeStatsStore = () => {
-  //   let playerStats = {};
-  //   for (const key in this.state.activePlayers) {
-  //     playerStats[key] = StatsStore.getStats(key)
-  //   }
-  //   this.setState({ playerStats });
-  // }
-
-
 
   /**
    * Toggle the splash screen
@@ -113,7 +50,7 @@ export const Table: React.FC<ITableProps> = (props) => {
   const toggleOptionsPanel = () => settingStore.setOptionsPanelVisible(!settingStore.isOptionsPanelVisible);
 
   /**
-   * render PlayerContainers for players listed in PlayerStore.state.activePLayers
+   * render PlayerContainers for players listed in PlayerStore.state.activePlayers
    */
   const renderPlayerContainers = () => {
     if (playerStore.length > 0) {
@@ -122,10 +59,10 @@ export const Table: React.FC<ITableProps> = (props) => {
           <PlayerContainer
             isDeckCalloutVisible={isDeckCalloutVisible}
             key={`PlayerContainer-${pl.key}`}
-            minimumBet={minimumBet}
+            minimumBet={gameStore.minimumBet}
             player={pl}
             playerKey={pl.key}
-            dealerHasControl={dealerHasControl}
+            dealerHasControl={gameStore.dealerHasControl}
           />
         </StackItem>
       );
@@ -164,7 +101,7 @@ export const Table: React.FC<ITableProps> = (props) => {
 
       {!isDialogVisible &&
         <Stack verticalAlign="space-around" tokens={{ childrenGap: 10, padding: 10, }}>
-          {!gameStore.gameStatusFlag && <Text block nowrap variant="xLarge">Pot: ${pot}</Text>}
+          {!gameStore.gameStatusFlag && <Text block nowrap variant="xLarge">Pot: ${gameStore.pot}</Text>}
           <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
             {renderPlayerContainers}
           </Stack>
@@ -186,7 +123,7 @@ export const Table: React.FC<ITableProps> = (props) => {
           </StackItem>
           <StackItem>
             <CardStack
-              cards={drawn}
+              cards={deckStore.deck.drawn}
               title="Drawn Cards"
               hidden={!settingStore.isDrawnVisible}
               isSelectable={false}
@@ -194,7 +131,7 @@ export const Table: React.FC<ITableProps> = (props) => {
           </StackItem>
           <StackItem>
             <CardStack
-              cards={selected}
+              cards={deckStore.deck.selected}
               title="Selected Cards"
               hidden={!settingStore.isSelectedVisible}
               isSelectable={false}
