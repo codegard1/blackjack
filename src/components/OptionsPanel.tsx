@@ -23,7 +23,7 @@ import AppContext from "../classes/AppContext";
 
 export const OptionsPanel: React.FC = () => {
   const {
-    deckStore,
+    deck,
     gameStore,
     settingStore,
     clearStores,
@@ -36,7 +36,7 @@ export const OptionsPanel: React.FC = () => {
    */
   const resetGame = () => {
     gameStore?.resetGame();
-    deckStore?.newDeck();
+    deck?.reset();
     gameStore?.showMessageBar({ text: 'Game Reset', type: MessageBarType.info, isMultiLine: false });
     closeOptionsPanel();
   }
@@ -108,7 +108,7 @@ export const OptionsPanel: React.FC = () => {
             iconProps={{ iconName: "Sync" }}
             disabled={false}
             checked={false}
-            onClick={deckStore?.shuffle}
+            onClick={deck?.shuffle}
             ariaLabel="Shuffle Deck"
             aria-describedby="tooltip-ShuffleDeck"
           >

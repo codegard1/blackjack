@@ -24,7 +24,7 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
   // Context props
   const {
     settingStore,
-    deckStore,
+    deck,
   } = React.useContext(AppContext);
 
   // State
@@ -47,7 +47,7 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
 
 
   /* Deck Title */
-  const deckTitleString = `${props.title} (${deckStore.deck.length})`;
+  const deckTitleString = `${props.title} (${deck.length})`;
 
   /* Hand Value (if it's a player deck) */
   let handValueString;

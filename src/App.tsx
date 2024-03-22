@@ -3,21 +3,21 @@ import React from 'react';
 
 // FluentUI
 import {
-  Stack,
   Layer,
-  initializeIcons,
-  MessageBarType
+  MessageBarType,
+  Stack,
+  initializeIcons
 } from '@fluentui/react';
 
 // Local Resources
 import './App.css';
-import { IAppContextProps, IDeckStoreProps, IGameStoreProps, ISettingStoreProps } from './interfaces';
-import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
-import { IndexedDB, PlayingCard, PlayingCardDeck, PlayerStore, Player } from './classes';
-import { defaultPlayers } from './definitions';
-import { MessageBarDefinition, PlayerKey, PlayerStats, PlayingCardKey } from './types';
-import { GameStatus } from './enums/GameStatus';
+import { IndexedDB, PlayerStore, PlayingCardDeck } from './classes';
 import AppContext from './classes/AppContext';
+import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
+import { defaultPlayers } from './definitions';
+import { GameStatus } from './enums/GameStatus';
+import { IAppContextProps, IGameStoreProps, ISettingStoreProps } from './interfaces';
+import { MessageBarDefinition, PlayerKey, PlayerStats } from './types';
 
 // Necessary in order for Fluent Icons to render on the page
 initializeIcons();
@@ -36,12 +36,11 @@ const App = () => {
   });
 
   // PlayerStore
-  const playerStore = new PlayerStore();
-
+  const playerStore = new PlayerStore(defaultPlayers);
+  const deck = new PlayingCardDeck();
 
   // State
   // TODO: determine if State and "Actions" should all be defined here in App
-  const [deck, setDeck] = React.useState<PlayingCardDeck>(new PlayingCardDeck());
   const [gameStatus, setGameStatus] = React.useState<GameStatus>(0);
   const [gameStatusFlag, setGameStatusFlag] = React.useState<boolean>(false);
   const [isActivityLogVisible, setActivityLogVisible] = React.useState<boolean>(false);
@@ -53,7 +52,7 @@ const App = () => {
   const [isHandValueVisible, setHandValueVisible] = React.useState<boolean>(false);
   const [isOptionsPanelVisible, setOptionsPanelVisible] = React.useState<boolean>(false);
   const [isSelectedVisible, setSelectedVisible] = React.useState<boolean>(false);
-  const [isSplashScreenVisible, setSplashScreenVisible] = React.useState<boolean>(false);
+  const [isSplashScreenVisible, setSplashScreenVisible] = React.useState<boolean>(true);
   const [isMessageBarVisible, setMessageBarVisible] = React.useState<boolean>(false);
 
   const [isSpinnerVisible, setSpinnerVisible] = React.useState<boolean>(true);
@@ -75,6 +74,15 @@ const App = () => {
   /**
    * delete all entries from stores
    */
+  const initializeStores = async () => {
+    const _playerStore = await db.get('playerStore', 'playerStore');
+    const _deckStore = await db.get('deck', 'deck');
+    const _settingStore = await db.get('settingStore', 'settingStore');
+
+    console.log('_playerStore: ', _playerStore);
+    console.log('_deckStore: ', _deckStore);
+    console.log('_settingStore: ', _settingStore);
+  }
   const clearStores = () => { };
   const evaluateGame = (statusCode: number) => { _evaluateGame(statusCode) };
   const endGame = () => { };
@@ -296,14 +304,21 @@ const App = () => {
   };
 
   React.useEffect(() => {
+    console.log('Initialization effect')
+    // if (undefined !== db) initializeStores();
+  }, [db])
+
+  React.useEffect(() => {
     if (null !== deck) {
       console.log('Deck effect');
+      db.set('deckStore', 'deckStore', JSON.stringify(deck));
     }
   }, [deck]);
 
   React.useEffect(() => {
     if (null !== playerStore) {
       console.log('Players effect');
+      db.set('playerStore', 'playerStore', JSON.stringify(playerStore.state));
     }
   }, [playerStore]);
 
@@ -314,13 +329,7 @@ const App = () => {
     }
   }, [settingStore]);
 
-  React.useEffect(() => {
-    console.log('initial effect');
-    // Set players
-    defaultPlayers.forEach((p) => playerStore.newPlayer(p.key, p.title, p.isNPC, p.id, p.bank, p.lastBet));
-    newGame(playerStore.all.map((v) => v.key));
 
-  }, []);
 
   return (
     <AppContext.Provider value={contextDefaults}>

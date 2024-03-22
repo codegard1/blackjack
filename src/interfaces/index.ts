@@ -16,6 +16,7 @@ export * from './IPlayerStore';
 export * from './IPlayerStoreState';
 export * from './IPlayingCard';
 export * from './IPlayingCardDeck';
+export * from './IPlayingCardDeckState';
 export * from './IPlayingCardSort';
 export * from './IPlayingCardSuit';
 export * from './ISettingStoreProps';

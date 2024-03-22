@@ -1,6 +1,6 @@
 import { PlayingCard } from '.';
 import { PlayerAction, PlayerStatus } from '../enums';
-import { IPlayer, IPlayerOpts, IPlayerState } from '../interfaces';
+import { IPlayer, IPlayerOptions, IPlayerState } from '../interfaces';
 import { PlayerHand, PlayerHandValue, PlayerKey, PlayerStats } from '../types';
 
 
@@ -29,7 +29,7 @@ export class Player implements IPlayer, IPlayerState {
   public turn = false;
 
   // CONSTRUCTOR
-  constructor(options: IPlayerOpts) {
+  constructor(options: IPlayerOptions) {
     this.id = options.id;
     this.key = options.key;
     this.isNPC = options.isNPC;

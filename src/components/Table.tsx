@@ -29,7 +29,7 @@ export const Table: React.FC = () => {
   const {
     playerStore,
     settingStore,
-    deckStore,
+    deck,
     gameStore,
   } = React.useContext(AppContext);
 
@@ -115,7 +115,7 @@ export const Table: React.FC = () => {
           </StackItem>
           <StackItem>
             <CardStack
-              cards={deckStore.deck.cards}
+              cards={deck.cards}
               title="Deck"
               hidden={!settingStore.isDeckVisible}
               isSelectable={false}
@@ -123,7 +123,7 @@ export const Table: React.FC = () => {
           </StackItem>
           <StackItem>
             <CardStack
-              cards={deckStore.deck.drawn}
+              cards={deck.drawn}
               title="Drawn Cards"
               hidden={!settingStore.isDrawnVisible}
               isSelectable={false}
@@ -131,7 +131,7 @@ export const Table: React.FC = () => {
           </StackItem>
           <StackItem>
             <CardStack
-              cards={deckStore.deck.selected}
+              cards={deck.selected}
               title="Selected Cards"
               hidden={!settingStore.isSelectedVisible}
               isSelectable={false}

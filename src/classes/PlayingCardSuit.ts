@@ -1,5 +1,5 @@
 import { IPlayingCardSuit } from "../interfaces";
-import { Suit, SuitKey } from "../types";
+import { Suit } from "../types";
 
 /**
  * All the playing cards in a pack bearing the same symbol
@@ -43,7 +43,7 @@ export class PlayingCardSuit implements IPlayingCardSuit {
    * @returns all suit values as an array of strings
    */
   static suits(): Suit[] {
-    return [this.Heart(), this.Club(), this.Spade(), this.Diamond()];
+    return [this.Heart(), this.Club(), this.Spade(), this.Diamond()].slice();
   }
 
   static Heart(): Suit {

@@ -1,20 +1,26 @@
 import { IPlayingCard } from "../interfaces";
+import { PlayingCardKey, Suit } from "../types";
 import { PlayingCardSort, PlayingCardSuit } from "./";
 
 /**
  * A single playing card
  */
 export class PlayingCard implements IPlayingCard {
-  public suit: PlayingCardSuit;
-  public description: string;
-  public sort: PlayingCardSort;
-  public key: string;
+  public readonly suit: PlayingCardSuit;
+  public readonly description: string;
+  public readonly sort: PlayingCardSort;
+  public readonly key: string;
 
-  constructor(suit: PlayingCardSuit, description: string, sort: number) {
-    this.suit = suit;
+  /**
+   * 
+   * @param key unique string made up of the suit name, card description, and card sort value joined with '_', e.g. Spade_Five_5
+   */
+  constructor(key: PlayingCardKey) {
+    const [suit, description, sort] = key.split('_');
+    this.suit = new PlayingCardSuit(suit as Suit);
     this.description = description;
-    this.sort = new PlayingCardSort(sort);
-    this.key = [suit.single, '_', sort].join();
+    this.sort = new PlayingCardSort(Number(sort));
+    this.key = key;
   }
 
   public toString() {

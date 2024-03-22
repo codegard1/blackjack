@@ -1,11 +1,9 @@
 
 // custom stuff
-import { PlayerKey, PlayerStats } from '../types';
-import { PlayerCollection } from '../types/PlayerCollection';
-import { IPlayerStore } from '../interfaces/IPlayerStore';
 import { Player } from '../classes/Player';
 import { PlayerAction } from '../enums/PlayerAction';
-import { IPlayerStoreState } from '../interfaces/IPlayerStoreState';
+import { IPlayerStore, IPlayerStoreState } from '../interfaces';
+import { PlayerCollection, PlayerKey } from '../types';
 
 export class PlayerStore implements IPlayerStore {
   private players: PlayerCollection = {};
@@ -13,8 +11,10 @@ export class PlayerStore implements IPlayerStore {
   private currentPlayerKey: PlayerKey | null = null;
   private lastWriteTime = '';
 
-  constructor() {
-    // this.initialize();
+  constructor(players?: Player[]) {
+    if (undefined !== players) {
+      players.forEach((p) => this.players[p.key] = p);
+    }
   }
 
   /**
@@ -29,9 +29,10 @@ export class PlayerStore implements IPlayerStore {
     }
   }
 
-  public newPlayer(key: PlayerKey, title: string, isNPC: boolean, id?: number, bank?: number, bet?: number): void {
+
+  public newPlayer(key: PlayerKey, title: string, isNPC: boolean, id: number, bank: number, disabled?: boolean): void {
     // Create new player record
-    const _newPlayer = new Player(key, title, isNPC, id, bank, bet);
+    const _newPlayer = new Player({ key, title, isNPC, id, bank, disabled });
 
     // Add the new Player to the players collection
     if (!(key in this.players)) this.players[key] = _newPlayer;
@@ -103,7 +104,6 @@ export class PlayerStore implements IPlayerStore {
  */
   public _resetPlayer(key: PlayerKey, omit: string) {
     const player = this.players[key];
-    player.bet = 0;
     player.bank = 1000;
     player.isFinished = false;
     player.isStaying = false;
@@ -119,7 +119,7 @@ export class PlayerStore implements IPlayerStore {
   public _bet(key: PlayerKey, amount: number) {
     let p = this.player(key);
     // p.pot -= amount;
-    p.bet = amount;
+    p.bet(amount);
     p.lastAction = PlayerAction.Bet;
     console.log(`${p.title} bet ${amount}`);
   }

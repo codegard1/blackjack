@@ -1,11 +1,9 @@
 /*  adapted from node-shuffle 
     https://github.com/codegard1/node-shuffle.git */
 
-import { IPlayingCardDeck } from "../interfaces";
-import { Suit, CardTuple, PlayingCardKey, PlayerHand, PlayerKey } from "../types";
-import { PlayingCard } from "./PlayingCard";
-import { PlayingCardSuit } from "./PlayingCardSuit";
-
+import { PlayingCard, _cardKeys } from ".";
+import { IPlayingCardDeck, IPlayingCardDeckState } from "../interfaces";
+import { PlayerHand, PlayerKey, PlayingCardKey } from "../types";
 
 export type PlayerHandList = {
   [index: PlayerKey]: PlayerHand;
@@ -14,15 +12,22 @@ export type PlayerHandList = {
 /**
  * A set of 52 Playing Cards in random order
  */
-export class PlayingCardDeck implements IPlayingCardDeck {
-  public cards: PlayingCard[] = [];
+export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck {
+  public selected: PlayingCard[] = [];
   public drawn: PlayingCard[] = [];
-  public selected: PlayingCardKey[] = [];
+  public cards: PlayingCard[] = [];
   public playerHands: PlayerHandList = {};
 
-  constructor() {
-    this.reset();
-    this.shuffle();
+  constructor(options?: IPlayingCardDeckState) {
+    if (undefined !== options) {
+      this.selected = options.selectedKeys.map((ck) => new PlayingCard(ck));
+      this.drawn = options.drawnKeys.map((ck) => new PlayingCard(ck));
+      this.cards = options.cardKeys.map((ck) => new PlayingCard(ck));
+      this.playerHands = options.playerHands;
+    } else {
+      this.reset();
+      this.shuffle();
+    }
   }
 
   private random(): number {
@@ -33,42 +38,30 @@ export class PlayingCardDeck implements IPlayingCardDeck {
     return this.cards.length;
   }
 
+  public get cardKeys(): PlayingCardKey[] {
+    return this.cards.map((c) => c.key);
+  }
+
+  public get selectedKeys(): PlayingCardKey[] {
+    return this.selected.map((c) => c.key);
+  }
+
+  /**
+   * Return drawn cards as keys
+   */
+  public get drawnKeys(): PlayingCardKey[] {
+    return this.drawn.map((c) => c.key);
+  }
+
+  /**
+   * Shuffle the cards using the Fisher-Yates method
+   */
   public shuffle(): void {
     this.fisherYates(this.cards);
   }
 
   public reset(): void {
-    const cardTuples: CardTuple[] = [
-      { name: "Two", value: 2 },
-      { name: "Three", value: 3 },
-      { name: "Four", value: 4 },
-      { name: "Five", value: 5 },
-      { name: "Six", value: 6 },
-      { name: "Seven", value: 7 },
-      { name: "Eight", value: 8 },
-      { name: "Nine", value: 9 },
-      { name: "Ten", value: 10 },
-      { name: "Jack", value: 11 },
-      { name: "Queen", value: 12 },
-      { name: "King", value: 13 },
-      { name: "Ace", value: 14 },
-    ];
-
-    const cardSuits = PlayingCardSuit.suits();
-
-    let _cards: PlayingCard[] = [];
-    cardSuits.forEach((suit: Suit) =>
-      cardTuples.forEach((t) =>
-        _cards.push(
-          new PlayingCard(
-            new PlayingCardSuit(suit),
-            t.name,
-            t.value
-          )
-        )
-      )
-    );
-    this.cards = _cards.slice(0);
+    this.cards = _cardKeys().map((ck) => new PlayingCard(ck)).slice();
     this.drawn = [];
     this.selected = [];
   }
@@ -167,20 +160,12 @@ export class PlayingCardDeck implements IPlayingCardDeck {
     return _cards;
   }
 
-  public get drawnCardKeys(): PlayingCardKey[] {
-    return this.drawn.map((c) => c.key);
-  }
-
-  public get deckCardKeys(): PlayingCardKey[] {
-    return this.cards.map((c) => c.key);
-  }
-
   /**
    * Add a card to the selected array
    * @param key unique key of the card to add
    */
   public select(key: PlayingCardKey) {
-    if (!(key in this.selected)) this.selected.push(key);
+    if (!(key in this.selectedKeys)) this.selected.push(new PlayingCard(key));
   }
 
   /**
@@ -188,7 +173,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
    * @param key Unique key of the card to remove
    */
   public unselect(key: PlayingCardKey) {
-    const ix = this.selected.findIndex((v) => v === key);
+    const ix = this.selected.findIndex((v) => v.key === key);
     if (ix > -1) this.selected.splice(ix, 1);
   }
 

@@ -6,16 +6,14 @@ export interface IPlayingCardDeck {
   deal: (numberOfCards: number, arrayOfHands: any[]) => PlayingCard[];
   draw: (numberOfCards: number) => PlayingCard[] | undefined;
   drawFromBottomOfDeck: (numberOfCards: number) => PlayingCard[];
+  drawn: PlayingCard[];
   drawRandom: (numberOfCards: number) => PlayingCard[];
   length: number;
   putOnBottomOfDeck: (cards: PlayingCard[]) => void;
   putOnTopOfDeck: (cards: PlayingCard[]) => void;
   reset: () => void;
-  shuffle: () => void;
-  drawn: PlayingCard[];
-  selected: PlayingCardKey[];
   select: (key: PlayingCardKey) => void;
+  selected: PlayingCard[];
+  shuffle: () => void;
   unselect: (key: PlayingCardKey) => void;
-  drawnCardKeys: PlayingCardKey[];
-  deckCardKeys: PlayingCardKey[];
 }

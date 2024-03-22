@@ -7,7 +7,7 @@ import { PlayerKey, PlayerStats, } from '../types';
  */
 export interface IPlayerStore {
   state: IPlayerStoreState;
-  newPlayer: (key: PlayerKey, title: string, isNPC: boolean, id?: number, bank?: number, bet?: number) => void;
+  newPlayer: (key: PlayerKey, title: string, isNPC: boolean, id: number, bank: number, disabled?: boolean) => void;
   saveAll: () => Promise<void>;
   clearStore: () => void;
   player: (key: PlayerKey) => Player;

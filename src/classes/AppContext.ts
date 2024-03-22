@@ -8,7 +8,7 @@ import { MessageBarType } from '@fluentui/react';
 import { PlayerStore, PlayingCardDeck } from './';
 import { IAppContextProps } from '../interfaces';
 import { PlayerKey } from '../types';
-import { GameStatus } from '../enums/GameStatus';
+import { GameStatus } from '../enums';
 
 // Create the default Context object with mostly dummy values
 const AppContext = React.createContext<IAppContextProps>({
