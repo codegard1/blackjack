@@ -56,6 +56,7 @@ const App = () => {
   const [isSplashScreenVisible, setSplashScreenVisible] = React.useState<boolean>(false);
   const [isMessageBarVisible, setMessageBarVisible] = React.useState<boolean>(false);
 
+  const [isSpinnerVisible, setSpinnerVisible] = React.useState<boolean>(true);
   const [loser, setLoser] = React.useState<PlayerKey>();
   const [winner, setWinner] = React.useState<PlayerKey>();
   const [dealerHasControl, setDealerHasControl] = React.useState<boolean>(false);
@@ -70,8 +71,7 @@ const App = () => {
     isMultiLine: false
   });
   const newActivityLogItem = (name: string, description: string, iconName: string) => { };
-  // Initialize Stores
-  const initializeStores = () => { };
+
   /**
    * delete all entries from stores
    */
@@ -131,22 +131,6 @@ const App = () => {
     return ret;
   }
 
-
-  /**
-   *  DECK ACTIONS
-   */
-  const newDeck = (): PlayingCardDeck => { setDeck(new PlayingCardDeck()); return deck; }
-  const draw = (num: number) => deck.draw(num);
-  const drawRandom = (num: number) => deck.drawRandom(num);
-  const drawFromBottomOfDeck = (num: number) => deck.drawFromBottomOfDeck(num);
-  const shuffle = () => deck.shuffle();
-  const putOnTopOfDeck = (cards: PlayingCard[]) => deck.putOnTopOfDeck(cards);
-  const putOnBottomOfDeck = (cards: PlayingCard[]) => deck.putOnBottomOfDeck(cards);
-  const removeSelectedFromPlayerHand = (playerKey: string, cards: PlayingCard[]) => { };
-  const removeSelectedFromDrawn = (cards: PlayingCard[]) => { };
-  const select = (key: PlayingCardKey) => deck.select(key);
-  const deselect = (key: PlayingCardKey) => deck.unselect(key);
-
   /**
    *  GAME ACTIONS
    */
@@ -158,7 +142,7 @@ const App = () => {
   const stay = (playerKey: string) => { };
   const bet = (playerKey: string, amount: number) => { };
   const newGame = (players: PlayerKey[]) => {
-    newDeck();
+    deck.reset();
     playerStore.all.forEach((p) => p.cards.push(...deck.draw(2)));
     newRound();
   };
@@ -273,21 +257,6 @@ const App = () => {
     isSplashScreenVisible, setSplashScreenVisible,
   };
 
-  const deckStore: IDeckStoreProps = {
-    deck,
-    newDeck,
-    draw,
-    drawRandom,
-    drawFromBottomOfDeck,
-    shuffle,
-    putOnTopOfDeck,
-    putOnBottomOfDeck,
-    removeSelectedFromPlayerHand,
-    removeSelectedFromDrawn,
-    select,
-    deselect,
-  };
-
   // All variables and functions related to Game state
   const gameStore: IGameStoreProps = {
     bet,
@@ -300,6 +269,7 @@ const App = () => {
     gameStatusFlag,
     hideMessageBar,
     hit,
+    isSpinnerVisible, setSpinnerVisible,
     lastWriteTime, setLastWriteTime,
     loser, setLoser,
     messageBarDefinition, setMessageBarDefinition,
@@ -322,7 +292,7 @@ const App = () => {
     playerStore,
     settingStore,
     gameStore,
-    deckStore,
+    deck,
   };
 
   React.useEffect(() => {
@@ -347,7 +317,7 @@ const App = () => {
   React.useEffect(() => {
     console.log('initial effect');
     // Set players
-    defaultPlayers.forEach((p) => playerStore.newPlayer(p.key, p.title, p.isNPC, p.id, p.bank, p.bet));
+    defaultPlayers.forEach((p) => playerStore.newPlayer(p.key, p.title, p.isNPC, p.id, p.bank, p.lastBet));
     newGame(playerStore.all.map((v) => v.key));
 
   }, []);
