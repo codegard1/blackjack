@@ -7,6 +7,7 @@ export interface IPlayerOpts {
   key: PlayerKey;
   title: string;
   isNPC: boolean;
-  id?: number;
-  bank?: number;
+  id: number;
+  bank: number;
+  disabled?: boolean;
 }
