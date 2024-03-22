@@ -1,34 +1,42 @@
-import { PlayerKey, PlayerHandValue, PlayerHand, PlayerStats, PlayerStatsKey } from '../types';
-import { IPlayer, IPlayerState } from '../interfaces';
 import { PlayingCard } from '.';
-import { PlayerAction } from '../enums/PlayerAction';
-import { PlayerStatus } from '../enums/PlayerStatus';
+import { PlayerAction, PlayerStatus } from '../enums';
+import { IPlayer, IPlayerOpts, IPlayerState } from '../interfaces';
+import { PlayerHand, PlayerHandValue, PlayerKey, PlayerStats } from '../types';
 
-export class Player implements IPlayer {
+
+/**
+ * A Player object keeps track of gold, cards, and statistics across multiple games
+ */
+export class Player implements IPlayer, IPlayerState {
+  // Hard properties 
+  public readonly disabled: boolean;
+  public readonly id: number;
+  public readonly isNPC: boolean;
+  public readonly key: PlayerKey;
+  public readonly title: string;
+
+  // Soft properties
   public bank = 0;
   public hand: PlayerHand;
-  public id: number;
   public isFinished = false;
-  public isNPC: boolean;
   public isSelected = false;
   public isStaying = false;
-  public key: PlayerKey;
   public lastAction = PlayerAction.Init;
   public lastAnte = 0;
   public lastBet = 0;
   public stats: PlayerStats;
-  public title: string;
   public totalBet = 0;
   public turn = false;
 
-  constructor(key: PlayerKey, title: string, isNPC: boolean, id?: number, bank?: number, bet?: number) {
-    this.id = id ? id : 0;
-    this.bank = bank ? bank : 0;
-    this.lastBet = bet ? bet : 0;
-    this.totalBet += bet ? bet : 0;
-    this.key = key;
-    this.title = title;
-    this.isNPC = isNPC;
+  // CONSTRUCTOR
+  constructor(options: IPlayerOpts) {
+    this.id = options.id;
+    this.key = options.key;
+    this.isNPC = options.isNPC;
+    this.title = options.title;
+    this.disabled = options.disabled ? options.disabled : false;
+
+    this.bank = options.bank ? options.bank : 0;
     this.hand = {
       cards: [],
       handValue: { aceAsEleven: 0, aceAsOne: 0, highest: 0 },
@@ -44,35 +52,10 @@ export class Player implements IPlayer {
     }
   }
 
-  public get cards(): PlayingCard[] {
-    return this.hand.cards;
-  }
-
-  public set cards(v: PlayingCard[]) {
-    this.hand.cards = v;
-  }
-
-  public get hasBlackjack(): boolean {
-    return this.handValue.aceAsEleven === 31 || this.handValue.aceAsOne === 31;
-  }
-
-  public get isBusted(): boolean {
-    return this.handValue.aceAsEleven > 31 && this.handValue.aceAsOne > 31;
-  }
-
-  public get handValue(): PlayerHandValue {
-    return this.hand.handValue;
-  }
-
-  public get highestValue(): number {
-    return this.hand.handValue.highest;
-  }
-
-  public get status(): PlayerStatus {
-    return this.isBusted ? PlayerStatus.Busted : PlayerStatus.OK;
-  }
-
-  // return the win/loss ratio as a string
+  /**
+   * return the win/loss ratio as a string
+   * @returns 
+   */
   public calculateWinLossRatio(): number {
     const { numberOfGamesWon, numberOfGamesLost } = this.stats;
     const numerator = numberOfGamesWon > 0 ? numberOfGamesWon : 1;
@@ -82,7 +65,10 @@ export class Player implements IPlayer {
     return ratio;
   }
 
-  // update stats for a given player
+  /**
+   * update stats for a given player
+   * @param statsFrame 
+   */
   public updateStats(statsFrame: PlayerStats) {
     for (const key in statsFrame) {
       /* add the value of stasFrame[key] to the corresponding key in statsstore */
@@ -122,9 +108,13 @@ export class Player implements IPlayer {
     }
   }
 
+  /**
+   * Return the internal state of the player
+   */
   public get state(): IPlayerState {
     return {
       bank: this.bank,
+      disabled: this.disabled,
       hand: this.hand,
       hasBlackjack: this.hasBlackjack,
       id: this.id,
@@ -145,21 +135,67 @@ export class Player implements IPlayer {
     }
   }
 
+  /**
+   * Set the internal state of the player
+   */
   public set state(newState: IPlayerState) {
-    this.bank = newState.bank;
-    this.hand = newState.hand;
-    this.id = newState.id;
-    this.isNPC = newState.isNPC;
-    this.key = newState.key;
-    this.lastAction = newState.lastAction;
-    this.lastAnte = newState.lastAnte;
-    this.lastBet = newState.lastBet;
-    this.stats = newState.stats;
-    this.title = newState.title;
-    this.totalBet = newState.totalBet;
-    this.turn = newState.turn;
+    this.bank = newState.bank ? newState.bank : this.bank;
+    this.hand = newState.hand ? newState.hand : this.hand;
+    this.lastAction = newState.lastAction ? newState.lastAction : this.lastAction;
+    this.lastAnte = newState.lastAnte ? newState.lastAnte : this.lastAnte;
+    this.lastBet = newState.lastBet ? newState.lastBet : this.lastBet;
+    this.stats = newState.stats ? newState.stats : this.stats;
+    this.totalBet = newState.totalBet ? newState.totalBet : this.totalBet;
+    this.turn = newState.turn ? newState.turn : this.turn;
   }
 
+  /**
+   * Return the player's hand as an array of PlayingCard
+   */
+  public get cards(): PlayingCard[] {
+    return this.hand.cards;
+  }
 
+  /**
+   * Set the player's hand to the specified cards
+   */
+  public set cards(v: PlayingCard[]) {
+    this.hand.cards = v;
+  }
+
+  /**
+   * Return true if the player's hand is worth 21 points
+   */
+  public get hasBlackjack(): boolean {
+    return this.handValue.aceAsEleven === 31 || this.handValue.aceAsOne === 31;
+  }
+
+  /**
+   * Return true if the player's hand is worth more than 21 points
+   */
+  public get isBusted(): boolean {
+    return this.handValue.aceAsEleven > 21 && this.handValue.aceAsOne > 21;
+  }
+
+  /**
+   * Return the PlayerHandValue object from the player
+   */
+  public get handValue(): PlayerHandValue {
+    return this.hand.handValue;
+  }
+
+  /**
+   * Return the highest value of ther player's hand
+   */
+  public get highestValue(): number {
+    return this.hand.handValue.highest;
+  }
+
+  /**
+   * Return the player status (OK or Busted)
+   */
+  public get status(): PlayerStatus {
+    return this.isBusted ? PlayerStatus.Busted : PlayerStatus.OK;
+  }
 
 }
