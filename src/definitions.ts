@@ -10,10 +10,10 @@ import { Player } from "./classes";
 
 //  Default players as array
 export const defaultPlayers: Player[] = [
-  new Player('chris', 'Chris', false, 0),
-  new Player('chris', 'Delaer', false, 1),
-  new Player('john', 'John', false, 2),
-  new Player('ralph', 'Ralph', false, 3),
+  new Player('chris', 'Chris', false, 0, 1000, 20),
+  new Player('chris', 'Delaer', false, 1, 1000, 20),
+  new Player('john', 'John', false, 2, 1000, 20),
+  new Player('ralph', 'Ralph', false, 3, 1000, 20),
 ];
 
 
