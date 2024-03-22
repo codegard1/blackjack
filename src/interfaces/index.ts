@@ -10,6 +10,7 @@ export type { IDeckCalloutProps } from './IDeckCalloutProps';
 export type { IGameStoreProps } from './IGameStoreProps';
 export type { IPlayer } from './IPlayer';
 export type { IPlayerContainerProps } from './IPlayerContainerProps';
+export type { IPlayerState } from './IPlayerState';
 export type { IPlayerStore } from './IPlayerStore';
 export type { IPlayerStoreState } from './IPlayerStoreState';
 export type { IPlayingCard } from './IPlayingCard';

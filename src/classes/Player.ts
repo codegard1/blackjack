@@ -1,12 +1,11 @@
 import { PlayerKey, PlayerHandValue, PlayerHand, PlayerStats, PlayerStatsKey } from '../types';
-import { IPlayer } from '../interfaces/IPlayer';
+import { IPlayer, IPlayerState } from '../interfaces';
 import { PlayingCard } from '.';
 import { PlayerAction } from '../enums/PlayerAction';
 import { PlayerStatus } from '../enums/PlayerStatus';
 
 export class Player implements IPlayer {
   public bank = 0;
-  public bet = 0;
   public hand: PlayerHand;
   public id: number;
   public isFinished = false;
@@ -15,14 +14,18 @@ export class Player implements IPlayer {
   public isStaying = false;
   public key: PlayerKey;
   public lastAction = PlayerAction.Init;
-  public title: string;
-  public turn = false;
+  public lastAnte = 0;
+  public lastBet = 0;
   public stats: PlayerStats;
+  public title: string;
+  public totalBet = 0;
+  public turn = false;
 
   constructor(key: PlayerKey, title: string, isNPC: boolean, id?: number, bank?: number, bet?: number) {
     this.id = id ? id : 0;
     this.bank = bank ? bank : 0;
-    this.bet = bet ? bet : 0;
+    this.lastBet = bet ? bet : 0;
+    this.totalBet += bet ? bet : 0;
     this.key = key;
     this.title = title;
     this.isNPC = isNPC;
@@ -88,5 +91,75 @@ export class Player implements IPlayer {
     /* recalculate win/loss ratio */
     this.calculateWinLossRatio();
   }
+
+  /**
+   * Check if the player bank has more than a certain amount
+   * @param amount 
+   * @returns true if the player bank has enough gold
+   */
+  private checkBank(amount: number): boolean {
+    return this.bank >= amount;
+  }
+
+  public ante(amount: number): boolean {
+    // fail if the player does not have enough gold
+    if (!this.checkBank(amount)) return false
+    else {
+      this.lastAnte = amount;
+      this.bank -= amount;
+      return true;
+    }
+  }
+
+  public bet(amount: number): boolean {
+    // fail if the player does not have enough gold
+    if (!this.checkBank(amount)) return false
+    else {
+      this.lastBet = amount;
+      this.totalBet += amount;
+      this.bank -= amount;
+      return true;
+    }
+  }
+
+  public get state(): IPlayerState {
+    return {
+      bank: this.bank,
+      hand: this.hand,
+      hasBlackjack: this.hasBlackjack,
+      id: this.id,
+      isBusted: this.isBusted,
+      isFinished: this.isFinished,
+      isNPC: this.isNPC,
+      isSelected: this.isSelected,
+      isStaying: this.isStaying,
+      key: this.key,
+      lastAction: this.lastAction,
+      lastAnte: this.lastAnte,
+      lastBet: this.lastBet,
+      stats: this.stats,
+      status: this.status,
+      title: this.title,
+      totalBet: this.totalBet,
+      turn: this.turn,
+    }
+  }
+
+  public set state(newState: IPlayerState) {
+    this.bank = newState.bank;
+    this.hand = newState.hand;
+    this.id = newState.id;
+    this.isNPC = newState.isNPC;
+    this.key = newState.key;
+    this.lastAction = newState.lastAction;
+    this.lastAnte = newState.lastAnte;
+    this.lastBet = newState.lastBet;
+    this.stats = newState.stats;
+    this.title = newState.title;
+    this.totalBet = newState.totalBet;
+    this.turn = newState.turn;
+  }
+
+
 
 }

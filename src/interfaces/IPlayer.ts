@@ -3,11 +3,9 @@ import { PlayerAction } from '../enums/PlayerAction';
 import { PlayerStatus } from '../enums/PlayerStatus';
 
 export interface IPlayer extends BasePlayer {
-  bet: number;
-  isFinished: boolean;
-  isSelected: boolean;
-  isStaying: boolean;
   lastAction: PlayerAction;
+  lastAnte: number;
+  lastBet: number;
   status: PlayerStatus;
   turn: boolean;
 }
