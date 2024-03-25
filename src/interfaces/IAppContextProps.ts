@@ -4,8 +4,8 @@ import { ISettingStoreProps, IGameStoreProps } from '.';
 export interface IAppContextProps {
   initializeStores: () => void;
   clearStores: () => void;
-  playerStore: PlayerStore;
+  playerStore: PlayerStore | null;
   settingStore: ISettingStoreProps;
   gameStore: IGameStoreProps;
-  deck: PlayingCardDeck;
+  deck: PlayingCardDeck | null;
 }

@@ -53,7 +53,7 @@ export const Table: React.FC = () => {
    * render PlayerContainers for players listed in PlayerStore.state.activePlayers
    */
   const renderPlayerContainers = () => {
-    if (playerStore.length > 0) {
+    if (null !== playerStore && playerStore.length > 0) {
       return playerStore.all.map(pl =>
         <StackItem align="stretch" grow={2} key={`PlayerStack-${pl.key}`}>
           <PlayerContainer
@@ -108,7 +108,7 @@ export const Table: React.FC = () => {
         </Stack>
       }
 
-      {!isDialogVisible &&
+      {!isDialogVisible && null !== deck &&
         <Stack verticalAlign="stretch" wrap tokens={{ childrenGap: 10, padding: 10 }} verticalFill>
           <StackItem>
 

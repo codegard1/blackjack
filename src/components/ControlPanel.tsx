@@ -162,7 +162,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
         iconProps: { iconName: "Refresh" },
         disabled: gameStatusFlag,
         onClick: () => {
-          deck.reset();
+          deck?.reset();
           gameStore.newRound();
           gameStore.showMessageBar({ text: "New Round", type: MessageBarType.info, isMultiLine: false });
         }

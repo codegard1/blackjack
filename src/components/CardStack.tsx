@@ -47,7 +47,7 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
 
 
   /* Deck Title */
-  const deckTitleString = `${props.title} (${deck.length})`;
+  const deckTitleString = `${props.title} (${deck?.length})`;
 
   /* Hand Value (if it's a player deck) */
   let handValueString;
