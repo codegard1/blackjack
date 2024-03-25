@@ -19,7 +19,7 @@ import {
 } from "@fluentui/react";
 
 // Context
-import AppContext from "../classes/AppContext";
+import AppContext from "../../src/classes/AppContext";
 
 export const OptionsPanel: React.FC = () => {
   const {

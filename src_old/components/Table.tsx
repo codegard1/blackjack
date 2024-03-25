@@ -27,9 +27,7 @@ export const Table: React.FC = () => {
 
   // Context
   const {
-    playerStore,
     settingStore,
-    deck,
     gameStore,
   } = React.useContext(AppContext);
 
@@ -52,24 +50,24 @@ export const Table: React.FC = () => {
   /**
    * render PlayerContainers for players listed in PlayerStore.state.activePlayers
    */
-  const renderPlayerContainers = () => {
-    if (playerStore.length > 0) {
-      return playerStore.all.map(pl =>
-        <StackItem align="stretch" grow={2} key={`PlayerStack-${pl.key}`}>
-          <PlayerContainer
-            isDeckCalloutVisible={isDeckCalloutVisible}
-            key={`PlayerContainer-${pl.key}`}
-            minimumBet={gameStore.minimumBet}
-            player={pl}
-            playerKey={pl.key}
-            dealerHasControl={gameStore.dealerHasControl}
-          />
-        </StackItem>
-      );
-    } else {
-      return <StackItem>No players</StackItem>;
-    }
-  }
+  // const renderPlayerContainers = () => {
+  //   if (playerStore.length > 0) {
+  //     return playerStore.all.map(pl =>
+  //       <StackItem align="stretch" grow={2} key={`PlayerStack-${pl.key}`}>
+  //         <PlayerContainer
+  //           isDeckCalloutVisible={isDeckCalloutVisible}
+  //           key={`PlayerContainer-${pl.key}`}
+  //           minimumBet={gameStore.minimumBet}
+  //           player={pl}
+  //           playerKey={pl.key}
+  //           dealerHasControl={gameStore.dealerHasControl}
+  //         />
+  //       </StackItem>
+  //     );
+  //   } else {
+  //     return <StackItem>No players</StackItem>;
+  //   }
+  // }
 
 
   // slice out the selected players (Chris and Dealer) and return PlayerContainers
@@ -103,7 +101,7 @@ export const Table: React.FC = () => {
         <Stack verticalAlign="space-around" tokens={{ childrenGap: 10, padding: 10, }}>
           {!gameStore.gameStatusFlag && <Text block nowrap variant="xLarge">Pot: ${gameStore.pot}</Text>}
           <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
-            {renderPlayerContainers}
+            {/* {renderPlayerContainers} */}
           </Stack>
         </Stack>
       }

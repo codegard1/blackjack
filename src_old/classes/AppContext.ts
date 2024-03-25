@@ -14,8 +14,6 @@ import { GameStatus } from '../enums';
 const AppContext = React.createContext<IAppContextProps>({
   initializeStores: () => { },
   clearStores: () => { },
-  playerStore: new PlayerStore(),
-  deck: new PlayingCardDeck(),
   settingStore: {
     isActivityLogVisible: false,
     isCardDescVisible: false,

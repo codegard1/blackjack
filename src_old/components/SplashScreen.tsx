@@ -11,15 +11,15 @@ import {
   IDropdownOption,
 } from '@fluentui/react';
 
-import AppContext from "../classes/AppContext";
+import AppContext from "../../src/classes/AppContext";
 
 import {
   defaultPlayers,
   defaultPlayersDropdownOptions,
   defaultSelectedPlayerKeys
-} from "../definitions";
-import { PlayerKey } from "../types";
-import { Player } from "../classes";
+} from "../../src/definitions";
+import { PlayerKey } from "../../src/types";
+import { Player } from "../../src/classes";
 
 export const SplashScreen: React.FC = () => {
 
