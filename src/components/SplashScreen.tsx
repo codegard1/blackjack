@@ -15,6 +15,7 @@ import AppContext from "../classes/AppContext";
 
 import { Player } from "../classes";
 import {
+  defaultplayersArr,
   defaultPlayersDropdownOptions,
   defaultSelectedPlayerKeys
 } from "../definitions";
@@ -45,15 +46,14 @@ export const SplashScreen: React.FC = () => {
     }
   }
 
-  const onClickStartButton = () => {
-    // get the complete player object for AppActions that don't use playerKey yet
-    // let pList = selectedPlayers.map(key => players[key]);
+  const onDismissDialog = () => settingStore.setSplashScreenVisible(false);
 
-    // initiate a new game 
-    // gameStore.newGame(pList);
+  const onClickStartButton = () => {
+    // initiate a new game     
+    gameStore.newGame(selectedPlayers);
 
     // hide the player selection modal 
-    settingStore.setSplashScreenVisible(false);
+    onDismissDialog();
   }
 
   return (
@@ -69,8 +69,8 @@ export const SplashScreen: React.FC = () => {
         styles: { main: { maxWidth: 450, top: 125 } },
         isDarkOverlay: true,
         topOffsetFixed: true,
-
       }}
+      onDismiss={onDismissDialog}
     >
       <Dropdown
         placeholder="Choose"
@@ -83,6 +83,6 @@ export const SplashScreen: React.FC = () => {
       <DialogFooter>
         <PrimaryButton text="Start" onClick={onClickStartButton} />
       </DialogFooter>
-    </Dialog>
+    </Dialog >
   );
 }
