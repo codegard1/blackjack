@@ -6,7 +6,8 @@ import {
   Layer,
   MessageBarType,
   Stack,
-  initializeIcons
+  initializeIcons,
+  Text,
 } from '@fluentui/react';
 
 // Local Resources
@@ -14,7 +15,7 @@ import './App.css';
 import { PlayerStore, PlayingCardDeck } from './classes';
 import AppContext from './classes/AppContext';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
-import { defaultPlayers } from './definitions';
+import { defaultPlayers, defaultplayersArr } from './definitions';
 import { GameStatus } from './enums/GameStatus';
 import { IAppContextProps, IGameStoreProps, ISettingStoreProps } from './interfaces';
 import { MessageBarDefinition, PlayerKey, PlayerStats, StoreName } from './types';
@@ -149,8 +150,13 @@ const App = () => {
   const hit = (playerKey: string) => { }
   const stay = (playerKey: string) => { };
   const bet = (playerKey: string, amount: number) => { };
-  const newGame = (players: PlayerKey[]) => {
+  const newGame = (selectedPlayers: PlayerKey[]) => {
     deck.reset();
+    selectedPlayers.forEach((pk, ix) => {
+      const _p = defaultplayersArr.find(v => v.key === pk);
+      if (_p) console.log(JSON.stringify(_p));
+      if (_p) playerStore!.newPlayer(pk, _p?.title, _p?.isNPC, ix, _p?.bank, _p?.disabled)
+    });
     playerStore.all.forEach((p) => p.cards.push(...deck.draw(2)));
     newRound();
   };
@@ -341,6 +347,9 @@ const App = () => {
       <Stack tokens={{ childrenGap: 15 }} horizontalAlign='space-between' verticalAlign='space-evenly'>
         <Table />
         <ActivityLog hidden={!settingStore.isActivityLogVisible} />
+        <div style={{ backgroundColor: '#eee' }}>
+          <Text>{JSON.stringify(playerStore.state)}</Text>
+        </div>
       </Stack>
     </AppContext.Provider>
   );
