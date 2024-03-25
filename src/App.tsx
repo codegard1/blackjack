@@ -11,29 +11,19 @@ import {
 
 // Local Resources
 import './App.css';
-import { IndexedDB, PlayerStore, PlayingCardDeck } from './classes';
+import { PlayerStore, PlayingCardDeck } from './classes';
 import AppContext from './classes/AppContext';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
 import { defaultPlayers } from './definitions';
 import { GameStatus } from './enums/GameStatus';
 import { IAppContextProps, IGameStoreProps, ISettingStoreProps } from './interfaces';
-import { MessageBarDefinition, PlayerKey, PlayerStats } from './types';
+import { MessageBarDefinition, PlayerKey, PlayerStats, StoreName } from './types';
 
 // Necessary in order for Fluent Icons to render on the page
 initializeIcons();
 
 // Main Component
 const App = () => {
-
-  // IDB  
-  const db = new IndexedDB('BlackJackDB', 1, (db, oldVersion, newVersion) => {
-    // upgrade database
-    switch (oldVersion) {
-      case 0: {
-        db.createObjectStore('App');
-      }
-    }
-  });
 
   // PlayerStore
   const playerStore = new PlayerStore(defaultPlayers);
@@ -72,18 +62,28 @@ const App = () => {
   const newActivityLogItem = (name: string, description: string, iconName: string) => { };
 
   /**
-   * delete all entries from stores
+   * Get values from localStorage
    */
-  const initializeStores = async () => {
-    const _playerStore = await db.get('playerStore', 'playerStore');
-    const _deckStore = await db.get('deck', 'deck');
-    const _settingStore = await db.get('settingStore', 'settingStore');
+  const initializeStores = () => {
+    const _playerStore = localStorage.getItem(StoreName.playerStore);
+    const _deckStore = localStorage.getItem(StoreName.deckStore);
+    const _settingStore = localStorage.getItem(StoreName.settingStore);
 
-    console.log('_playerStore: ', _playerStore);
-    console.log('_deckStore: ', _deckStore);
-    console.log('_settingStore: ', _settingStore);
+    if (null !== _playerStore) console.log('found existing playerStore data in localStorage');
+    if (null !== _deckStore) console.log('found existing deckStore data in localStorage');
+    if (null !== _settingStore) console.log('found existing settingStore data in localStorage');
   }
-  const clearStores = () => { };
+
+  /**
+   * delete all entries from stores
+  */
+  const clearStores = () => {
+    localStorage.removeItem(StoreName.deckStore);
+    localStorage.removeItem(StoreName.playerStore);
+    localStorage.removeItem(StoreName.settingStore);
+    localStorage.removeItem(StoreName.statStore);
+  };
+
   const evaluateGame = (statusCode: number) => { _evaluateGame(statusCode) };
   const endGame = () => { };
   const endGameTrap = (): boolean => {
@@ -295,8 +295,8 @@ const App = () => {
   }
 
   const contextDefaults: IAppContextProps = {
-    initializeStores: () => { },
-    clearStores: () => { },
+    initializeStores,
+    clearStores,
     playerStore,
     settingStore,
     gameStore,
@@ -304,28 +304,29 @@ const App = () => {
   };
 
   React.useEffect(() => {
-    console.log('Initialization effect')
-    // if (undefined !== db) initializeStores();
-  }, [db])
+    // console.log('Initialization effect');
+    initializeStores();
+  }, [])
 
   React.useEffect(() => {
     if (null !== deck) {
       console.log('Deck effect');
-      db.set('deckStore', 'deckStore', JSON.stringify(deck));
+
+      localStorage.setItem(StoreName.deckStore, JSON.stringify(deck));
     }
   }, [deck]);
 
   React.useEffect(() => {
     if (null !== playerStore) {
       console.log('Players effect');
-      db.set('playerStore', 'playerStore', JSON.stringify(playerStore.state));
+      localStorage.setItem(StoreName.playerStore, JSON.stringify(playerStore.state));
     }
   }, [playerStore]);
 
   React.useEffect(() => {
     if (null !== settingStore) {
       console.log('settingStore effect', JSON.stringify(settingStore));
-      db.set('settingStore', 'settingStore', JSON.stringify(settingStore));
+      localStorage.setItem(StoreName.settingStore, JSON.stringify(settingStore));
     }
   }, [settingStore]);
 
