@@ -14,7 +14,7 @@ export const defaultPlayers: Player[] = [
 /**
  * default keys for the Dropdown on  the splash dialog
  */
-export const defaultSelectedPlayerKeys: PlayerKey[] = defaultPlayers.slice(0, 1).map((p) => p.key);
+export const defaultSelectedPlayerKeys: PlayerKey[] = defaultPlayers.slice(0, 2).map((p) => p.key);
 
 /**
  * default options for the splash dialog dropdown
