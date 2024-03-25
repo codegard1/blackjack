@@ -26,7 +26,7 @@ initializeIcons();
 const App = () => {
 
   // PlayerStore
-  const playerStore = new PlayerStore(defaultPlayers);
+  const playerStore = new PlayerStore();
   const deck = new PlayingCardDeck();
 
   // State
