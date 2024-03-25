@@ -5,7 +5,7 @@ import { PlayerKey } from "./types";
 //  Default players as array
 export const defaultPlayers: Player[] = [
   { key: 'chris', title: 'Chris', disabled: false, bank: 1000, isNPC: true },
-  { key: 'chris', title: 'Delaer', disabled: false, bank: 1000, isNPC: true },
+  { key: 'dealer', title: 'Delaer', disabled: false, bank: 1000, isNPC: true },
   { key: 'john', title: 'John', disabled: false, bank: 1000, isNPC: true },
   { key: 'ralph', title: 'Ralph', disabled: false, bank: 1000, isNPC: true }
 ].map((p, i) => new Player({ id: i, ...p }));
