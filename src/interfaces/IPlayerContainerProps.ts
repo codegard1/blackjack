@@ -1,8 +1,5 @@
+import { PlayerKey } from "../types";
 
 export interface IPlayerContainerProps {
-  dealerHasControl: boolean;
-  isDeckCalloutVisible: boolean;
-  player: any;
-  playerKey: string;
-  minimumBet: number;
+  playerKey: PlayerKey;
 }
