@@ -17,7 +17,7 @@ import AppContext from './classes/AppContext';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
 import { defaultPlayers, defaultplayersArr } from './definitions';
 import { GameStatus } from './enums/GameStatus';
-import { IAppContextProps, IGameStoreProps, ISettingStoreProps } from './interfaces';
+import { IAppContextProps, IGameStoreProps, ISettingStoreProps, ISettingStoreState } from './interfaces';
 import { MessageBarDefinition, PlayerKey, PlayerStats, StoreName } from './types';
 
 // Necessary in order for Fluent Icons to render on the page
@@ -26,9 +26,8 @@ initializeIcons();
 // Main Component
 const App = () => {
 
-  // PlayerStore
-  const playerStore = new PlayerStore();
-  const deck = new PlayingCardDeck();
+  const [playerStore, setPlayerStore] = React.useState<PlayerStore>(new PlayerStore());
+  const [deck] = React.useState<PlayingCardDeck>(new PlayingCardDeck());
 
   // State
   // TODO: determine if State and "Actions" should all be defined here in App
@@ -70,9 +69,23 @@ const App = () => {
     const _deckStore = localStorage.getItem(StoreName.deckStore);
     const _settingStore = localStorage.getItem(StoreName.settingStore);
 
-    if (null !== _playerStore) console.log('found existing playerStore data in localStorage');
-    if (null !== _deckStore) console.log('found existing deckStore data in localStorage');
-    if (null !== _settingStore) console.log('found existing settingStore data in localStorage');
+    // if (null !== _playerStore) console.log('found existing playerStore data in localStorage');
+    // if (null !== _deckStore) console.log('found existing deckStore data in localStorage');
+    if (null !== _settingStore) {
+      const _ss: ISettingStoreState = JSON.parse(_settingStore);
+      // setOptionsPanelVisible(_ss.isOptionsPanelVisible);
+      // setSplashScreenVisible(_ss.isSplashScreenVisible);
+      setActivityLogVisible(_ss.isActivityLogVisible);
+      setCardDescVisible(_ss.isCardDescVisible);
+      setCardTitleVisible(_ss.isCardTitleVisible);
+      setDealerHandVisible(_ss.isDealerHandVisible);
+      setDeckVisible(_ss.isDeckVisible);
+      setDrawnVisible(_ss.isDrawnVisible);
+      setHandValueVisible(_ss.isHandValueVisible);
+      setMessageBarVisible(_ss.isMessageBarVisible);
+      setSelectedVisible(_ss.isSelectedVisible);
+    }
+
   }
 
   /**
@@ -147,9 +160,13 @@ const App = () => {
     deck.deal(2, []);
     setGameStatus(1);
   }
+
   const hit = (playerKey: string) => { }
+
   const stay = (playerKey: string) => { };
+
   const bet = (playerKey: string, amount: number) => { };
+
   const newGame = (selectedPlayers: PlayerKey[]) => {
     deck.reset();
     selectedPlayers.forEach((pk, ix) => {
@@ -160,11 +177,14 @@ const App = () => {
     playerStore.all.forEach((p) => p.cards.push(...deck.draw(2)));
     newRound();
   };
+
   const showMessageBar = (d: MessageBarDefinition) => {
     setMessageBarDefinition(d);
     setMessageBarVisible(true);
   };
+
   const hideMessageBar = () => setMessageBarVisible(false);
+
   const resetGame = () => {
     deck.reset();
     setDealerHasControl(false);
@@ -173,6 +193,7 @@ const App = () => {
     setRound(0);
     setTurnCount(0);
   };
+
   const newRound = () => {
     /* reset state props to default */
     setDealerHasControl(false);
@@ -324,14 +345,14 @@ const App = () => {
 
   React.useEffect(() => {
     if (null !== playerStore) {
-      console.log('Players effect');
+      console.log('Players effect', playerStore.state);
       localStorage.setItem(StoreName.playerStore, JSON.stringify(playerStore.state));
     }
-  }, [playerStore]);
+  }, [playerStore.state]);
 
   React.useEffect(() => {
     if (null !== settingStore) {
-      console.log('settingStore effect', JSON.stringify(settingStore));
+      // console.log('settingStore effect', JSON.stringify(settingStore));
       localStorage.setItem(StoreName.settingStore, JSON.stringify(settingStore));
     }
   }, [settingStore]);

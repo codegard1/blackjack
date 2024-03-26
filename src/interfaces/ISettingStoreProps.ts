@@ -1,6 +1,6 @@
 import React from 'react';
 
-export interface ISettingStoreProps {
+export interface ISettingStoreState {
   isActivityLogVisible: boolean;
   isCardDescVisible: boolean;
   isCardTitleVisible: boolean;
@@ -12,6 +12,9 @@ export interface ISettingStoreProps {
   isOptionsPanelVisible: boolean;
   isSelectedVisible: boolean;
   isSplashScreenVisible: boolean;
+}
+
+export interface ISettingStoreProps extends ISettingStoreState {
   setActivityLogVisible: React.Dispatch<React.SetStateAction<boolean>>;
   setCardDescVisible: React.Dispatch<React.SetStateAction<boolean>>;
   setCardTitleVisible: React.Dispatch<React.SetStateAction<boolean>>;
