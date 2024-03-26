@@ -15,7 +15,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
     deck,
     gameStore,
   } = React.useContext(AppContext);
-  const { gameStatusFlag } = gameStore;
+  const { gameStatusFlag, gameStatus, minimumBet } = gameStore;
 
   const {
     playerStatusFlag,

@@ -1,11 +1,11 @@
 export interface IControlPanelProps {
-  gameStatus: number;
+  // gameStatus: number;
+  // minimumBet: number;
   hidden: boolean;
-  minimumBet: number;
+  isDeckCalloutVisible: boolean;
   player: any,
   playerKey: string,
   playerStatusFlag: boolean;
   selectedFlag: boolean;
   showDeckCallout: () => void,
-  isDeckCalloutVisible: boolean;
 }
