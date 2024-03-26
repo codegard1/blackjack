@@ -4,7 +4,7 @@ import { PlayerKey } from "./types";
 
 export const defaultplayersArr = [
   { key: 'chris', title: 'Chris', disabled: false, bank: 1000, isNPC: true },
-  { key: 'dealer', title: 'Delaer', disabled: false, bank: 1000, isNPC: true },
+  { key: 'dealer', title: 'Delear', disabled: false, bank: 1000, isNPC: true },
   { key: 'john', title: 'John', disabled: false, bank: 1000, isNPC: true },
   { key: 'ralph', title: 'Ralph', disabled: false, bank: 1000, isNPC: true }
 ]
