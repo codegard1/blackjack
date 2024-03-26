@@ -28,7 +28,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   // State
   const [isStatusCalloutVisible, setStatusCalloutVisible] = React.useState<boolean>(false);
   const [isDeckCalloutVisible, setDeckCalloutVisible] = React.useState<boolean>(false);
-  const player = playerStore?.player(props.playerKey);
+  const { player, playerKey } = props;
 
   const _showDeckCallout = () => setDeckCalloutVisible(true);
   const _hideDeckCallout = () => setDeckCalloutVisible(false);
@@ -36,20 +36,20 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
   /* style PlayerContainer conditionally */
   let playerContainerClass = "PlayerContainer ";
-  if (player?.turn) {
+  if (player.turn) {
     playerContainerClass += "selected ";
   }
   if (
-    player?.isStaying &&
-    !player?.turn
+    player.isStaying &&
+    !player.turn
   ) {
     playerContainerClass += "staying ";
   }
 
-  const playerStatusFlag = (player?.isBusted ||
-    player?.isFinished ||
-    player?.isStaying ||
-    !player?.turn);
+  const playerStatusFlag = (player.isBusted ||
+    player.isFinished ||
+    player.isStaying ||
+    !player.turn);
 
   /* selectedFlag is true if getSelected() returns an array */
   // const selectedFlag = !!DeckStore.getSelected(playerKey);
@@ -58,32 +58,32 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   return (
     <Stack className={playerContainerClass}>
 
-      <Stack horizontal horizontalAlign="space-between" style={{ padding: '5px' }} className={`${player?.title}-titleBar playerContainerClass`}>
+      <Stack horizontal horizontalAlign="space-between" style={{ padding: '5px' }} className={`${player.title}-titleBar playerContainerClass`}>
         <Stack.Item align="start">
           <Text block nowrap variant="large">
-            {`${player?.title} ($${player?.bank || 0})  `}</Text>
+            {`${player.title} ($${player.bank || 0})  `}</Text>
         </Stack.Item>
         <Stack.Item>
-          <StatusDisplay player={player} stats={player?.stats} />
+          <StatusDisplay player={player} stats={player.stats} />
         </Stack.Item>
       </Stack>
 
       <Stack horizontalAlign="space-between">
-        {player?.isNPC && gameStore.dealerHasControl &&
+        {player.isNPC && gameStore.dealerHasControl &&
           <Stack.Item>
             <Agent
               dealerHasControl={gameStore.dealerHasControl}
               gameStatus={gameStore.gameStatus}
-              handValue={player?.handValue}
+              handValue={player.handValue}
               playerKey={props.playerKey}
             />
           </Stack.Item>
         }
 
-        {!player?.isNPC &&
+        {!player.isNPC &&
           <Stack.Item>
             <ControlPanel
-              hidden={player? player.isNPC : false}
+              hidden={player ? player.isNPC : false}
               player={player}
               playerKey={props.playerKey}
               playerStatusFlag={playerStatusFlag}
@@ -94,14 +94,14 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
           </Stack.Item>
         }
 
-        <Stack.Item className={`DeckCalloutTarget-${player?.title}`}>
-          {player?.hand.cards ?
+        <Stack.Item className={`DeckCalloutTarget-${player.title}`}>
+          {player.hand.cards ?
             <CardStack
-              cards={player?.hand.cards}
+              cards={player.hand.cards}
               hidden={false}
               isSelectable
               player={player}
-              title={player?.title}
+              title={player.title}
             /> : nullRender()
           }
         </Stack.Item>
@@ -111,9 +111,9 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
           player={player}
           isDeckCalloutVisible={isDeckCalloutVisible}
           onHideCallout={_hideDeckCallout}
-          target={`.DeckCalloutTarget-${player?.title}`}
+          target={`.DeckCalloutTarget-${player.title}`}
         />
-        </Layer>
+      </Layer>
     </Stack>
   );
 }

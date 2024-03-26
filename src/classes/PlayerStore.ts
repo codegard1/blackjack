@@ -38,7 +38,11 @@ export class PlayerStore implements IPlayerStore {
     if (!(key in this.players)) this.players[key] = _newPlayer;
 
     // add new player to the active players list
-    if (!(key in this.activePlayerKeys)) this.activePlayerKeys.push(key);
+    const _ap = this.activePlayerKeys.slice();
+    if (!(key in _ap)) {
+      _ap.push(key);
+      this.activePlayerKeys = _ap;
+    }
   }
 
   /**
@@ -61,13 +65,6 @@ export class PlayerStore implements IPlayerStore {
   public player(key: PlayerKey): Player { return this.players[key] }
 
   /**
- * Get all active players
- */
-  public get all(): Player[] {
-    return this.activePlayerKeys.map(key => this.players[key]);
-  }
-
-  /**
  * Return the name of the given player
  * @param {string} key key of the player to look up
  */
@@ -78,6 +75,13 @@ export class PlayerStore implements IPlayerStore {
   public get length(): number {
     return this.activePlayerKeys.length;
   }
+
+    /**
+ * Get all active players
+ */
+    public get all(): Player[] {
+      return this.activePlayerKeys.map(key => this.players[key]);
+    }
 
   /**
  * reset gameplay variables for each player and set the current player key to the first in the list
