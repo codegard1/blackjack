@@ -5,12 +5,12 @@ import React from "react";
 import {
   DefaultEffects,
   Icon,
+  MotionAnimations,
   Spinner,
   SpinnerSize,
   Stack,
   StackItem,
   Text,
-  MotionAnimations,
   nullRender,
 } from '@fluentui/react';
 
@@ -18,7 +18,6 @@ import {
 import {
   CardStack, PlayerContainer,
 } from ".";
-import { PlayingCard } from "../classes";
 
 // Context
 import AppContext from "../classes/AppContext";
@@ -36,7 +35,6 @@ export const Table: React.FC = () => {
   // State
   const [isSpinnerVisible, setSpinnerVisible] = React.useState<boolean>(false);
   const [isDialogVisible, setDialogVisible] = React.useState<boolean>(false);
-  const [isDeckCalloutVisible, setDeckCalloutVisible] = React.useState<boolean>(false);
 
   /**
    * Toggle the splash screen
@@ -49,31 +47,6 @@ export const Table: React.FC = () => {
    */
   const toggleOptionsPanel = () => settingStore.setOptionsPanelVisible(!settingStore.isOptionsPanelVisible);
 
-  /**
-   * render PlayerContainers for players listed in PlayerStore.state.activePlayers
-   */
-  const renderPlayerContainers = () => {
-    if (null !== playerStore && playerStore.length > 0) {
-      return playerStore.all.map(pl =>
-        <StackItem align="stretch" grow={2} key={`PlayerStack-${pl.key}`}>
-          <PlayerContainer
-            isDeckCalloutVisible={isDeckCalloutVisible}
-            key={`PlayerContainer-${pl.key}`}
-            minimumBet={gameStore.minimumBet}
-            player={pl}
-            playerKey={pl.key}
-            dealerHasControl={gameStore.dealerHasControl}
-          />
-        </StackItem>
-      );
-    } else {
-      return <StackItem>No players</StackItem>;
-    }
-  }
-
-
-  // slice out the selected players (Chris and Dealer) and return PlayerContainers
-  // const selectedPlayersContainers = renderPlayerContainers();
 
   // Ad-hod styles for the Table
   const tableStyles = {
@@ -99,20 +72,30 @@ export const Table: React.FC = () => {
           style={{ animation: MotionAnimations.scaleDownIn }}
         />}
 
-      {!isDialogVisible &&
-        <Stack verticalAlign="space-around" tokens={{ childrenGap: 10, padding: 10, }}>
-          {!gameStore.gameStatusFlag && <Text block nowrap variant="xLarge">Pot: ${gameStore.pot}</Text>}
-          <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
-            {renderPlayerContainers}
-          </Stack>
+      <Stack verticalAlign="space-around" tokens={{ childrenGap: 10, padding: 10, }}>
+
+        {!gameStore.gameStatusFlag && <Text block nowrap variant="xLarge">Pot: ${gameStore.pot}</Text>}
+
+        <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
+
+          {null === playerStore || playerStore.length === 0
+            ? <StackItem>No players</StackItem>
+            : playerStore.all.map(p =>
+              <StackItem align="stretch" grow={1} key={`PlayerStack-${p.key}`}>
+                <Text block>{p.title}</Text>
+                <PlayerContainer
+                  key={`PlayerContainer-${p.key}`}
+                  playerKey={p.key}
+                  player={p}
+                />
+              </StackItem>
+            )}
         </Stack>
-      }
+      </Stack>
 
       {!isDialogVisible && null !== deck &&
         <Stack verticalAlign="stretch" wrap tokens={{ childrenGap: 10, padding: 10 }} verticalFill>
-          <StackItem>
 
-          </StackItem>
           <StackItem>
             <CardStack
               cards={deck.cards}
