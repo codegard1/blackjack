@@ -143,7 +143,7 @@ export const OptionsPanel: React.FC = () => {
           ariaLabel="The deck is visible. Press to hide it."
           onText="On"
           offText="Off"
-          onChange={(e, checked) => settingStore.setDeckVisible(checked ? checked : true)}
+          onChange={(e, checked) => settingStore.setDeckVisible(checked ? checked : false)}
         />
         <Toggle
           checked={settingStore.isDrawnVisible}
@@ -168,7 +168,7 @@ export const OptionsPanel: React.FC = () => {
           onText="On"
           offText="Off"
           onChange={(e, checked) =>
-            settingStore.setDealerHandVisible(checked ? checked : false)}
+            settingStore.setDealerHandVisible(!!checked)}
         />
         <Toggle
           checked={settingStore.isHandValueVisible}
@@ -176,7 +176,7 @@ export const OptionsPanel: React.FC = () => {
           ariaLabel="The hand value display is visible. Press to hide it."
           onText="On"
           offText="Off"
-          onChange={(e, checked) => settingStore.setHandValueVisible(checked ? checked : false)}
+          onChange={(e, checked) => settingStore.setHandValueVisible(!!checked)}
         />
         <Toggle
           checked={settingStore.isCardDescVisible}
@@ -184,7 +184,7 @@ export const OptionsPanel: React.FC = () => {
           ariaLabel="The card titles are visible. Press to hide them."
           onText="On"
           offText="Off"
-          onChange={(e, checked) => settingStore.setCardTitleVisible(checked ? checked : false)}
+          onChange={(e, checked) => settingStore.setCardTitleVisible(!!checked)}
         />
         <Toggle
           checked={settingStore.isActivityLogVisible}
