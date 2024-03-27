@@ -6,6 +6,7 @@ export * from './PlayerHand';
 export * from './PlayerHandValue';
 export * from './PlayerStats';
 export * from './PlayingCardKey';
+export * from './SettingState';
 export * from './StoreName';
 export * from './Suit';
 export * from './SuitCollection';
