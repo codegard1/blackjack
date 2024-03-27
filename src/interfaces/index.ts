@@ -1,4 +1,3 @@
-export * from './IActivityLogProps';
 export * from './IAgentProps';
 export * from './IAppContextProps';
 export * from './ICardContainerProps';
@@ -19,5 +18,7 @@ export * from './IPlayingCardDeck';
 export * from './IPlayingCardDeckState';
 export * from './IPlayingCardSort';
 export * from './IPlayingCardSuit';
+export * from './ISettingReducerAction';
 export * from './ISettingStoreProps';
 export * from './IStatusDisplayProps';
+
