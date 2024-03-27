@@ -18,7 +18,6 @@
     "@types/react-dom": "^17.0.2",
     "@types/throttle-debounce": "^5.0.0",
     "@types/webpack-env": "1.15.2",
-    "keymirror": "^0.1.1",
     "lodash": "^4.17.21",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
