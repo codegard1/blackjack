@@ -1,18 +1,19 @@
 // React
-import React, { Props } from 'react';
+import React from 'react';
 
 // Fluent UI
 import {
-  Stack,
   Icon,
+  Stack,
   Text,
   nullRender
 } from "@fluentui/react";
 
 /* custom stuff */
 import { CardContainer } from '.';
-import { ICardStackProps } from '../interfaces';
 import AppContext from '../classes/AppContext';
+import { SettingContext, SettingDispatchContext } from '../ctx';
+import { ICardStackProps } from '../interfaces';
 
 /**
  * A visual component that displays PlayingCards
@@ -22,10 +23,11 @@ import AppContext from '../classes/AppContext';
 export const CardStack: React.FC<ICardStackProps> = (props) => {
 
   // Context props
+  const settings = React.useContext(SettingContext);
   const {
-    settingStore,
     deck,
   } = React.useContext(AppContext);
+
 
   // State
   const [isDeckVisible, setVisible] = React.useState<boolean>(!props.hidden);
@@ -37,8 +39,8 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
     <CardContainer
       {...card}
       isSelectable={props.isSelectable}
-      isBackFacing={index === 0 && !settingStore.isDealerHandVisible && props.player?.isNPC}
-      isDescVisible={settingStore.isCardDescVisible}
+      isBackFacing={index === 0 && !settings.isDealerHandVisible && props.player?.isNPC}
+      isDescVisible={settings.isCardDescVisible}
     />
   );
 
@@ -52,7 +54,7 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
   /* Hand Value (if it's a player deck) */
   let handValueString;
   if (props.player?.handValue.highest) {
-    if (!props.player.isNPC || (props.player.isNPC && settingStore.isDealerHandVisible)) {
+    if (!props.player.isNPC || (props.player.isNPC && settings.isDealerHandVisible)) {
       handValueString = `Hand Value: ${props.player.handValue.aceAsOne} `;
       if (props.player.handValue.aceAsOne !== props.player.handValue.aceAsEleven) {
         handValueString += " / " + props.player.handValue.aceAsEleven;
@@ -79,7 +81,7 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
         </Text>
       )}
       {!props.player?.isNPC &&
-        settingStore.isHandValueVisible && (
+        settings.isHandValueVisible && (
           <Text variant="large">{handValueString}</Text>
         )}
       <Stack horizontal horizontalAlign="start" tokens={tokens.cardStack} wrap>

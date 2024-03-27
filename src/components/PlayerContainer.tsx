@@ -13,14 +13,12 @@ import "./PlayerContainer.css";
 
 // Context
 import AppContext from "../classes/AppContext";
-import { Player } from "../classes";
 
 // Component
 export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
   // Context
   const {
-    settingStore,
     playerStore,
     gameStore,
   } = React.useContext(AppContext);

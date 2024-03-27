@@ -21,31 +21,30 @@ import {
 
 // Context
 import AppContext from "../classes/AppContext";
+import { SettingContext, SettingDispatchContext } from '../ctx';
+
 
 export const Table: React.FC = () => {
 
   // Context
+  const settings = React.useContext(SettingContext);
+  const toggleSetting = React.useContext(SettingDispatchContext);
   const {
     playerStore,
-    settingStore,
     deck,
     gameStore,
   } = React.useContext(AppContext);
 
   // State
-  const [isSpinnerVisible, setSpinnerVisible] = React.useState<boolean>(false);
-  const [isDialogVisible, setDialogVisible] = React.useState<boolean>(false);
-
-  /**
-   * Toggle the splash screen
-   */
-  const toggleHideDialog = () => settingStore.setSplashScreenVisible(!settingStore.isSplashScreenVisible);
+  const [isSpinnerVisible, setSpinnerVisible] = React.useState<boolean>(true);
 
   /**
    * Toggle the Options Panel visibility
    * @returns void
    */
-  const toggleOptionsPanel = () => settingStore.setOptionsPanelVisible(!settingStore.isOptionsPanelVisible);
+  const toggleOptionsPanel = () => {
+    toggleSetting({ key: 'isOptionsPanelVisible', value: !settings.isOptionsPanelVisible });
+  }
 
 
   // Ad-hod styles for the Table
@@ -93,14 +92,14 @@ export const Table: React.FC = () => {
         </Stack>
       </Stack>
 
-      {!isDialogVisible && null !== deck &&
+      {!settings.isSplashScreenVisible && null !== deck &&
         <Stack verticalAlign="stretch" wrap tokens={{ childrenGap: 10, padding: 10 }} verticalFill>
 
           <StackItem>
             <CardStack
               cards={deck.cards}
               title="Deck"
-              hidden={!settingStore.isDeckVisible}
+              hidden={!settings.isDeckVisible}
               isSelectable={false}
             />
           </StackItem>
@@ -108,7 +107,7 @@ export const Table: React.FC = () => {
             <CardStack
               cards={deck.drawn}
               title="Drawn Cards"
-              hidden={!settingStore.isDrawnVisible}
+              hidden={!settings.isDrawnVisible}
               isSelectable={false}
             />
           </StackItem>
@@ -116,7 +115,7 @@ export const Table: React.FC = () => {
             <CardStack
               cards={deck.selected}
               title="Selected Cards"
-              hidden={!settingStore.isSelectedVisible}
+              hidden={!settings.isSelectedVisible}
               isSelectable={false}
             />
           </StackItem>

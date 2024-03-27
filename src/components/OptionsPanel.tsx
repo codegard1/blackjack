@@ -20,16 +20,22 @@ import {
 
 // Context
 import AppContext from "../classes/AppContext";
+import { SettingContext, SettingDispatchContext } from "../ctx";
 
 export const OptionsPanel: React.FC = () => {
+
+  const settings = React.useContext(SettingContext);
+  const toggleSetting = React.useContext(SettingDispatchContext);
+
   const {
     deck,
     gameStore,
-    settingStore,
     clearStores,
   } = React.useContext(AppContext);
 
-  const closeOptionsPanel = () => settingStore.setOptionsPanelVisible(false);
+  const closeOptionsPanel = () => {
+    toggleSetting({ key: "isOptionsPanelVisible", value: false });
+  }
 
   /**
    * Reset the game from the Options Panel
@@ -46,12 +52,17 @@ export const OptionsPanel: React.FC = () => {
     closeOptionsPanel();
   }
 
+  const shuffle = () => {
+    console.log('deck:', typeof deck, JSON.stringify(deck), deck);
+    // deck?.shuffle
+  }
+
   const tooltipCalloutProps = { gapSpace: 0, };
 
   return (
     <Panel
       id="OptionsPanel"
-      isOpen={settingStore.isOptionsPanelVisible}
+      isOpen={settings.isOptionsPanelVisible}
       onDismiss={closeOptionsPanel}
       type={PanelType.smallFixedFar}
       headerText="Options"
@@ -108,7 +119,7 @@ export const OptionsPanel: React.FC = () => {
             iconProps={{ iconName: "Sync" }}
             disabled={false}
             checked={false}
-            onClick={deck?.shuffle}
+            onClick={shuffle}
             ariaLabel="Shuffle Deck"
             aria-describedby="tooltip-ShuffleDeck"
           >
@@ -138,61 +149,74 @@ export const OptionsPanel: React.FC = () => {
         <Separator />
 
         <Toggle
-          checked={settingStore.isDeckVisible}
+          checked={settings.isDeckVisible}
           label="Show Deck"
           ariaLabel="The deck is visible. Press to hide it."
           onText="On"
           offText="Off"
-          onChange={(e, checked) => settingStore.setDeckVisible(checked ? checked : false)}
+          onChange={(e, checked) => {
+            toggleSetting({ key: "isDeckVisible", value: !!checked });
+          }}
         />
         <Toggle
-          checked={settingStore.isDrawnVisible}
+          checked={settings.isDrawnVisible}
           label="Show Drawn"
           ariaLabel="The Drawn cards are visible. Press to hide it."
           onText="On"
           offText="Off"
-          onChange={(e, checked) => settingStore.setDrawnVisible(checked ? checked : false)}
+          onChange={(e, checked) => {
+            toggleSetting({ key: "isDrawnVisible", value: !!checked });
+          }}
         />
         <Toggle
-          checked={settingStore.isSelectedVisible}
+          checked={settings.isSelectedVisible}
           label="Show Selected"
           ariaLabel="The Selected cards are visible. Press to hide it."
           onText="On"
           offText="Off"
-          onChange={(e, checked) => settingStore.setSelectedVisible(checked ? checked : false)}
+          onChange={(e, checked) => {
+            toggleSetting({ key: "isSelectedVisible", value: !!checked });
+          }}
         />
         <Toggle
-          checked={settingStore.isDealerHandVisible}
+          checked={settings.isDealerHandVisible}
           label="Show Dealer Hand"
           ariaLabel="The dealer's hand is visible. Press to hide it."
           onText="On"
           offText="Off"
-          onChange={(e, checked) =>
-            settingStore.setDealerHandVisible(!!checked)}
+          onChange={(e, checked) => {
+            toggleSetting({ key: "isDealerHandVisible", value: !!checked });
+          }}
         />
         <Toggle
-          checked={settingStore.isHandValueVisible}
+          checked={settings.isHandValueVisible}
           label="Show Hand Value"
           ariaLabel="The hand value display is visible. Press to hide it."
           onText="On"
           offText="Off"
-          onChange={(e, checked) => settingStore.setHandValueVisible(!!checked)}
+          onChange={(e, checked) => {
+            toggleSetting({ key: 'isHandValueVisible', value: !!checked });
+          }}
         />
         <Toggle
-          checked={settingStore.isCardDescVisible}
+          checked={settings.isCardTitleVisible}
           label="Show Card Titles"
           ariaLabel="The card titles are visible. Press to hide them."
           onText="On"
           offText="Off"
-          onChange={(e, checked) => settingStore.setCardTitleVisible(!!checked)}
+          onChange={(e, checked) => {
+            toggleSetting({ key: "isCardTitleVisible", value: !!checked });
+          }}
         />
         <Toggle
-          checked={settingStore.isActivityLogVisible}
+          checked={settings.isActivityLogVisible}
           label="Show Activity Log"
           ariaLabel="The Activity Log visible. Press to hide it."
           onText="On"
           offText="Off"
-          onChange={(e, checked) => settingStore.setActivityLogVisible(checked ? checked : false)}
+          onChange={(e, checked) => {
+            toggleSetting({ key: "isActivityLogVisible", value: !!checked });
+          }}
         />
 
 

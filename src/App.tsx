@@ -6,8 +6,8 @@ import {
   Layer,
   MessageBarType,
   Stack,
-  initializeIcons,
   Text,
+  initializeIcons
 } from '@fluentui/react';
 
 // Local Resources
@@ -15,10 +15,11 @@ import './App.css';
 import { PlayerStore, PlayingCardDeck } from './classes';
 import AppContext from './classes/AppContext';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
-import { defaultPlayers, defaultplayersArr } from './definitions';
-import { GameStatus } from './enums/GameStatus';
-import { IAppContextProps, IGameStoreProps, ISettingStoreProps, ISettingStoreState } from './interfaces';
-import { MessageBarDefinition, PlayerKey, PlayerStats, StoreName } from './types';
+import { SettingContext, SettingDispatchContext, settingDefaults, settingReducer } from './ctx';
+import { defaultplayersArr } from './definitions';
+import { GameStatus, StoreName } from './enums';
+import { IAppContextProps, IGameStoreProps } from './interfaces';
+import { MessageBarDefinition, PlayerKey, PlayerStats, SettingsState } from './types';
 
 // Necessary in order for Fluent Icons to render on the page
 initializeIcons();
@@ -26,25 +27,17 @@ initializeIcons();
 // Main Component
 const App = () => {
 
-  const [playerStore, setPlayerStore] = React.useState<PlayerStore>(new PlayerStore());
-  const [deck] = React.useState<PlayingCardDeck>(new PlayingCardDeck());
+  // NEW State using Reducers
+  const [settings, toggleSetting] = React.useReducer(settingReducer, settingDefaults);
+
+
+  //----------------------------------------------------------------//
 
   // State
-  // TODO: determine if State and "Actions" should all be defined here in App
+  const [playerStore] = React.useState<PlayerStore>(new PlayerStore());
+  const [deck] = React.useState<PlayingCardDeck>(new PlayingCardDeck());
   const [gameStatus, setGameStatus] = React.useState<GameStatus>(0);
   const [gameStatusFlag, setGameStatusFlag] = React.useState<boolean>(false);
-  const [isActivityLogVisible, setActivityLogVisible] = React.useState<boolean>(false);
-  const [isCardDescVisible, setCardDescVisible] = React.useState<boolean>(false);
-  const [isCardTitleVisible, setCardTitleVisible] = React.useState<boolean>(false);
-  const [isDealerHandVisible, setDealerHandVisible] = React.useState<boolean>(false);
-  const [isDeckVisible, setDeckVisible] = React.useState<boolean>(true);
-  const [isDrawnVisible, setDrawnVisible] = React.useState<boolean>(false);
-  const [isHandValueVisible, setHandValueVisible] = React.useState<boolean>(false);
-  const [isOptionsPanelVisible, setOptionsPanelVisible] = React.useState<boolean>(false);
-  const [isSelectedVisible, setSelectedVisible] = React.useState<boolean>(false);
-  const [isSplashScreenVisible, setSplashScreenVisible] = React.useState<boolean>(true);
-  const [isMessageBarVisible, setMessageBarVisible] = React.useState<boolean>(false);
-
   const [isSpinnerVisible, setSpinnerVisible] = React.useState<boolean>(true);
   const [loser, setLoser] = React.useState<PlayerKey>();
   const [winner, setWinner] = React.useState<PlayerKey>();
@@ -65,37 +58,26 @@ const App = () => {
    * Get values from localStorage
    */
   const initializeStores = () => {
-    const _playerStore = localStorage.getItem(StoreName.playerStore);
-    const _deckStore = localStorage.getItem(StoreName.deckStore);
-    const _settingStore = localStorage.getItem(StoreName.settingStore);
+    const _playerStore = localStorage.getItem(StoreName.PLAYERSTORE);
+    const _deckStore = localStorage.getItem(StoreName.DECKSTORE);
+    const _settingStore = localStorage.getItem(StoreName.SETTINGSTORE);
 
-    // if (null !== _playerStore) console.log('found existing playerStore data in localStorage');
-    // if (null !== _deckStore) console.log('found existing deckStore data in localStorage');
     if (null !== _settingStore) {
-      const _ss: ISettingStoreState = JSON.parse(_settingStore);
-      // setOptionsPanelVisible(_ss.isOptionsPanelVisible);
-      // setSplashScreenVisible(_ss.isSplashScreenVisible);
-      setActivityLogVisible(_ss.isActivityLogVisible);
-      setCardDescVisible(_ss.isCardDescVisible);
-      setCardTitleVisible(_ss.isCardTitleVisible);
-      setDealerHandVisible(_ss.isDealerHandVisible);
-      setDeckVisible(_ss.isDeckVisible);
-      setDrawnVisible(_ss.isDrawnVisible);
-      setHandValueVisible(_ss.isHandValueVisible);
-      setMessageBarVisible(_ss.isMessageBarVisible);
-      setSelectedVisible(_ss.isSelectedVisible);
+      const _ss: SettingsState = JSON.parse(_settingStore);
+      for (let key in _ss) {
+        if (key !== 'isSplashScreenVisible') toggleSetting({ key, value: _ss[key] });
+      }
     }
-
   }
 
   /**
    * delete all entries from stores
   */
   const clearStores = () => {
-    localStorage.removeItem(StoreName.deckStore);
-    localStorage.removeItem(StoreName.playerStore);
-    localStorage.removeItem(StoreName.settingStore);
-    localStorage.removeItem(StoreName.statStore);
+    localStorage.removeItem(StoreName.DECKSTORE);
+    localStorage.removeItem(StoreName.PLAYERSTORE);
+    localStorage.removeItem(StoreName.SETTINGSTORE);
+    localStorage.removeItem(StoreName.STATSTORE);
   };
 
   const evaluateGame = (statusCode: number) => { _evaluateGame(statusCode) };
@@ -180,10 +162,10 @@ const App = () => {
 
   const showMessageBar = (d: MessageBarDefinition) => {
     setMessageBarDefinition(d);
-    setMessageBarVisible(true);
+    toggleSetting({ key: 'isMessageBarVisible', value: true });
   };
 
-  const hideMessageBar = () => setMessageBarVisible(false);
+  const hideMessageBar = () => toggleSetting({ key: 'isMessageBarVisible', value: false });
 
   const resetGame = () => {
     deck.reset();
@@ -275,23 +257,6 @@ const App = () => {
   }
 
 
-  /**
-   * All state variables related to App settings
-   */
-  const settingStore: ISettingStoreProps = {
-    isActivityLogVisible, setActivityLogVisible,
-    isCardDescVisible, setCardDescVisible,
-    isCardTitleVisible, setCardTitleVisible,
-    isDealerHandVisible, setDealerHandVisible,
-    isDeckVisible, setDeckVisible,
-    isDrawnVisible, setDrawnVisible,
-    isHandValueVisible, setHandValueVisible,
-    isMessageBarVisible, setMessageBarVisible,
-    isOptionsPanelVisible, setOptionsPanelVisible,
-    isSelectedVisible, setSelectedVisible,
-    isSplashScreenVisible, setSplashScreenVisible,
-  };
-
   // All variables and functions related to Game state
   const gameStore: IGameStoreProps = {
     bet,
@@ -325,7 +290,6 @@ const App = () => {
     initializeStores,
     clearStores,
     playerStore,
-    settingStore,
     gameStore,
     deck,
   };
@@ -336,42 +300,45 @@ const App = () => {
   }, [])
 
   React.useEffect(() => {
-    if (null !== deck) {
-      console.log('Deck effect');
+    // if (null !== deck) {
+    //   console.log('Deck effect');
 
-      localStorage.setItem(StoreName.deckStore, JSON.stringify(deck));
-    }
+    //   localStorage.setItem(StoreName.DECKSTORE, JSON.stringify(deck));
+    // }
   }, [deck]);
 
   React.useEffect(() => {
-    if (null !== playerStore) {
-      console.log('Players effect', playerStore.state);
-      localStorage.setItem(StoreName.playerStore, JSON.stringify(playerStore.state));
-    }
+    // if (null !== playerStore) {
+    //   console.log('Players effect', playerStore.state);
+    //   localStorage.setItem(StoreName.PLAYERSTORE, JSON.stringify(playerStore.state));
+    // }
   }, [playerStore.state]);
 
   React.useEffect(() => {
-    if (null !== settingStore) {
-      // console.log('settingStore effect', JSON.stringify(settingStore));
-      localStorage.setItem(StoreName.settingStore, JSON.stringify(settingStore));
+    if (!!settings) {
+      localStorage.setItem(StoreName.SETTINGSTORE, JSON.stringify(settings));
     }
-  }, [settingStore]);
+  }, [settings]);
 
 
 
   return (
     <AppContext.Provider value={contextDefaults}>
-      <Layer>
-        <SplashScreen />
-        <OptionsPanel />
-      </Layer>
-      <Stack tokens={{ childrenGap: 15 }} horizontalAlign='space-between' verticalAlign='space-evenly'>
-        <Table />
-        <ActivityLog hidden={!settingStore.isActivityLogVisible} />
-        <div style={{ backgroundColor: '#eee' }}>
-          <Text>{JSON.stringify(playerStore.state)}</Text>
-        </div>
-      </Stack>
+      <SettingContext.Provider value={settings}>
+        <SettingDispatchContext.Provider value={toggleSetting}>
+          <Layer>
+            <SplashScreen />
+            <OptionsPanel />
+          </Layer>
+          <Stack tokens={{ childrenGap: 15 }} horizontalAlign='space-between' verticalAlign='space-evenly'>
+            <Table />
+            <ActivityLog />
+            <div style={{ backgroundColor: '#eee' }}>
+              <Text>{JSON.stringify(playerStore.state)}</Text>
+            </div>
+          </Stack>
+        </SettingDispatchContext.Provider>
+      </SettingContext.Provider>
     </AppContext.Provider>
   );
 }

@@ -26,7 +26,6 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
       this.playerHands = options.playerHands;
     } else {
       this.reset();
-      this.shuffle();
     }
   }
 
@@ -57,13 +56,15 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
    * Shuffle the cards using the Fisher-Yates method
    */
   public shuffle(): void {
-    this.fisherYates(this.cards);
+    this.cards = this.fisherYates(this.cards);
   }
 
   public reset(): void {
     this.cards = _cardKeys().map((ck) => new PlayingCard(ck)).slice();
+    this.shuffle();
     this.drawn = [];
     this.selected = [];
+    this.playerHands = {};
   }
 
   public deal(numberOfCards: number, arrayOfHands: any[]): any[] {
@@ -82,9 +83,10 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
    * array shuffling algorithm: http://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
    * @param cards 
    */
-  private fisherYates(cards: PlayingCard[]): void {
-    if (this.length === 0) return;
-    let i = this.length;
+  public fisherYates(cards: PlayingCard[]): PlayingCard[] {
+    let _cards = cards.slice();
+    if (_cards.length === 0) return [];
+    let i = _cards.length;
     while (--i) {
       const j = Math.floor(this.random() * (i + 1));
       const tempi = cards[i];
@@ -92,6 +94,7 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
       cards[i] = tempj;
       cards[j] = tempi;
     }
+    return _cards;
   }
 
   public putOnBottomOfDeck(cards: PlayingCard[]) {

@@ -5,22 +5,18 @@ import React from "react";
 import {
   ActivityItem,
   DefaultEffects,
-  getTheme,
   Icon,
-  mergeStyleSets,
   ScrollablePane,
   Sticky,
   StickyPositionType,
   Text,
+  getTheme,
+  mergeStyleSets,
   nullRender
 } from '@fluentui/react';
 import { MotionAnimations } from '@fluentui/theme';
 
-import { IActivityLogProps } from "../interfaces/IActivityLogProps";
-import AppContext from "../classes/AppContext";
-
-// Flux Store
-// import ActivityLogStore from '../../_old/src/components/blackjack/stores/ActivityLogStore';
+import { SettingContext } from '../ctx';
 
 // Get Fluent UI theme
 const theme = getTheme();
@@ -78,12 +74,10 @@ const classNames = mergeStyleSets({
   },
 });
 
-export const ActivityLog: React.FC<IActivityLogProps> = (props) => {
+export const ActivityLog: React.FC = () => {
 
   // Context
-  const {
-    settingStore
-  } = React.useContext(AppContext);
+  const settings = React.useContext(SettingContext);
 
   // State
   const [activityItems, setActivityItems] = React.useState<any>([]);
@@ -140,7 +134,7 @@ export const ActivityLog: React.FC<IActivityLogProps> = (props) => {
     return outputMemo;
   }
 
-  return props.hidden ? nullRender() : (
+  return !settings.isActivityLogVisible ? nullRender() : (
     <div id="ActivityLogRoot" className={classNames.divRoot}>
       <Text block nowrap variant="xLarge">Activity Log</Text>
       <div className={classNames.wrapper}>

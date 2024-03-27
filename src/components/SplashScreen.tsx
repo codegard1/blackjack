@@ -9,25 +9,27 @@ import {
   Dropdown,
   IDropdownOption,
   PrimaryButton,
+  ResponsiveMode
 } from '@fluentui/react';
 
 import AppContext from "../classes/AppContext";
 
 import { Player } from "../classes";
+import { SettingContext, SettingDispatchContext } from '../ctx';
 import {
-  defaultplayersArr,
   defaultPlayersDropdownOptions,
   defaultSelectedPlayerKeys
 } from "../definitions";
 import { PlayerKey } from "../types";
 
+
 export const SplashScreen: React.FC = () => {
 
   // Context
+  const settings = React.useContext(SettingContext);
+  const toggleSetting = React.useContext(SettingDispatchContext);
   const {
     gameStore,
-    settingStore,
-    playerStore,
   } = React.useContext(AppContext);
 
   // State
@@ -46,9 +48,12 @@ export const SplashScreen: React.FC = () => {
     }
   }
 
-  const onDismissDialog = () => settingStore.setSplashScreenVisible(false);
+  function onDismissDialog() {
+    console.log('onDismissDialog');
+    toggleSetting({ key: 'isSplashScreenVisible', value: false })
+  }
 
-  const onClickStartButton = () => {
+  function onClickStartButton() {
     // initiate a new game     
     gameStore.newGame(selectedPlayers);
 
@@ -58,18 +63,25 @@ export const SplashScreen: React.FC = () => {
 
   return (
     <Dialog
-      hidden={!settingStore.isSplashScreenVisible}
+      hidden={!settings.isSplashScreenVisible}
       dialogContentProps={{
         type: DialogType.normal,
         title: 'Blackjack',
         subText: 'This is the splash screen',
+        onDismiss: onDismissDialog,
+        showCloseButton: true,
+        // responsiveMode: ResponsiveMode.small,
+        closeButtonAriaLabel: 'Close dialog',
       }}
       modalProps={{
         isBlocking: true,
         styles: { main: { maxWidth: 450, top: 125 } },
         isDarkOverlay: true,
         topOffsetFixed: true,
+        onDismiss: () => onDismissDialog,
+        onDismissed: () => onDismissDialog,
       }}
+      responsiveMode={ResponsiveMode.medium}
       onDismiss={onDismissDialog}
     >
       <Dropdown
