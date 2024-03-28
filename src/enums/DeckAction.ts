@@ -4,4 +4,5 @@
 export enum DeckAction {
   SELECT = 'SELECT',
   DRAW = 'DRAW',
+  PUT = 'PUT',
 }

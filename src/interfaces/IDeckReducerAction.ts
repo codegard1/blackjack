@@ -1,5 +1,5 @@
 import { DeckAction } from "../enums";
-import { PlayingCardKey } from "../types";
+import { PlayerKey, PlayingCardKey } from "../types";
 
 /**
  * Dispatcher that changes state values
@@ -7,5 +7,5 @@ import { PlayingCardKey } from "../types";
 export interface IDeckReducerAction {
   type: string | DeckAction;
   cardKey: PlayingCardKey;
-
+  playerKey?: PlayerKey;
 }

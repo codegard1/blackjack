@@ -15,11 +15,11 @@ import './App.css';
 import { PlayerStore, PlayingCardDeck } from './classes';
 import AppContext from './classes/AppContext';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
-import { SettingContext, SettingDispatchContext, settingDefaults, settingReducer } from './ctx';
+import { SettingContext, SettingDispatchContext, settingDefaults, settingReducer, DeckContext, DeckDispatchContext, deckDefaults, deckReducer } from './ctx';
 import { defaultplayersArr } from './definitions';
 import { GameStatus, StoreName } from './enums';
 import { IAppContextProps, IGameStoreProps } from './interfaces';
-import { MessageBarDefinition, PlayerKey, PlayerStats, SettingsState } from './types';
+import { DeckState, MessageBarDefinition, PlayerKey, PlayerStats, SettingsState } from './types';
 
 // Necessary in order for Fluent Icons to render on the page
 initializeIcons();
@@ -29,6 +29,7 @@ const App = () => {
 
   // NEW State using Reducers
   const [settings, toggleSetting] = React.useReducer(settingReducer, settingDefaults);
+  const [deck1, deckDispatch] = React.useReducer(deckReducer, deckDefaults);
 
 
   //----------------------------------------------------------------//
@@ -60,8 +61,14 @@ const App = () => {
   const initializeStores = () => {
     const _playerStore = localStorage.getItem(StoreName.PLAYERSTORE);
     const _deckStore = localStorage.getItem(StoreName.DECKSTORE);
+    if (null !== _deckStore) {
+      const _ds: DeckState = JSON.parse(_deckStore);
+      for (let key in _ds) {
+        // if (key !== 'isSplashScreenVisible') toggleSetting({ key, value: _ss[key] });
+      }
+    }
+    
     const _settingStore = localStorage.getItem(StoreName.SETTINGSTORE);
-
     if (null !== _settingStore) {
       const _ss: SettingsState = JSON.parse(_settingStore);
       for (let key in _ss) {
