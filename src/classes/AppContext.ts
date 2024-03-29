@@ -14,7 +14,6 @@ const AppContext = React.createContext<IAppContextProps>({
   initializeStores: () => { },
   clearStores: () => { },
   playerStore: null,
-  deck: null,
   gameStore: {
     bet: (key: PlayerKey) => console.log('bet'),
     deal: (key: PlayerKey) => console.log('deal'),

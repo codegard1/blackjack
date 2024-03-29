@@ -36,7 +36,6 @@ const App = () => {
 
   // State
   const [playerStore] = React.useState<PlayerStore>(new PlayerStore());
-  const [deck] = React.useState<PlayingCardDeck>(new PlayingCardDeck());
   const [gameStatus, setGameStatus] = React.useState<GameStatus>(0);
   const [gameStatusFlag, setGameStatusFlag] = React.useState<boolean>(false);
   const [isSpinnerVisible, setSpinnerVisible] = React.useState<boolean>(true);
@@ -145,31 +144,27 @@ const App = () => {
   /**
    *  GAME ACTIONS
    */
-  const deal = (key: PlayerKey) => {
-    deckDispatch({ type: DeckAction.DrawOne, playerKey: key });
-    deck.deal(2, []);
+  const deal = (playerKey: PlayerKey) => {
+    deckDispatch({ type: DeckAction.Draw, playerKey, numberOfCards: 2 });
     setGameStatus(1);
   }
 
-  const hit = (playerKey: string) => { }
+  const hit = (playerKey: string) => {
+    deckDispatch({ type: DeckAction.Draw, playerKey, numberOfCards: 1 });
+  }
 
   const stay = (playerKey: string) => { };
 
   const bet = (playerKey: string, amount: number) => { };
 
   const newGame = (selectedPlayers: PlayerKey[]) => {
-    deckDispatch({ type: DeckAction.Shuffle });
-    deck.reset();
+    deckDispatch({ type: DeckAction.Reset });
     selectedPlayers.forEach((pk, ix) => {
       const _p = defaultplayersArr.find(v => v.key === pk);
       if (_p) console.log(JSON.stringify(_p));
       if (_p) playerStore!.newPlayer(pk, _p?.title, _p?.isNPC, ix, _p?.bank, _p?.disabled)
     });
-    playerStore.all.forEach((p) => {
-      deckDispatch({ type: DeckAction.DrawOne, playerKey: p.key });
-      deckDispatch({ type: DeckAction.DrawOne, playerKey: p.key });
-      p.cards.push(...deck.draw(2));
-    });
+    playerStore.all.forEach((p) => deal(p.key));
     newRound();
   };
 
@@ -182,7 +177,6 @@ const App = () => {
 
   const resetGame = () => {
     deckDispatch({ type: DeckAction.Reset });
-    deck.reset();
     setDealerHasControl(false);
     setGameStatus(0);
     setPot(0);
@@ -305,7 +299,6 @@ const App = () => {
     clearStores,
     playerStore,
     gameStore,
-    deck,
   };
 
   React.useEffect(() => {
@@ -314,12 +307,12 @@ const App = () => {
   }, [])
 
   React.useEffect(() => {
-    // if (null !== deck) {
-    //   console.log('Deck effect');
+    if (null !== deck1) {
+      //   console.log('Deck effect');
 
-    //   localStorage.setItem(StoreName.DECKSTORE, JSON.stringify(deck));
-    // }
-  }, [deck]);
+      localStorage.setItem(StoreName.DECKSTORE, JSON.stringify(deck1));
+    }
+  }, [deck1]);
 
   React.useEffect(() => {
     // if (null !== playerStore) {
