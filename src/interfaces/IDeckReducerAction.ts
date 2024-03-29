@@ -6,6 +6,8 @@ import { PlayerKey, PlayingCardKey } from "../types";
  */
 export interface IDeckReducerAction {
   type: string | DeckAction;
-  cardKey: PlayingCardKey;
+  cardKey?: PlayingCardKey;
   playerKey?: PlayerKey;
+  numberOfCards?: number;
+  
 }

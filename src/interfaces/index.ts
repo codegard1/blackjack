@@ -7,6 +7,7 @@ export * from './IControlPanelState';
 export * from './IControlPanelStore';
 export * from './IDeckCalloutProps';
 export * from './IDeckReducerAction';
+export * from './IGameReducerAction';
 export * from './IGameStoreProps';
 export * from './IPlayer';
 export * from './IPlayerContainerProps';
