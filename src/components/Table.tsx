@@ -22,6 +22,8 @@ import {
 // Context
 import AppContext from "../classes/AppContext";
 import { SettingContext, SettingDispatchContext } from '../ctx';
+import { DeckContext, DeckDispatchContext } from "../ctx";
+import { PlayingCard, PlayingCardDeck } from "../classes";
 
 
 export const Table: React.FC = () => {
@@ -29,6 +31,8 @@ export const Table: React.FC = () => {
   // Context
   const settings = React.useContext(SettingContext);
   const toggleSetting = React.useContext(SettingDispatchContext);
+  const deck1 = React.useContext(DeckContext);
+  const deckDispatch = React.useContext(DeckDispatchContext);
   const {
     playerStore,
     deck,
@@ -97,7 +101,7 @@ export const Table: React.FC = () => {
 
           <StackItem>
             <CardStack
-              cards={deck.cards}
+              cards={deck1.cardKeys.map((ck) => new PlayingCard(ck))}
               title="Deck"
               hidden={!settings.isDeckVisible}
               isSelectable={false}
@@ -105,7 +109,7 @@ export const Table: React.FC = () => {
           </StackItem>
           <StackItem>
             <CardStack
-              cards={deck.drawn}
+              cards={deck1.drawnKeys.map((ck) => new PlayingCard(ck))}
               title="Drawn Cards"
               hidden={!settings.isDrawnVisible}
               isSelectable={false}
@@ -113,7 +117,7 @@ export const Table: React.FC = () => {
           </StackItem>
           <StackItem>
             <CardStack
-              cards={deck.selected}
+              cards={deck1.selectedKeys.map((ck) => new PlayingCard(ck))}
               title="Selected Cards"
               hidden={!settings.isSelectedVisible}
               isSelectable={false}
