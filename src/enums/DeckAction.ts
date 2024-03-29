@@ -3,27 +3,27 @@
  */
 export enum DeckAction {
   // TODO
-  clearSelected = 'clearSelected',
+  ClearSelected = 'ClearSelected',
   // TODO
-  drawFromBottomOfDeck = 'drawFromBottomOfDeck',
-  DRAWONE = 'DRAWONE',
+  DrawFromBottomOfDeck = 'DrawFromBottomOfDeck',
+  DrawOne = 'DrawOne',
   // TODO
-  drawRandom = 'drawRandom',
+  DrawRandom = 'DrawRandom',
   // TODO
-  putOnBottomOfDeck = 'putOnBottomOfDeck',
-  PUTONE = 'PUTONE',
+  PutOnBottomOfDeck = 'PutOnBottomOfDeck',
+  PutOne = 'PutOne',
   // TODO
-  putOnTopOfDeck = 'putOnTopOfDeck',
+  PutOnTopOfDeck = 'PutOnTopOfDeck',
   // TODO
-  RESET = 'RESET',
-  SELECT = 'SELECT',
+  Reset = 'Reset',
+  Select = 'Select',
   // TODO
-  SHUFFLE = 'SHUFFLE',
+  Shuffle = 'Shuffle',
   // TODO
-  UNSELECT = 'UNSELECT',
+  Unselect = 'Unselect',
   // TODO
-  HIT = 'HIT',
+  Hit = 'Hit',
   // TO DO
-  newPlayerHand = 'newPlayerHand',
+  NewPlayerHand = 'NewPlayerHand',
 }
 

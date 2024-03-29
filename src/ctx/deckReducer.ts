@@ -17,7 +17,7 @@ export function deckReducer(deck: DeckState, action: IDeckReducerAction) {
   switch (type) {
 
     // Draw a single card from the top of the deck
-    case DeckAction.DRAWONE: {
+    case DeckAction.DrawOne: {
       if (deck.cardKeys.length > 0) {
         const _shifted = deck.cardKeys.shift();
         deck.drawnKeys.push(_shifted as PlayingCardKey);
@@ -29,7 +29,7 @@ export function deckReducer(deck: DeckState, action: IDeckReducerAction) {
     }
 
     // Select a card
-    case DeckAction.SELECT: {
+    case DeckAction.Select: {
       if (undefined === cardKey) return deck;
 
       if (!(cardKey in deck.selectedKeys)) {
@@ -42,7 +42,7 @@ export function deckReducer(deck: DeckState, action: IDeckReducerAction) {
     }
 
     // Put one card on top of the deck
-    case DeckAction.PUTONE: {
+    case DeckAction.PutOne: {
       if (undefined === cardKey) return deck;
 
       if (!(cardKey in deck.cardKeys)) {
@@ -58,13 +58,13 @@ export function deckReducer(deck: DeckState, action: IDeckReducerAction) {
     }
 
     // Shuffle the remaining card in the deck
-    case DeckAction.SHUFFLE: {
+    case DeckAction.Shuffle: {
       deck.cardKeys = fisherYates(deck.cardKeys);
       return deck;
     }
 
     // Populate and shuffle the deck
-    case DeckAction.RESET: {
+    case DeckAction.Reset: {
       deck.drawnKeys = [];
       deck.selectedKeys = [];
       deck.cardKeys = fisherYates(_cardKeys());
