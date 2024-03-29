@@ -146,7 +146,7 @@ const App = () => {
    *  GAME ACTIONS
    */
   const deal = (key: PlayerKey) => {
-    deckDispatch({ type: DeckAction.DRAWONE, playerKey: key });
+    deckDispatch({ type: DeckAction.DrawOne, playerKey: key });
     deck.deal(2, []);
     setGameStatus(1);
   }
@@ -158,7 +158,7 @@ const App = () => {
   const bet = (playerKey: string, amount: number) => { };
 
   const newGame = (selectedPlayers: PlayerKey[]) => {
-    deckDispatch({ type: DeckAction.SHUFFLE });
+    deckDispatch({ type: DeckAction.Shuffle });
     deck.reset();
     selectedPlayers.forEach((pk, ix) => {
       const _p = defaultplayersArr.find(v => v.key === pk);
@@ -166,8 +166,8 @@ const App = () => {
       if (_p) playerStore!.newPlayer(pk, _p?.title, _p?.isNPC, ix, _p?.bank, _p?.disabled)
     });
     playerStore.all.forEach((p) => {
-      deckDispatch({ type: DeckAction.DRAWONE, playerKey: p.key });
-      deckDispatch({ type: DeckAction.DRAWONE, playerKey: p.key });
+      deckDispatch({ type: DeckAction.DrawOne, playerKey: p.key });
+      deckDispatch({ type: DeckAction.DrawOne, playerKey: p.key });
       p.cards.push(...deck.draw(2));
     });
     newRound();
@@ -181,7 +181,7 @@ const App = () => {
   const hideMessageBar = () => toggleSetting({ key: 'isMessageBarVisible', value: false });
 
   const resetGame = () => {
-    deckDispatch({ type: DeckAction.RESET });
+    deckDispatch({ type: DeckAction.Reset });
     deck.reset();
     setDealerHasControl(false);
     setGameStatus(0);
