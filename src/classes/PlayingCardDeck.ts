@@ -1,7 +1,8 @@
 /*  adapted from node-shuffle 
     https://github.com/codegard1/node-shuffle.git */
 
-import { PlayingCard, _cardKeys } from ".";
+import { PlayingCard } from ".";
+import { _cardKeys } from "../functions";
 import { IPlayingCardDeck, IPlayingCardDeckState } from "../interfaces";
 import { PlayerHand, PlayerKey, PlayingCardKey } from "../types";
 

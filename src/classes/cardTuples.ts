@@ -1,5 +1,4 @@
-import { PlayingCardSuit } from ".";
-import { CardTuple, PlayingCardKey, Suit } from "../types";
+import { CardTuple } from "../types";
 
 const _cardTuples: CardTuple[] = [
   { name: "Two", value: 2 },
@@ -18,16 +17,3 @@ const _cardTuples: CardTuple[] = [
 ];
 
 export const cardTuples = (): CardTuple[] => _cardTuples.slice();
-
-/** Unique identifiers for each card in the deck */
-export const _cardKeys = (): string[] => {
-  let _: PlayingCardKey[] = [];
-  PlayingCardSuit.suits().forEach((suit: Suit) =>
-    cardTuples().forEach((t) =>
-      _.push(
-        [suit, t.name, t.value].join('_')
-      )
-    )
-  );
-  return _.slice();
-}
