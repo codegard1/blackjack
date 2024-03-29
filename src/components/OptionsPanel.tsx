@@ -20,15 +20,16 @@ import {
 
 // Context
 import AppContext from "../classes/AppContext";
-import { SettingContext, SettingDispatchContext } from "../ctx";
+import { DeckDispatchContext, SettingContext, SettingDispatchContext } from "../ctx";
+import { DeckAction } from "../enums";
 
 export const OptionsPanel: React.FC = () => {
 
   const settings = React.useContext(SettingContext);
   const toggleSetting = React.useContext(SettingDispatchContext);
+  const deckDispatch = React.useContext(DeckDispatchContext);
 
   const {
-    deck,
     gameStore,
     clearStores,
   } = React.useContext(AppContext);
@@ -42,7 +43,7 @@ export const OptionsPanel: React.FC = () => {
    */
   const resetGame = () => {
     gameStore?.resetGame();
-    deck?.reset();
+    deckDispatch({ type: DeckAction.Reset });
     gameStore?.showMessageBar({ text: 'Game Reset', type: MessageBarType.info, isMultiLine: false });
     closeOptionsPanel();
   }
@@ -53,8 +54,7 @@ export const OptionsPanel: React.FC = () => {
   }
 
   const shuffle = () => {
-    console.log('deck:', typeof deck, JSON.stringify(deck), deck);
-    // deck?.shuffle
+    deckDispatch({ type: DeckAction.Shuffle });
   }
 
   const tooltipCalloutProps = { gapSpace: 0, };

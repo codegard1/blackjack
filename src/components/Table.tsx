@@ -20,10 +20,9 @@ import {
 } from ".";
 
 // Context
+import { PlayingCard } from "../classes";
 import AppContext from "../classes/AppContext";
-import { SettingContext, SettingDispatchContext } from '../ctx';
-import { DeckContext, DeckDispatchContext } from "../ctx";
-import { PlayingCard, PlayingCardDeck } from "../classes";
+import { DeckContext, DeckDispatchContext, SettingContext, SettingDispatchContext } from '../ctx';
 
 
 export const Table: React.FC = () => {
@@ -32,15 +31,10 @@ export const Table: React.FC = () => {
   const settings = React.useContext(SettingContext);
   const toggleSetting = React.useContext(SettingDispatchContext);
   const deck1 = React.useContext(DeckContext);
-  const deckDispatch = React.useContext(DeckDispatchContext);
   const {
     playerStore,
-    deck,
     gameStore,
   } = React.useContext(AppContext);
-
-  // State
-  const [isSpinnerVisible, setSpinnerVisible] = React.useState<boolean>(true);
 
   /**
    * Toggle the Options Panel visibility
@@ -66,7 +60,7 @@ export const Table: React.FC = () => {
         <Icon iconName="Settings" aria-label="Settings" style={{ fontSize: "24px" }} onClick={toggleOptionsPanel} />
       </Stack>
 
-      {!isSpinnerVisible ? nullRender() :
+      {!gameStore.isSpinnerVisible ? nullRender() :
         <Spinner
           size={SpinnerSize.large}
           label="Wait, wait..."
@@ -96,7 +90,7 @@ export const Table: React.FC = () => {
         </Stack>
       </Stack>
 
-      {!settings.isSplashScreenVisible && null !== deck &&
+      {!settings.isSplashScreenVisible && null !== deck1.cardKeys &&
         <Stack verticalAlign="stretch" wrap tokens={{ childrenGap: 10, padding: 10 }} verticalFill>
 
           <StackItem>

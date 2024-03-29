@@ -5,14 +5,17 @@ import React from "react";
 import { CommandBar, ICommandBarItemProps, MessageBarType, nullRender } from "@fluentui/react";
 
 // Local Resources
-import { IControlPanelProps } from "../interfaces";
 import AppContext from "../classes/AppContext";
+import { DeckContext, DeckDispatchContext } from "../ctx";
+import { IControlPanelProps } from "../interfaces";
+import { DeckAction } from "../enums";
 
 // Component
 export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
 
+  const deck1 = React.useContext(DeckContext);
+  const deckDispatch = React.useContext(DeckDispatchContext);
   const {
-    deck,
     gameStore,
   } = React.useContext(AppContext);
   const { gameStatusFlag, gameStatus, minimumBet } = gameStore;
@@ -92,7 +95,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
       disabled: gameStatusFlag || playerStatusFlag,
       onClick: (ev: any) => {
         ev.preventDefault();
-        gameStore?.hit(playerKey)
+        deckDispatch({ type: DeckAction.Draw, playerKey, numberOfCards: 1 });
       }
     },
     // {
@@ -162,7 +165,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
         iconProps: { iconName: "Refresh" },
         disabled: gameStatusFlag,
         onClick: () => {
-          deck?.reset();
+          deckDispatch({ type: DeckAction.Reset });
           gameStore.newRound();
           gameStore.showMessageBar({ text: "New Round", type: MessageBarType.info, isMultiLine: false });
         }

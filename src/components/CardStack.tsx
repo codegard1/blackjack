@@ -11,8 +11,7 @@ import {
 
 /* custom stuff */
 import { CardContainer } from '.';
-import AppContext from '../classes/AppContext';
-import { SettingContext, SettingDispatchContext } from '../ctx';
+import { SettingContext } from '../ctx';
 import { ICardStackProps } from '../interfaces';
 
 /**
@@ -24,13 +23,9 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
 
   // Context props
   const settings = React.useContext(SettingContext);
-  const {
-    deck,
-  } = React.useContext(AppContext);
-
 
   // State
-  const [isDeckVisible, setVisible] = React.useState<boolean>(!props.hidden);
+  const [isDeckVisible, setVisible] = React.useState<boolean>(true);
 
   const _toggleDeck = () => setVisible(!isDeckVisible);
 
@@ -49,7 +44,7 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
 
 
   /* Deck Title */
-  const deckTitleString = `${props.title} (${deck?.length})`;
+  const deckTitleString = `${props.title} (${props.cards.length})`;
 
   /* Hand Value (if it's a player deck) */
   let handValueString;
