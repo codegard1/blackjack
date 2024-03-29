@@ -1,6 +1,8 @@
 import { IDeckReducerAction } from "../interfaces";
-import { DeckState, } from "../types";
+import { DeckState, PlayingCardKey, } from "../types";
 import { DeckAction } from "../enums";
+import { _cardKeys } from "../classes";
+import { fisherYates } from "../functions";
 
 /**
  * Reducer function for deck state
@@ -13,12 +15,23 @@ export function deckReducer(deck: DeckState, action: IDeckReducerAction) {
   const { type, cardKey, playerKey } = action;
 
   switch (type) {
-    // TODO
-    case DeckAction.DRAW: {
+
+    // Draw a single card from the top of the deck
+    case DeckAction.DRAWONE: {
+      if (deck.cardKeys.length > 0) {
+        const _shifted = deck.cardKeys.shift();
+        deck.drawnKeys.push(_shifted as PlayingCardKey);
+
+        if (undefined !== playerKey)
+          deck.playerHands[playerKey].push(_shifted as PlayingCardKey);
+      }
       return deck;
     }
 
+    // Select a card
     case DeckAction.SELECT: {
+      if (undefined === cardKey) return deck;
+
       if (!(cardKey in deck.selectedKeys)) {
         deck.selectedKeys.push(cardKey);
       } else {
@@ -28,8 +41,33 @@ export function deckReducer(deck: DeckState, action: IDeckReducerAction) {
       return deck;
     }
 
-    // TODO
-    case DeckAction.PUT: {
+    // Put one card on top of the deck
+    case DeckAction.PUTONE: {
+      if (undefined === cardKey) return deck;
+
+      if (!(cardKey in deck.cardKeys)) {
+        deck.cardKeys.push(cardKey);
+      }
+
+      if (cardKey in deck.drawnKeys) {
+        const ix = deck.drawnKeys.indexOf(cardKey);
+        deck.drawnKeys.splice(ix, 1);
+      }
+
+      return deck;
+    }
+
+    // Shuffle the remaining card in the deck
+    case DeckAction.SHUFFLE: {
+      deck.cardKeys = fisherYates(deck.cardKeys);
+      return deck;
+    }
+
+    // Populate and shuffle the deck
+    case DeckAction.RESET: {
+      deck.drawnKeys = [];
+      deck.selectedKeys = [];
+      deck.cardKeys = fisherYates(_cardKeys());
       return deck;
     }
 
