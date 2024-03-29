@@ -1,8 +1,7 @@
-import { IDeckReducerAction } from "../interfaces";
-import { DeckState, PlayingCardKey, } from "../types";
 import { DeckAction } from "../enums";
-import { _cardKeys } from "../classes";
-import { fisherYates } from "../functions";
+import { _cardKeys, fisherYates, getRandomIndex } from "../functions";
+import { IDeckReducerAction } from "../interfaces";
+import { DeckState } from "../types";
 
 /**
  * Reducer function for deck state
@@ -12,43 +11,109 @@ import { fisherYates } from "../functions";
  */
 export function deckReducer(deck: DeckState, action: IDeckReducerAction) {
 
-  const { type, cardKey, playerKey } = action;
+  // Reducer action props. Only type is required
+  const { type, cardKey, playerKey, numberOfCards, deckSide } = action;
 
   switch (type) {
 
-    // Draw a single card from the top of the deck
-    case DeckAction.DrawOne: {
-      if (deck.cardKeys.length > 0) {
-        const _shifted = deck.cardKeys.shift();
-        deck.drawnKeys.push(_shifted as PlayingCardKey);
+    // Clear the list of selected cards
+    case DeckAction.ClearSelected: {
+      deck.selectedKeys = [];
+      return deck;
+    }
 
-        if (undefined !== playerKey)
-          deck.playerHands[playerKey].push(_shifted as PlayingCardKey);
-      }
+    // Create an entry in the playerHands list for the given Player
+    case DeckAction.NewPlayerHand: {
+      if ((undefined !== playerKey) && !(playerKey in deck.playerHands))
+        deck.playerHands[playerKey] = [];
       return deck;
     }
 
     // Select a card
     case DeckAction.Select: {
+
+      // If no cardKey was passed then do nothing 
       if (undefined === cardKey) return deck;
 
-      if (!(cardKey in deck.selectedKeys)) {
+      if (!(cardKey in deck.selectedKeys))
         deck.selectedKeys.push(cardKey);
-      } else {
-        const ix = deck.selectedKeys.indexOf(cardKey);
-        deck.selectedKeys.splice(ix, 1);
-      }
+
       return deck;
     }
 
-    // Put one card on top of the deck
-    case DeckAction.PutOne: {
+    // Unselect a card
+    case DeckAction.Unselect: {
       if (undefined === cardKey) return deck;
 
-      if (!(cardKey in deck.cardKeys)) {
-        deck.cardKeys.push(cardKey);
+      if (cardKey in deck.selectedKeys)
+        deck.selectedKeys.splice(deck.selectedKeys.indexOf(cardKey), 1);
+
+      return deck;
+    }
+
+    // Draw card(s) from the deck
+    case DeckAction.Draw: {
+      const _num = (undefined === numberOfCards) ? 0 : numberOfCards;
+      if (deck.cardKeys.length > _num) {
+
+        if (undefined !== deckSide) {
+
+          switch (deckSide) {
+            case 'top': {
+              const _drawn = deck.cardKeys.splice(0, _num);
+              deck.drawnKeys.push(..._drawn);
+              if (undefined !== playerKey) deck.playerHands[playerKey].push(..._drawn);
+              break;
+            }
+            case 'random': {
+              for (let index = 0; index < _num; index++) {
+                const _ix = getRandomIndex(deck.cardKeys);
+                const _drawn = deck.cardKeys.splice(_ix, 1);
+                deck.drawnKeys.push(..._drawn);
+                if (undefined !== playerKey) deck.playerHands[playerKey].push(..._drawn);
+              }
+              break;
+            }
+            default: {
+              const _drawn = deck.cardKeys.splice(deck.cardKeys.length - _num - 1);
+              deck.drawnKeys.push(..._drawn);
+              if (undefined !== playerKey) deck.playerHands[playerKey].push(..._drawn);
+              break;
+            }
+          }
+        }
       }
 
+      return deck;
+    }
+
+    // Put one card into the deck
+    case DeckAction.Put: {
+
+      // If no cardKey was passed then do nothing
+      if (undefined === cardKey) return deck;
+
+      // If cardKey is not in the deck already then put it
+      if (!(cardKey in deck.cardKeys)) {
+
+        // deckSide determines where in the cardKeys array the cardKey goes
+        if (undefined !== deckSide) {
+          switch (deckSide) {
+            case 'top':
+              deck.cardKeys.unshift(cardKey);
+              break;
+            case 'random':
+              const _ix = getRandomIndex(deck.cardKeys);
+              deck.cardKeys = [...deck.cardKeys.slice(0, _ix - 1), cardKey, ...deck.cardKeys.slice(_ix)];
+              break;
+            default:
+              deck.cardKeys.push(cardKey);
+              break;
+          }
+        }
+      }
+
+      // If the cardKey is in the list of drawn cards
       if (cardKey in deck.drawnKeys) {
         const ix = deck.drawnKeys.indexOf(cardKey);
         deck.drawnKeys.splice(ix, 1);
@@ -68,6 +133,7 @@ export function deckReducer(deck: DeckState, action: IDeckReducerAction) {
       deck.drawnKeys = [];
       deck.selectedKeys = [];
       deck.cardKeys = fisherYates(_cardKeys());
+      deck.playerHands = {};
       return deck;
     }
 
