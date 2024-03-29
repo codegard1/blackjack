@@ -17,7 +17,7 @@ import AppContext from './classes/AppContext';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
 import { SettingContext, SettingDispatchContext, settingDefaults, settingReducer, DeckContext, DeckDispatchContext, deckDefaults, deckReducer } from './ctx';
 import { defaultplayersArr } from './definitions';
-import { GameStatus, StoreName } from './enums';
+import { DeckAction, GameStatus, StoreName } from './enums';
 import { IAppContextProps, IGameStoreProps } from './interfaces';
 import { DeckState, MessageBarDefinition, PlayerKey, PlayerStats, SettingsState } from './types';
 
@@ -67,7 +67,7 @@ const App = () => {
         // if (key !== 'isSplashScreenVisible') toggleSetting({ key, value: _ss[key] });
       }
     }
-    
+
     const _settingStore = localStorage.getItem(StoreName.SETTINGSTORE);
     if (null !== _settingStore) {
       const _ss: SettingsState = JSON.parse(_settingStore);
@@ -146,6 +146,7 @@ const App = () => {
    *  GAME ACTIONS
    */
   const deal = (key: PlayerKey) => {
+    deckDispatch({ type: DeckAction.DRAWONE, playerKey: key });
     deck.deal(2, []);
     setGameStatus(1);
   }
@@ -157,13 +158,18 @@ const App = () => {
   const bet = (playerKey: string, amount: number) => { };
 
   const newGame = (selectedPlayers: PlayerKey[]) => {
+    deckDispatch({ type: DeckAction.SHUFFLE });
     deck.reset();
     selectedPlayers.forEach((pk, ix) => {
       const _p = defaultplayersArr.find(v => v.key === pk);
       if (_p) console.log(JSON.stringify(_p));
       if (_p) playerStore!.newPlayer(pk, _p?.title, _p?.isNPC, ix, _p?.bank, _p?.disabled)
     });
-    playerStore.all.forEach((p) => p.cards.push(...deck.draw(2)));
+    playerStore.all.forEach((p) => {
+      deckDispatch({ type: DeckAction.DRAWONE, playerKey: p.key });
+      deckDispatch({ type: DeckAction.DRAWONE, playerKey: p.key });
+      p.cards.push(...deck.draw(2));
+    });
     newRound();
   };
 
@@ -175,6 +181,7 @@ const App = () => {
   const hideMessageBar = () => toggleSetting({ key: 'isMessageBarVisible', value: false });
 
   const resetGame = () => {
+    deckDispatch({ type: DeckAction.RESET });
     deck.reset();
     setDealerHasControl(false);
     setGameStatus(0);
@@ -333,17 +340,23 @@ const App = () => {
     <AppContext.Provider value={contextDefaults}>
       <SettingContext.Provider value={settings}>
         <SettingDispatchContext.Provider value={toggleSetting}>
-          <Layer>
-            <SplashScreen />
-            <OptionsPanel />
-          </Layer>
-          <Stack tokens={{ childrenGap: 15 }} horizontalAlign='space-between' verticalAlign='space-evenly'>
-            <Table />
-            <ActivityLog />
-            <div style={{ backgroundColor: '#eee' }}>
-              <Text>{JSON.stringify(playerStore.state)}</Text>
-            </div>
-          </Stack>
+          <DeckContext.Provider value={deck1}>
+            <DeckDispatchContext.Provider value={deckDispatch}>
+
+              <Layer>
+                <SplashScreen />
+                <OptionsPanel />
+              </Layer>
+              <Stack tokens={{ childrenGap: 15 }} horizontalAlign='space-between' verticalAlign='space-evenly'>
+                <Table />
+                <ActivityLog />
+                <div style={{ backgroundColor: '#eee' }}>
+                  <Text>{JSON.stringify(deck1)}</Text>
+                </div>
+              </Stack>
+
+            </DeckDispatchContext.Provider>
+          </DeckContext.Provider>
         </SettingDispatchContext.Provider>
       </SettingContext.Provider>
     </AppContext.Provider>

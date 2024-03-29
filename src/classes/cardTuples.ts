@@ -19,6 +19,7 @@ const _cardTuples: CardTuple[] = [
 
 export const cardTuples = (): CardTuple[] => _cardTuples.slice();
 
+/** Unique identifiers for each card in the deck */
 export const _cardKeys = (): string[] => {
   let _: PlayingCardKey[] = [];
   PlayingCardSuit.suits().forEach((suit: Suit) =>
