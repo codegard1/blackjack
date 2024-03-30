@@ -5,9 +5,6 @@ import { GameStatus } from '../enums/GameStatus';
 export interface IGameStoreProps {
   bet: (key: PlayerKey, amount: number) => void;
   deal: (key: PlayerKey) => void;
-  endGame: () => void;
-  endGameTrap: () => boolean;
-  evaluateGame: (statusCode: GameStatus) => void;
   hideMessageBar: () => void;
   hit: (key: PlayerKey) => void;
   lastWriteTime: string;

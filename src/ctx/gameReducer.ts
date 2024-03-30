@@ -15,6 +15,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     gameStatus,
     messageBarDefinition,
     minimumBet,
+    playerKey,
     potIncrement,
     type,
   } = action;
@@ -62,6 +63,36 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
     case GameAction.SetGameStatus: {
       if (undefined !== gameStatus) state.gameStatus = gameStatus;
+      return state;
+    }
+
+    // TODO
+    case GameAction.EndGame: {
+      return state;
+    }
+
+    // TODO
+    case GameAction.EvaluateGame: {
+      return state;
+    }
+
+    // TODO
+    case GameAction.EndGameTrap: {
+      return state;
+    }
+
+    // TODO
+    case GameAction.ResetGame: {
+      return state;
+    }
+
+    // TODO
+    case GameAction.SetLoser: {
+      return state;
+    }
+
+    // TODO
+    case GameAction.SetWinner: {
       return state;
     }
 

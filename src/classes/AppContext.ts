@@ -16,9 +16,6 @@ const AppContext = React.createContext<IAppContextProps>({
   gameStore: {
     bet: (key: PlayerKey) => console.log('bet'),
     deal: (key: PlayerKey) => console.log('deal'),
-    endGame: () => { },
-    endGameTrap: () => true,
-    evaluateGame: () => { },
     hideMessageBar: () => console.log('hideMessageBar'),
     hit: (key: PlayerKey) => console.log('hit'),
     lastWriteTime: '',

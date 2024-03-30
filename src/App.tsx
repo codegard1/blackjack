@@ -78,8 +78,6 @@ const App = () => {
     localStorage.removeItem(StoreName.STATSTORE);
   };
 
-  const evaluateGame = (statusCode: number) => { _evaluateGame(statusCode) };
-  const endGame = () => { };
   const endGameTrap = (): boolean => {
 
     let ret = false;
@@ -231,7 +229,7 @@ const App = () => {
         setWinner(playerStore.all[0].key);
         setLoser(playerStore.all[1].key);
         playerStore._payout(playerStore.all[0].key, pot);
-        endGame();
+        gameDispatch({ type: GameAction.SetWinner, })
         break;
 
       case GameStatus.DealerWins:
@@ -240,7 +238,7 @@ const App = () => {
         setLoser(playerStore.all[0].key);
         playerStore._payout(playerStore.all[1].key, pot);
         newActivityLogItem(playerStore.all[1].title, 'wins!', 'Crown');
-        endGame();
+        gameDispatch({ type: GameAction.EndGame });
         break;
 
       default:
@@ -265,9 +263,6 @@ const App = () => {
   const gameStore: IGameStoreProps = {
     bet,
     deal,
-    endGame,
-    endGameTrap,
-    evaluateGame,
     hideMessageBar,
     hit,
     lastWriteTime, setLastWriteTime,

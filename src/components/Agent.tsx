@@ -9,13 +9,15 @@ import { MotionAnimations } from '@fluentui/theme';
 import AppContext from "../classes/AppContext";
 
 // Local Resources
+import { GameContext, GameDispatchContext } from "../ctx";
 import { IAgentProps } from "../interfaces/IAgentProps";
-import { GameContext } from "../ctx";
+import { GameAction } from "../enums";
 
 export const Agent: React.FC<IAgentProps> = (props) => {
 
   // Context
   const gameState = React.useContext(GameContext);
+  const gameDispatch = React.useContext(GameDispatchContext);
   const {
     gameStore,
   } = React.useContext(AppContext);
@@ -30,7 +32,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
     // Agent acts on a partially random interval
     const intervalInMilliseconds = Math.floor(Math.random() * (new Date().getMilliseconds()))
     const intervalID = setInterval(() => {
-      gameStore.evaluateGame(gameState.gameStatus!);
+      gameDispatch({ type: GameAction.EvaluateGame, gameStatus: gameState.gameStatus });
       const { aceAsEleven, aceAsOne } = props.handValue;
 
       if (props.gameStatus !== 0) {
