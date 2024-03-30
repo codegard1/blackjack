@@ -6,7 +6,7 @@ import { CommandBar, ICommandBarItemProps, MessageBarType, nullRender } from "@f
 
 // Local Resources
 import AppContext from "../classes/AppContext";
-import { DeckContext, DeckDispatchContext } from "../ctx";
+import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext } from "../ctx";
 import { IControlPanelProps } from "../interfaces";
 import { DeckAction } from "../enums";
 
@@ -15,10 +15,13 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
 
   const deck1 = React.useContext(DeckContext);
   const deckDispatch = React.useContext(DeckDispatchContext);
+  const gameState = React.useContext(GameContext);
+  const gameDispatch = React.useContext(GameDispatchContext);
+
   const {
     gameStore,
   } = React.useContext(AppContext);
-  const { gameStatusFlag, gameStatus, minimumBet } = gameStore;
+  const { gameStatusFlag, gameStatus, minimumBet } = gameState;
 
   const {
     playerStatusFlag,
