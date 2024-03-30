@@ -5,7 +5,6 @@ import { GameStatus } from '../enums/GameStatus';
 export interface IGameStoreProps {
   bet: (key: PlayerKey, amount: number) => void;
   deal: (key: PlayerKey) => void;
-  dealerHasControl: boolean;
   endGame: () => void;
   endGameTrap: () => boolean;
   evaluateGame: (statusCode: GameStatus) => void;
@@ -19,7 +18,6 @@ export interface IGameStoreProps {
   pot: number;
   resetGame: () => void;
   round: number;
-  setDealerHasControl: React.Dispatch<React.SetStateAction<boolean>>;
   setLastWriteTime: React.Dispatch<React.SetStateAction<string>>;
   setLoser: React.Dispatch<React.SetStateAction<PlayerKey | undefined>>;
   setPot: React.Dispatch<React.SetStateAction<number>>;

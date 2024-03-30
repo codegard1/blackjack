@@ -16,7 +16,6 @@ const AppContext = React.createContext<IAppContextProps>({
   gameStore: {
     bet: (key: PlayerKey) => console.log('bet'),
     deal: (key: PlayerKey) => console.log('deal'),
-    dealerHasControl: false,
     endGame: () => { },
     endGameTrap: () => true,
     evaluateGame: () => { },
@@ -30,7 +29,6 @@ const AppContext = React.createContext<IAppContextProps>({
     pot: 0,
     resetGame: () => console.log('resetGame'),
     round: 0,
-    setDealerHasControl: () => console.log('setDealerHasControl'),
     setLastWriteTime: () => console.log('setLastWriteTime'),
     setLoser: () => console.log('setLoser'),
     setPot: () => console.log('setPot'),

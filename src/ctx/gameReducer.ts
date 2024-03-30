@@ -55,10 +55,8 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     }
 
     case GameAction.SetControllingPlayer: {
-      if (undefined !== controllingPlayerKey) {
-        state.controllingPlayer = controllingPlayerKey;
-        state.dealerHasControl = controllingPlayerKey === 'dealer';
-      }
+      state.controllingPlayer = controllingPlayerKey;
+      state.dealerHasControl = controllingPlayerKey === 'dealer';
       return state;
     }
 

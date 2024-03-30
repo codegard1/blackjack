@@ -73,10 +73,10 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
       </Stack>
 
       <Stack horizontalAlign="space-between">
-        {player.isNPC && gameStore.dealerHasControl &&
+        {player.isNPC && gameState.dealerHasControl &&
           <Stack.Item>
             <Agent
-              dealerHasControl={gameStore.dealerHasControl}
+              dealerHasControl={gameState.dealerHasControl}
               gameStatus={gameState.gameStatus}
               handValue={player.handValue}
               playerKey={props.playerKey}

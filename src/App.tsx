@@ -41,7 +41,6 @@ const App = () => {
 
   // DEPRECATED 
   const [winner, setWinner] = React.useState<PlayerKey>();
-  const [dealerHasControl, setDealerHasControl] = React.useState<boolean>(false);
   const [pot, setPot] = React.useState<number>(0);
   const [round, setRound] = React.useState<number>(0);
   const [turnCount, setTurnCount] = React.useState<number>(0);
@@ -171,7 +170,7 @@ const App = () => {
 
   const resetGame = () => {
     deckDispatch({ type: DeckAction.Reset });
-    setDealerHasControl(false);
+    gameDispatch({ type: GameAction.SetControllingPlayer, controllingPlayerKey: undefined })
     gameDispatch({ type: GameAction.SetGameStatus, gameStatus: GameStatus.Init });
     setPot(0);
     setRound(0);
@@ -180,7 +179,7 @@ const App = () => {
 
   const newRound = () => {
     /* reset state props to default */
-    setDealerHasControl(false);
+    gameDispatch({ type: GameAction.SetControllingPlayer, controllingPlayerKey: playerStore.currentPlayer?.key })
     gameDispatch({ type: GameAction.SetGameStatus, gameStatus: GameStatus.Init });
     setPot(0);
     setRound(round + 1);
@@ -251,7 +250,7 @@ const App = () => {
 
   const _gameStay = () => {
     if (gameState.gameStatus !== GameStatus.Init && !_evaluateGame(GameStatus.NextTurn)) {
-      setDealerHasControl(true);
+      gameDispatch({ type: GameAction.SetControllingPlayer, controllingPlayerKey: 'dealer' });
     }
   }
 
@@ -266,7 +265,6 @@ const App = () => {
   const gameStore: IGameStoreProps = {
     bet,
     deal,
-    dealerHasControl, setDealerHasControl,
     endGame,
     endGameTrap,
     evaluateGame,
