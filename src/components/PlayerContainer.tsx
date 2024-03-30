@@ -13,11 +13,14 @@ import "./PlayerContainer.css";
 
 // Context
 import AppContext from "../classes/AppContext";
+import { DeckContext } from "../ctx";
+import { PlayingCard } from "../classes";
 
 // Component
 export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
   // Context
+  const deck1 = React.useContext(DeckContext);
   const {
     playerStore,
     gameStore,
@@ -27,6 +30,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   const [isStatusCalloutVisible, setStatusCalloutVisible] = React.useState<boolean>(false);
   const [isDeckCalloutVisible, setDeckCalloutVisible] = React.useState<boolean>(false);
   const { player, playerKey } = props;
+  const playerCards = deck1.playerHands[playerKey].map((ck) => new PlayingCard(ck));
 
   const _showDeckCallout = () => setDeckCalloutVisible(true);
   const _hideDeckCallout = () => setDeckCalloutVisible(false);
@@ -95,7 +99,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
         <Stack.Item className={`DeckCalloutTarget-${player.title}`}>
           {player.hand.cards ?
             <CardStack
-              cards={player.hand.cards}
+              cards={playerCards}
               hidden={false}
               isSelectable
               player={player}

@@ -24,6 +24,7 @@ export function deckReducer(deck: DeckState, action: IDeckReducerAction) {
 
     // Create an entry in the playerHands list for the given Player
     case DeckAction.NewPlayerHand: {
+      console.log('DeckAction.NewPlayerHand', playerKey, JSON.stringify(deck.playerHands));
       if ((undefined !== playerKey) && !(playerKey in deck.playerHands))
         deck.playerHands[playerKey] = [];
       return deck;
@@ -56,30 +57,28 @@ export function deckReducer(deck: DeckState, action: IDeckReducerAction) {
       const _num = (undefined === numberOfCards) ? 0 : numberOfCards;
       if (deck.cardKeys.length > _num) {
 
-        if (undefined !== deckSide) {
+        switch (deckSide) {
+          case 'top': {
+            const _drawn = deck.cardKeys.splice(0, _num);
+            deck.drawnKeys.push(..._drawn);
+            if (undefined !== playerKey) deck.playerHands[playerKey].push(..._drawn);
+            break;
+          }
+          case 'random': {
+            for (let index = 0; index < _num; index++) {
+              const _ix = getRandomIndex(deck.cardKeys);
+              const _drawn = deck.cardKeys.splice(_ix, 1);
+              deck.drawnKeys.push(..._drawn);
+              if (undefined !== playerKey) deck.playerHands[playerKey].push(..._drawn);
+            }
+            break;
+          }
+          default: {
 
-          switch (deckSide) {
-            case 'top': {
-              const _drawn = deck.cardKeys.splice(0, _num);
-              deck.drawnKeys.push(..._drawn);
-              if (undefined !== playerKey) deck.playerHands[playerKey].push(..._drawn);
-              break;
-            }
-            case 'random': {
-              for (let index = 0; index < _num; index++) {
-                const _ix = getRandomIndex(deck.cardKeys);
-                const _drawn = deck.cardKeys.splice(_ix, 1);
-                deck.drawnKeys.push(..._drawn);
-                if (undefined !== playerKey) deck.playerHands[playerKey].push(..._drawn);
-              }
-              break;
-            }
-            default: {
-              const _drawn = deck.cardKeys.splice(deck.cardKeys.length - _num - 1);
-              deck.drawnKeys.push(..._drawn);
-              if (undefined !== playerKey) deck.playerHands[playerKey].push(..._drawn);
-              break;
-            }
+            const _drawn = deck.cardKeys.splice(deck.cardKeys.length - _num - 1);
+            deck.drawnKeys.push(..._drawn);
+            if (undefined !== playerKey) deck.playerHands[playerKey].push(..._drawn);
+            break;
           }
         }
       }

@@ -145,12 +145,12 @@ const App = () => {
    *  GAME ACTIONS
    */
   const deal = (playerKey: PlayerKey) => {
-    deckDispatch({ type: DeckAction.Draw, playerKey, numberOfCards: 2 });
+    deckDispatch({ type: DeckAction.Draw, playerKey, numberOfCards: 2, deckSide: 'top' });
     setGameStatus(1);
   }
 
   const hit = (playerKey: string) => {
-    deckDispatch({ type: DeckAction.Draw, playerKey, numberOfCards: 1 });
+    deckDispatch({ type: DeckAction.Draw, playerKey, numberOfCards: 1, deckSide: 'top' });
   }
 
   const stay = (playerKey: string) => { };
@@ -160,11 +160,12 @@ const App = () => {
   const newGame = (selectedPlayers: PlayerKey[]) => {
     deckDispatch({ type: DeckAction.Reset });
     selectedPlayers.forEach((pk, ix) => {
+      deckDispatch({ type: DeckAction.NewPlayerHand, playerKey: pk });
+      deal(pk);
       const _p = defaultplayersArr.find(v => v.key === pk);
-      if (_p) console.log(JSON.stringify(_p));
+      // if (_p) console.log(JSON.stringify(_p));
       if (_p) playerStore!.newPlayer(pk, _p?.title, _p?.isNPC, ix, _p?.bank, _p?.disabled)
     });
-    playerStore.all.forEach((p) => deal(p.key));
     newRound();
   };
 

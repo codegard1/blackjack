@@ -31,6 +31,7 @@ export const OptionsPanel: React.FC = () => {
 
   const {
     gameStore,
+    playerStore,
     clearStores,
   } = React.useContext(AppContext);
 
@@ -49,7 +50,9 @@ export const OptionsPanel: React.FC = () => {
   }
 
   const newDeal = () => {
-    // AppActions.deal();
+    playerStore?.all.forEach((p) => {
+      gameStore.deal(p.key);
+    })
     closeOptionsPanel();
   }
 

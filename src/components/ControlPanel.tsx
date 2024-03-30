@@ -95,7 +95,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
       disabled: gameStatusFlag || playerStatusFlag,
       onClick: (ev: any) => {
         ev.preventDefault();
-        deckDispatch({ type: DeckAction.Draw, playerKey, numberOfCards: 1 });
+        deckDispatch({ type: DeckAction.Draw, playerKey, numberOfCards: 1, deckSide: 'top' });
       }
     },
     // {
