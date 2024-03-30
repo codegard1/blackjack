@@ -1,6 +1,8 @@
 import { IGameReducerAction } from "../interfaces";
 import { GameState } from "../types";
 import { GameAction } from "../enums/GameAction";
+import { GameStatus } from "../enums";
+import { gameDefaults } from "./gameDefaults";
 
 /**
  * Reducer function for game state
@@ -72,6 +74,16 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     }
 
     // TODO
+    case GameAction.NewGame: {
+      // state.controllingPlayer = undefined;
+      state.gameStatus = GameStatus.Init;
+      state.pot = 0;
+      state.round = state.round + 1;
+      state.turnCount = 0;
+      return state;
+    }
+
+    // TODO
     case GameAction.EvaluateGame: {
       return state;
     }
@@ -83,6 +95,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
     // TODO
     case GameAction.ResetGame: {
+      state = gameDefaults;
       return state;
     }
 
