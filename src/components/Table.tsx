@@ -22,7 +22,7 @@ import {
 // Context
 import { PlayingCard } from "../classes";
 import AppContext from "../classes/AppContext";
-import { DeckContext, DeckDispatchContext, SettingContext, SettingDispatchContext } from '../ctx';
+import { DeckContext, DeckDispatchContext, SettingContext, SettingDispatchContext, GameContext, GameDispatchContext } from '../ctx';
 
 
 export const Table: React.FC = () => {
@@ -31,6 +31,8 @@ export const Table: React.FC = () => {
   const settings = React.useContext(SettingContext);
   const toggleSetting = React.useContext(SettingDispatchContext);
   const deck1 = React.useContext(DeckContext);
+  const gameState = React.useContext(GameContext);
+  const gameDispatch = React.useContext(GameDispatchContext);
   const {
     playerStore,
     gameStore,
@@ -60,7 +62,7 @@ export const Table: React.FC = () => {
         <Icon iconName="Settings" aria-label="Settings" style={{ fontSize: "24px" }} onClick={toggleOptionsPanel} />
       </Stack>
 
-      {!gameStore.isSpinnerVisible ? nullRender() :
+      {!gameState.isSpinnerVisible ? nullRender() :
         <Spinner
           size={SpinnerSize.large}
           label="Wait, wait..."
@@ -71,7 +73,7 @@ export const Table: React.FC = () => {
 
       <Stack verticalAlign="space-around" tokens={{ childrenGap: 10, padding: 10, }}>
 
-        {!gameStore.gameStatusFlag && <Text block nowrap variant="xLarge">Pot: ${gameStore.pot}</Text>}
+        {!gameState.gameStatusFlag && <Text block nowrap variant="xLarge">Pot: ${gameState.pot}</Text>}
 
         <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
 
