@@ -10,10 +10,12 @@ import AppContext from "../classes/AppContext";
 
 // Local Resources
 import { IAgentProps } from "../interfaces/IAgentProps";
+import { GameContext } from "../ctx";
 
 export const Agent: React.FC<IAgentProps> = (props) => {
 
   // Context
+  const gameState = React.useContext(GameContext);
   const {
     gameStore,
   } = React.useContext(AppContext);
@@ -28,7 +30,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
     // Agent acts on a partially random interval
     const intervalInMilliseconds = Math.floor(Math.random() * (new Date().getMilliseconds()))
     const intervalID = setInterval(() => {
-      gameStore.evaluateGame(gameStore.gameStatus!);
+      gameStore.evaluateGame(gameState.gameStatus!);
       const { aceAsEleven, aceAsOne } = props.handValue;
 
       if (props.gameStatus !== 0) {

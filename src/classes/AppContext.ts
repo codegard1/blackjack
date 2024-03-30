@@ -21,7 +21,6 @@ const AppContext = React.createContext<IAppContextProps>({
     endGame: () => { },
     endGameTrap: () => true,
     evaluateGame: () => { },
-    gameStatus: GameStatus.Init,
     gameStatusFlag: false,
     hideMessageBar: () => console.log('hideMessageBar'),
     hit: (key: PlayerKey) => console.log('hit'),

@@ -13,7 +13,7 @@ import "./PlayerContainer.css";
 
 // Context
 import AppContext from "../classes/AppContext";
-import { DeckContext } from "../ctx";
+import { DeckContext, GameContext } from "../ctx";
 import { PlayingCard } from "../classes";
 
 // Component
@@ -21,6 +21,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
   // Context
   const deck1 = React.useContext(DeckContext);
+  const gameState = React.useContext(GameContext);
   const {
     playerStore,
     gameStore,
@@ -76,7 +77,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
           <Stack.Item>
             <Agent
               dealerHasControl={gameStore.dealerHasControl}
-              gameStatus={gameStore.gameStatus}
+              gameStatus={gameState.gameStatus}
               handValue={player.handValue}
               playerKey={props.playerKey}
             />

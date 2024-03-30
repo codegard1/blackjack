@@ -9,7 +9,6 @@ export interface IGameStoreProps {
   endGame: () => void;
   endGameTrap: () => boolean;
   evaluateGame: (statusCode: GameStatus) => void;
-  gameStatus: GameStatus;
   gameStatusFlag: boolean;
   hideMessageBar: () => void;
   hit: (key: PlayerKey) => void;

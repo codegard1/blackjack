@@ -12,12 +12,12 @@ import {
 
 // Local Resources
 import './App.css';
-import { PlayerStore, PlayingCardDeck } from './classes';
+import { PlayerStore } from './classes';
 import AppContext from './classes/AppContext';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
-import { SettingContext, SettingDispatchContext, settingDefaults, settingReducer, DeckContext, DeckDispatchContext, deckDefaults, deckReducer } from './ctx';
+import { DeckContext, DeckDispatchContext, SettingContext, SettingDispatchContext, deckDefaults, deckReducer, settingDefaults, settingReducer, gameReducer, GameContext, GameDispatchContext, gameDefaults } from './ctx';
 import { defaultplayersArr } from './definitions';
-import { DeckAction, GameStatus, StoreName } from './enums';
+import { DeckAction, GameAction, GameStatus, StoreName } from './enums';
 import { IAppContextProps, IGameStoreProps } from './interfaces';
 import { DeckState, MessageBarDefinition, PlayerKey, PlayerStats, SettingsState } from './types';
 
@@ -30,23 +30,22 @@ const App = () => {
   // NEW State using Reducers
   const [settings, toggleSetting] = React.useReducer(settingReducer, settingDefaults);
   const [deck1, deckDispatch] = React.useReducer(deckReducer, deckDefaults);
-
+  const [gameState, gameDispatch] = React.useReducer(gameReducer, gameDefaults);
 
   //----------------------------------------------------------------//
 
   // State
   const [playerStore] = React.useState<PlayerStore>(new PlayerStore());
-  const [gameStatus, setGameStatus] = React.useState<GameStatus>(0);
-  const [gameStatusFlag, setGameStatusFlag] = React.useState<boolean>(false);
-  const [isSpinnerVisible, setSpinnerVisible] = React.useState<boolean>(true);
   const [loser, setLoser] = React.useState<PlayerKey>();
+  const [lastWriteTime, setLastWriteTime] = React.useState<string>('');
+
+  // DEPRECATED 
+  const [gameStatusFlag, setGameStatusFlag] = React.useState<boolean>(false);
   const [winner, setWinner] = React.useState<PlayerKey>();
   const [dealerHasControl, setDealerHasControl] = React.useState<boolean>(false);
-  const [minimumBet, setMinimumBet] = React.useState<number>(25);
   const [pot, setPot] = React.useState<number>(0);
   const [round, setRound] = React.useState<number>(0);
   const [turnCount, setTurnCount] = React.useState<number>(0);
-  const [lastWriteTime, setLastWriteTime] = React.useState<string>('');
   const [messageBarDefinition, setMessageBarDefinition] = React.useState<MessageBarDefinition>({
     type: MessageBarType.info,
     text: "",
@@ -91,7 +90,7 @@ const App = () => {
   const endGameTrap = (): boolean => {
 
     let ret = false;
-    let nextGameStatus: GameStatus = GameStatus.InProgress;
+    let nextGameStatus = GameStatus.InProgress;
 
     /* Set next game status */
     if (playerStore.all[1].hasBlackjack) {
@@ -113,7 +112,7 @@ const App = () => {
         ret = true;
       } else {
         /* player 0 is not Dealer */
-        setGameStatus(GameStatus.InProgress);
+        gameDispatch({ type: GameAction.SetGameStatus, gameStatus: GameStatus.InProgress });
         ret = false;
       }
     }
@@ -146,7 +145,7 @@ const App = () => {
    */
   const deal = (playerKey: PlayerKey) => {
     deckDispatch({ type: DeckAction.Draw, playerKey, numberOfCards: 2, deckSide: 'top' });
-    setGameStatus(1);
+    gameDispatch({ type: GameAction.SetGameStatus, gameStatus: GameStatus.InProgress });
   }
 
   const hit = (playerKey: string) => {
@@ -170,7 +169,7 @@ const App = () => {
   };
 
   const showMessageBar = (d: MessageBarDefinition) => {
-    setMessageBarDefinition(d);
+    gameDispatch({ type: GameAction.ShowMessageBar, messageBarDefinition: d });
     toggleSetting({ key: 'isMessageBarVisible', value: true });
   };
 
@@ -179,7 +178,7 @@ const App = () => {
   const resetGame = () => {
     deckDispatch({ type: DeckAction.Reset });
     setDealerHasControl(false);
-    setGameStatus(0);
+    gameDispatch({ type: GameAction.SetGameStatus, gameStatus: GameStatus.Init });
     setPot(0);
     setRound(0);
     setTurnCount(0);
@@ -188,15 +187,16 @@ const App = () => {
   const newRound = () => {
     /* reset state props to default */
     setDealerHasControl(false);
-    setGameStatus(0);
+    gameDispatch({ type: GameAction.SetGameStatus, gameStatus: GameStatus.Init });
     setPot(0);
     setRound(round + 1);
     setTurnCount(0);
 
     /* start a new round with a new deck */
     // PlayersStore.currentPlayer.startTurn();
-    setGameStatus(GameStatus.InProgress);
+    gameDispatch({ type: GameAction.SetGameStatus, gameStatus: GameStatus.InProgress });
   }
+
   const _evaluateGame = (statusCode: GameStatus) => {
     switch (statusCode) {
       case GameStatus.Init:
@@ -206,7 +206,7 @@ const App = () => {
       case GameStatus.InProgress /*   Game in progress; first play  */:
         console.log('Game Status: InProgress');
         /*   all players bet the minimum to start  */
-        if (turnCount === 0) _ante(minimumBet);
+        if (turnCount === 0) _ante(gameState.minimumBet);
         setTurnCount(turnCount + 1);
         endGameTrap();
         break;
@@ -218,7 +218,7 @@ const App = () => {
         if (!endGameTrap()) {
           /* increment currentPlayerIndex */
           playerStore._nextPlayer();
-          setGameStatus(GameStatus.InProgress)
+          gameDispatch({ type: GameAction.SetGameStatus, gameStatus: GameStatus.InProgress });
           endGameTrap();
         } else {
           return false;
@@ -227,7 +227,7 @@ const App = () => {
 
       case GameStatus.GameOver:
         console.log('Game Status: GameOver');
-        setGameStatus(GameStatus.Init);
+        gameDispatch({ type: GameAction.SetGameStatus, gameStatus: GameStatus.Init });
         break;
 
       case GameStatus.HumanWins:
@@ -254,11 +254,13 @@ const App = () => {
         break;
     }
   };
+
   const _gameStay = () => {
-    if (gameStatus !== GameStatus.Init && !_evaluateGame(GameStatus.NextTurn)) {
+    if (gameState.gameStatus !== GameStatus.Init && !_evaluateGame(GameStatus.NextTurn)) {
       setDealerHasControl(true);
     }
   }
+
   const _ante = (amount: number) => {
     playerStore._allPlayersAnte(amount);
     setPot(pot + amount * playerStore.length);
@@ -274,15 +276,12 @@ const App = () => {
     endGame,
     endGameTrap,
     evaluateGame,
-    gameStatus,
     gameStatusFlag,
     hideMessageBar,
     hit,
-    isSpinnerVisible, setSpinnerVisible,
     lastWriteTime, setLastWriteTime,
     loser, setLoser,
     messageBarDefinition, setMessageBarDefinition,
-    minimumBet, setMinimumBet,
     newActivityLogItem,
     newGame,
     newRound,
@@ -336,19 +335,23 @@ const App = () => {
         <SettingDispatchContext.Provider value={toggleSetting}>
           <DeckContext.Provider value={deck1}>
             <DeckDispatchContext.Provider value={deckDispatch}>
+              <GameContext.Provider value={gameState}>
+                <GameDispatchContext.Provider value={gameDispatch}>
 
-              <Layer>
-                <SplashScreen />
-                <OptionsPanel />
-              </Layer>
-              <Stack tokens={{ childrenGap: 15 }} horizontalAlign='space-between' verticalAlign='space-evenly'>
-                <Table />
-                <ActivityLog />
-                <div style={{ backgroundColor: '#eee' }}>
-                  <Text>{JSON.stringify(deck1)}</Text>
-                </div>
-              </Stack>
+                  <Layer>
+                    <SplashScreen />
+                    <OptionsPanel />
+                  </Layer>
+                  <Stack tokens={{ childrenGap: 15 }} horizontalAlign='space-between' verticalAlign='space-evenly'>
+                    <Table />
+                    <ActivityLog />
+                    <div style={{ backgroundColor: '#eee' }}>
+                      <Text>{JSON.stringify(deck1)}</Text>
+                    </div>
+                  </Stack>
 
+                </GameDispatchContext.Provider>
+              </GameContext.Provider>
             </DeckDispatchContext.Provider>
           </DeckContext.Provider>
         </SettingDispatchContext.Provider>
