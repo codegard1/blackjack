@@ -13,7 +13,6 @@ export interface IGameStoreProps {
   hit: (key: PlayerKey) => void;
   lastWriteTime: string;
   loser: PlayerKey | undefined;
-  messageBarDefinition: MessageBarDefinition;
   newActivityLogItem: (name: string, description: string, iconName: string) => void;
   newGame: (keys: PlayerKey[]) => void;
   newRound: () => void;
@@ -23,7 +22,6 @@ export interface IGameStoreProps {
   setDealerHasControl: React.Dispatch<React.SetStateAction<boolean>>;
   setLastWriteTime: React.Dispatch<React.SetStateAction<string>>;
   setLoser: React.Dispatch<React.SetStateAction<PlayerKey | undefined>>;
-  setMessageBarDefinition: React.Dispatch<React.SetStateAction<MessageBarDefinition>>;
   setPot: React.Dispatch<React.SetStateAction<number>>;
   setRound: React.Dispatch<React.SetStateAction<number>>;
   setTurnCount: React.Dispatch<React.SetStateAction<number>>;

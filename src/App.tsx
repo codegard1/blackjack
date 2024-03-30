@@ -45,11 +45,6 @@ const App = () => {
   const [pot, setPot] = React.useState<number>(0);
   const [round, setRound] = React.useState<number>(0);
   const [turnCount, setTurnCount] = React.useState<number>(0);
-  const [messageBarDefinition, setMessageBarDefinition] = React.useState<MessageBarDefinition>({
-    type: MessageBarType.info,
-    text: "",
-    isMultiLine: false
-  });
   const newActivityLogItem = (name: string, description: string, iconName: string) => { };
 
   /**
@@ -279,7 +274,6 @@ const App = () => {
     hit,
     lastWriteTime, setLastWriteTime,
     loser, setLoser,
-    messageBarDefinition, setMessageBarDefinition,
     newActivityLogItem,
     newGame,
     newRound,
