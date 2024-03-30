@@ -13,4 +13,5 @@ export enum GameAction {
   SetSpinnerVisible = 'SetSpinnerVisible',
   SetWinner = 'SetWinner',
   ShowMessageBar = 'ShowMessageBar',
+  EndGame = 'EndGame',
 }
