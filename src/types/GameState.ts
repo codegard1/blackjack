@@ -6,8 +6,8 @@ export type GameState = {
   gameStatus: GameStatus;
   gameStatusFlag: boolean;
   isSpinnerVisible: boolean;
-  loser: PlayerKey | null;
-  winner: PlayerKey | null;
+  loser?: PlayerKey;
+  winner?: PlayerKey;
   dealerHasControl: boolean;
   minimumBet: number;
   pot: number;
@@ -15,4 +15,5 @@ export type GameState = {
   turnCount: number;
   lastWriteTime: string;
   messageBarDefinition: MessageBarDefinition;
+  controllingPlayer?: PlayerKey;
 }

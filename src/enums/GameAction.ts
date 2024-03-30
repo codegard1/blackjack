@@ -1,7 +1,16 @@
 export enum GameAction {
-  SetMinimumBet,
-  SetSpinnerVisible,
-  SetLoser,
-  SetWinner,
-
+  AddToPot = 'AddToPot',
+  EvaluateGame = 'EvaluateGame',
+  IncrementRound = 'IncrementRound',
+  IncrementTurn = 'IncrementTurn',
+  NewGame = 'NewGame',
+  NewRound = 'NewRound',
+  ResetGame = 'ResetGame',
+  SetControllingPlayer = 'SetControllingPlayer',
+  SetGameStatus = 'SetGameStatus',
+  SetLoser = 'SetLoser',
+  SetMinimumBet = 'SetMinimumBet',
+  SetSpinnerVisible = 'SetSpinnerVisible',
+  SetWinner = 'SetWinner',
+  ShowMessageBar = 'ShowMessageBar',
 }

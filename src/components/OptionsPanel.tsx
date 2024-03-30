@@ -58,6 +58,7 @@ export const OptionsPanel: React.FC = () => {
 
   const shuffle = () => {
     deckDispatch({ type: DeckAction.Shuffle });
+    closeOptionsPanel();
   }
 
   const tooltipCalloutProps = { gapSpace: 0, };

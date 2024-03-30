@@ -6,8 +6,8 @@ export const gameDefaults: GameState = {
   gameStatus: GameStatus.Init,
   gameStatusFlag: false,
   isSpinnerVisible: false,
-  loser: null,
-  winner: null,
+  loser: undefined,
+  winner: undefined,
   dealerHasControl: false,
   minimumBet: 25,
   pot: 0,
@@ -18,5 +18,6 @@ export const gameDefaults: GameState = {
     type: MessageBarType.info,
     text: "",
     isMultiLine: false
-  }
+  },
+  controllingPlayer: undefined,
 }

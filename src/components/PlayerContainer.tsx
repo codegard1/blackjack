@@ -30,7 +30,8 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   const [isStatusCalloutVisible, setStatusCalloutVisible] = React.useState<boolean>(false);
   const [isDeckCalloutVisible, setDeckCalloutVisible] = React.useState<boolean>(false);
   const { player, playerKey } = props;
-  const playerCards = deck1.playerHands[playerKey].map((ck) => new PlayingCard(ck));
+  const playerCards = undefined === deck1.playerHands[playerKey] ? [] :
+    deck1.playerHands[playerKey].map((ck) => new PlayingCard(ck));
 
   const _showDeckCallout = () => setDeckCalloutVisible(true);
   const _hideDeckCallout = () => setDeckCalloutVisible(false);
