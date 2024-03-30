@@ -13,7 +13,7 @@ export const gameDefaults: GameState = {
   pot: 0,
   round: 0,
   turnCount: 0,
-  lastWriteTime: '',
+  lastWriteTime: new Date().toISOString(),
   messageBarDefinition: {
     type: MessageBarType.info,
     text: "",
