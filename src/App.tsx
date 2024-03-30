@@ -40,7 +40,6 @@ const App = () => {
   const [lastWriteTime, setLastWriteTime] = React.useState<string>('');
 
   // DEPRECATED 
-  const [gameStatusFlag, setGameStatusFlag] = React.useState<boolean>(false);
   const [winner, setWinner] = React.useState<PlayerKey>();
   const [dealerHasControl, setDealerHasControl] = React.useState<boolean>(false);
   const [pot, setPot] = React.useState<number>(0);
@@ -276,7 +275,6 @@ const App = () => {
     endGame,
     endGameTrap,
     evaluateGame,
-    gameStatusFlag,
     hideMessageBar,
     hit,
     lastWriteTime, setLastWriteTime,

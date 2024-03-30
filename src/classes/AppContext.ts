@@ -5,7 +5,6 @@ import React from 'react';
 import { MessageBarType } from '@fluentui/react';
 
 // Local Resources
-import { GameStatus } from '../enums';
 import { IAppContextProps } from '../interfaces';
 import { PlayerKey } from '../types';
 
@@ -21,7 +20,6 @@ const AppContext = React.createContext<IAppContextProps>({
     endGame: () => { },
     endGameTrap: () => true,
     evaluateGame: () => { },
-    gameStatusFlag: false,
     hideMessageBar: () => console.log('hideMessageBar'),
     hit: (key: PlayerKey) => console.log('hit'),
     lastWriteTime: '',
