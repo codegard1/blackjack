@@ -1,19 +1,23 @@
+import { PlayerStore } from "../classes";
 import { GameStatus } from "../enums";
-import { PlayerKey } from "./BasePlayer";
-import { MessageBarDefinition } from "./MessageBarDefinition";
+import { MessageBarDefinition, PlayerCollection, PlayerKey } from "./";
 
 export type GameState = {
+  activePlayerKeys?: PlayerKey[];
+  controllingPlayer?: PlayerKey;
+  currentPlayerKey?: PlayerKey;
+  dealerHasControl: boolean;
   gameStatus: GameStatus;
   gameStatusFlag: boolean;
   isSpinnerVisible: boolean;
+  lastWriteTime: string;
   loser?: PlayerKey;
-  winner?: PlayerKey;
-  dealerHasControl: boolean;
+  messageBarDefinition: MessageBarDefinition;
   minimumBet: number;
+  players?: PlayerCollection;
   pot: number;
   round: number;
   turnCount: number;
-  lastWriteTime: string;
-  messageBarDefinition: MessageBarDefinition;
-  controllingPlayer?: PlayerKey;
+  winner?: PlayerKey;
+  playerStore: PlayerStore;
 }

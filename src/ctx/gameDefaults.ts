@@ -1,6 +1,7 @@
 import { MessageBarType } from "@fluentui/react"
 import { GameStatus } from "../enums"
 import { GameState } from "../types"
+import { PlayerStore } from "../classes"
 
 export const gameDefaults: GameState = {
   gameStatus: GameStatus.Init,
@@ -20,4 +21,8 @@ export const gameDefaults: GameState = {
     isMultiLine: false
   },
   controllingPlayer: undefined,
+  players: undefined,
+  activePlayerKeys: undefined,
+  currentPlayerKey: undefined,
+  playerStore: new PlayerStore(),
 }

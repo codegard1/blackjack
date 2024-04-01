@@ -30,8 +30,11 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     }
 
     case GameAction.ShowMessageBar: {
-      if (undefined !== messageBarDefinition)
+      if (undefined === messageBarDefinition) {
+        state.messageBarDefinition = gameDefaults.messageBarDefinition;
+      } else {
         state.messageBarDefinition = messageBarDefinition;
+      }
       return state;
     }
 
@@ -85,6 +88,62 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
     // TODO
     case GameAction.EvaluateGame: {
+      switch (gameStatus) {
+        case GameStatus.Init:
+          console.log('Game Status: Init');
+          break;
+
+        case GameStatus.InProgress /*   Game in progress; first play  */:
+          console.log('Game Status: InProgress');
+          /*   all players bet the minimum to start  */
+          // if (state.turnCount === 0) _ante(gameState.minimumBet);
+          // setTurnCount(turnCount + 1);
+          // endGameTrap();
+          break;
+
+        case GameStatus.NextTurn:
+          console.log('Game Status: NextTurn');
+          /*   stay (go to next turn)  */
+          /* If endgame conditions not met   */
+          // if (!endGameTrap()) {
+          //   /* increment currentPlayerIndex */
+          //   playerStore._nextPlayer();
+          //   gameDispatch({ type: GameAction.SetGameStatus, gameStatus: GameStatus.InProgress });
+          //   endGameTrap();
+          // } else {
+          //   return false;
+          // }
+          break;
+
+        case GameStatus.GameOver:
+          console.log('Game Status: GameOver');
+          // gameDispatch({ type: GameAction.SetGameStatus, gameStatus: GameStatus.Init });
+          break;
+
+        case GameStatus.HumanWins:
+          console.log('Game Status: HumanWins');
+          // const winningPlayerTitle = playerStore.all[0].title;
+          // newActivityLogItem(winningPlayerTitle, 'wins!', 'Crown');
+
+          // setWinner(playerStore.all[0].key);
+          // setLoser(playerStore.all[1].key);
+          // playerStore._payout(playerStore.all[0].key, pot);
+          // gameDispatch({ type: GameAction.SetWinner, })
+          break;
+
+        case GameStatus.DealerWins:
+          console.log('Game Status: DealerWins');
+          // state.winner = playerStore.all[1].key;
+          // state.loser = playerStore.all[0].key;
+          // playerStore._payout(playerStore.all[1].key, pot);
+          // newActivityLogItem(playerStore.all[1].title, 'wins!', 'Crown');
+          // gameDispatch({ type: GameAction.EndGame });
+          break;
+
+        default:
+          break;
+      }
+
       return state;
     }
 
@@ -95,23 +154,24 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
     // TODO
     case GameAction.ResetGame: {
-      state = gameDefaults;
-      return state;
+      return gameDefaults;
     }
 
     // TODO
     case GameAction.SetLoser: {
+      if (undefined !== playerKey) state.loser = playerKey;
       return state;
     }
 
     // TODO
     case GameAction.SetWinner: {
+      if (undefined !== playerKey) state.winner = playerKey;
       return state;
     }
 
     default: {
       return state;
-    };
+    }
   }
 
 }
