@@ -4,11 +4,7 @@
 import { PlayingCard } from "..";
 import { _cardKeys } from "../../functions";
 import { IPlayingCardDeck, IPlayingCardDeckState } from "../../interfaces";
-import { PlayerHand, PlayerKey, PlayingCardKey } from "../../types";
-
-export type PlayerHandList = {
-  [index: PlayerKey]: PlayerHand;
-}
+import { PlayerHand, PlayerHandList, PlayerKey, PlayingCardKey } from "../../types";
 
 /**
  * A set of 52 Playing Cards in random order

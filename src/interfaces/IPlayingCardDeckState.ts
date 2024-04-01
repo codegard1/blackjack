@@ -1,5 +1,4 @@
-import { PlayerHandList } from "../classes";
-import { PlayingCardKey } from "../types";
+import { PlayerHandList, PlayingCardKey } from "../types";
 
 export interface IPlayingCardDeckState {
   selectedKeys: PlayingCardKey[];
