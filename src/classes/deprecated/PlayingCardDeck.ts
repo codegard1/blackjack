@@ -1,10 +1,10 @@
 /*  adapted from node-shuffle 
     https://github.com/codegard1/node-shuffle.git */
 
-import { PlayingCard } from ".";
-import { _cardKeys } from "../functions";
-import { IPlayingCardDeck, IPlayingCardDeckState } from "../interfaces";
-import { PlayerHand, PlayerKey, PlayingCardKey } from "../types";
+import { PlayingCard } from "..";
+import { _cardKeys } from "../../functions";
+import { IPlayingCardDeck, IPlayingCardDeckState } from "../../interfaces";
+import { PlayerHand, PlayerKey, PlayingCardKey } from "../../types";
 
 export type PlayerHandList = {
   [index: PlayerKey]: PlayerHand;
