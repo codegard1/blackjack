@@ -1,5 +1,5 @@
+import { _cardKeys, fisherYates, getRandomIndex } from ".";
 import { DeckAction } from "../enums";
-import { _cardKeys, fisherYates, getRandomIndex } from "../functions";
 import { IDeckReducerAction } from "../interfaces";
 import { DeckState } from "../types";
 

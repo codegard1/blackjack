@@ -1,8 +1,8 @@
+import { gameDefaults } from "../ctx/gameDefaults";
+import { GameStatus } from "../enums";
+import { GameAction } from "../enums/GameAction";
 import { IGameReducerAction } from "../interfaces";
 import { GameState } from "../types";
-import { GameAction } from "../enums/GameAction";
-import { GameStatus } from "../enums";
-import { gameDefaults } from "./gameDefaults";
 
 /**
  * Reducer function for game state

@@ -4,7 +4,6 @@ import React from 'react';
 // FluentUI
 import {
   Layer,
-  MessageBarType,
   Stack,
   Text,
   initializeIcons
@@ -15,9 +14,10 @@ import './App.css';
 import { PlayerStore } from './classes';
 import AppContext from './classes/AppContext';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
-import { DeckContext, DeckDispatchContext, SettingContext, SettingDispatchContext, deckDefaults, deckReducer, settingDefaults, settingReducer, gameReducer, GameContext, GameDispatchContext, gameDefaults } from './ctx';
+import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, deckDefaults, gameDefaults, settingDefaults } from './ctx';
 import { defaultplayersArr } from './definitions';
 import { DeckAction, GameAction, GameStatus, StoreName } from './enums';
+import { deckReducer, gameReducer, settingReducer } from './functions';
 import { IAppContextProps, IGameStoreProps } from './interfaces';
 import { DeckState, MessageBarDefinition, PlayerKey, PlayerStats, SettingsState } from './types';
 
