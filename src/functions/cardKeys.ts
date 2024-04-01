@@ -1,13 +1,14 @@
-import { PlayingCardSuit, cardTuples } from "../classes";
-import { PlayingCardKey, Suit } from "../types";
+import { PlayingCardKey, PlayingCardSuit } from "../types";
+import { cardSuits } from "./cardSuits";
+import { cardTuples } from "./cardTuples";
 
 /** Create nique identifiers representing each card in the deck */
 export function _cardKeys(): string[] {
   let _: PlayingCardKey[] = [];
-  PlayingCardSuit.suits().forEach((suit: Suit) =>
+  cardSuits.forEach((suit: PlayingCardSuit) =>
     cardTuples().forEach((t) =>
       _.push(
-        [suit, t.name, t.value].join('_')
+        [suit.single, t.name, t.value].join('_')
       )
     )
   );
