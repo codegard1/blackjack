@@ -1,5 +1,6 @@
 export enum GameAction {
   AddToPot = 'AddToPot',
+  Deal = 'Deal',
   EndGame = 'EndGame',
   EndGameTrap = 'EndGameTrap',
   EvaluateGame = 'EvaluateGame',
@@ -15,4 +16,5 @@ export enum GameAction {
   SetSpinnerVisible = 'SetSpinnerVisible',
   SetWinner = 'SetWinner',
   ShowMessageBar = 'ShowMessageBar',
+  Stay = 'Stay',
 }

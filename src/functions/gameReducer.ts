@@ -78,7 +78,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
     // TODO
     case GameAction.NewGame: {
-      // state.controllingPlayer = undefined;
+      state.controllingPlayer = undefined;
       state.gameStatus = GameStatus.Init;
       state.pot = 0;
       state.round = state.round + 1;
@@ -152,7 +152,9 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       return state;
     }
 
-    // TODO
+    /**
+     * Reset game state to default
+     */
     case GameAction.ResetGame: {
       return gameDefaults;
     }
@@ -166,6 +168,23 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     // TODO
     case GameAction.SetWinner: {
       if (undefined !== playerKey) state.winner = playerKey;
+      return state;
+    }
+
+    /**
+     * Start a new round of a continuous game
+     */
+    case GameAction.NewRound: {
+      state.controllingPlayer = state.currentPlayerKey;
+      state.gameStatus = GameStatus.InProgress;
+      state.pot = 0;
+      state.round = state.round + 1;
+      state.turnCount = 0;
+      return state;
+    }
+
+    // TODO
+    case GameAction.Stay: {
       return state;
     }
 
