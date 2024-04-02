@@ -247,7 +247,8 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
     // TODO
     case GameAction.Ante: {
-      return state;
+      state.playerStore._allPlayersAnte(state.minimumBet);
+      return state; 
     }
 
 
