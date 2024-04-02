@@ -8,5 +8,5 @@ export interface IGameReducerAction {
   potIncrement?: number;
   controllingPlayerKey?: PlayerKey;
   gameStatus?: GameStatus;
-  playerKey?: PlayerKey;
+  playerKey?: PlayerKey | PlayerKey[];
 }

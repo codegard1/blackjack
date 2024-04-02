@@ -206,13 +206,15 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
     // TODO
     case GameAction.SetLoser: {
-      if (undefined !== playerKey) state.loser = playerKey;
+      if (undefined !== playerKey && typeof playerKey === 'string')
+        state.loser = playerKey;
       return state;
     }
 
     // TODO
     case GameAction.SetWinner: {
-      if (undefined !== playerKey) state.winner = playerKey;
+      if (undefined !== playerKey && typeof playerKey === 'string')
+        state.winner = playerKey;
       return state;
     }
 
