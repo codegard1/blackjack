@@ -14,7 +14,7 @@ export type GameState = {
   loser?: PlayerKey;
   messageBarDefinition: MessageBarDefinition;
   minimumBet: number;
-  players?: PlayerCollection;
+  players: any[];
   pot: number;
   round: number;
   turnCount: number;

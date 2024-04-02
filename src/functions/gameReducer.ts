@@ -78,6 +78,13 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
     // TODO
     case GameAction.NewGame: {
+      if (undefined !== playerKey && typeof playerKey !== 'string') {
+        state.activePlayerKeys = playerKey;
+        playerKey.forEach(v => {
+          const _p = state.players?.filter(p => p.key === v)[0];
+          state.playerStore.newPlayer(_p.key, _p.title, _p.isNPC, _p.id, _p.bank,);
+        })
+      }
       state.controllingPlayer = undefined;
       state.gameStatus = GameStatus.Init;
       state.pot = 0;

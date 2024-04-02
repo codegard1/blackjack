@@ -16,7 +16,7 @@ import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext, Set
 import { defaultplayersArr } from './definitions';
 import { DeckAction, GameAction, StoreName } from './enums';
 import { deckReducer, gameReducer, settingReducer } from './functions';
-import { DeckState, PlayerKey, SettingsState } from './types';
+import { PlayerKey, SettingsState } from './types';
 
 // Necessary in order for Fluent Icons to render on the page
 initializeIcons();
@@ -87,7 +87,7 @@ const App = () => {
                   <Table />
                   <ActivityLog />
                   <div style={{ backgroundColor: '#eee' }}>
-                    <Text>{JSON.stringify(deck1)}</Text>
+                    <Text>{JSON.stringify(gameState.playerStore.state)}</Text>
                   </div>
                 </Stack>
 
