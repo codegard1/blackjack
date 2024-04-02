@@ -1,5 +1,6 @@
 export enum GameAction {
   AddToPot = 'AddToPot',
+  Ante = 'Ante',
   Deal = 'Deal',
   EndGame = 'EndGame',
   EndGameTrap = 'EndGameTrap',
