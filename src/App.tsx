@@ -11,13 +11,11 @@ import {
 
 // Local Resources
 import './App.css';
-import AppContext from './classes/AppContext';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
 import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, deckDefaults, gameDefaults, settingDefaults } from './ctx';
 import { defaultplayersArr } from './definitions';
 import { DeckAction, GameAction, GameStatus, StoreName } from './enums';
 import { deckReducer, gameReducer, settingReducer } from './functions';
-import { IAppContextProps } from './interfaces';
 import { DeckState, MessageBarDefinition, PlayerKey, PlayerStats, SettingsState } from './types';
 
 // Necessary in order for Fluent Icons to render on the page
@@ -241,11 +239,6 @@ const App = () => {
     newActivityLogItem('All players', `ante $${amount}`, 'Money');
   }
 
-  const contextDefaults: IAppContextProps = {
-    initializeStores,
-    clearStores,
-  };
-
   React.useEffect(() => {
     // console.log('Initialization effect');
     initializeStores();
@@ -275,33 +268,31 @@ const App = () => {
 
 
   return (
-    <AppContext.Provider value={contextDefaults}>
-      <SettingContext.Provider value={settings}>
-        <SettingDispatchContext.Provider value={toggleSetting}>
-          <DeckContext.Provider value={deck1}>
-            <DeckDispatchContext.Provider value={deckDispatch}>
-              <GameContext.Provider value={gameState}>
-                <GameDispatchContext.Provider value={gameDispatch}>
+    <SettingContext.Provider value={settings}>
+      <SettingDispatchContext.Provider value={toggleSetting}>
+        <DeckContext.Provider value={deck1}>
+          <DeckDispatchContext.Provider value={deckDispatch}>
+            <GameContext.Provider value={gameState}>
+              <GameDispatchContext.Provider value={gameDispatch}>
 
-                  <Layer>
-                    <SplashScreen />
-                    <OptionsPanel />
-                  </Layer>
-                  <Stack tokens={{ childrenGap: 15 }} horizontalAlign='space-between' verticalAlign='space-evenly'>
-                    <Table />
-                    <ActivityLog />
-                    <div style={{ backgroundColor: '#eee' }}>
-                      <Text>{JSON.stringify(deck1)}</Text>
-                    </div>
-                  </Stack>
+                <Layer>
+                  <SplashScreen />
+                  <OptionsPanel />
+                </Layer>
+                <Stack tokens={{ childrenGap: 15 }} horizontalAlign='space-between' verticalAlign='space-evenly'>
+                  <Table />
+                  <ActivityLog />
+                  <div style={{ backgroundColor: '#eee' }}>
+                    <Text>{JSON.stringify(deck1)}</Text>
+                  </div>
+                </Stack>
 
-                </GameDispatchContext.Provider>
-              </GameContext.Provider>
-            </DeckDispatchContext.Provider>
-          </DeckContext.Provider>
-        </SettingDispatchContext.Provider>
-      </SettingContext.Provider>
-    </AppContext.Provider>
+              </GameDispatchContext.Provider>
+            </GameContext.Provider>
+          </DeckDispatchContext.Provider>
+        </DeckContext.Provider>
+      </SettingDispatchContext.Provider>
+    </SettingContext.Provider>
   );
 }
 

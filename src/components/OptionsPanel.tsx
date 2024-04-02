@@ -19,7 +19,6 @@ import {
 } from "@fluentui/react";
 
 // Context
-import AppContext from "../classes/AppContext";
 import { DeckDispatchContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext } from "../ctx";
 import { DeckAction, GameAction } from "../enums";
 
@@ -31,10 +30,6 @@ export const OptionsPanel: React.FC = () => {
   const gameState = React.useContext(GameContext);
   const gameDispatch = React.useContext(GameDispatchContext);
   const playerStore = gameState.playerStore;
-
-  const {
-    clearStores,
-  } = React.useContext(AppContext);
 
   const closeOptionsPanel = () => {
     toggleSetting({ key: "isOptionsPanelVisible", value: false });

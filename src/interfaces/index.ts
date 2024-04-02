@@ -1,5 +1,4 @@
 export * from './IAgentProps';
-export * from './IAppContextProps';
 export * from './ICardContainerProps';
 export * from './ICardStackProps';
 export * from './IControlPanelProps';
