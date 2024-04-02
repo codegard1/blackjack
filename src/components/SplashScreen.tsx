@@ -15,12 +15,12 @@ import {
 
 
 import { Player } from "../classes";
-import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext } from '../ctx';
+import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, DeckContext, DeckDispatchContext } from '../ctx';
 import {
   defaultPlayersDropdownOptions,
   defaultSelectedPlayerKeys
 } from "../definitions";
-import { GameAction } from "../enums";
+import { DeckAction, GameAction } from "../enums";
 import { PlayerKey } from "../types";
 
 
@@ -31,6 +31,8 @@ export const SplashScreen: React.FC = () => {
   const toggleSetting = React.useContext(SettingDispatchContext);
   const gameState = React.useContext(GameContext);
   const gameDispatch = React.useContext(GameDispatchContext);
+  const deck1 = React.useContext(DeckContext);
+  const deckDispatch = React.useContext(DeckDispatchContext);
 
   // State
   const [selectedPlayers, setSelectedPlayers] = React.useState<PlayerKey[]>(defaultSelectedPlayerKeys);
@@ -59,6 +61,8 @@ export const SplashScreen: React.FC = () => {
     } else {
       // initiate a new game     
       gameDispatch({ type: GameAction.NewGame, playerKey: selectedPlayers });
+      deckDispatch({ type: DeckAction.NewPlayerHand, playerKey: selectedPlayers });
+      gameDispatch({ type: GameAction.Ante });
       // hide the player selection modal 
       onDismissDialog();
     }
