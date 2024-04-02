@@ -21,6 +21,7 @@ import {
 // Context
 import { DeckDispatchContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext } from "../ctx";
 import { DeckAction, GameAction } from "../enums";
+import { clearStores } from "../functions";
 
 export const OptionsPanel: React.FC = () => {
 

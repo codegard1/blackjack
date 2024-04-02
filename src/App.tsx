@@ -15,7 +15,7 @@ import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
 import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, deckDefaults, gameDefaults, settingDefaults } from './ctx';
 import { defaultplayersArr } from './definitions';
 import { DeckAction, GameAction, GameStatus, StoreName } from './enums';
-import { deckReducer, gameReducer, settingReducer } from './functions';
+import { deckReducer, gameReducer, settingReducer, clearStores } from './functions';
 import { DeckState, MessageBarDefinition, PlayerKey, PlayerStats, SettingsState } from './types';
 
 // Necessary in order for Fluent Icons to render on the page
@@ -56,16 +56,6 @@ const App = () => {
       }
     }
   }
-
-  /**
-   * delete all entries from stores
-  */
-  const clearStores = () => {
-    localStorage.removeItem(StoreName.DECKSTORE);
-    localStorage.removeItem(StoreName.PLAYERSTORE);
-    localStorage.removeItem(StoreName.SETTINGSTORE);
-    localStorage.removeItem(StoreName.STATSTORE);
-  };
 
   const endGameTrap = (): boolean => {
 
