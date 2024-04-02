@@ -3,7 +3,7 @@ import { cardSuits } from "./cardSuits";
 import { cardTuples } from "./cardTuples";
 
 /** Create nique identifiers representing each card in the deck */
-export function _cardKeys(): string[] {
+export function _cardKeys(): PlayingCardKey[] {
   let _: PlayingCardKey[] = [];
   cardSuits.forEach((suit: PlayingCardSuit) =>
     cardTuples().forEach((t) =>

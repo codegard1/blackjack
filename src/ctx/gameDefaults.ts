@@ -1,11 +1,12 @@
 import { MessageBarType } from "@fluentui/react"
-import { PlayerStore } from "../classes"
+import { PlayerStore, PlayingCardDeck } from "../classes"
 import { defaultplayersArr } from "../definitions"
 import { GameStatus } from "../enums"
 import { GameState } from "../types"
 
 export const gameDefaults: GameState = {
   gameStatus: GameStatus.Init,
+  deck: new PlayingCardDeck(),
   gameStatusFlag: false,
   isSpinnerVisible: false,
   loser: undefined,
