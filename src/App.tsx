@@ -14,7 +14,7 @@ import './App.css';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
 import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, deckDefaults, gameDefaults, settingDefaults } from './ctx';
 import { defaultplayersArr } from './definitions';
-import { DeckAction, GameAction, GameStatus, StoreName } from './enums';
+import { DeckAction, GameAction, StoreName } from './enums';
 import { deckReducer, gameReducer, settingReducer } from './functions';
 import { DeckState, PlayerKey, SettingsState } from './types';
 
@@ -24,29 +24,29 @@ initializeIcons();
 // Main Component
 const App = () => {
 
-  // NEW State using Reducers
+  // State using Reducers
   const [settings, toggleSetting] = React.useReducer(settingReducer, settingDefaults);
   const [deck1, deckDispatch] = React.useReducer(deckReducer, deckDefaults);
   const [gameState, gameDispatch] = React.useReducer(gameReducer, gameDefaults);
-  const { playerStore, loser, winner, lastWriteTime, pot, round, turnCount } = gameState;
+  const { playerStore, } = gameState;
 
   //----------------------------------------------------------------//
 
-  // DEPRECATED 
-  const newActivityLogItem = (name: string, description: string, iconName: string) => { };
+  const newGame = (selectedPlayers: PlayerKey[]) => {
+    deckDispatch({ type: DeckAction.Reset });
+    selectedPlayers.forEach((pk, ix) => {
+      deckDispatch({ type: DeckAction.NewPlayerHand, playerKey: pk });
+      const _p = defaultplayersArr.find(v => v.key === pk);
+      // if (_p) console.log(JSON.stringify(_p));
+      if (_p) playerStore!.newPlayer(pk, _p?.title, _p?.isNPC, ix, _p?.bank, _p?.disabled)
+    });
+    gameDispatch({ type: GameAction.NewRound });
+  };
 
-  /**
-   * Get values from localStorage
-   */
-  const initializeStores = () => {
-    const _playerStore = localStorage.getItem(StoreName.PLAYERSTORE);
-    const _deckStore = localStorage.getItem(StoreName.DECKSTORE);
-    if (null !== _deckStore) {
-      const _ds: DeckState = JSON.parse(_deckStore);
-      for (let key in _ds) {
-        // if (key !== 'isSplashScreenVisible') toggleSetting({ key, value: _ss[key] });
-      }
-    }
+  // Read values from localStorage
+  React.useEffect(() => {
+    // const _playerStore = localStorage.getItem(StoreName.PLAYERSTORE);
+    // const _deckStore = localStorage.getItem(StoreName.DECKSTORE);
 
     const _settingStore = localStorage.getItem(StoreName.SETTINGSTORE);
     if (null !== _settingStore) {
@@ -55,65 +55,21 @@ const App = () => {
         if (key !== 'isSplashScreenVisible') toggleSetting({ key, value: _ss[key] });
       }
     }
-  }
+  }, []);
 
-  /**
-   *  GAME ACTIONS
-   */
-  const deal = (playerKey: PlayerKey) => {
-    deckDispatch({ type: DeckAction.Draw, playerKey, numberOfCards: 2, deckSide: 'top' });
-    gameDispatch({ type: GameAction.SetGameStatus, gameStatus: GameStatus.InProgress });
-  }
-
-  const hit = (playerKey: string) => {
-    deckDispatch({ type: DeckAction.Draw, playerKey, numberOfCards: 1, deckSide: 'top' });
-  }
-
-  const newGame = (selectedPlayers: PlayerKey[]) => {
-    deckDispatch({ type: DeckAction.Reset });
-    selectedPlayers.forEach((pk, ix) => {
-      deckDispatch({ type: DeckAction.NewPlayerHand, playerKey: pk });
-      deal(pk);
-      const _p = defaultplayersArr.find(v => v.key === pk);
-      // if (_p) console.log(JSON.stringify(_p));
-      if (_p) playerStore!.newPlayer(pk, _p?.title, _p?.isNPC, ix, _p?.bank, _p?.disabled)
-    });
-    gameDispatch({ type: GameAction.NewRound });
-  };
-
-  const _ante = (amount: number) => {
-    playerStore._allPlayersAnte(amount);
-    gameDispatch({ type: GameAction.AddToPot, potIncrement: (amount * playerStore.length) })
-    newActivityLogItem('All players', `ante $${amount}`, 'Money');
-  }
-
+  // Save deck state to localStorage
   React.useEffect(() => {
-    // console.log('Initialization effect');
-    initializeStores();
-  }, [])
-
-  React.useEffect(() => {
-    if (null !== deck1) {
-      //   console.log('Deck effect');
-
+    if (!!deck1) {
       localStorage.setItem(StoreName.DECKSTORE, JSON.stringify(deck1));
     }
   }, [deck1]);
 
-  React.useEffect(() => {
-    // if (null !== playerStore) {
-    //   console.log('Players effect', playerStore.state);
-    //   localStorage.setItem(StoreName.PLAYERSTORE, JSON.stringify(playerStore.state));
-    // }
-  }, [playerStore.state]);
-
+  // Save settings state to localStorage
   React.useEffect(() => {
     if (!!settings) {
       localStorage.setItem(StoreName.SETTINGSTORE, JSON.stringify(settings));
     }
   }, [settings]);
-
-
 
   return (
     <SettingContext.Provider value={settings}>
