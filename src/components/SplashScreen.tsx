@@ -9,7 +9,8 @@ import {
   Dropdown,
   IDropdownOption,
   PrimaryButton,
-  ResponsiveMode
+  ResponsiveMode,
+  Text,
 } from '@fluentui/react';
 
 
@@ -33,16 +34,15 @@ export const SplashScreen: React.FC = () => {
 
   // State
   const [selectedPlayers, setSelectedPlayers] = React.useState<PlayerKey[]>(defaultSelectedPlayerKeys);
-
+  const [errorMessage, setErrorMessage] = React.useState<string>();
 
   const onChangeDropDown = (event: React.FormEvent<HTMLDivElement>, option: IDropdownOption<Player> | undefined, index?: number): void => {
-    if (option) {
+    if (!!option) {
+      const { key, selected } = option;
       const _selectedPlayers = selectedPlayers.slice();
-      if (option!.selected && _selectedPlayers.indexOf(option!.key as PlayerKey) === -1) {
-        _selectedPlayers.push(option!.key as PlayerKey);
-      } else if (!option?.selected && option!.key in selectedPlayers) {
-        _selectedPlayers.splice(_selectedPlayers.indexOf(option!.key as PlayerKey), 1);
-      }
+      const _ix = _selectedPlayers.indexOf(key as PlayerKey);
+      if (true === selected && _ix === -1) _selectedPlayers.push(key as PlayerKey);
+      if (false === selected && _ix !== -1) _selectedPlayers.splice(_ix, 1);
       setSelectedPlayers(_selectedPlayers);
     }
   }
@@ -53,11 +53,15 @@ export const SplashScreen: React.FC = () => {
   }
 
   function onClickStartButton() {
-    // initiate a new game     
-    gameDispatch({ type: GameAction.NewGame, playerKey: selectedPlayers });
-
-    // hide the player selection modal 
-    onDismissDialog();
+    if (selectedPlayers.length < 2) {
+      setErrorMessage('You must select at least 2 players');
+      return;
+    } else {
+      // initiate a new game     
+      gameDispatch({ type: GameAction.NewGame, playerKey: selectedPlayers });
+      // hide the player selection modal 
+      onDismissDialog();
+    }
   }
 
   return (
@@ -89,8 +93,9 @@ export const SplashScreen: React.FC = () => {
         multiSelect
         onChange={onChangeDropDown}
         options={defaultPlayersDropdownOptions}
-        defaultSelectedKeys={defaultSelectedPlayerKeys}
+        defaultSelectedKeys={selectedPlayers}
       />
+      <Text block styles={{ root: { margin: '1em', color: 'salmon' } }}>{errorMessage}</Text>
       <DialogFooter>
         <PrimaryButton text="Start" onClick={onClickStartButton} />
       </DialogFooter>
