@@ -54,7 +54,7 @@ export const SplashScreen: React.FC = () => {
 
   function onClickStartButton() {
     // initiate a new game     
-    gameDispatch({ type: GameAction.NewGame });
+    gameDispatch({ type: GameAction.NewGame, playerKey: selectedPlayers });
 
     // hide the player selection modal 
     onDismissDialog();
