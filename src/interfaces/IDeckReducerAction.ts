@@ -7,7 +7,7 @@ import { PlayerKey, PlayingCardKey } from "../types";
 export interface IDeckReducerAction {
   type: DeckAction;
   cardKey?: PlayingCardKey;
-  playerKey?: PlayerKey;
+  playerKey?: PlayerKey | PlayerKey[];
   numberOfCards?: number;
   deckSide?: 'top' | 'bottom' | 'random';
 }

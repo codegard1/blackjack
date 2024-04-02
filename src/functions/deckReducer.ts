@@ -25,8 +25,13 @@ export function deckReducer(deck: DeckState, action: IDeckReducerAction) {
     // Create an entry in the playerHands list for the given Player
     case DeckAction.NewPlayerHand: {
       console.log('DeckAction.NewPlayerHand', playerKey, JSON.stringify(deck.playerHands));
-      if ((undefined !== playerKey) && !(playerKey in deck.playerHands))
+      // Single Player
+      if (undefined !== playerKey && typeof playerKey === 'string')
         deck.playerHands[playerKey] = [];
+      // Multiple Players
+      if (undefined !== playerKey && typeof playerKey !== 'string') {
+        playerKey.forEach((pk) => deck.playerHands[pk] = []);
+      }
       return deck;
     }
 
@@ -61,7 +66,8 @@ export function deckReducer(deck: DeckState, action: IDeckReducerAction) {
           case 'top': {
             const _drawn = deck.cardKeys.splice(0, _num);
             deck.drawnKeys.push(..._drawn);
-            if (undefined !== playerKey) deck.playerHands[playerKey].push(..._drawn);
+            if (undefined !== playerKey && typeof playerKey === 'string')
+              deck.playerHands[playerKey].push(..._drawn);
             break;
           }
           case 'random': {
@@ -69,15 +75,16 @@ export function deckReducer(deck: DeckState, action: IDeckReducerAction) {
               const _ix = getRandomIndex(deck.cardKeys);
               const _drawn = deck.cardKeys.splice(_ix, 1);
               deck.drawnKeys.push(..._drawn);
-              if (undefined !== playerKey) deck.playerHands[playerKey].push(..._drawn);
+              if (undefined !== playerKey && typeof playerKey === 'string')
+                deck.playerHands[playerKey].push(..._drawn);
             }
             break;
           }
           default: {
-
             const _drawn = deck.cardKeys.splice(deck.cardKeys.length - _num - 1);
             deck.drawnKeys.push(..._drawn);
-            if (undefined !== playerKey) deck.playerHands[playerKey].push(..._drawn);
+            if (undefined !== playerKey && typeof playerKey === 'string')
+              deck.playerHands[playerKey].push(..._drawn);
             break;
           }
         }
