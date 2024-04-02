@@ -8,7 +8,6 @@ export * from './IControlPanelStore';
 export * from './IDeckCalloutProps';
 export * from './IDeckReducerAction';
 export * from './IGameReducerAction';
-export * from './IGameStoreProps';
 export * from './IPlayer';
 export * from './IPlayerContainerProps';
 export * from './IPlayerOpts';
@@ -23,3 +22,4 @@ export * from './IPlayingCardSuit';
 export * from './ISettingReducerAction';
 export * from './ISettingStoreProps';
 export * from './IStatusDisplayProps';
+

@@ -17,7 +17,7 @@ import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext, Set
 import { defaultplayersArr } from './definitions';
 import { DeckAction, GameAction, GameStatus, StoreName } from './enums';
 import { deckReducer, gameReducer, settingReducer } from './functions';
-import { IAppContextProps, IGameStoreProps } from './interfaces';
+import { IAppContextProps } from './interfaces';
 import { DeckState, MessageBarDefinition, PlayerKey, PlayerStats, SettingsState } from './types';
 
 // Necessary in order for Fluent Icons to render on the page
