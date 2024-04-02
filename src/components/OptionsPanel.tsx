@@ -20,18 +20,19 @@ import {
 
 // Context
 import AppContext from "../classes/AppContext";
-import { DeckDispatchContext, SettingContext, SettingDispatchContext } from "../ctx";
-import { DeckAction } from "../enums";
+import { DeckDispatchContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext } from "../ctx";
+import { DeckAction, GameAction } from "../enums";
 
 export const OptionsPanel: React.FC = () => {
 
   const settings = React.useContext(SettingContext);
   const toggleSetting = React.useContext(SettingDispatchContext);
   const deckDispatch = React.useContext(DeckDispatchContext);
+  const gameState = React.useContext(GameContext);
+  const gameDispatch = React.useContext(GameDispatchContext);
+  const playerStore = gameState.playerStore;
 
   const {
-    gameStore,
-    playerStore,
     clearStores,
   } = React.useContext(AppContext);
 
@@ -43,16 +44,14 @@ export const OptionsPanel: React.FC = () => {
    * Reset the game from the Options Panel
    */
   const resetGame = () => {
-    gameStore?.resetGame();
     deckDispatch({ type: DeckAction.Reset });
-    gameStore?.showMessageBar({ text: 'Game Reset', type: MessageBarType.info, isMultiLine: false });
+    gameDispatch({ type: GameAction.ResetGame });
+    gameDispatch({ type: GameAction.ShowMessageBar, messageBarDefinition: { text: 'Game Reset', type: MessageBarType.info, isMultiLine: false } });
     closeOptionsPanel();
   }
 
   const newDeal = () => {
-    playerStore?.all.forEach((p) => {
-      gameStore.deal(p.key);
-    })
+    playerStore.all.forEach(p => deckDispatch({ type: DeckAction.Draw, playerKey: p.key }));
     closeOptionsPanel();
   }
 

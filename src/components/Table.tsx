@@ -21,8 +21,7 @@ import {
 
 // Context
 import { PlayingCard } from "../classes";
-import AppContext from "../classes/AppContext";
-import { DeckContext, DeckDispatchContext, SettingContext, SettingDispatchContext, GameContext, GameDispatchContext } from '../ctx';
+import { DeckContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext } from '../ctx';
 
 
 export const Table: React.FC = () => {
@@ -33,10 +32,8 @@ export const Table: React.FC = () => {
   const deck1 = React.useContext(DeckContext);
   const gameState = React.useContext(GameContext);
   const gameDispatch = React.useContext(GameDispatchContext);
-  const {
-    playerStore,
-    gameStore,
-  } = React.useContext(AppContext);
+  const playerStore = gameState.playerStore;
+
 
   /**
    * Toggle the Options Panel visibility

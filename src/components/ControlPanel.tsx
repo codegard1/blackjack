@@ -5,10 +5,9 @@ import React from "react";
 import { CommandBar, ICommandBarItemProps, MessageBarType, nullRender } from "@fluentui/react";
 
 // Local Resources
-import AppContext from "../classes/AppContext";
 import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext } from "../ctx";
+import { DeckAction, GameAction } from "../enums";
 import { IControlPanelProps } from "../interfaces";
-import { DeckAction } from "../enums";
 
 // Component
 export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
@@ -17,10 +16,6 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const deckDispatch = React.useContext(DeckDispatchContext);
   const gameState = React.useContext(GameContext);
   const gameDispatch = React.useContext(GameDispatchContext);
-
-  const {
-    gameStore,
-  } = React.useContext(AppContext);
   const { gameStatusFlag, gameStatus, minimumBet } = gameState;
 
   const {
@@ -118,7 +113,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
       ariaLabel: "Stay",
       iconProps: { iconName: "Forward" },
       disabled: gameStatusFlag || playerStatusFlag,
-      onClick: () => playerKey ? gameStore?.stay(playerKey) : null,
+      onClick: () => gameDispatch({ type: GameAction.Stay }),
     }
   ];
 
@@ -169,8 +164,11 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
         disabled: gameStatusFlag,
         onClick: () => {
           deckDispatch({ type: DeckAction.Reset });
-          gameStore.newRound();
-          gameStore.showMessageBar({ text: "New Round", type: MessageBarType.info, isMultiLine: false });
+          gameDispatch({ type: GameAction.NewRound });
+          gameDispatch({
+            type: GameAction.ShowMessageBar,
+            messageBarDefinition: { text: "New Round", type: MessageBarType.info, isMultiLine: false }
+          })
         }
       }
     ];

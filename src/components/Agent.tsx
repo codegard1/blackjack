@@ -6,21 +6,19 @@ import { Spinner, SpinnerSize } from '@fluentui/react';
 import { MotionAnimations } from '@fluentui/theme';
 
 // Context
-import AppContext from "../classes/AppContext";
 
 // Local Resources
-import { GameContext, GameDispatchContext } from "../ctx";
+import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext } from "../ctx";
+import { DeckAction, GameAction } from "../enums";
 import { IAgentProps } from "../interfaces/IAgentProps";
-import { GameAction } from "../enums";
 
 export const Agent: React.FC<IAgentProps> = (props) => {
 
   // Context
   const gameState = React.useContext(GameContext);
   const gameDispatch = React.useContext(GameDispatchContext);
-  const {
-    gameStore,
-  } = React.useContext(AppContext);
+  const deck1 = React.useContext(DeckContext);
+  const deckDispatch = React.useContext(DeckDispatchContext);
 
   // State
   const [lastAction, setLastAction] = React.useState<string>('');
@@ -39,7 +37,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
         /* when to hit */
         if (aceAsEleven <= 16 || aceAsOne <= 16) {
           setSpinnerLabel("Hit");
-          gameStore?.hit(props.playerKey)
+          deckDispatch({ type: DeckAction.Draw, playerKey: props.playerKey, numberOfCards: 1 });
         }
 
         /* when to stay */
@@ -48,7 +46,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
           (aceAsEleven >= 17 && aceAsEleven <= 21)
         ) {
           setSpinnerLabel("Stay");
-          gameStore?.stay(props.playerKey);
+          gameDispatch({ type: GameAction.Stay });
         }
       } else {
         setSpinnerLabel("Okay, that's it!");

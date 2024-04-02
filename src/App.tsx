@@ -11,7 +11,6 @@ import {
 
 // Local Resources
 import './App.css';
-import { PlayerStore } from './classes';
 import AppContext from './classes/AppContext';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
 import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, deckDefaults, gameDefaults, settingDefaults } from './ctx';
@@ -31,19 +30,11 @@ const App = () => {
   const [settings, toggleSetting] = React.useReducer(settingReducer, settingDefaults);
   const [deck1, deckDispatch] = React.useReducer(deckReducer, deckDefaults);
   const [gameState, gameDispatch] = React.useReducer(gameReducer, gameDefaults);
+  const { playerStore, loser, winner, lastWriteTime, pot, round, turnCount } = gameState;
 
   //----------------------------------------------------------------//
 
-  // State
-  const [playerStore] = React.useState<PlayerStore>(new PlayerStore());
-  const [loser, setLoser] = React.useState<PlayerKey>();
-  const [lastWriteTime, setLastWriteTime] = React.useState<string>('');
-
   // DEPRECATED 
-  const [winner, setWinner] = React.useState<PlayerKey>();
-  const [pot, setPot] = React.useState<number>(0);
-  const [round, setRound] = React.useState<number>(0);
-  const [turnCount, setTurnCount] = React.useState<number>(0);
   const newActivityLogItem = (name: string, description: string, iconName: string) => { };
 
   /**
@@ -168,20 +159,12 @@ const App = () => {
 
   const resetGame = () => {
     deckDispatch({ type: DeckAction.Reset });
-    gameDispatch({ type: GameAction.SetControllingPlayer, controllingPlayerKey: undefined })
-    gameDispatch({ type: GameAction.SetGameStatus, gameStatus: GameStatus.Init });
-    setPot(0);
-    setRound(0);
-    setTurnCount(0);
+    gameDispatch({ type: GameAction.ResetGame });
   };
 
   const newRound = () => {
     /* reset state props to default */
-    gameDispatch({ type: GameAction.SetControllingPlayer, controllingPlayerKey: playerStore.currentPlayer?.key })
-    gameDispatch({ type: GameAction.SetGameStatus, gameStatus: GameStatus.Init });
-    setPot(0);
-    setRound(round + 1);
-    setTurnCount(0);
+    gameDispatch({ type: GameAction.NewRound });
 
     /* start a new round with a new deck */
     // PlayersStore.currentPlayer.startTurn();
@@ -198,7 +181,7 @@ const App = () => {
         console.log('Game Status: InProgress');
         /*   all players bet the minimum to start  */
         if (turnCount === 0) _ante(gameState.minimumBet);
-        setTurnCount(turnCount + 1);
+        gameDispatch({ type: GameAction.IncrementTurn });
         endGameTrap();
         break;
 
@@ -226,16 +209,16 @@ const App = () => {
         const winningPlayerTitle = playerStore.all[0].title;
         newActivityLogItem(winningPlayerTitle, 'wins!', 'Crown');
 
-        setWinner(playerStore.all[0].key);
-        setLoser(playerStore.all[1].key);
+        gameDispatch({ type: GameAction.SetWinner, playerKey: playerStore.all[0].key });
+        gameDispatch({ type: GameAction.SetLoser, playerKey: playerStore.all[1].key });
         playerStore._payout(playerStore.all[0].key, pot);
         gameDispatch({ type: GameAction.SetWinner, })
         break;
 
       case GameStatus.DealerWins:
         console.log('Game Status: DealerWins');
-        setWinner(playerStore.all[1].key);
-        setLoser(playerStore.all[0].key);
+        gameDispatch({ type: GameAction.SetWinner, playerKey: playerStore.all[1].key });
+        gameDispatch({ type: GameAction.SetLoser, playerKey: playerStore.all[0].key });
         playerStore._payout(playerStore.all[1].key, pot);
         newActivityLogItem(playerStore.all[1].title, 'wins!', 'Crown');
         gameDispatch({ type: GameAction.EndGame });
@@ -254,36 +237,13 @@ const App = () => {
 
   const _ante = (amount: number) => {
     playerStore._allPlayersAnte(amount);
-    setPot(pot + amount * playerStore.length);
+    gameDispatch({ type: GameAction.AddToPot, potIncrement: (amount * playerStore.length) })
     newActivityLogItem('All players', `ante $${amount}`, 'Money');
-  }
-
-
-  // All variables and functions related to Game state
-  const gameStore: IGameStoreProps = {
-    bet,
-    deal,
-    hideMessageBar,
-    hit,
-    lastWriteTime, setLastWriteTime,
-    loser, setLoser,
-    newActivityLogItem,
-    newGame,
-    newRound,
-    pot, setPot,
-    resetGame,
-    round, setRound,
-    showMessageBar,
-    stay,
-    turnCount, setTurnCount,
-    winner, setWinner,
   }
 
   const contextDefaults: IAppContextProps = {
     initializeStores,
     clearStores,
-    playerStore,
-    gameStore,
   };
 
   React.useEffect(() => {

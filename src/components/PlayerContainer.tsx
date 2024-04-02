@@ -12,9 +12,8 @@ import { IPlayerContainerProps } from "../interfaces";
 import "./PlayerContainer.css";
 
 // Context
-import AppContext from "../classes/AppContext";
-import { DeckContext, GameContext } from "../ctx";
 import { PlayingCard } from "../classes";
+import { DeckContext, GameContext } from "../ctx";
 
 // Component
 export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
@@ -22,10 +21,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   // Context
   const deck1 = React.useContext(DeckContext);
   const gameState = React.useContext(GameContext);
-  const {
-    playerStore,
-    gameStore,
-  } = React.useContext(AppContext);
+  const playerStore = gameState.playerStore;
 
   // State
   const [isStatusCalloutVisible, setStatusCalloutVisible] = React.useState<boolean>(false);

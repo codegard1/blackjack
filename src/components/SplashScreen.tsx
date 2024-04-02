@@ -12,14 +12,14 @@ import {
   ResponsiveMode
 } from '@fluentui/react';
 
-import AppContext from "../classes/AppContext";
 
 import { Player } from "../classes";
-import { SettingContext, SettingDispatchContext } from '../ctx';
+import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext } from '../ctx';
 import {
   defaultPlayersDropdownOptions,
   defaultSelectedPlayerKeys
 } from "../definitions";
+import { GameAction } from "../enums";
 import { PlayerKey } from "../types";
 
 
@@ -28,9 +28,8 @@ export const SplashScreen: React.FC = () => {
   // Context
   const settings = React.useContext(SettingContext);
   const toggleSetting = React.useContext(SettingDispatchContext);
-  const {
-    gameStore,
-  } = React.useContext(AppContext);
+  const gameState = React.useContext(GameContext);
+  const gameDispatch = React.useContext(GameDispatchContext);
 
   // State
   const [selectedPlayers, setSelectedPlayers] = React.useState<PlayerKey[]>(defaultSelectedPlayerKeys);
@@ -55,7 +54,7 @@ export const SplashScreen: React.FC = () => {
 
   function onClickStartButton() {
     // initiate a new game     
-    gameStore.newGame(selectedPlayers);
+    gameDispatch({ type: GameAction.NewGame });
 
     // hide the player selection modal 
     onDismissDialog();
