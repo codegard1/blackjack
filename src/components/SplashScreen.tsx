@@ -7,21 +7,20 @@ import {
 } from '@fluentui/react';
 
 import { Player } from "../classes";
-import { useDeckContext, useGameContext, useSettingContext } from '../context';
+import { useGameContext, useSettingContext } from '../context';
 import {
   defaultPlayersDropdownOptions,
   defaultSelectedPlayerKeys
 } from "../definitions";
-import { DeckAction, GameAction } from "../enums";
+import { GameAction } from "../enums";
 import { PlayerKey } from "../types";
 
 
 export const SplashScreen: React.FC = () => {
 
   // Context
-  const { settings, toggleSetting } = useSettingContext(),
-    { gameState, gameDispatch } = useGameContext(),
-    { deckState, deckDispatch } = useDeckContext();
+  const { settings, toggleSetting } = useSettingContext();
+  const { gameState, gameDispatch } = useGameContext();
 
   // State
   const [selectedPlayers, setSelectedPlayers] = React.useState<PlayerKey[]>(defaultSelectedPlayerKeys);
@@ -51,10 +50,6 @@ export const SplashScreen: React.FC = () => {
     } else {
       // initiate a new game     
       gameDispatch({ type: GameAction.NewGame, playerKey: selectedPlayers });
-      deckDispatch({ type: DeckAction.NewPlayerHand, playerKey: selectedPlayers });
-      gameDispatch({ type: GameAction.NewRound });
-      gameDispatch({ type: GameAction.Ante });
-      // hide the player selection modal 
       onDismissDialog();
     }
   }

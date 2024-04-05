@@ -5,19 +5,17 @@ import React from 'react';
 import {
   Layer,
   Stack,
-  Text,
-  initializeIcons,
+  initializeIcons
 } from '@fluentui/react';
 
 // Local Resources
 import './App.css';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
-import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, deckDefaults, gameDefaults, settingDefaults } from './context';
-import { defaultplayersArr } from './definitions';
-import { DeckAction, GameAction, StoreName } from './enums';
-import { deckReducer, gameReducer, settingReducer } from './functions';
-import { PlayerKey, SettingsState } from './types';
 import { DebugWindow } from './components/DebugWindow';
+import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, gameDefaults, settingDefaults } from './context';
+import { StoreName } from './enums';
+import { gameReducer, settingReducer } from './functions';
+import { SettingsState } from './types';
 
 // Necessary in order for Fluent Icons to render on the page
 initializeIcons();
@@ -26,10 +24,9 @@ initializeIcons();
 const App = () => {
 
   // State from context
-  const [settings, toggleSetting] = React.useReducer(settingReducer, settingDefaults),
-    [deckState, deckDispatch] = React.useReducer(deckReducer, deckDefaults),
-    [gameState, gameDispatch] = React.useReducer(gameReducer, gameDefaults);
-  const { playerStore, } = gameState;
+  const [settings, toggleSetting] = React.useReducer(settingReducer, settingDefaults);
+  const [gameState, gameDispatch] = React.useReducer(gameReducer, gameDefaults);
+  const deckState = gameState.deck;
 
   // Read values from localStorage
   React.useEffect(() => {
@@ -62,25 +59,21 @@ const App = () => {
   return (
     <SettingContext.Provider value={settings}>
       <SettingDispatchContext.Provider value={toggleSetting}>
-        <DeckContext.Provider value={deckState}>
-          <DeckDispatchContext.Provider value={deckDispatch}>
-            <GameContext.Provider value={gameState}>
-              <GameDispatchContext.Provider value={gameDispatch}>
+        <GameContext.Provider value={gameState}>
+          <GameDispatchContext.Provider value={gameDispatch}>
 
-                <Layer>
-                  <SplashScreen />
-                  <OptionsPanel />
-                </Layer>
-                <Stack tokens={{ childrenGap: 15 }} horizontalAlign='space-between' verticalAlign='space-evenly'>
-                  <Table />
-                  <ActivityLog />
-                  <DebugWindow />
-                </Stack>
+            <Layer>
+              <SplashScreen />
+              <OptionsPanel />
+            </Layer>
+            <Stack tokens={{ childrenGap: 15 }} horizontalAlign='space-between' verticalAlign='space-evenly'>
+              <Table />
+              <ActivityLog />
+              <DebugWindow />
+            </Stack>
 
-              </GameDispatchContext.Provider>
-            </GameContext.Provider>
-          </DeckDispatchContext.Provider>
-        </DeckContext.Provider>
+          </GameDispatchContext.Provider>
+        </GameContext.Provider>
       </SettingDispatchContext.Provider>
     </SettingContext.Provider>
   );
