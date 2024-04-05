@@ -82,7 +82,9 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       return state;
     }
 
-    // TODO
+    /**
+     * Initiate a new game from scratch
+     */
     case GameAction.NewGame: {
       state.deck.shuffle();
       if (undefined !== playerKey && typeof playerKey !== 'string') {
@@ -91,6 +93,8 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
           const _p = state.players.find(p => p.key === v);
           state.playerStore.newPlayer(_p.key, _p.title, _p.isNPC, _p.id, _p.bank,);
           state.deck.newPlayerHand(_p.key);
+          const drawnCards = state.deck.draw(2);
+          state.deck.playerHands[_p.key].cards.push(...drawnCards);
         });
       }
       state.controllingPlayer = undefined;
