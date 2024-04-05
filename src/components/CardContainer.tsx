@@ -14,10 +14,10 @@ import {
 } from '@fluentui/theme';
 
 // Local Resources
-import { DeckContext, DeckDispatchContext } from '../context';
+import { useDeckContext } from '../context';
+import { DeckAction } from '../enums';
 import { ICardContainerProps } from '../interfaces';
 import { SuitCollection, SuitCollectionKey, SuitKey } from '../types';
-import { DeckAction } from '../enums';
 
 // Fluent UI styles
 const cardStyles = {
@@ -67,8 +67,7 @@ const cardStyles = {
 export const CardContainer: React.FC<ICardContainerProps> = (props) => {
 
   // Context
-  const deck1 = React.useContext(DeckContext);
-  const deckDispatch = React.useContext(DeckDispatchContext);
+  const { deckState, deckDispatch } = useDeckContext();
 
   // State
   const [isSelected, setSelected] = React.useState<boolean>(false);

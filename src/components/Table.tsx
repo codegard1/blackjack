@@ -21,15 +21,15 @@ import {
 
 // Context
 import { PlayingCard } from "../classes";
-import { DeckContext, useGameContext, useSettingContext } from '../context';
+import { useDeckContext, useGameContext, useSettingContext } from '../context';
 
 
 export const Table: React.FC = () => {
 
   // Context
-  const { settings,toggleSetting } = useSettingContext();
-  const deck1 = React.useContext(DeckContext);
-  const { gameState, gameDispatch } = useGameContext();
+  const { settings, toggleSetting } = useSettingContext(),
+    { deckState } = useDeckContext(),
+    { gameState, gameDispatch } = useGameContext();
   const playerStore = gameState.playerStore;
 
 
@@ -87,12 +87,12 @@ export const Table: React.FC = () => {
         </Stack>
       </Stack>
 
-      {!settings.isSplashScreenVisible && null !== deck1.cardKeys &&
+      {!settings.isSplashScreenVisible && null !== deckState.cardKeys &&
         <Stack verticalAlign="stretch" wrap tokens={{ childrenGap: 10, padding: 10 }} verticalFill>
 
           <StackItem>
             <CardStack
-              cards={deck1.cardKeys.map((ck) => new PlayingCard(ck))}
+              cards={deckState.cardKeys.map((ck) => new PlayingCard(ck))}
               title="Deck"
               hidden={!settings.isDeckVisible}
               isSelectable={false}
@@ -100,7 +100,7 @@ export const Table: React.FC = () => {
           </StackItem>
           <StackItem>
             <CardStack
-              cards={deck1.drawnKeys.map((ck) => new PlayingCard(ck))}
+              cards={deckState.drawnKeys.map((ck) => new PlayingCard(ck))}
               title="Drawn Cards"
               hidden={!settings.isDrawnVisible}
               isSelectable={false}
@@ -108,7 +108,7 @@ export const Table: React.FC = () => {
           </StackItem>
           <StackItem>
             <CardStack
-              cards={deck1.selectedKeys.map((ck) => new PlayingCard(ck))}
+              cards={deckState.selectedKeys.map((ck) => new PlayingCard(ck))}
               title="Selected Cards"
               hidden={!settings.isSelectedVisible}
               isSelectable={false}

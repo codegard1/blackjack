@@ -8,7 +8,7 @@ import { MotionAnimations } from '@fluentui/theme';
 // Context
 
 // Local Resources
-import { DeckContext, DeckDispatchContext, useGameContext } from "../context";
+import { useDeckContext, useGameContext } from "../context";
 import { DeckAction, GameAction } from "../enums";
 import { IAgentProps } from "../interfaces/IAgentProps";
 
@@ -16,8 +16,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
 
   // Context
   const { gameState, gameDispatch } = useGameContext();
-  const deck1 = React.useContext(DeckContext);
-  const deckDispatch = React.useContext(DeckDispatchContext);
+  const { deckState, deckDispatch } = useDeckContext();
 
   // State
   const [lastAction, setLastAction] = React.useState<string>('');
