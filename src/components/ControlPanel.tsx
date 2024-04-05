@@ -161,7 +161,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
         iconProps: { iconName: "Refresh" },
         disabled: gameStatusFlag,
         onClick: () => {
-          gameDispatch({ type: GameAction.Reset });
+          gameDispatch({ type: GameAction.ResetGame });
           gameDispatch({ type: GameAction.NewRound });
           gameDispatch({
             type: GameAction.ShowMessageBar,
