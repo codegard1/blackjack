@@ -19,7 +19,7 @@ export const DebugWindow: React.FC = () => {
     <Stack styles={{ root: { backgroundColor: '#eee' } }}>
       <Text as='h1' block onClick={() => setDeckStateVisible(!isDeckStateVisible)}>
         Deck</Text>
-      {isDeckStateVisible ? <JsonViewer data={deckState} /> : nullRender()}
+      {isDeckStateVisible ? <JsonViewer data={gameState.deck} /> : nullRender()}
 
       <Text as='h1' block onClick={() => setGameStateVisible(!isGameStateVisible)}>
         Game</Text>
