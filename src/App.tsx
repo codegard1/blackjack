@@ -12,7 +12,7 @@ import {
 // Local Resources
 import './App.css';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
-import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, deckDefaults, gameDefaults, settingDefaults } from './ctx';
+import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, deckDefaults, gameDefaults, settingDefaults } from './context';
 import { defaultplayersArr } from './definitions';
 import { DeckAction, GameAction, StoreName } from './enums';
 import { deckReducer, gameReducer, settingReducer } from './functions';
@@ -24,14 +24,15 @@ initializeIcons();
 // Main Component
 const App = () => {
 
-  // State using Reducers
-  const [settings, toggleSetting] = React.useReducer(settingReducer, settingDefaults);
-  const [deck1, deckDispatch] = React.useReducer(deckReducer, deckDefaults);
-  const [gameState, gameDispatch] = React.useReducer(gameReducer, gameDefaults);
+  // State from context
+  const [settings, toggleSetting] = React.useReducer(settingReducer, settingDefaults),
+    [deck1, deckDispatch] = React.useReducer(deckReducer, deckDefaults),
+    [gameState, gameDispatch] = React.useReducer(gameReducer, gameDefaults);
   const { playerStore, } = gameState;
 
   //----------------------------------------------------------------//
 
+  // TODO: replicate this in a reducer function
   const newGame = (selectedPlayers: PlayerKey[]) => {
     deckDispatch({ type: DeckAction.Reset });
     selectedPlayers.forEach((pk, ix) => {
@@ -87,7 +88,7 @@ const App = () => {
                   <Table />
                   <ActivityLog />
                   <div style={{ backgroundColor: '#eee' }}>
-                    <Text>{JSON.stringify(gameState.playerStore.state)}</Text>
+
                   </div>
                 </Stack>
 

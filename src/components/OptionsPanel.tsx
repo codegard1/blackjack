@@ -19,7 +19,7 @@ import {
 } from "@fluentui/react";
 
 // Context
-import { DeckDispatchContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext } from "../ctx";
+import { DeckDispatchContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext } from "../context";
 import { DeckAction, GameAction } from "../enums";
 import { clearStores } from "../functions";
 

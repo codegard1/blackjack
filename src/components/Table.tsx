@@ -21,7 +21,7 @@ import {
 
 // Context
 import { PlayingCard } from "../classes";
-import { DeckContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext } from '../ctx';
+import { DeckContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext } from '../context';
 
 
 export const Table: React.FC = () => {
