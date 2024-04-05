@@ -1,9 +1,9 @@
+import { Callout, FontWeights, Icon, Stack, Text, getTheme, mergeStyleSets } from "@fluentui/react";
 import React from "react";
-import { Stack, Callout, Text, Icon, mergeStyleSets, getTheme, FontWeights } from "@fluentui/react";
 
 /* custom stuff */
-import "./StatusDisplay.css";
 import { IStatusDisplayProps } from "../interfaces";
+import "./StatusDisplay.css";
 
 export const StatusDisplay: React.FC<IStatusDisplayProps> = (props) => {
 
