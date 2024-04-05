@@ -25,58 +25,43 @@ initializeIcons();
 const App = () => {
 
   // State from context
-  const [settings, toggleSetting] = React.useReducer(settingReducer, settingDefaults);
-  const [deck1, deckDispatch] = React.useReducer(deckReducer, deckDefaults);
-  const [gameState, gameDispatch] = React.useReducer(gameReducer, gameDefaults);
+  const [settings, toggleSetting] = React.useReducer(settingReducer, settingDefaults),
+    [deckState, deckDispatch] = React.useReducer(deckReducer, deckDefaults),
+    [gameState, gameDispatch] = React.useReducer(gameReducer, gameDefaults);
   const { playerStore, } = gameState;
 
-  // // Read values from localStorage
-  // React.useEffect(() => {
-  //   // const _playerStore = localStorage.getItem(StoreName.PLAYERSTORE);
-  //   // const _deckStore = localStorage.getItem(StoreName.DECKSTORE);
+  // Read values from localStorage
+  React.useEffect(() => {
+    // const _playerStore = localStorage.getItem(StoreName.PLAYERSTORE);
+    // const _deckStore = localStorage.getItem(StoreName.DECKSTORE);
 
-  //   const _settingStore = localStorage.getItem(StoreName.SETTINGSTORE);
-  //   if (null !== _settingStore) {
-  //     const _ss: SettingsState = JSON.parse(_settingStore);
-  //     for (let key in _ss) {
-  //       if (key !== 'isSplashScreenVisible') toggleSetting({ key, value: _ss[key] });
-  //     }
-  //   }
-  // }, []);
+    const _settingStore = localStorage.getItem(StoreName.SETTINGSTORE);
+    if (null !== _settingStore) {
+      const _ss: SettingsState = JSON.parse(_settingStore);
+      for (let key in _ss) {
+        if (key !== 'isSplashScreenVisible') toggleSetting({ key, value: _ss[key] });
+      }
+    }
+  }, []);
 
   // Save settings state to localStorage
-  // React.useEffect(() => {
-  //   if (!!settings) {
-  //     localStorage.setItem(StoreName.SETTINGSTORE, JSON.stringify(settings));
-  //   }
-  // }, [settings]);
+  React.useEffect(() => {
+    if (!!settings) {
+      localStorage.setItem(StoreName.SETTINGSTORE, JSON.stringify(settings));
+    }
+  }, [settings]);
 
   // Save deck state to localStorage
-  // React.useEffect(() => {
-  //   if (!!deck1) {
-  //     localStorage.setItem(StoreName.DECKSTORE, JSON.stringify(deck1));
-  //   }
-  // }, [deck1]);
-
-
-
-
-  // TODO: replicate this in a reducer function
-  const newGame = (selectedPlayers: PlayerKey[]) => {
-    deckDispatch({ type: DeckAction.Reset });
-    selectedPlayers.forEach((pk, ix) => {
-      deckDispatch({ type: DeckAction.NewPlayerHand, playerKey: pk });
-      const _p = defaultplayersArr.find(v => v.key === pk);
-      // if (_p) console.log(JSON.stringify(_p));
-      if (_p) playerStore!.newPlayer(pk, _p?.title, _p?.isNPC, ix, _p?.bank, _p?.disabled)
-    });
-    gameDispatch({ type: GameAction.NewRound });
-  };
+  React.useEffect(() => {
+    if (!!deckState) {
+      localStorage.setItem(StoreName.DECKSTORE, JSON.stringify(deckState));
+    }
+  }, [deckState]);
 
   return (
     <SettingContext.Provider value={settings}>
       <SettingDispatchContext.Provider value={toggleSetting}>
-        <DeckContext.Provider value={deck1}>
+        <DeckContext.Provider value={deckState}>
           <DeckDispatchContext.Provider value={deckDispatch}>
             <GameContext.Provider value={gameState}>
               <GameDispatchContext.Provider value={gameDispatch}>
