@@ -1,12 +1,15 @@
-import { GameStatus } from "../enums";
-import { MessageBarDefinition, PlayerKey } from "../types";
+import { GameAction, GameStatus } from "../enums";
+import { MessageBarDefinition, PlayerKey, PlayingCardKey } from "../types";
 
 export interface IGameReducerAction {
-  type: string;
+  type: GameAction;
+  cardKey?: PlayingCardKey;
+  controllingPlayerKey?: PlayerKey;
+  deckSide?: 'top' | 'bottom' | 'random';
+  gameStatus?: GameStatus;
   messageBarDefinition?: MessageBarDefinition;
   minimumBet?: number;
-  potIncrement?: number;
-  controllingPlayerKey?: PlayerKey;
-  gameStatus?: GameStatus;
+  numberOfCards?: number;
   playerKey?: PlayerKey | PlayerKey[];
+  potIncrement?: number;
 }
