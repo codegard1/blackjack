@@ -84,18 +84,22 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
     // TODO
     case GameAction.NewGame: {
+      state.deck.shuffle();
       if (undefined !== playerKey && typeof playerKey !== 'string') {
         state.activePlayerKeys = playerKey;
         playerKey.forEach(v => {
-          const _p = state.players?.filter(p => p.key === v)[0];
+          const _p = state.players.find(p => p.key === v);
           state.playerStore.newPlayer(_p.key, _p.title, _p.isNPC, _p.id, _p.bank,);
+          state.deck.newPlayerHand(_p.key);
         });
       }
       state.controllingPlayer = undefined;
+      state.currentPlayerKey = undefined;
       state.gameStatus = GameStatus.Init;
       state.pot = 0;
-      state.round = state.round + 1;
+      state.round = 1;
       state.turnCount = 0;
+      state.playerStore._allPlayersAnte(state.minimumBet);
       return state;
     }
 
@@ -214,7 +218,24 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
      * Reset game state to default
      */
     case GameAction.ResetGame: {
-      return gameDefaults;
+      state.deck.reset();
+      state.playerStore.reset();
+      state.controllingPlayer = gameDefaults.controllingPlayer;
+      state.currentPlayerKey = gameDefaults.currentPlayerKey;
+      state.dealerHasControl = gameDefaults.dealerHasControl;
+      state.gameStatus = gameDefaults.gameStatus;
+      state.gameStatusFlag = gameDefaults.gameStatusFlag;
+      state.isSpinnerVisible = gameDefaults.isSpinnerVisible;
+      state.lastWriteTime = gameDefaults.lastWriteTime;
+      state.loser = gameDefaults.loser;
+      state.messageBarDefinition = gameDefaults.messageBarDefinition;
+      state.minimumBet = gameDefaults.minimumBet;
+      state.playerStore = gameDefaults.playerStore;
+      state.pot = gameDefaults.pot;
+      state.round = gameDefaults.round;
+      state.turnCount = gameDefaults.turnCount;
+      state.winner = gameDefaults.winner;
+      return state;
     }
 
     // TODO
