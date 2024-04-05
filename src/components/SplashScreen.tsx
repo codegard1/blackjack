@@ -15,7 +15,7 @@ import {
 
 
 import { Player } from "../classes";
-import { DeckContext, DeckDispatchContext, useGameContext, useSettingContext } from '../context';
+import { useDeckContext, useGameContext, useSettingContext } from '../context';
 import {
   defaultPlayersDropdownOptions,
   defaultSelectedPlayerKeys
@@ -29,8 +29,7 @@ export const SplashScreen: React.FC = () => {
   // Context
   const { settings, toggleSetting } = useSettingContext();
   const { gameState, gameDispatch } = useGameContext();
-  const deck1 = React.useContext(DeckContext);
-  const deckDispatch = React.useContext(DeckDispatchContext);
+  const { deckState, deckDispatch } = useDeckContext();
 
   // State
   const [selectedPlayers, setSelectedPlayers] = React.useState<PlayerKey[]>(defaultSelectedPlayerKeys);
