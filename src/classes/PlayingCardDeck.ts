@@ -54,6 +54,19 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
   }
 
   /**
+   * Return a specific player's hand
+   * @param key PlayerKey
+   * @returns Array of PlayingCard
+   */
+  public getHand(key: PlayerKey) {
+    return this.playerHands[key].cards;
+  }
+
+  public getHandValue(key: PlayerKey) {
+    return this.playerHands[key].handValue
+  }
+
+  /**
    * Shuffle the cards using the Fisher-Yates method
    */
   public shuffle(): void {
@@ -69,16 +82,14 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
     this.playerHands = {};
   }
 
-  public deal(numberOfCards: number, arrayOfHands: any[]): any[] {
-    for (let i = 0; i < numberOfCards; i++)
-      for (let j = 0; j < arrayOfHands.length; j++) {
-        const _pop = this.cards.pop();
-        if (_pop !== undefined) {
-          this.drawn.push(_pop);
-          arrayOfHands[j].push(_pop);
-        }
-      }
-    return arrayOfHands;
+  /**
+   * Distribute a certain number of cards to every playerHand
+   * @param numberOfCards 
+   */
+  public deal(numberOfCards: number): void {
+    for (let key in this.playerHands) {
+      this.playerHands[key].cards.push(...this.draw(2));
+    }
   }
 
   /**
@@ -211,8 +222,30 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
     return this.cardKeys.indexOf(cardKey) !== -1;
   }
 
-}
+  /**
+   * Reset all player hands to the default state
+   */
+  public clearHands() {
+    for (let key in this.playerHands) { this.newPlayerHand(key) }
+  }
 
+  public hit(key: PlayerKey): PlayingCard {
+    const card = this.draw(1);
+    this.playerHands[key].cards.push(...card);
+    return card[0];
+  }
+
+  public removeSelectedFromPlayerHand(key: PlayerKey, cards: PlayingCard[]) {
+    const hand = this.playerHands[key].cards;
+    cards.forEach(card => {
+      let index = hand.findIndex(element => {
+        return element.suit === card.suit && element.sort === card.sort;
+      });
+      hand.splice(index, 1);
+      this.playerHands[key].cards = hand;
+    });
+  }
+}
 
 /*
   getSelected(playerKey) {
@@ -247,66 +280,4 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
       return false;
     }
   },
-
-getHand(key) {
-  return this.state.playerHands[key].hand;
-}
-
-getHandValue(key) {
-  return (this.state.playerHands[key]) ?
-    this.evaluateHand(key) :
-    this.defaultPlayerHandState.getHandValue;
-}
-
-select(cardAttributes) {
-  this.state.selected.push(
-    new PlayingCard(
-      cardAttributes.suit,
-      cardAttributes.description,
-      cardAttributes.sort
-    )
-  );
-},
-
-
-deselect(cardAttributes) {
-  const toDeselect = this.state.selected.findIndex(
-    card =>
-      card.suit === cardAttributes.suit && card.sort === cardAttributes.sort
-  );
-  this.state.selected.splice(toDeselect, 1);
-},
-
-
-clearHands() {
-  for (const key in this.state.playerHands) { this.newPlayerHand(key) }
-},
-
-removeSelectedFromPlayerHand(key, cards) {
-  const { hand } = this.state.playerHands[key].hand;
-  cards.forEach(card => {
-    let index = hand.findIndex(element => {
-      return element.suit === card.suit && element.sort === card.sort;
-    });
-    hand.splice(index, 1);
-    this.state.playerHands[key] = hand;
-  });
-},
-
-
-deal() {
-  for (const key in this.state.playerHands) {
-    this.state.playerHands[key].hand = this.draw(2);
-    this.evaluateHand(key);
-  }
-},
-
-
-hit(key) {
-  const card = this.draw(1);
-  this.state.playerHands[key].hand.push(card);
-  return card;
-},
-
-
 */
