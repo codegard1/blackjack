@@ -3,7 +3,7 @@ import { PlayingCardKey } from "../types";
 
 export interface IPlayingCardDeck {
   cards: PlayingCard[];
-  deal: (numberOfCards: number, arrayOfHands: any[]) => PlayingCard[];
+  deal: (numberOfCards: number) => void;
   draw: (numberOfCards: number) => PlayingCard[] | undefined;
   drawFromBottomOfDeck: (numberOfCards: number) => PlayingCard[];
   drawn: PlayingCard[];
