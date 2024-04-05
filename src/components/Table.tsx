@@ -20,7 +20,6 @@ import {
 } from ".";
 
 // Context
-import { PlayingCard } from "../classes";
 import { useGameContext, useSettingContext } from '../context';
 
 
@@ -28,9 +27,8 @@ export const Table: React.FC = () => {
 
   // Context
   const { settings, toggleSetting } = useSettingContext();
-  const { gameState, gameDispatch } = useGameContext();
+  const { gameState } = useGameContext();
   const playerStore = gameState.playerStore;
-  const deckState = gameState.deck;
 
 
   /**
@@ -87,12 +85,12 @@ export const Table: React.FC = () => {
         </Stack>
       </Stack>
 
-      {!settings.isSplashScreenVisible && null !== deckState.cardKeys &&
+      {!settings.isSplashScreenVisible && gameState.deck.length > 0 &&
         <Stack verticalAlign="stretch" wrap tokens={{ childrenGap: 10, padding: 10 }} verticalFill>
 
           <StackItem>
             <CardStack
-              cards={deckState.cards}
+              cards={gameState.deck.cards}
               title="Deck"
               hidden={!settings.isDeckVisible}
               isSelectable={false}
@@ -100,7 +98,7 @@ export const Table: React.FC = () => {
           </StackItem>
           <StackItem>
             <CardStack
-              cards={deckState.drawn}
+              cards={gameState.deck.drawn}
               title="Drawn Cards"
               hidden={!settings.isDrawnVisible}
               isSelectable={false}
@@ -108,7 +106,7 @@ export const Table: React.FC = () => {
           </StackItem>
           <StackItem>
             <CardStack
-              cards={deckState.selected}
+              cards={gameState.deck.selected}
               title="Selected Cards"
               hidden={!settings.isSelectedVisible}
               isSelectable={false}
