@@ -137,6 +137,7 @@ export class PlayerStore implements IPlayerStore {
     let p = this.player(key);
     p.bank -= amount;
     p.lastAction = PlayerAction.Ante;
+    p.lastAnte = amount;
     console.log(`${p.title} ante ${amount}`);
   }
 
