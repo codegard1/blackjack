@@ -13,14 +13,14 @@ import "./PlayerContainer.css";
 
 // Context
 import { PlayingCard } from "../classes";
-import { DeckContext, GameContext } from "../context";
+import { DeckContext, useGameContext } from "../context";
 
 // Component
 export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
   // Context
   const deck1 = React.useContext(DeckContext);
-  const gameState = React.useContext(GameContext);
+  const { gameState } = useGameContext();
   const playerStore = gameState.playerStore;
 
   // State

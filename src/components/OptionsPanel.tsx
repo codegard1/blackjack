@@ -3,32 +3,20 @@ import React from "react";
 
 // Fluent UI
 import {
-  ActionButton,
-  DirectionalHint,
-  Link,
-  MessageBarType,
-  Panel,
-  PanelType,
-  Separator,
-  Stack,
-  StackItem,
-  Text,
-  Toggle,
-  TooltipDelay,
-  TooltipHost,
+  ActionButton, DirectionalHint, Link, MessageBarType, Panel, PanelType, Separator, Stack, StackItem, Text, Toggle, TooltipDelay, TooltipHost,
 } from "@fluentui/react";
 
 // Context
-import { DeckDispatchContext, GameContext, GameDispatchContext, useSettingContext } from "../context";
+import { DeckDispatchContext, useGameContext, useSettingContext } from "../context";
 import { DeckAction, GameAction } from "../enums";
 import { clearStores } from "../functions";
 
 export const OptionsPanel: React.FC = () => {
 
-  const { settings, toggleSetting } = useSettingContext();
-  const deckDispatch = React.useContext(DeckDispatchContext);
-  const gameState = React.useContext(GameContext);
-  const gameDispatch = React.useContext(GameDispatchContext);
+  // Context
+  const { settings, toggleSetting } = useSettingContext(),
+    deckDispatch = React.useContext(DeckDispatchContext),
+    { gameState, gameDispatch } = useGameContext();
   const playerStore = gameState.playerStore;
 
   const closeOptionsPanel = () => {

@@ -21,7 +21,7 @@ import {
 
 // Context
 import { PlayingCard } from "../classes";
-import { DeckContext, GameContext, GameDispatchContext, useSettingContext } from '../context';
+import { DeckContext, useGameContext, useSettingContext } from '../context';
 
 
 export const Table: React.FC = () => {
@@ -29,8 +29,7 @@ export const Table: React.FC = () => {
   // Context
   const { settings,toggleSetting } = useSettingContext();
   const deck1 = React.useContext(DeckContext);
-  const gameState = React.useContext(GameContext);
-  const gameDispatch = React.useContext(GameDispatchContext);
+  const { gameState, gameDispatch } = useGameContext();
   const playerStore = gameState.playerStore;
 
 
