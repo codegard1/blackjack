@@ -16,7 +16,7 @@ import {
 } from '@fluentui/react';
 import { MotionAnimations } from '@fluentui/theme';
 
-import { useSettingContext } from '../context';
+import { useGameContext, useSettingContext } from '../context';
 
 // Get Fluent UI theme
 const theme = getTheme();

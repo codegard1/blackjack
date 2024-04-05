@@ -11,7 +11,7 @@ import {
 
 /* custom stuff */
 import { CardContainer } from '.';
-import { useSettingContext } from '../context';
+import { useGameContext, useSettingContext } from '../context';
 import { ICardStackProps } from '../interfaces';
 
 /**
