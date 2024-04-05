@@ -1,38 +1,34 @@
-import { Stack, Text } from "@fluentui/react";
+import { ScrollablePane, ScrollbarVisibility, Stack, Text, nullRender } from "@fluentui/react";
 import React from "react";
 import { gameReducer } from "../functions";
-import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext } from "../context";
+import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext, useDeckContext, useGameContext } from "../context";
+import { JsonViewer } from './'
 
 export const DebugWindow: React.FC = () => {
 
   // State from context
-  const deck1 = React.useContext(DeckContext),
-    deckDispatch = React.useContext(DeckDispatchContext),
-    gameState = React.useContext(GameContext),
-    gameDispatch = React.useContext(GameDispatchContext);
+  const { deckState } = useDeckContext(),
+    { gameState } = useGameContext();
+
+  // Local State
+  const [isDeckStateVisible, setDeckStateVisible] = React.useState<boolean>(true);
+  const [isGameStateVisible, setGameStateVisible] = React.useState<boolean>(false);
+  const [isPlayerStoreVisible, setPlayerStoreVisible] = React.useState<boolean>(false);
 
   return (
-    <Stack>
-      <Text as='h1' block>Deck</Text>
-      <Text block>
-        <pre>
-          {JSON.stringify(deck1)}
-        </pre>
-      </Text>
-      
-      <Text as='h1' block>Game</Text>
-      <Text block>
-        <pre>
-          {JSON.stringify(gameState)}
-        </pre>
-      </Text>
+    <Stack styles={{ root: { backgroundColor: '#eee' } }}>
+      <Text as='h1' block onClick={() => setDeckStateVisible(!isDeckStateVisible)}>
+        Deck</Text>
+      {isDeckStateVisible ? <JsonViewer data={deckState} /> : nullRender()}
 
-      <Text as='h1' block>Game</Text>
-      <Text block>
-        <pre>
-          {JSON.stringify(gameState.playerStore)}
-        </pre>
-      </Text>
+      <Text as='h1' block onClick={() => setGameStateVisible(!isGameStateVisible)}>
+        Game</Text>
+      {isGameStateVisible ? <JsonViewer data={gameState} /> : nullRender()}
+
+      <Text as='h1' block onClick={() => setPlayerStoreVisible(!isPlayerStoreVisible)}>
+        Players</Text>
+      {isPlayerStoreVisible ? <JsonViewer data={gameState.playerStore.state} /> : nullRender()}
+
     </Stack>
   );
 

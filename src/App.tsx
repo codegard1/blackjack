@@ -17,6 +17,7 @@ import { defaultplayersArr } from './definitions';
 import { DeckAction, GameAction, StoreName } from './enums';
 import { deckReducer, gameReducer, settingReducer } from './functions';
 import { PlayerKey, SettingsState } from './types';
+import { DebugWindow } from './components/DebugWindow';
 
 // Necessary in order for Fluent Icons to render on the page
 initializeIcons();
@@ -73,9 +74,7 @@ const App = () => {
                 <Stack tokens={{ childrenGap: 15 }} horizontalAlign='space-between' verticalAlign='space-evenly'>
                   <Table />
                   <ActivityLog />
-                  <div style={{ backgroundColor: '#eee' }}>
-
-                  </div>
+                  <DebugWindow />
                 </Stack>
 
               </GameDispatchContext.Provider>

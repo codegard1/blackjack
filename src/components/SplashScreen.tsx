@@ -3,16 +3,8 @@ import React from "react";
 
 // Fluent UI
 import {
-  Dialog,
-  DialogFooter,
-  DialogType,
-  Dropdown,
-  IDropdownOption,
-  PrimaryButton,
-  ResponsiveMode,
-  Text,
+  Dialog, DialogFooter, DialogType, Dropdown, IDropdownOption, PrimaryButton, ResponsiveMode, Text,
 } from '@fluentui/react';
-
 
 import { Player } from "../classes";
 import { useDeckContext, useGameContext, useSettingContext } from '../context';
@@ -27,9 +19,9 @@ import { PlayerKey } from "../types";
 export const SplashScreen: React.FC = () => {
 
   // Context
-  const { settings, toggleSetting } = useSettingContext();
-  const { gameState, gameDispatch } = useGameContext();
-  const { deckState, deckDispatch } = useDeckContext();
+  const { settings, toggleSetting } = useSettingContext(),
+    { gameState, gameDispatch } = useGameContext(),
+    { deckState, deckDispatch } = useDeckContext();
 
   // State
   const [selectedPlayers, setSelectedPlayers] = React.useState<PlayerKey[]>(defaultSelectedPlayerKeys);
@@ -51,6 +43,7 @@ export const SplashScreen: React.FC = () => {
     toggleSetting({ key: 'isSplashScreenVisible', value: false })
   }
 
+  // Start a new game with the selected players
   function onClickStartButton() {
     if (selectedPlayers.length < 2) {
       setErrorMessage('You must select at least 2 players');
@@ -59,6 +52,7 @@ export const SplashScreen: React.FC = () => {
       // initiate a new game     
       gameDispatch({ type: GameAction.NewGame, playerKey: selectedPlayers });
       deckDispatch({ type: DeckAction.NewPlayerHand, playerKey: selectedPlayers });
+      gameDispatch({ type: GameAction.NewRound });
       gameDispatch({ type: GameAction.Ante });
       // hide the player selection modal 
       onDismissDialog();
