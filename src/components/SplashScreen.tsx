@@ -38,7 +38,6 @@ export const SplashScreen: React.FC = () => {
   }
 
   function onDismissDialog() {
-    console.log('onDismissDialog');
     toggleSetting({ key: 'isSplashScreenVisible', value: false })
   }
 
