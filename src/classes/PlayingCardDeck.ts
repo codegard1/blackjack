@@ -2,9 +2,9 @@
     https://github.com/codegard1/node-shuffle.git */
 
 import { PlayingCard } from ".";
-import { _cardKeys } from "../functions";
+import { _cardKeys, getRandomIndex } from "../functions";
 import { IPlayingCardDeck, IPlayingCardDeckState } from "../interfaces";
-import { PlayerHand, PlayerHandList, PlayerKey, PlayingCardKey } from "../types";
+import { PlayerHandList, PlayerKey, PlayingCardKey } from "../types";
 
 /**
  * A set of 52 Playing Cards in random order
@@ -28,6 +28,10 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
 
   private random(): number {
     return Math.random();
+  }
+
+  public get randomIndex(): number {
+    return getRandomIndex(this.cards);
   }
 
   public get length(): number {
@@ -95,18 +99,24 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
   }
 
   public putOnBottomOfDeck(cards: PlayingCard[]) {
-    this.cards.unshift(...cards);
     cards.forEach((c, i,) => {
-      const keys = this.drawn.map((c) => c.key);
-      if (c.key in keys) this.drawn.splice(i, 1);
+      this.cards.unshift(c);
+      if (c.key in this.drawnKeys) this.drawn.splice(i, 1);
     });
   }
 
   public putOnTopOfDeck(cards: PlayingCard[]) {
-    this.cards.push(...cards);
     cards.forEach((c, i,) => {
-      const keys = this.drawn.map((c) => c.key);
-      if (c.key in keys) this.drawn.splice(i, 1);
+      this.cards.push(c);
+      if (c.key in this.drawnKeys) this.drawn.splice(i, 1);
+    });
+  }
+
+  public putInMiddleOfDeck(cards: PlayingCard[]) {
+    cards.forEach((c, i) => {
+      const _ix = this.randomIndex;
+      this.cards = [...this.cards.slice(0, _ix - 1), c, ...this.cards.slice(_ix)];
+      if (c.key in this.drawnKeys) this.drawn.splice(i, 1);
     });
   }
 
@@ -165,7 +175,7 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
    * @param key unique key of the card to add
    */
   public select(key: PlayingCardKey) {
-    if (!(key in this.selectedKeys)) this.selected.push(new PlayingCard(key));
+    if (!(this.selectedKeys.indexOf(key) === -1)) this.selected.push(new PlayingCard(key));
   }
 
   /**
@@ -191,6 +201,16 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
   public clearSelected() {
     this.selected = [];
   }
+
+  /**
+   * Return true if the specific cardKey is in the cards array 
+   * @param cardKey 
+   * @returns 
+   */
+  public has(cardKey: PlayingCardKey): boolean {
+    return this.cardKeys.indexOf(cardKey) !== -1;
+  }
+
 }
 
 
