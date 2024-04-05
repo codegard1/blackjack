@@ -1,14 +1,12 @@
-import { ScrollablePane, ScrollbarVisibility, Stack, Text, nullRender } from "@fluentui/react";
+import { Stack, Text, nullRender } from "@fluentui/react";
 import React from "react";
-import { gameReducer } from "../functions";
-import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext, useDeckContext, useGameContext } from "../context";
-import { JsonViewer } from './'
+import { useGameContext } from "../context";
+import { JsonViewer } from './';
 
 export const DebugWindow: React.FC = () => {
 
   // State from context
-  const { deckState } = useDeckContext(),
-    { gameState } = useGameContext();
+  const { gameState } = useGameContext();
 
   // Local State
   const [isDeckStateVisible, setDeckStateVisible] = React.useState<boolean>(true);

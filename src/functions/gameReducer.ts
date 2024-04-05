@@ -26,6 +26,8 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     type,
   } = action;
 
+  console.log('GameAction.' + type, JSON.stringify(action));
+
   switch (type) {
     // Toggle visibility of the spinner
     case GameAction.SetSpinnerVisible: {

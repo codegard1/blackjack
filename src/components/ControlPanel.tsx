@@ -5,18 +5,15 @@ import React from "react";
 import { CommandBar, ICommandBarItemProps, MessageBarType, nullRender } from "@fluentui/react";
 
 // Local Resources
-import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext } from "../context";
-import { DeckAction, GameAction } from "../enums";
+import { useGameContext } from "../context";
+import { GameAction } from "../enums";
 import { IControlPanelProps } from "../interfaces";
 
 // Component
 export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
 
   // State from context
-  const deck1 = React.useContext(DeckContext),
-    deckDispatch = React.useContext(DeckDispatchContext),
-    gameState = React.useContext(GameContext),
-    gameDispatch = React.useContext(GameDispatchContext);
+  const { gameState, gameDispatch } = useGameContext();
   const { gameStatusFlag, gameStatus, minimumBet } = gameState;
 
   const {
@@ -94,7 +91,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
       disabled: gameStatusFlag || playerStatusFlag,
       onClick: (ev: any) => {
         ev.preventDefault();
-        deckDispatch({ type: DeckAction.Draw, playerKey, numberOfCards: 1, deckSide: 'top' });
+        gameDispatch({ type: GameAction.Draw, playerKey, numberOfCards: 1, deckSide: 'top' });
       }
     },
     // {
@@ -164,7 +161,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
         iconProps: { iconName: "Refresh" },
         disabled: gameStatusFlag,
         onClick: () => {
-          deckDispatch({ type: DeckAction.Reset });
+          gameDispatch({ type: GameAction.Reset });
           gameDispatch({ type: GameAction.NewRound });
           gameDispatch({
             type: GameAction.ShowMessageBar,

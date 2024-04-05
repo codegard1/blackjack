@@ -7,16 +7,15 @@ import {
 } from "@fluentui/react";
 
 // Context
-import { DeckDispatchContext, useGameContext, useSettingContext } from "../context";
-import { DeckAction, GameAction } from "../enums";
+import { useGameContext, useSettingContext } from "../context";
+import { GameAction } from "../enums";
 import { clearStores } from "../functions";
 
 export const OptionsPanel: React.FC = () => {
 
   // Context
-  const { settings, toggleSetting } = useSettingContext(),
-    deckDispatch = React.useContext(DeckDispatchContext),
-    { gameState, gameDispatch } = useGameContext();
+  const { settings, toggleSetting } = useSettingContext();
+  const { gameState, gameDispatch } = useGameContext();
   const playerStore = gameState.playerStore;
 
   const closeOptionsPanel = () => {
@@ -27,19 +26,18 @@ export const OptionsPanel: React.FC = () => {
    * Reset the game from the Options Panel
    */
   const resetGame = () => {
-    deckDispatch({ type: DeckAction.Reset });
     gameDispatch({ type: GameAction.ResetGame });
     gameDispatch({ type: GameAction.ShowMessageBar, messageBarDefinition: { text: 'Game Reset', type: MessageBarType.info, isMultiLine: false } });
     closeOptionsPanel();
   }
 
   const newDeal = () => {
-    playerStore.all.forEach(p => deckDispatch({ type: DeckAction.Draw, playerKey: p.key }));
+    playerStore.all.forEach(p => gameDispatch({ type: GameAction.Draw, playerKey: p.key, numberOfCards: 2 }));
     closeOptionsPanel();
   }
 
   const shuffle = () => {
-    deckDispatch({ type: DeckAction.Shuffle });
+    gameDispatch({ type: GameAction.Shuffle });
     closeOptionsPanel();
   }
 

@@ -13,22 +13,22 @@ import "./PlayerContainer.css";
 
 // Context
 import { PlayingCard } from "../classes";
-import { useDeckContext, useGameContext } from "../context";
+import { useGameContext } from "../context";
 
 // Component
 export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
   // Context
-  const { deckState } = useDeckContext();
   const { gameState } = useGameContext();
   const playerStore = gameState.playerStore;
+  const deckState = gameState.deck;
 
   // State
   const [isStatusCalloutVisible, setStatusCalloutVisible] = React.useState<boolean>(false);
   const [isDeckCalloutVisible, setDeckCalloutVisible] = React.useState<boolean>(false);
   const { player, playerKey } = props;
   const playerCards = undefined === deckState.playerHands[playerKey] ? [] :
-    deckState.playerHands[playerKey].map((ck) => new PlayingCard(ck));
+    deckState.playerHands[playerKey].cards;
 
   const _showDeckCallout = () => setDeckCalloutVisible(true);
   const _hideDeckCallout = () => setDeckCalloutVisible(false);

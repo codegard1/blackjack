@@ -14,10 +14,11 @@ import {
 } from '@fluentui/theme';
 
 // Local Resources
-import { useDeckContext } from '../context';
-import { DeckAction } from '../enums';
+import { useGameContext } from '../context';
+import { GameAction } from '../enums';
 import { ICardContainerProps } from '../interfaces';
 import { SuitCollection, SuitCollectionKey, SuitKey } from '../types';
+
 
 // Fluent UI styles
 const cardStyles = {
@@ -67,29 +68,23 @@ const cardStyles = {
 export const CardContainer: React.FC<ICardContainerProps> = (props) => {
 
   // Context
-  const { deckState, deckDispatch } = useDeckContext();
+  const { gameDispatch } = useGameContext();
 
   // State
   const [isSelected, setSelected] = React.useState<boolean>(false);
-
-  const _toggleSelect = (): void => {
-    const cardAttributes = {
-      description: props.description,
-      suit: props.suit,
-      sort: props.sort
-    };
-    if (!isSelected) {
-      deckDispatch({type:DeckAction.Select,})
-      setSelected(true);
-    } else {
-      // props.deselect(cardAttributes);
-      setSelected(false);
-    }
-  }
-
   const description = props.description + ' of ' + props.suit.plural;
   const cardTitle = props.sort.name;
   const cardIcon = props.suit.icon;
+
+  const _toggleSelect = (): void => {
+    if (!isSelected) {
+      gameDispatch({ type: GameAction.Select, cardKey: props.key });
+      setSelected(true);
+    } else {
+      gameDispatch({ type: GameAction.Unselect, cardKey: props.key });
+      setSelected(false);
+    }
+  }
 
   // Determine styles 
   const cardStylesBySuit: SuitCollection = {

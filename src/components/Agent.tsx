@@ -8,15 +8,14 @@ import { MotionAnimations } from '@fluentui/theme';
 // Context
 
 // Local Resources
-import { useDeckContext, useGameContext } from "../context";
-import { DeckAction, GameAction } from "../enums";
+import { useGameContext } from "../context";
+import { GameAction } from "../enums";
 import { IAgentProps } from "../interfaces/IAgentProps";
 
 export const Agent: React.FC<IAgentProps> = (props) => {
 
   // Context
   const { gameState, gameDispatch } = useGameContext();
-  const { deckState, deckDispatch } = useDeckContext();
 
   // State
   const [lastAction, setLastAction] = React.useState<string>('');
@@ -35,7 +34,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
         /* when to hit */
         if (aceAsEleven <= 16 || aceAsOne <= 16) {
           setSpinnerLabel("Hit");
-          deckDispatch({ type: DeckAction.Draw, playerKey: props.playerKey, numberOfCards: 1 });
+          gameDispatch({ type: GameAction.Draw, playerKey: props.playerKey, numberOfCards: 1 });
         }
 
         /* when to stay */
