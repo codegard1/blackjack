@@ -1,4 +1,4 @@
-import { gameDefaults } from "../ctx/gameDefaults";
+import { gameDefaults } from "../context/gameDefaults";
 import { GameStatus } from "../enums";
 import { GameAction } from "../enums/GameAction";
 import { IGameReducerAction } from "../interfaces";

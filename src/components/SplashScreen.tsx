@@ -15,7 +15,7 @@ import {
 
 
 import { Player } from "../classes";
-import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, DeckContext, DeckDispatchContext } from '../ctx';
+import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, DeckContext, DeckDispatchContext } from '../context';
 import {
   defaultPlayersDropdownOptions,
   defaultSelectedPlayerKeys

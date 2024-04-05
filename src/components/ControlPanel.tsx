@@ -5,17 +5,18 @@ import React from "react";
 import { CommandBar, ICommandBarItemProps, MessageBarType, nullRender } from "@fluentui/react";
 
 // Local Resources
-import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext } from "../ctx";
+import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext } from "../context";
 import { DeckAction, GameAction } from "../enums";
 import { IControlPanelProps } from "../interfaces";
 
 // Component
 export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
 
-  const deck1 = React.useContext(DeckContext);
-  const deckDispatch = React.useContext(DeckDispatchContext);
-  const gameState = React.useContext(GameContext);
-  const gameDispatch = React.useContext(GameDispatchContext);
+  // State from context
+  const deck1 = React.useContext(DeckContext),
+    deckDispatch = React.useContext(DeckDispatchContext),
+    gameState = React.useContext(GameContext),
+    gameDispatch = React.useContext(GameDispatchContext);
   const { gameStatusFlag, gameStatus, minimumBet } = gameState;
 
   const {

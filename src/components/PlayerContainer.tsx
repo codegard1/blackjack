@@ -13,7 +13,7 @@ import "./PlayerContainer.css";
 
 // Context
 import { PlayingCard } from "../classes";
-import { DeckContext, GameContext } from "../ctx";
+import { DeckContext, GameContext } from "../context";
 
 // Component
 export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {

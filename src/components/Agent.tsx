@@ -8,7 +8,7 @@ import { MotionAnimations } from '@fluentui/theme';
 // Context
 
 // Local Resources
-import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext } from "../ctx";
+import { DeckContext, DeckDispatchContext, GameContext, GameDispatchContext } from "../context";
 import { DeckAction, GameAction } from "../enums";
 import { IAgentProps } from "../interfaces/IAgentProps";
 

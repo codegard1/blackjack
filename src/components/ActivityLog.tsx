@@ -16,7 +16,7 @@ import {
 } from '@fluentui/react';
 import { MotionAnimations } from '@fluentui/theme';
 
-import { SettingContext } from '../ctx';
+import { SettingContext } from '../context';
 
 // Get Fluent UI theme
 const theme = getTheme();

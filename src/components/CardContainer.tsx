@@ -14,7 +14,7 @@ import {
 } from '@fluentui/theme';
 
 // Local Resources
-import { DeckContext, DeckDispatchContext } from '../ctx';
+import { DeckContext, DeckDispatchContext } from '../context';
 import { ICardContainerProps } from '../interfaces';
 import { SuitCollection, SuitCollectionKey, SuitKey } from '../types';
 import { DeckAction } from '../enums';
