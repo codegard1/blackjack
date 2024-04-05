@@ -16,7 +16,7 @@ import {
 } from '@fluentui/react';
 import { MotionAnimations } from '@fluentui/theme';
 
-import { SettingContext } from '../context';
+import { useSettingContext } from '../context';
 
 // Get Fluent UI theme
 const theme = getTheme();
@@ -77,7 +77,7 @@ const classNames = mergeStyleSets({
 export const ActivityLog: React.FC = () => {
 
   // Context
-  const settings = React.useContext(SettingContext);
+  const { settings } = useSettingContext();
 
   // State
   const [activityItems, setActivityItems] = React.useState<any>([]);

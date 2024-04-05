@@ -19,14 +19,13 @@ import {
 } from "@fluentui/react";
 
 // Context
-import { DeckDispatchContext, GameContext, GameDispatchContext, SettingContext, SettingDispatchContext } from "../context";
+import { DeckDispatchContext, GameContext, GameDispatchContext, useSettingContext } from "../context";
 import { DeckAction, GameAction } from "../enums";
 import { clearStores } from "../functions";
 
 export const OptionsPanel: React.FC = () => {
 
-  const settings = React.useContext(SettingContext);
-  const toggleSetting = React.useContext(SettingDispatchContext);
+  const { settings, toggleSetting } = useSettingContext();
   const deckDispatch = React.useContext(DeckDispatchContext);
   const gameState = React.useContext(GameContext);
   const gameDispatch = React.useContext(GameDispatchContext);

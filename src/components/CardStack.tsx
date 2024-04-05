@@ -11,7 +11,7 @@ import {
 
 /* custom stuff */
 import { CardContainer } from '.';
-import { SettingContext } from '../context';
+import { useSettingContext } from '../context';
 import { ICardStackProps } from '../interfaces';
 
 /**
@@ -22,7 +22,7 @@ import { ICardStackProps } from '../interfaces';
 export const CardStack: React.FC<ICardStackProps> = (props) => {
 
   // Context props
-  const settings = React.useContext(SettingContext);
+  const { settings } = useSettingContext();
 
   // State
   const [isDeckVisible, setVisible] = React.useState<boolean>(true);
