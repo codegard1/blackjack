@@ -4,6 +4,7 @@ import React from 'react';
 // Fluent UI
 import {
   DefaultPalette,
+  IStyle,
   mergeStyles,
   Stack,
   StackItem,
@@ -78,6 +79,7 @@ export const CardContainer: React.FC<ICardContainerProps> = (props) => {
 
   const _toggleSelect = (): void => {
     if (!isSelected) {
+      console.log('cardKey', props)
       gameDispatch({ type: GameAction.Select, cardKey: props.key });
       setSelected(true);
     } else {
@@ -87,25 +89,24 @@ export const CardContainer: React.FC<ICardContainerProps> = (props) => {
   }
 
   // Determine styles 
-  const cardStylesBySuit: SuitCollection = {
+  const cardStylesBySuit: { [index: string]: any } = {
     'Heart': cardStyles.hearts,
     'Spade': cardStyles.spades,
     'Diamond': cardStyles.diamonds,
     'Club': cardStyles.clubs,
   }
-  const suitKey: SuitKey = props.suit.single
-  const cardTitleClassName: SuitCollectionKey = cardStylesBySuit[suitKey];
+  const suitKey: string = props.suit.single
+  const cardTitleClassName = cardStylesBySuit[suitKey];
 
-  let cardClassNames = [cardTitleClassName];
+  let cardClassNames = [cardTitleClassName, cardStyles.root];
   if (props.isBackFacing) cardClassNames.push([cardStyles.root, cardStyles.backFacing])
-  else cardClassNames.push([cardStyles.root, cardStyles.frontFacing]);
+  else cardClassNames.push(cardStyles.root, cardStyles.frontFacing);
 
   if (props.isSelectable) cardClassNames.push(cardStyles.selectable)
   else cardClassNames.push(cardStyles.unselectable);
 
   if (isSelected) cardClassNames.push(cardStyles.selected)
   else cardClassNames.push(cardStyles.unselected);
-
 
   return (
     <Stack
