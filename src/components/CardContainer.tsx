@@ -65,21 +65,17 @@ export const CardContainer: React.FC<ICardContainerProps> = (props) => {
   // Context
   const { gameDispatch } = useGameContext();
 
-  // State
-  const [isSelected, setSelected] = React.useState<boolean>(false);
-  const description = props.description + ' of ' + props.suit.plural;
+  // Props
+  const description = props.description;
   const cardTitle = props.sort.name;
   const cardIcon = props.suit.icon;
 
+  // State
+  const [isSelected, setSelected] = React.useState<boolean>(false);
+
   const _toggleSelect = (): void => {
-    if (!isSelected) {
-      console.log('cardKey', props)
-      gameDispatch({ type: GameAction.Select, cardKey: props.key });
-      setSelected(true);
-    } else {
-      gameDispatch({ type: GameAction.Unselect, cardKey: props.key });
-      setSelected(false);
-    }
+    gameDispatch({ type: !isSelected ? GameAction.Select : GameAction.Unselect, cardKey: props.id });
+    setSelected(!isSelected);
   }
 
   // Determine styles 
