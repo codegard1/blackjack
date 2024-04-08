@@ -1,3 +1,4 @@
+import { CardTuple } from "../enums";
 import { IPlayingCard, IPlayingCardSort, IPlayingCardSuit } from "../interfaces";
 import { PlayingCardKey } from "../types";
 
@@ -10,6 +11,9 @@ export class PlayingCard implements IPlayingCard {
   public readonly sort: IPlayingCardSort;
   public readonly key: string;
 
+  /**
+   * Static object containing predefined objects for each Card suit
+   */
   static cardSuits: { [index: string]: IPlayingCardSuit } = {
     'Heart': {
       single: 'Heart',
@@ -45,7 +49,7 @@ export class PlayingCard implements IPlayingCard {
     this.key = key;
     const [suit, desc, sortValue] = key.split('_');
     this.suit = PlayingCard.cardSuits[suit];
-    this.description = desc;
+    this.description = CardTuple[Number(sortValue)];
     switch (sortValue) {
       case '11':
         this.sort = {
