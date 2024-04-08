@@ -235,7 +235,7 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
    * @param key unique key of the card to add
    */
   public select(key: PlayingCardKey) {
-    if (!(this.selectedKeys.indexOf(key) === -1)) this.selected.push(new PlayingCard(key));
+    if (this.selectedKeys.indexOf(key) === -1) this.selected.push(new PlayingCard(key));
   }
 
   /**

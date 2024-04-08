@@ -9,7 +9,8 @@ export const DebugWindow: React.FC = () => {
   const { gameState } = useGameContext();
 
   // Local State
-  const [isDeckStateVisible, setDeckStateVisible] = React.useState<boolean>(true);
+  const [isDeckStateVisible, setDeckStateVisible] = React.useState<boolean>(false);
+  const [isSelectedStateVisible, setSelectedStateVisible] = React.useState<boolean>(true);
   const [isPlayerHandStateVisible, setPlayerHandStateVisible] = React.useState<boolean>(false);
   const [isGameStateVisible, setGameStateVisible] = React.useState<boolean>(false);
   const [isPlayerStoreVisible, setPlayerStoreVisible] = React.useState<boolean>(false);
@@ -19,6 +20,10 @@ export const DebugWindow: React.FC = () => {
       <Text as='h1' block onClick={() => setDeckStateVisible(!isDeckStateVisible)}>
         Deck</Text>
       {isDeckStateVisible ? <JsonViewer data={gameState.deck.cardKeys} /> : nullRender()}
+
+      <Text as='h1' block onClick={() => setSelectedStateVisible(!isSelectedStateVisible)}>
+        Selected</Text>
+      {isSelectedStateVisible ? <JsonViewer data={gameState.deck.selectedKeys} /> : nullRender()}
 
       <Text as='h1' block onClick={() => setPlayerHandStateVisible(!isPlayerHandStateVisible)}>
         Player Hands</Text>

@@ -33,6 +33,7 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
   const cardElements = props.cards.map((card, index) =>
     <CardContainer
       {...card}
+      id={card.key}
       isSelectable={props.isSelectable}
       isBackFacing={index === 0 && !settings.isDealerHandVisible && props.player?.isNPC}
       isDescVisible={settings.isCardDescVisible}
