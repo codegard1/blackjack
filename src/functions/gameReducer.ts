@@ -1,4 +1,4 @@
-import { PlayingCard } from "../classes";
+import { PlayingCard, PlayingCardDeck } from "../classes";
 import { gameDefaults } from "../context";
 import { GameStatus } from "../enums";
 import { GameAction } from "../enums/GameAction";
@@ -17,6 +17,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     cardKey,
     controllingPlayerKey,
     deckSide,
+    deckState,
     gameStatus,
     messageBarDefinition,
     minimumBet,
@@ -29,6 +30,15 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
   console.log('GameAction.' + type, JSON.stringify(action));
 
   switch (type) {
+
+    /**
+     * Replace the default state with one from localStorage
+     */
+    case GameAction.SetDeckState:{
+      if(undefined !== deckState)state.deck = new PlayingCardDeck(deckState)
+      return state;
+    }
+
     // Toggle visibility of the spinner
     case GameAction.SetSpinnerVisible: {
       state.isSpinnerVisible = !state.isSpinnerVisible;
