@@ -3,12 +3,7 @@ import React from 'react';
 
 // Fluent UI
 import {
-  DefaultPalette,
-  IStyle,
-  mergeStyles,
-  Stack,
-  StackItem,
-  Text,
+  DefaultPalette, mergeStyles, Stack, StackItem, Text,
 } from '@fluentui/react';
 import {
   MotionAnimations,
@@ -18,7 +13,6 @@ import {
 import { useGameContext } from '../context';
 import { GameAction } from '../enums';
 import { ICardContainerProps } from '../interfaces';
-import { SuitCollection, SuitCollectionKey, SuitKey } from '../types';
 
 
 // Fluent UI styles
