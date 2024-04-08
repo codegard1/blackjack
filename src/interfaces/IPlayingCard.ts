@@ -1,9 +1,13 @@
-import { PlayingCardSort, PlayingCardSuit } from '../classes';
+import { IPlayingCardSort, IPlayingCardSuit } from '.';
 
+/**
+ * Interface describing the class PlayingCard,
+ * which inherits from the type PlayingCard
+ */
 export interface IPlayingCard {
-  suit: PlayingCardSuit;
+  suit: IPlayingCardSuit;
   description: string;
-  sort: PlayingCardSort;
+  sort: IPlayingCardSort;
   key: string;
   toString: () => string;
   toShortDisplayString: () => string;

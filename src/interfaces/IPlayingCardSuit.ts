@@ -1,5 +1,7 @@
+import { SuitName } from "../types";
+
 export interface IPlayingCardSuit {
-  single: string;
+  single: SuitName;
   plural: string;
   short: string;
   icon: string;
