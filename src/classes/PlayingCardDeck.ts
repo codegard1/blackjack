@@ -2,15 +2,14 @@
     https://github.com/codegard1/node-shuffle.git */
 
 import { PlayingCard } from ".";
-import { CardTuple } from "../enums";
 import { getRandomIndex } from "../functions";
-import { IPlayingCardDeck, IPlayingCardDeckState } from "../interfaces";
-import { PlayerHandList, PlayerKey, PlayingCardKey } from "../types";
+import { IPlayingCardDeck } from "../interfaces";
+import { DeckState, PlayerHandList, PlayerKey, PlayingCardKey } from "../types";
 
 /**
  * A set of 52 Playing Cards in random order
  */
-export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck {
+export class PlayingCardDeck implements IPlayingCardDeck {
   public selected: PlayingCard[] = [];
   public drawn: PlayingCard[] = [];
   public cards: PlayingCard[] = [];
@@ -31,7 +30,7 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
       const suitName = PlayingCard.cardSuits[key];
 
       // Generate 13 cards starting at 2
-      for (let index = 2; index <= 14; index++) {
+      for (let index = 2; index < 15; index++) {
 
         // Compose the Card key from the Suit name, the Card name, and the Card sort 
         // Add the card key to our output array
@@ -44,7 +43,7 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
     return _.slice();
   }
 
-  constructor(options?: IPlayingCardDeckState) {
+  constructor(options?: DeckState) {
     if (undefined !== options) {
       this.selected = options.selectedKeys.map(this.newCard);
       this.drawn = options.drawnKeys.map(this.newCard);
@@ -57,6 +56,15 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
 
   private random(): number {
     return Math.random();
+  }
+
+  public get state(): DeckState {
+    return {
+      selectedKeys: this.selectedKeys,
+      drawnKeys: this.drawnKeys,
+      cardKeys: this.cardKeys,
+      playerHands: this.playerHands,
+    }
   }
 
   public get randomIndex(): number {

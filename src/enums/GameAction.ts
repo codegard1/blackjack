@@ -26,4 +26,5 @@ export enum GameAction {
   Shuffle = 'Shuffle',
   Stay = 'Stay',
   Unselect = 'Unselect',
+  SetDeckState = 'SetDeckState',
 }

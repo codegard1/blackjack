@@ -1,10 +1,8 @@
-import { PlayerKey, PlayingCardKey } from "../types";
+import { PlayerHandList, PlayingCardKey } from "../types";
 
 export interface DeckState {
   selectedKeys: PlayingCardKey[];
   drawnKeys: PlayingCardKey[];
   cardKeys: PlayingCardKey[];
-  playerHands: {
-    [index: PlayerKey]: PlayingCardKey[];
-  }
+  playerHands: PlayerHandList;
 }

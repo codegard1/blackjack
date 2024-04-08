@@ -13,9 +13,9 @@ import './App.css';
 import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
 import { DebugWindow } from './components/DebugWindow';
 import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, gameDefaults, settingDefaults } from './context';
-import { StoreName } from './enums';
+import { GameAction, StoreName } from './enums';
 import { gameReducer, settingReducer } from './functions';
-import { SettingsState } from './types';
+import { DeckState, SettingsState } from './types';
 
 // Necessary in order for Fluent Icons to render on the page
 initializeIcons();
@@ -26,19 +26,29 @@ const App = () => {
   // State from context
   const [settings, toggleSetting] = React.useReducer(settingReducer, settingDefaults);
   const [gameState, gameDispatch] = React.useReducer(gameReducer, gameDefaults);
-  const deckState = gameState.deck;
+  const deckState = gameState.deck.state;
+  const playerState = gameState.playerStore.state;
 
-  // Read values from localStorage
+  // Initialization effect 
   React.useEffect(() => {
-    // const _playerStore = localStorage.getItem(StoreName.PLAYERSTORE);
-    // const _deckStore = localStorage.getItem(StoreName.DECKSTORE);
+    console.log('Initialization effect');
 
     const _settingStore = localStorage.getItem(StoreName.SETTINGSTORE);
     if (null !== _settingStore) {
       const _ss: SettingsState = JSON.parse(_settingStore);
       for (let key in _ss) {
-        if (key !== 'isSplashScreenVisible') toggleSetting({ key, value: _ss[key] });
+        toggleSetting({ key, value: _ss[key] });
       }
+    }
+
+    const _deckStore = localStorage.getItem(StoreName.DECKSTORE);
+    if (null !== _deckStore) {
+      gameDispatch({ type: GameAction.SetDeckState, deckState: JSON.parse(_deckStore) })
+    }
+
+    const _playerStore = localStorage.getItem(StoreName.PLAYERSTORE);
+    if (null !== _playerStore) {
+      console.log(JSON.stringify(_playerStore));
     }
   }, []);
 
@@ -52,9 +62,18 @@ const App = () => {
   // Save deck state to localStorage
   React.useEffect(() => {
     if (!!deckState) {
+      console.log('deckstate effect');
       localStorage.setItem(StoreName.DECKSTORE, JSON.stringify(deckState));
     }
   }, [deckState]);
+  
+  // Save player state to localStorage
+  React.useEffect(() => {
+    if (!!deckState) {
+      console.log('deckstate effect');
+      localStorage.setItem(StoreName.DECKSTORE, JSON.stringify(deckState));
+    }
+  }, [playerState]);
 
   return (
     <SettingContext.Provider value={settings}>

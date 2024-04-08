@@ -1,5 +1,5 @@
 import { GameAction, GameStatus } from "../enums";
-import { MessageBarDefinition, PlayerKey, PlayingCardKey } from "../types";
+import { DeckState, MessageBarDefinition, PlayerKey, PlayingCardKey } from "../types";
 
 export interface IGameReducerAction {
   type: GameAction;
@@ -12,4 +12,5 @@ export interface IGameReducerAction {
   numberOfCards?: number;
   playerKey?: PlayerKey | PlayerKey[];
   potIncrement?: number;
+  deckState?: DeckState;
 }
