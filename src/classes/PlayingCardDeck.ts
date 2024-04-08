@@ -2,7 +2,8 @@
     https://github.com/codegard1/node-shuffle.git */
 
 import { PlayingCard } from ".";
-import { _cardKeys, getRandomIndex } from "../functions";
+import { CardTuple } from "../enums";
+import { getRandomIndex } from "../functions";
 import { IPlayingCardDeck, IPlayingCardDeckState } from "../interfaces";
 import { PlayerHandList, PlayerKey, PlayingCardKey } from "../types";
 
@@ -15,11 +16,39 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
   public cards: PlayingCard[] = [];
   public playerHands: PlayerHandList = {};
 
+  /**
+   * Static method to generate 52 unique card keys
+   * @returns 
+   */
+  static cardKeys(): PlayingCardKey[] {
+    // Initialize an array to hold our output value
+    let _: PlayingCardKey[] = [];
+
+    // For each suit defined in the PlayingCard class
+    for (let key in PlayingCard.cardSuits) {
+
+      // Get the suit name
+      const suitName = PlayingCard.cardSuits[key];
+
+      // Generate 13 cards starting at 2
+      for (let index = 2; index <= 14; index++) {
+
+        // Compose the Card key from the Suit name, the Card name, and the Card sort 
+        // Add the card key to our output array
+        _.push([suitName.single, index].join('_'));
+
+      }
+    }
+
+    // Return a copy of the array
+    return _.slice();
+  }
+
   constructor(options?: IPlayingCardDeckState) {
     if (undefined !== options) {
-      this.selected = options.selectedKeys.map((ck) => new PlayingCard(ck));
-      this.drawn = options.drawnKeys.map((ck) => new PlayingCard(ck));
-      this.cards = options.cardKeys.map((ck) => new PlayingCard(ck));
+      this.selected = options.selectedKeys.map(this.newCard);
+      this.drawn = options.drawnKeys.map(this.newCard);
+      this.cards = options.cardKeys.map(this.newCard);
       this.playerHands = options.playerHands;
     } else {
       this.reset();
@@ -34,14 +63,23 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
     return getRandomIndex(this.cards);
   }
 
+  /**
+   * Return the number of deck cards remaining
+   */
   public get length(): number {
-    return this.cards.length;
+    return this.cards ? this.cards.length : 0;
   }
 
+  /**
+   * Return deck cards as keys
+   */
   public get cardKeys(): PlayingCardKey[] {
     return this.cards.map((c) => c.key);
   }
 
+  /**
+   * Return selected cards as keys
+   */
   public get selectedKeys(): PlayingCardKey[] {
     return this.selected.map((c) => c.key);
   }
@@ -67,16 +105,27 @@ export class PlayingCardDeck implements IPlayingCardDeckState, IPlayingCardDeck 
   }
 
   /**
+   * Generate a set of 52 distinct cards for the deck
+   */
+  private makeCards(): void {
+    this.cards = PlayingCardDeck.cardKeys().map(this.newCard);
+  }
+
+  /**
    * Shuffle the cards using the Fisher-Yates method
    */
   public shuffle(): void {
-    console.log('PlayingCardDeck#shuffle');
+    if (this.length === 0) this.makeCards();
     this.cards = this.fisherYates(this.cards);
   }
 
+  public newCard(key: PlayingCardKey): PlayingCard {
+    return new PlayingCard(key);
+  }
+
   public reset(): void {
-    this.cards = _cardKeys().map((ck) => new PlayingCard(ck));
-    this.shuffle();
+    this.makeCards();
+    // this.shuffle();
     this.drawn = [];
     this.selected = [];
     this.playerHands = {};

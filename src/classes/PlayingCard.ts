@@ -15,6 +15,18 @@ export class PlayingCard implements IPlayingCard {
    * Static object containing predefined objects for each Card suit
    */
   static cardSuits: { [index: string]: IPlayingCardSuit } = {
+    'Club': {
+      single: 'Club',
+      plural: 'Clubs',
+      short: 'C',
+      icon: '\u2663',
+    },
+    'Diamond': {
+      single: 'Diamond',
+      plural: 'Diamonds',
+      short: 'D',
+      icon: '\u2666',
+    },
     'Heart': {
       single: 'Heart',
       plural: 'Hearts',
@@ -27,18 +39,6 @@ export class PlayingCard implements IPlayingCard {
       short: 'S',
       icon: '\u2660',
     },
-    'Diamond': {
-      single: 'Diamond',
-      plural: 'Diamonds',
-      short: 'D',
-      icon: '\u2666',
-    },
-    'Club': {
-      single: 'Club',
-      plural: 'Clubs',
-      short: 'C',
-      icon: '\u2663',
-    },
   }
 
   /**
@@ -47,39 +47,12 @@ export class PlayingCard implements IPlayingCard {
    */
   constructor(key: PlayingCardKey) {
     this.key = key;
-    const [suit, desc, sortValue] = key.split('_');
+    const [suit, sortValue] = key.split('_');
     this.suit = PlayingCard.cardSuits[suit];
     this.description = CardTuple[Number(sortValue)];
-    switch (sortValue) {
-      case '11':
-        this.sort = {
-          name: 'J',
-          value: Number(key.split('_')[2]),
-        }
-        break;
-      case '12':
-        this.sort = {
-          name: 'Q',
-          value: Number(key.split('_')[2]),
-        }
-        break;
-      case '13':
-        this.sort = {
-          name: 'K',
-          value: Number(key.split('_')[2]),
-        }
-        break;
-      case '14':
-        this.sort = {
-          name: 'A',
-          value: Number(key.split('_')[2]),
-        }
-        break;
-      default:
-        this.sort = {
-          name: key.split('_')[2],
-          value: Number(key.split('_')[2]),
-        }
+    this.sort = {
+      name: Number(sortValue) > 10 ? this.description.substring(0, 1) : sortValue,
+      value: Number(sortValue),
     }
   }
 
