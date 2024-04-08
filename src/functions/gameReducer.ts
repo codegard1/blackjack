@@ -1,5 +1,5 @@
 import { PlayingCard } from "../classes";
-import { gameDefaults } from "../context/gameDefaults";
+import { gameDefaults } from "../context";
 import { GameStatus } from "../enums";
 import { GameAction } from "../enums/GameAction";
 import { IGameReducerAction } from "../interfaces";
