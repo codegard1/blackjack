@@ -1,3 +1,3 @@
-import { PlayingCardSuit } from "../classes/PlayingCardSuit";
+import { IPlayingCardSuit } from "../interfaces";
 
-export type SuitKey = PlayingCardSuit['single'];
+export type SuitKey = IPlayingCardSuit['single'];
