@@ -1,4 +1,4 @@
-import { PlayingCardSuit, PlayingCardSort } from '../classes';
+import { IPlayingCardSort, IPlayingCardSuit } from '../interfaces';
 
 export interface ICardContainerProps {
   description: string;
@@ -8,6 +8,6 @@ export interface ICardContainerProps {
   isSelectable?: boolean;
   isDescVisible?: boolean;
   select?: () => void;
-  sort: PlayingCardSort;
-  suit: PlayingCardSuit;
+  sort: IPlayingCardSort;
+  suit: IPlayingCardSuit;
 }
