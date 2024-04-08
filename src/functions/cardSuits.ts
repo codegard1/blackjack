@@ -1,6 +1,6 @@
-import { PlayingCardSuit } from "../types";
+import { IPlayingCardSuit } from "../interfaces";
 
-export const cardSuits: PlayingCardSuit[] = [
+export const cardSuits: IPlayingCardSuit[] = [
   {
     single: 'Heart',
     plural: 'Hearts',

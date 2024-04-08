@@ -1,10 +1,10 @@
-import { Suit } from "./Suit";
+import { SuitName } from "./SuitName";
 
 export type SuitCollection = {
-  'Heart': any;
-  'Spade': any;
-  'Diamond': any;
-  'Club': any;
+  'Heart': string;
+  'Spade': string;
+  'Diamond': string;
+  'Club': string;
 }
 
-export type SuitCollectionKey = SuitCollection[Suit];
+export type SuitCollectionKey = SuitCollection[SuitName];
