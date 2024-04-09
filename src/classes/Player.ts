@@ -1,7 +1,7 @@
 import { PlayerAction, PlayerStatus } from '../enums';
+import { handValue } from '../functions';
 import { IPlayer, IPlayerOptions, IPlayerState } from '../interfaces';
 import { PlayerHandValue, PlayerKey, PlayerStats, PlayingCardKey } from '../types';
-import { PlayingCard } from './PlayingCard';
 
 
 /**
@@ -179,13 +179,7 @@ export class Player implements IPlayer, IPlayerState {
    * Calculate the player's hand value and return it
    */
   public get handValue(): PlayerHandValue {
-    const aceAsOne: number = this.hand.reduce((prev: number, curr: string) => prev + PlayingCard.pointValue(curr)[1], 0),
-      aceAsEleven: number = this.hand.reduce((prev: number, curr: string) => prev + PlayingCard.pointValue(curr)[2], 0);
-    return {
-      aceAsEleven,
-      aceAsOne,
-      highest: Math.max(aceAsEleven, aceAsOne),
-    }
+    return handValue(this.hand);
   }
 
   /**
