@@ -1,7 +1,6 @@
-
 // custom stuff
-import { Player } from '../classes/Player';
-import { PlayerAction } from '../enums/PlayerAction';
+import { Player } from '../classes';
+import { PlayerAction } from '../enums';
 import { IPlayerStore, IPlayerStoreState } from '../interfaces';
 import { PlayerCollection, PlayerKey } from '../types';
 
@@ -11,9 +10,12 @@ export class PlayerStore implements IPlayerStore {
   private currentPlayerKey: PlayerKey | null = null;
   private lastWriteTime = '';
 
-  constructor(players?: Player[]) {
-    if (undefined !== players) {
-      players.forEach((p) => this.players[p.key] = p);
+  constructor(playerState?: IPlayerStoreState) {
+    if (undefined !== playerState) {
+      this.players = playerState.players;
+      this.activePlayerKeys = playerState.activePlayerKeys;
+      this.currentPlayerKey = playerState.currentPlayerKey;
+      this.lastWriteTime = playerState.lastWriteTime;
     }
   }
 
@@ -76,12 +78,12 @@ export class PlayerStore implements IPlayerStore {
     return this.activePlayerKeys.length;
   }
 
-    /**
- * Get all active players
- */
-    public get all(): Player[] {
-      return this.activePlayerKeys.map(key => this.players[key]);
-    }
+  /**
+* Get all active players
+*/
+  public get all(): Player[] {
+    return this.activePlayerKeys.map(key => this.players[key]);
+  }
 
   /**
  * reset gameplay variables for each player and set the current player key to the first in the list

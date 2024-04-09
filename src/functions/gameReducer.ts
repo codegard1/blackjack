@@ -1,4 +1,4 @@
-import { PlayingCard, PlayingCardDeck } from "../classes";
+import { PlayerStore, PlayingCard, PlayingCardDeck } from "../classes";
 import { gameDefaults } from "../context";
 import { GameStatus } from "../enums";
 import { GameAction } from "../enums/GameAction";
@@ -23,6 +23,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     minimumBet,
     numberOfCards,
     playerKey,
+    playerState,
     potIncrement,
     type,
   } = action;
@@ -34,8 +35,13 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     /**
      * Replace the default state with one from localStorage
      */
-    case GameAction.SetDeckState:{
-      if(undefined !== deckState)state.deck = new PlayingCardDeck(deckState)
+    case GameAction.SetDeckState: {
+      if (undefined !== deckState) state.deck = new PlayingCardDeck(deckState)
+      return state;
+    }
+
+    case GameAction.SetPlayerState: {
+      if(undefined !== playerState) state.playerStore = new PlayerStore(playerState)
       return state;
     }
 

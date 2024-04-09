@@ -49,7 +49,7 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
 
   /* Hand Value (if it's a player deck) */
   let handValueString;
-  if (props.player?.handValue.highest) {
+  if (undefined !== props.player?.handValue?.highest) {
     if (!props.player.isNPC || (props.player.isNPC && settings.isDealerHandVisible)) {
       handValueString = `Hand Value: ${props.player.handValue.aceAsOne} `;
       if (props.player.handValue.aceAsOne !== props.player.handValue.aceAsEleven) {

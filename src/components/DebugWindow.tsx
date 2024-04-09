@@ -10,7 +10,7 @@ export const DebugWindow: React.FC = () => {
 
   // Local State
   const [isDeckStateVisible, setDeckStateVisible] = React.useState<boolean>(false);
-  const [isSelectedStateVisible, setSelectedStateVisible] = React.useState<boolean>(true);
+  const [isSelectedStateVisible, setSelectedStateVisible] = React.useState<boolean>(false);
   const [isPlayerHandStateVisible, setPlayerHandStateVisible] = React.useState<boolean>(false);
   const [isGameStateVisible, setGameStateVisible] = React.useState<boolean>(false);
   const [isPlayerStoreVisible, setPlayerStoreVisible] = React.useState<boolean>(false);

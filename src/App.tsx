@@ -15,7 +15,7 @@ import { DebugWindow } from './components/DebugWindow';
 import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, gameDefaults, settingDefaults } from './context';
 import { GameAction, StoreName } from './enums';
 import { gameReducer, settingReducer } from './functions';
-import { DeckState, SettingsState } from './types';
+import { SettingsState } from './types';
 
 // Necessary in order for Fluent Icons to render on the page
 initializeIcons();
@@ -48,31 +48,28 @@ const App = () => {
 
     const _playerStore = localStorage.getItem(StoreName.PLAYERSTORE);
     if (null !== _playerStore) {
-      console.log(JSON.stringify(_playerStore));
+      gameDispatch({ type: GameAction.SetPlayerState, playerState: JSON.parse(_playerStore) })
+    } else {
+      toggleSetting({ key: 'isSplashScreenVisible', value: true });
     }
   }, []);
 
   // Save settings state to localStorage
   React.useEffect(() => {
-    if (!!settings) {
+    if (!!settings)
       localStorage.setItem(StoreName.SETTINGSTORE, JSON.stringify(settings));
-    }
   }, [settings]);
 
   // Save deck state to localStorage
   React.useEffect(() => {
-    if (!!deckState) {
-      console.log('deckstate effect');
+    if (!!deckState)
       localStorage.setItem(StoreName.DECKSTORE, JSON.stringify(deckState));
-    }
   }, [deckState]);
-  
+
   // Save player state to localStorage
   React.useEffect(() => {
-    if (!!deckState) {
-      console.log('deckstate effect');
-      localStorage.setItem(StoreName.DECKSTORE, JSON.stringify(deckState));
-    }
+    if (!!playerState)
+      localStorage.setItem(StoreName.PLAYERSTORE, JSON.stringify(playerState));
   }, [playerState]);
 
   return (
