@@ -1,8 +1,7 @@
-import { GameState, PlayerCollection, PlayerKey } from "../types";
-import { Player, PlayerStore, PlayingCard, PlayingCardDeck } from ".";
-import { OptionsPanel } from "../components";
-import { GameStatus, StoreName } from "../enums";
+import { Player, PlayingCard, PlayingCardDeck } from ".";
 import { gameDefaults } from "../context";
+import { GameStatus, StoreName } from "../enums";
+import { GameState, PlayerCollection, PlayerKey } from "../types";
 
 interface IGame {
   state: GameState;
