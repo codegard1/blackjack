@@ -2,7 +2,7 @@
 import React from "react";
 
 // Fluent UI
-import { Layer, Stack, Text, nullRender } from "@fluentui/react";
+import { Layer, Stack, Text } from "@fluentui/react";
 
 /* custom stuff */
 import { Agent, CardStack, ControlPanel, DeckCallout, StatusDisplay } from '.';
@@ -14,22 +14,27 @@ import "./PlayerContainer.css";
 // Context
 import { PlayingCard } from "../classes";
 import { useGameContext } from "../context";
+import { handValue } from "../functions";
 
 // Component
 export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
+
+  const { playerKey } = props;
 
   // Context
   const { gameState } = useGameContext();
   const playerStore = gameState.playerStore;
   const deckState = gameState.deck;
-  
+
   // State
   const [isStatusCalloutVisible, setStatusCalloutVisible] = React.useState<boolean>(false);
   const [isDeckCalloutVisible, setDeckCalloutVisible] = React.useState<boolean>(false);
 
-  const player = playerStore.player(props.playerKey);
-  const playerCards = undefined === deckState.playerHands[props.playerKey] ? [] :
-    deckState.playerHands[props.playerKey].cards;
+  // computed values
+  const player = playerStore.player(playerKey);
+  const playerCards: PlayingCard[] = undefined === deckState.playerHands[props.playerKey] ? [] :
+    deckState.playerHands[playerKey].cards;
+  const playerHandValue = handValue(playerCards.map((c) => c.key));
 
   const _showDeckCallout = () => setDeckCalloutVisible(true);
   const _hideDeckCallout = () => setDeckCalloutVisible(false);
@@ -75,35 +80,31 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
             <Agent
               dealerHasControl={gameState.dealerHasControl}
               gameStatus={gameState.gameStatus}
-              handValue={player.handValue}
-              playerKey={props.playerKey}
+              handValue={playerHandValue}
+              playerKey={playerKey}
             />
           </Stack.Item>
         }
 
-        {!player.isNPC &&
-          <Stack.Item>
-            <ControlPanel
-              hidden={player ? player.isNPC : false}
-              playerKey={props.playerKey}
-              playerStatusFlag={playerStatusFlag}
-              selectedFlag={selectedFlag}
-              showDeckCallout={_showDeckCallout}
-              isDeckCalloutVisible={isDeckCalloutVisible}
-            />
-          </Stack.Item>
-        }
+        <Stack.Item>
+          <ControlPanel
+            hidden={player.isNPC}
+            playerKey={props.playerKey}
+            playerStatusFlag={playerStatusFlag}
+            selectedFlag={selectedFlag}
+            showDeckCallout={_showDeckCallout}
+            isDeckCalloutVisible={isDeckCalloutVisible}
+          />
+        </Stack.Item>
 
         <Stack.Item className={`DeckCalloutTarget-${player.title}`}>
-          {player.hand.cards ?
-            <CardStack
-              cards={playerCards}
-              hidden={false}
-              isSelectable
-              player={player}
-              title={player.title}
-            /> : nullRender()
-          }
+          <CardStack
+            cards={playerCards}
+            hidden={playerCards.length === 0}
+            isSelectable
+            player={player}
+            title={player.title}
+          />
         </Stack.Item>
       </Stack>
       <Layer>
