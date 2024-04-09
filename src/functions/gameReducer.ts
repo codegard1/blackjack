@@ -28,7 +28,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     type,
   } = action;
 
-  console.log('GameAction.' + type, JSON.stringify(action));
+  console.log('## GameAction.' + type, JSON.stringify(action));
 
   switch (type) {
 
@@ -113,18 +113,20 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
           state.deck.playerHands[_p.key].cards.push(...drawnCards);
         });
       }
-      state.controllingPlayer = undefined;
-      state.currentPlayerKey = undefined;
-      state.gameStatus = GameStatus.Init;
-      state.pot = 0;
+      state.controllingPlayer = 'chris';
+      state.currentPlayerKey = 'chris';
+      state.gameStatus = GameStatus.InProgress;
       state.round = 1;
       state.turnCount = 0;
-      state.playerStore._allPlayersAnte(state.minimumBet);
       return state;
     }
 
     // TODO
     case GameAction.EvaluateGame: {
+      
+      // If GameStatus is not passed in as a parameter then use the state value
+      const gameStatus = (undefined !== action.gameStatus) ? action.gameStatus : state.gameStatus;
+
       switch (gameStatus) {
         case GameStatus.Init:
           console.log('Game Status: Init');
@@ -135,6 +137,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
           console.log('Game Status: InProgress');
           /*   all players bet the minimum to start  */
           if (state.turnCount === 0) state.playerStore._allPlayersAnte(state.minimumBet);
+          state.pot = state.minimumBet * 2;
           state.turnCount = state.turnCount + 1;
           // endGameTrap();
           break;
