@@ -31,26 +31,26 @@ const App = () => {
 
   // Initialization effect 
   React.useEffect(() => {
-    console.log('Initialization effect');
+    // console.log('Initialization effect');
 
     const _settingStore = localStorage.getItem(StoreName.SETTINGSTORE);
     if (null !== _settingStore) {
       const _ss: SettingsState = JSON.parse(_settingStore);
       for (let key in _ss) {
-        toggleSetting({ key, value: _ss[key] });
+        // toggleSetting({ key, value: _ss[key] });
       }
     }
 
     const _deckStore = localStorage.getItem(StoreName.DECKSTORE);
     if (null !== _deckStore) {
-      gameDispatch({ type: GameAction.SetDeckState, deckState: JSON.parse(_deckStore) })
+      // gameDispatch({ type: GameAction.SetDeckState, deckState: JSON.parse(_deckStore) })
     }
 
     const _playerStore = localStorage.getItem(StoreName.PLAYERSTORE);
     if (null !== _playerStore) {
-      gameDispatch({ type: GameAction.SetPlayerState, playerState: JSON.parse(_playerStore) })
+      // gameDispatch({ type: GameAction.SetPlayerState, playerState: JSON.parse(_playerStore) })
     } else {
-      toggleSetting({ key: 'isSplashScreenVisible', value: true });
+      // toggleSetting({ key: 'isSplashScreenVisible', value: true });
     }
   }, []);
 
@@ -71,6 +71,12 @@ const App = () => {
     if (!!playerState)
       localStorage.setItem(StoreName.PLAYERSTORE, JSON.stringify(playerState));
   }, [playerState]);
+
+  // Evaluate game whenever state changes
+  React.useEffect(() => {
+    // console.log('Evaluate Game effect');
+    gameDispatch({ type: GameAction.EvaluateGame, gameStatus: gameState.gameStatus });
+  }, [gameState.gameStatus])
 
   return (
     <SettingContext.Provider value={settings}>
