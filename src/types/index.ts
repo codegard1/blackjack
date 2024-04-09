@@ -1,4 +1,3 @@
-export * from './BasePlayer';
 export * from './DeckState';
 export * from './GameState';
 export * from './MessageBarDefinition';
@@ -6,6 +5,7 @@ export * from './PlayerCollection';
 export * from './PlayerHand';
 export * from './PlayerHandList';
 export * from './PlayerHandValue';
+export * from './PlayerKey';
 export * from './PlayerStats';
 export * from './PlayingCardKey';
 export * from './SettingState';

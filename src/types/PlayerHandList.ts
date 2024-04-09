@@ -1,5 +1,4 @@
-import { PlayerKey } from "./BasePlayer";
-import { PlayerHand } from "./PlayerHand";
+import { PlayerHand, PlayerKey } from ".";
 
 export type PlayerHandList = {
   [index: PlayerKey]: PlayerHand;
