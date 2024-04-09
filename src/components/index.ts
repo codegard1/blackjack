@@ -3,6 +3,7 @@ export * from './Agent';
 export * from "./CardContainer";
 export * from "./CardStack";
 export * from './ControlPanel';
+export * from './DebugWindow';
 export * from './DeckCallout';
 export * from './JsonViewer';
 export * from './OptionsPanel';
