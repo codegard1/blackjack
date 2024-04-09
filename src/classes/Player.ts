@@ -1,7 +1,7 @@
-import { PlayingCard } from '.';
 import { PlayerAction, PlayerStatus } from '../enums';
 import { IPlayer, IPlayerOptions, IPlayerState } from '../interfaces';
-import { PlayerHand, PlayerHandValue, PlayerKey, PlayerStats } from '../types';
+import { PlayerHandValue, PlayerKey, PlayerStats, PlayingCardKey } from '../types';
+import { PlayingCard } from './PlayingCard';
 
 
 /**
@@ -17,7 +17,7 @@ export class Player implements IPlayer, IPlayerState {
 
   // Soft properties
   public bank = 0;
-  public hand: PlayerHand;
+  public hand: PlayingCardKey[] = [];
   public isFinished = false;
   public isSelected = false;
   public isStaying = false;
@@ -37,10 +37,7 @@ export class Player implements IPlayer, IPlayerState {
     this.disabled = options.disabled ? options.disabled : false;
 
     this.bank = options.bank ? options.bank : 0;
-    this.hand = {
-      cards: [],
-      handValue: { aceAsEleven: 0, aceAsOne: 0, highest: 0 },
-    };
+    this.hand = [];
     this.stats = {
       numberOfGamesLost: 0,
       numberOfGamesPlayed: 0,
@@ -116,6 +113,7 @@ export class Player implements IPlayer, IPlayerState {
       bank: this.bank,
       disabled: this.disabled,
       hand: this.hand,
+      handValue: this.handValue,
       hasBlackjack: this.hasBlackjack,
       id: this.id,
       isBusted: this.isBusted,
@@ -152,15 +150,15 @@ export class Player implements IPlayer, IPlayerState {
   /**
    * Return the player's hand as an array of PlayingCard
    */
-  public get cards(): PlayingCard[] {
-    return this.hand.cards;
+  public get cards(): PlayingCardKey[] {
+    return this.hand;
   }
 
   /**
    * Set the player's hand to the specified cards
    */
-  public set cards(v: PlayingCard[]) {
-    this.hand.cards = v;
+  public set cards(v: PlayingCardKey[]) {
+    this.hand = v;
   }
 
   /**
@@ -178,17 +176,23 @@ export class Player implements IPlayer, IPlayerState {
   }
 
   /**
-   * Return the PlayerHandValue object from the player
+   * Calculate the player's hand value and return it
    */
   public get handValue(): PlayerHandValue {
-    return this.hand.handValue;
+    const aceAsOne: number = this.hand.reduce((prev: number, curr: string) => prev + PlayingCard.pointValue(curr)[1], 0),
+      aceAsEleven: number = this.hand.reduce((prev: number, curr: string) => prev + PlayingCard.pointValue(curr)[2], 0);
+    return {
+      aceAsEleven,
+      aceAsOne,
+      highest: Math.max(aceAsEleven, aceAsOne),
+    }
   }
 
   /**
    * Return the highest value of ther player's hand
    */
   public get highestValue(): number {
-    return this.hand.handValue.highest;
+    return this.handValue.highest;
   }
 
   /**
