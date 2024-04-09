@@ -2,16 +2,11 @@
 import React from 'react';
 
 // FluentUI
-import {
-  Layer,
-  Stack,
-  initializeIcons
-} from '@fluentui/react';
+import { initializeIcons, Layer, MessageBar, nullRender, Stack, } from '@fluentui/react';
 
 // Local Resources
 import './App.css';
-import { ActivityLog, OptionsPanel, SplashScreen, Table } from './components';
-import { DebugWindow } from './components/DebugWindow';
+import { ActivityLog, OptionsPanel, SplashScreen, Table, DebugWindow } from './components';
 import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, gameDefaults, settingDefaults } from './context';
 import { GameAction, StoreName } from './enums';
 import { gameReducer, settingReducer } from './functions';
@@ -83,6 +78,16 @@ const App = () => {
       <SettingDispatchContext.Provider value={toggleSetting}>
         <GameContext.Provider value={gameState}>
           <GameDispatchContext.Provider value={gameDispatch}>
+
+            {
+              (true === settings.isMessageBarVisible) && ('' !== gameState.messageBarDefinition.text) ?
+                <MessageBar
+                  messageBarType={gameState.messageBarDefinition.type}
+                  isMultiline={gameState.messageBarDefinition.isMultiLine}>
+                  {gameState.messageBarDefinition.text}
+                </MessageBar>
+                : nullRender()
+            }
 
             <Layer>
               <SplashScreen />
