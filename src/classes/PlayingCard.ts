@@ -67,8 +67,9 @@ export class PlayingCard implements IPlayingCard {
     return value + suit;
   }
 
-  public get value(): string {
-    return this.toString();
+  static pointValue(key: PlayingCardKey): number[] {
+    const sortValue = Number(key.split('_')[1]);
+    return (sortValue === 14) ? [1, 11] : (sortValue > 9) ? [10, 10] : [sortValue, sortValue];
   }
 
 }
