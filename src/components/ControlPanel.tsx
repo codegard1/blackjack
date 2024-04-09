@@ -6,21 +6,24 @@ import { CommandBar, ICommandBarItemProps, MessageBarType, nullRender } from "@f
 
 // Local Resources
 import { useGameContext } from "../context";
-import { GameAction } from "../enums";
+import { GameAction, GameStatus } from "../enums";
 import { IControlPanelProps } from "../interfaces";
 
 // Component
 export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
 
-  // State from context
-  const { gameState, gameDispatch } = useGameContext();
-  const { gameStatusFlag, gameStatus, minimumBet } = gameState;
-
+  // Props
   const {
     playerStatusFlag,
     playerKey,
-    player
   } = props;
+
+  // State from context
+  const { gameState, gameDispatch } = useGameContext();
+  const { gameStatusFlag, gameStatus, minimumBet,currentPlayerKey } = gameState;
+
+  // Computed properties
+  const player = gameState.playerStore.player(props.playerKey);
   const npcFlag = player.isNPC;
 
   /* selectedFlag is true when the player has selected cards in his hand */
@@ -88,7 +91,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
       name: "Hit",
       ariaLabel: "Hit",
       iconProps: { iconName: "Add" },
-      disabled: gameStatusFlag || playerStatusFlag,
+      disabled: gameStatus > 2 || currentPlayerKey !== playerKey,
       onClick: (ev: any) => {
         ev.preventDefault();
         gameDispatch({ type: GameAction.Draw, playerKey, numberOfCards: 1, deckSide: 'top' });
