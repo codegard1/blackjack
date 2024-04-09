@@ -75,11 +75,7 @@ export const Table: React.FC = () => {
             : playerStore.all.map(p =>
               <StackItem align="stretch" grow={1} key={`PlayerStack-${p.key}`}>
                 <Text block>{p.title}</Text>
-                <PlayerContainer
-                  key={`PlayerContainer-${p.key}`}
-                  playerKey={p.key}
-                  player={p}
-                />
+                <PlayerContainer key={`PlayerContainer-${p.key}`} playerKey={p.key} />
               </StackItem>
             )}
         </Stack>

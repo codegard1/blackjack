@@ -22,13 +22,14 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   const { gameState } = useGameContext();
   const playerStore = gameState.playerStore;
   const deckState = gameState.deck;
-
+  
   // State
   const [isStatusCalloutVisible, setStatusCalloutVisible] = React.useState<boolean>(false);
   const [isDeckCalloutVisible, setDeckCalloutVisible] = React.useState<boolean>(false);
-  const { player, playerKey } = props;
-  const playerCards = undefined === deckState.playerHands[playerKey] ? [] :
-    deckState.playerHands[playerKey].cards;
+
+  const player = playerStore.player(props.playerKey);
+  const playerCards = undefined === deckState.playerHands[props.playerKey] ? [] :
+    deckState.playerHands[props.playerKey].cards;
 
   const _showDeckCallout = () => setDeckCalloutVisible(true);
   const _hideDeckCallout = () => setDeckCalloutVisible(false);
@@ -84,7 +85,6 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
           <Stack.Item>
             <ControlPanel
               hidden={player ? player.isNPC : false}
-              player={player}
               playerKey={props.playerKey}
               playerStatusFlag={playerStatusFlag}
               selectedFlag={selectedFlag}
