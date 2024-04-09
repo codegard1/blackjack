@@ -13,50 +13,8 @@ import {
 import { CardContainer } from '.';
 import { useGameContext, useSettingContext } from '../context';
 import { ICardStackProps } from '../interfaces';
+import { handValue } from '../functions';
 
-/**
- * A visual component that displays PlayingCards
- * @param props 
- * @returns 
- */
-export const CardStack: React.FC<ICardStackProps> = (props) => {
-
-  // Context props
-  const { settings } = useSettingContext();
-
-  // State
-  const [isDeckVisible, setVisible] = React.useState<boolean>(true);
-
-  const _toggleDeck = () => setVisible(!isDeckVisible);
-
-  // Create CardContainers to display cards
-  const cardElements = props.cards.map((card, index) =>
-    <CardContainer
-      {...card}
-      id={card.key}
-      isSelectable={props.isSelectable}
-      isBackFacing={index === 0 && !settings.isDealerHandVisible && props.player?.isNPC}
-      isDescVisible={settings.isCardDescVisible}
-    />
-  );
-
-  // Set toggle icon for Deck titles
-  const toggleIcon = <Icon iconName={isDeckVisible ? "ChevronUp" : "ChevronDown"} />
-
-
-  /* Deck Title */
-  const deckTitleString = `${props.title} (${props.cards.length})`;
-
-  /* Hand Value (if it's a player deck) */
-  let handValueString;
-  if (undefined !== props.player?.handValue?.highest) {
-    if (!props.player.isNPC || (props.player.isNPC && settings.isDealerHandVisible)) {
-      handValueString = `Hand Value: ${props.player.handValue.aceAsOne} `;
-      if (props.player.handValue.aceAsOne !== props.player.handValue.aceAsEleven) {
-        handValueString += " / " + props.player.handValue.aceAsEleven;
-      }
-    }
-  }
 
   // Style tokens for Fluent UI Stacks
   const tokens = {
@@ -69,14 +27,57 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
     },
   };
 
-  return props.hidden ? nullRender() : (
+/**
+ * A visual component that displays PlayingCards
+ * @param props 
+ * @returns 
+ */
+export const CardStack: React.FC<ICardStackProps> = (props) => {
+
+  const {
+    cards,
+    hidden,
+    isSelectable,
+    player,
+    title,
+  } = props;
+
+  // Context props
+  const { settings } = useSettingContext();
+
+  // State
+  const [isDeckVisible, setVisible] = React.useState<boolean>(true);
+  const _toggleDeck = () => setVisible(!isDeckVisible);
+
+  // Computed values
+  const handValues = handValue(cards.map((c) => c.key));
+
+  // Create CardContainers to display cards
+  const cardElements = cards.map((card, index) =>
+    <CardContainer
+      {...card}
+      key={`cardContainer-${card.key}-${index}`}
+      id={card.key}
+      isSelectable={isSelectable}
+      isBackFacing={index === 0 && !settings.isDealerHandVisible && player?.isNPC}
+      isDescVisible={settings.isCardDescVisible}
+    />
+  );
+
+  /* Deck Title */
+  const deckTitleString = `${title} (${cards.length})`;
+
+  /* Hand Value (if it's a player deck) */
+  const handValueString = (handValues.aceAsEleven === handValues.aceAsOne) ?
+    `Hand Value: ${handValues.highest}` :
+    `Hand Value: ${handValues.aceAsOne} / ${handValues.aceAsEleven}`;
+
+  return hidden ? nullRender() : (
     <Stack verticalAlign="stretch" tokens={tokens.sectionStack}>
-      {props.player?.isNPC && (
-        <Text variant="mediumPlus" nowrap block onClick={_toggleDeck}>
-          {deckTitleString}&nbsp;{toggleIcon}
-        </Text>
-      )}
-      {!props.player?.isNPC &&
+      <Text variant="mediumPlus" nowrap block onClick={_toggleDeck}>
+        {deckTitleString}&nbsp;<Icon iconName={isDeckVisible ? "ChevronUp" : "ChevronDown"} />
+      </Text>
+      {!player?.isNPC &&
         settings.isHandValueVisible && (
           <Text variant="large">{handValueString}</Text>
         )}
