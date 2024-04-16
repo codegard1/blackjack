@@ -1,4 +1,4 @@
-import { PlayingCardDeck } from ".";
+import { PlayerStore, PlayingCardDeck } from ".";
 import { gameDefaults, settingDefaults } from "../context";
 import { StoreName } from "../enums";
 import { GameState, PlayerCollection, SettingsState } from "../types";
@@ -14,7 +14,7 @@ interface IGame {
 }
 
 interface IBlackjackProps {
-  players: PlayerCollection;
+  players: PlayerStore;
   deck: PlayingCardDeck;
   state: GameState;
   settings: SettingsState;
