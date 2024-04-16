@@ -6,7 +6,7 @@ import { Text, Stack, StackItem, Label, Dropdown, DropdownMenuItemType, TextFiel
 import { MotionAnimations } from '@fluentui/theme';
 
 // Local Resources
-import { defaultPlayers } from "../definitions";
+import { defaultplayersArr } from "../definitions";
 
 // Component
 export const UserForm: React.FC = () => {
