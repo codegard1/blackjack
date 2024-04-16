@@ -1,7 +1,8 @@
 import { PlayerAction, PlayerStatus } from '../enums';
 import { PlayerStats } from '../types';
+import { IPlayerOptions } from './IPlayerOpts';
 
-export interface IPlayer {
+export interface IPlayer extends IPlayerOptions {
   bank: number;
   disabled?: boolean;
   id: number;
