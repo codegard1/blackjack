@@ -3,8 +3,6 @@ export * from './GameState';
 export * from './MessageBarDefinition';
 export * from './PlayerCollection';
 export * from './PlayerHand';
-export * from './PlayerHandList';
-export * from './PlayerHandValue';
 export * from './PlayerKey';
 export * from './PlayerStats';
 export * from './PlayingCardKey';
