@@ -6,7 +6,6 @@ import {
   Dialog, DialogFooter, DialogType, Dropdown, IDropdownOption, PrimaryButton, ResponsiveMode, Text,
 } from '@fluentui/react';
 
-import { Player } from "../classes";
 import { useGameContext, useSettingContext } from '../context';
 import {
   defaultPlayersDropdownOptions,
@@ -14,6 +13,7 @@ import {
 } from "../definitions";
 import { GameAction } from "../enums";
 import { PlayerKey } from "../types";
+import { IPlayer } from "../interfaces";
 
 
 export const SplashScreen: React.FC = () => {
@@ -26,7 +26,7 @@ export const SplashScreen: React.FC = () => {
   const [selectedPlayers, setSelectedPlayers] = React.useState<PlayerKey[]>(defaultSelectedPlayerKeys);
   const [errorMessage, setErrorMessage] = React.useState<string>();
 
-  const onChangeDropDown = (event: React.FormEvent<HTMLDivElement>, option: IDropdownOption<Player> | undefined, index?: number): void => {
+  const onChangeDropDown = (event: React.FormEvent<HTMLDivElement>, option: IDropdownOption<IPlayer> | undefined, index?: number): void => {
     if (!!option) {
       const { key, selected } = option;
       const _selectedPlayers = selectedPlayers.slice();

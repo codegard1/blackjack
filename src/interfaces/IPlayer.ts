@@ -8,6 +8,8 @@ export interface IPlayer {
   isFinished?: boolean;
   isNPC: boolean;
   isSelected?: boolean;
+  isBusted?: boolean;
+  isBlackjack?: boolean;
   isStaying?: boolean;
   key: string;
   lastAction?: PlayerAction;

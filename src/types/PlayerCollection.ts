@@ -1,8 +1,8 @@
 import { PlayerKey } from '.';
-import { Player } from '../classes';
+import { IPlayer } from '../interfaces';
 
 export type PlayerCollection = {
-  [index: PlayerKey]: Player;
+  [index: PlayerKey]: IPlayer;
 };
 
 export type PlayerCollectionKey = PlayerCollection[PlayerKey];

@@ -1,38 +1,37 @@
-import { Player } from '../classes/Player';
-import { IPlayerStoreState } from './IPlayerStoreState';
+import { IPlayer, IPlayerOptions } from '.';
 import { PlayerKey, PlayerStats, } from '../types';
+import { IPlayerStoreState } from './IPlayerStoreState';
 
 /**
  * Class that tracks and manipulates Player objects
  */
 export interface IPlayerStore {
-  state: IPlayerStoreState;
-  newPlayer: (key: PlayerKey, title: string, isNPC: boolean, id: number, bank: number, disabled?: boolean) => void;
-  saveAll: () => Promise<void>;
+  isCurrentPlayerNPC: null | boolean;
+  all: IPlayer[];
+  allPlayersAnte: (amount: number) => void;
+  allPlayersFinish: () => void;
+  ante: (key: PlayerKey, amount: number) => void;
+  bet: (key: PlayerKey, amount: number) => void;
+  bust: (key: PlayerKey) => void;
   clearStore: () => void;
-  player: (key: PlayerKey) => Player;
-  all: Player[];
-  playerName: (key: PlayerKey) => string;
+  currentPlayer?: IPlayer;
+  endTurn: (key: PlayerKey) => void;
+  finish: (key: PlayerKey) => void;
+  hit: (key: PlayerKey) => void;
   length: number;
-  reset: () => void;
+  newPlayer: (options: IPlayerOptions) => void;
   newRound: () => void;
-  _allPlayersAnte: (amount: number) => void;
-  _allPlayersFinish: () => void;
-  _ante: (key: PlayerKey, amount: number) => void;
-  _bet: (key: PlayerKey, amount: number) => void;
-  _blackjack: (key: PlayerKey) => boolean;
-  _bust: (key: PlayerKey) => void;
-  _endTurn: (key: PlayerKey) => void;
-  _finish: (key: PlayerKey) => void;
-  _hit: (key: PlayerKey) => void;
-  _nextPlayer: () => void;
-  _resetPlayer: (key: PlayerKey, omit: string) => void;
-  _payout: (key: PlayerKey, amount: number) => void;
-  _startTurn: (key: PlayerKey) => void;
-  _stay: (key: PlayerKey) => void;
-  _stats: (key: PlayerKey) => PlayerStats;
-  currentPlayer: null | Player;
-  _isCurrentPlayerNPC: null | boolean;
+  nextPlayer: () => void;
+  payout: (key: PlayerKey, amount: number) => void;
+  player: (key: PlayerKey) => IPlayer;
+  playerName: (key: PlayerKey) => string;
+  reset: () => void;
+  resetPlayer: (key: PlayerKey, omit: string) => void;
+  saveAll: () => Promise<void>;
+  startTurn: (key: PlayerKey) => void;
+  state: IPlayerStoreState;
+  stats: (key: PlayerKey) => PlayerStats;
+  stay: (key: PlayerKey) => void;
 }
 
 

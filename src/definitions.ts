@@ -1,5 +1,4 @@
 import { IDropdownOption } from "@fluentui/react";
-import { Player } from "./classes";
 import { PlayerStatus } from "./enums";
 import { IPlayer } from "./interfaces";
 import { PlayerKey } from "./types";
@@ -14,6 +13,8 @@ export const playerDefaults: IPlayer = {
   isFinished: false,
   isNPC: false,
   isSelected: false,
+  isBlackjack: false,
+  isBusted: false,
   isStaying: false,
   key: 'default',
   lastAction: undefined,
@@ -35,7 +36,7 @@ export const playerDefaults: IPlayer = {
 };
 
 //  Default players as array
-export const defaultplayersArr:IPlayer[] = [
+export const defaultplayersArr: IPlayer[] = [
   { ...playerDefaults, key: 'chris', title: 'Chris', disabled: false, bank: 1000, isNPC: false, },
   { ...playerDefaults, key: 'dealer', title: 'Dealer', disabled: false, bank: 1000, isNPC: true },
   { ...playerDefaults, key: 'john', title: 'John', disabled: false, bank: 1000, isNPC: true },

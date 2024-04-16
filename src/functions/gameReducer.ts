@@ -1,9 +1,11 @@
 import { PlayerStore, PlayingCard, PlayingCardDeck } from "../classes";
 import { gameDefaults } from "../context";
+import { playerDefaults } from "../definitions";
 import { GameStatus } from "../enums";
 import { GameAction } from "../enums/GameAction";
 import { IGameReducerAction } from "../interfaces";
 import { GameState, PlayerStats } from "../types";
+import { handValue } from "./getHandValue";
 
 /**
  * Reducer function for game state
@@ -41,7 +43,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     }
 
     case GameAction.SetPlayerState: {
-      if(undefined !== playerState) state.playerStore = new PlayerStore(playerState)
+      if (undefined !== playerState) state.playerStore = new PlayerStore(playerState)
       return state;
     }
 
@@ -107,7 +109,8 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
         state.activePlayerKeys = playerKey;
         playerKey.forEach(v => {
           const _p = state.players.find(p => p.key === v);
-          state.playerStore.newPlayer(_p.key, _p.title, _p.isNPC, _p.id, _p.bank,);
+          const { key, title, isNPC, bank, id } = _p;
+          state.playerStore.newPlayer({ ...playerDefaults, key, title, isNPC, id, bank, });
           state.deck.newPlayerHand(_p.key);
           const drawnCards = state.deck.draw(2);
           state.deck.playerHands[_p.key].cards.push(...drawnCards);
@@ -123,7 +126,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
     // TODO
     case GameAction.EvaluateGame: {
-      
+
       // If GameStatus is not passed in as a parameter then use the state value
       const gameStatus = (undefined !== action.gameStatus) ? action.gameStatus : state.gameStatus;
 
@@ -136,7 +139,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
           /*   Game in progress; first play  */
           console.log('Game Status: InProgress');
           /*   all players bet the minimum to start  */
-          if (state.turnCount === 0) state.playerStore._allPlayersAnte(state.minimumBet);
+          if (state.turnCount === 0) state.playerStore.allPlayersAnte(state.minimumBet);
           state.pot = state.minimumBet * 2;
           state.turnCount = state.turnCount + 1;
           // endGameTrap();
@@ -148,7 +151,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
           /* If endgame conditions not met   */
           if (!state.gameStatusFlag) {
             /* increment currentPlayerIndex */
-            state.playerStore._nextPlayer();
+            state.playerStore.nextPlayer();
             state.gameStatus = GameStatus.InProgress;
           }
           break;
@@ -165,14 +168,14 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
           state.winner = state.playerStore.all[0].key;
           state.loser = state.playerStore.all[1].key;
-          state.playerStore._payout(state.playerStore.all[0].key, state.pot);
+          state.playerStore.payout(state.playerStore.all[0].key, state.pot);
           break;
 
         case GameStatus.DealerWins:
           console.log('Game Status: DealerWins');
           state.winner = state.playerStore.all[1].key;
           state.loser = state.playerStore.all[0].key;
-          state.playerStore._payout(state.playerStore.all[1].key, state.pot);
+          state.playerStore.payout(state.playerStore.all[1].key, state.pot);
           // newActivityLogItem(playerStore.all[1].title, 'wins!', 'Crown');
           // gameDispatch({ type: GameAction.EndGame });
           break;
@@ -190,7 +193,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       const playerStore = state.playerStore;
 
       /* Set next game status */
-      if (playerStore.all[1].hasBlackjack) {
+      if (playerStore.all[1].isBlackjack) {
         nextGameStatus = GameStatus.DealerWins; // Dealer has blackjack ; dealer wins
       } else if (playerStore.all[0].isBusted) {
         nextGameStatus = GameStatus.DealerWins; // Player 0 busted ; dealer wins
@@ -198,7 +201,9 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
         nextGameStatus = GameStatus.HumanWins; // Dealer is busted; Player 0 wins
       } else if (playerStore.all[1].isStaying) {
         if (
-          playerStore.all[1].highestValue > playerStore.all[0].highestValue
+          // TODO: refactor this monstrosity
+          handValue(state.deck.playerHands[playerStore.all[1].key].cards.map((c) => c.key)).highest >
+          handValue(state.deck.playerHands[playerStore.all[0].key].cards.map((c) => c.key)).highest
         ) {
           nextGameStatus = GameStatus.DealerWins; // Dealer has higher hand ; dealer wins
         } else {
@@ -224,12 +229,12 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
             numberOfGamesLost: (player.key === state.loser ? 1 : 0),
             numberOfGamesPlayed: 1,
             numberOfGamesWon: (player.key === state.winner ? 1 : 0),
-            numberOfTimesBlackjack: (player.hasBlackjack ? 1 : 0),
+            numberOfTimesBlackjack: (player.isBlackjack ? 1 : 0),
             numberOfTimesBusted: (player.isBusted ? 1 : 0),
             totalWinnings: (player.key === state.winner ? state.pot : 0),
             winLossRatio: 0,
           };
-          player.updateStats(statsFrame);
+          state.playerStore.updateStats(player.key, statsFrame);
         });
         state.gameStatusFlag = true;
       }
@@ -297,7 +302,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
     // TODO
     case GameAction.Ante: {
-      state.playerStore._allPlayersAnte(state.minimumBet);
+      state.playerStore.allPlayersAnte(state.minimumBet);
       return state;
     }
 
