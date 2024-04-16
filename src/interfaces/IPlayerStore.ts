@@ -12,7 +12,6 @@ export interface IPlayerStoreState {
  * Class that tracks and manipulates Player objects
  */
 export interface IPlayerStore extends IPlayerStoreState {
-  isCurrentPlayerNPC: null | boolean;
   all: IPlayer[];
   allPlayersAnte: (amount: number) => void;
   allPlayersFinish: () => void;
@@ -24,6 +23,7 @@ export interface IPlayerStore extends IPlayerStoreState {
   endTurn: (key: PlayerKey) => void;
   finish: (key: PlayerKey) => void;
   hit: (key: PlayerKey) => void;
+  isCurrentPlayerNPC: null | boolean;
   length: number;
   newPlayer: (options: IPlayerOptions) => void;
   newRound: () => void;

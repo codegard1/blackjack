@@ -23,7 +23,6 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const { gameState, gameDispatch } = useGameContext();
   const { settings, toggleSetting } = useSettingContext();
   const {
-    currentPlayerKey,
     deck,
     gameStatus,
     gameStatusFlag,
@@ -32,6 +31,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   } = gameState;
 
   // Computed properties
+  const currentPlayerKey = playerStore.currentPlayerKey;
   const player = playerStore.player(props.playerKey);
   const npcFlag = player.isNPC;
   const isBtnDisabled = gameStatus > 2 || currentPlayerKey !== playerKey;

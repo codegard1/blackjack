@@ -1,6 +1,6 @@
+import { IPlayerStoreState } from ".";
 import { GameAction, GameStatus } from "../enums";
 import { DeckState, MessageBarDefinition, PlayerKey, PlayingCardKey } from "../types";
-import { IPlayerStoreState } from "./IPlayerStoreState";
 
 export interface IGameReducerAction {
   cardKey?: PlayingCardKey;

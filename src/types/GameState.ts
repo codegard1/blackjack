@@ -3,9 +3,7 @@ import { GameStatus } from "../enums";
 import { MessageBarDefinition, PlayerKey } from "./";
 
 export type GameState = {
-  activePlayerKeys?: PlayerKey[];
   controllingPlayer?: PlayerKey;
-  currentPlayerKey?: PlayerKey;
   dealerHasControl: boolean;
   deck: PlayingCardDeck;
   gameStatus: GameStatus;

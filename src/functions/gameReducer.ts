@@ -5,7 +5,6 @@ import { GameStatus } from "../enums";
 import { GameAction } from "../enums/GameAction";
 import { IGameReducerAction } from "../interfaces";
 import { GameState, PlayerStats } from "../types";
-import { handValue } from "./getHandValue";
 
 /**
  * Reducer function for game state
@@ -107,20 +106,20 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
      * Initiate a new game from scratch
      */
     case GameAction.NewGame: {
+      state.playerStore.reset();
+      state.deck.reset();
       state.deck.shuffle();
+
+      // This is redundant with playerStore.reset(). Consider removing
       if (undefined !== playerKey && typeof playerKey !== 'string') {
-        state.activePlayerKeys = playerKey;
         playerKey.forEach(v => {
-          const _p = state.players.find(p => p.key === v);
-          const { key, title, isNPC, bank, id } = _p;
+          const { key, title, isNPC, bank, id } = state.playerStore.player(v);
           state.playerStore.newPlayer({ ...playerDefaults, key, title, isNPC, id, bank, });
-          state.deck.newPlayerHand(_p.key);
-          const drawnCards = state.deck.draw(2);
-          state.deck.playerHands[_p.key].cards.push(...drawnCards);
+          state.deck.newPlayerHand(v);
         });
       }
-      state.controllingPlayer = 'chris';
-      state.currentPlayerKey = 'chris';
+
+      state.controllingPlayer = state.playerStore.currentPlayer?.key;
       state.gameStatus = GameStatus.InProgress;
       state.round = 1;
       state.turnCount = 0;
@@ -251,7 +250,6 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       state.deck.reset();
       state.playerStore.reset();
       state.controllingPlayer = gameDefaults.controllingPlayer;
-      state.currentPlayerKey = gameDefaults.currentPlayerKey;
       state.dealerHasControl = gameDefaults.dealerHasControl;
       state.gameStatus = gameDefaults.gameStatus;
       state.gameStatusFlag = gameDefaults.gameStatusFlag;
@@ -286,7 +284,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
      * Start a new round of a continuous game
      */
     case GameAction.NewRound: {
-      state.controllingPlayer = state.currentPlayerKey;
+      state.controllingPlayer = state.playerStore.currentPlayerKey;
       state.gameStatus = GameStatus.InProgress;
       state.pot = 0;
       state.round = state.round + 1;

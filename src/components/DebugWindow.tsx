@@ -32,9 +32,9 @@ export const DebugWindow: React.FC = () => {
       <Text as='h1' block onClick={() => setGameStateVisible(!isGameStateVisible)}>
         Game</Text>
       {isGameStateVisible ? <JsonViewer data={{
-        activePlayerKeys: gameState.activePlayerKeys,
+        activePlayerKeys: gameState.playerStore.activePlayerKeys,
         controllingPlayer: gameState.controllingPlayer,
-        currentPlayerKey: gameState.currentPlayerKey,
+        currentPlayerKey: gameState.playerStore.activePlayerKeys,
         dealerHasControl: gameState.dealerHasControl,
         gameStatus: gameState.gameStatus,
         gameStatusFlag: gameState.gameStatusFlag,

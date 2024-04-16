@@ -1,13 +1,13 @@
 // custom stuff
 import { playerDefaults } from '../definitions';
-import { PlayerAction } from '../enums';
+import { PlayerAction, StoreName } from '../enums';
 import { IPlayer, IPlayerOptions, IPlayerStore, IPlayerStoreState } from '../interfaces';
 import { PlayerCollection, PlayerKey, PlayerStats } from '../types';
 
 export class PlayerStore implements IPlayerStore {
-  private players: PlayerCollection = {};
-  private currentPlayerKey: PlayerKey | null = null;
-  private lastWriteTime = '';
+  public players: PlayerCollection = {};
+  public currentPlayerKey: PlayerKey | undefined = undefined;
+  public lastWriteTime = '';
 
   constructor(playerState?: IPlayerStoreState) {
     if (undefined !== playerState) {
@@ -58,7 +58,7 @@ export class PlayerStore implements IPlayerStore {
    */
   public async saveAll(): Promise<void> {
     this.lastWriteTime = new Date().toISOString();
-    // this.stateManager.set(STORE_NAME, this.state);
+    localStorage.setItem(StoreName.PLAYERSTORE, JSON.stringify(this.state));
   }
 
   public clearStore() {
@@ -96,7 +96,7 @@ export class PlayerStore implements IPlayerStore {
    */
   public reset(): void {
     this.activePlayerKeys.forEach(key => this.resetPlayer(key, 'bank'));
-    this.currentPlayerKey = this.length > 0 ? this.activePlayerKeys[0] : null;
+    this.currentPlayerKey = this.length > 0 ? this.activePlayerKeys[0] : undefined;
   }
 
   /**
@@ -104,7 +104,7 @@ export class PlayerStore implements IPlayerStore {
    */
   public newRound() {
     this.activePlayerKeys.forEach(key => this.resetPlayer(key, "bank"));
-    this.currentPlayerKey = this.state.activePlayerKeys[0];
+    this.currentPlayerKey = this.activePlayerKeys[0];
     this.allPlayersAnte(20);
     this.startTurn(this.currentPlayerKey);
   }
@@ -259,11 +259,8 @@ export class PlayerStore implements IPlayerStore {
  * cycle currentPlayerKey
  */
   public nextPlayer() {
-    // get key of current Player from state
-    const { currentPlayerKey, activePlayerKeys } = this.state;
-
     // get index of current player in the activePlayers list
-    const index = activePlayerKeys.findIndex(key => key === currentPlayerKey);
+    const index = this.activePlayerKeys.findIndex(key => key === this.currentPlayerKey);
 
     // increment the index or go back to 0
     let nextIndex = index + 1 >= (this.length)
@@ -284,7 +281,7 @@ export class PlayerStore implements IPlayerStore {
   }
 
   public get currentPlayer() {
-    if (null !== this.currentPlayerKey)
+    if (undefined !== this.currentPlayerKey)
       return this.players[this.currentPlayerKey];
   }
 
