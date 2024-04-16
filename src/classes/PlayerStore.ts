@@ -6,14 +6,12 @@ import { PlayerCollection, PlayerKey, PlayerStats } from '../types';
 
 export class PlayerStore implements IPlayerStore {
   private players: PlayerCollection = {};
-  private activePlayerKeys: PlayerKey[] = [];
   private currentPlayerKey: PlayerKey | null = null;
   private lastWriteTime = '';
 
   constructor(playerState?: IPlayerStoreState) {
     if (undefined !== playerState) {
       this.players = playerState.players;
-      this.activePlayerKeys = playerState.activePlayerKeys;
       this.currentPlayerKey = playerState.currentPlayerKey;
       this.lastWriteTime = playerState.lastWriteTime;
     }
@@ -31,6 +29,17 @@ export class PlayerStore implements IPlayerStore {
     }
   }
 
+  /**
+   * Construct an array from this.players.key
+   */
+  public get activePlayerKeys(): PlayerKey[] {
+    let _keys: PlayerKey[] = [];
+    for (let pk in this.players) {
+      _keys.push(this.players[pk].key);
+    }
+    return _keys;
+  }
+
 
   /**
    * Create a new Player object and add it to the collection in PlayerStore
@@ -42,13 +51,6 @@ export class PlayerStore implements IPlayerStore {
     const _newPlayer: IPlayer = { ...playerDefaults, key, title, isNPC, id, bank, disabled: disabled ? disabled : false, };
     // Add the new Player to the players collection
     if (!(key in this.players)) this.players[key] = _newPlayer;
-
-    // add new player to the active players list
-    const _ap = this.activePlayerKeys.slice();
-    if (!(key in _ap)) {
-      _ap.push(key);
-      this.activePlayerKeys = _ap;
-    }
   }
 
   /**
@@ -113,12 +115,8 @@ export class PlayerStore implements IPlayerStore {
    * @param  {...string} omit properties to omit when resetting
    */
   public resetPlayer(key: PlayerKey, omit: string) {
-    const player = this.players[key];
-    player.bank = 1000;
-    player.isFinished = false;
-    player.isStaying = false;
-    player.lastAction = PlayerAction.Init;
-    player.turn = false;
+    const p = this.players[key];
+    this.players[key] = { ...playerDefaults, key, title: p.title, isNPC: p.isNPC, bank: p.bank, id: p.id }
   }
 
   /**
