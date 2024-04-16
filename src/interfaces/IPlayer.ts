@@ -1,20 +1,21 @@
 import { PlayerAction, PlayerStatus } from '../enums';
-import { PlayerHandValue, PlayingCardKey } from '../types';
+import { PlayerStats } from '../types';
 
 export interface IPlayer {
-  lastAction: PlayerAction;
-  lastAnte: number;
-  lastBet: number;
-  status: PlayerStatus;
-  turn: boolean;
   bank: number;
-  disabled: boolean;
-  hand: PlayingCardKey[];
-  handValue: PlayerHandValue;
-  hasBlackjack: boolean;
+  disabled?: boolean;
   id: number;
-  isBusted: boolean;
+  isFinished?: boolean;
   isNPC: boolean;
+  isSelected?: boolean;
+  isStaying?: boolean;
   key: string;
+  lastAction?: PlayerAction;
+  lastAnte?: number;
+  lastBet?: number;
+  stats: PlayerStats;
+  status?: PlayerStatus;
   title: string;
+  totalBet?: number;
+  turn?: boolean;
 }

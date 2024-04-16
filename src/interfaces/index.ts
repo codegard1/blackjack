@@ -9,7 +9,6 @@ export * from './IGameReducerAction';
 export * from './IPlayer';
 export * from './IPlayerContainerProps';
 export * from './IPlayerOpts';
-export * from './IPlayerState';
 export * from './IPlayerStore';
 export * from './IPlayerStoreState';
 export * from './IPlayingCard';
