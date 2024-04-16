@@ -1,11 +1,17 @@
 import { IPlayer, IPlayerOptions } from '.';
-import { PlayerKey, PlayerStats, } from '../types';
-import { IPlayerStoreState } from './IPlayerStoreState';
+import { PlayerCollection, PlayerKey, PlayerStats, } from '../types';
+
+export interface IPlayerStoreState {
+  players: PlayerCollection;
+  activePlayerKeys?: PlayerKey[];
+  currentPlayerKey?: PlayerKey;
+  lastWriteTime: string;
+}
 
 /**
  * Class that tracks and manipulates Player objects
  */
-export interface IPlayerStore {
+export interface IPlayerStore extends IPlayerStoreState {
   isCurrentPlayerNPC: null | boolean;
   all: IPlayer[];
   allPlayersAnte: (amount: number) => void;

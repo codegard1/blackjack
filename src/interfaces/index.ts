@@ -10,7 +10,6 @@ export * from './IPlayer';
 export * from './IPlayerContainerProps';
 export * from './IPlayerOpts';
 export * from './IPlayerStore';
-export * from './IPlayerStoreState';
 export * from './IPlayingCard';
 export * from './IPlayingCardDeck';
 export * from './IPlayingCardSort';
