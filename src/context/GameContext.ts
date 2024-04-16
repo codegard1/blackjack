@@ -25,7 +25,6 @@ export const gameDefaults: GameState = {
     isMultiLine: false
   },
   controllingPlayer: undefined,
-  players: defaultplayersArr,
   activePlayerKeys: undefined,
   currentPlayerKey: undefined,
   playerStore: new PlayerStore(),

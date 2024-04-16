@@ -43,7 +43,7 @@ export const DebugWindow: React.FC = () => {
         loser: gameState.loser,
         messageBarDefinition: gameState.messageBarDefinition,
         minimumBet: gameState.minimumBet,
-        players: gameState.players,
+        players: gameState.playerStore.all,
         pot: gameState.pot,
         round: gameState.round,
         turnCount: gameState.turnCount,

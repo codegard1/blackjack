@@ -15,7 +15,6 @@ export type GameState = {
   loser?: PlayerKey;
   messageBarDefinition: MessageBarDefinition;
   minimumBet: number;
-  players: any[];
   playerStore: PlayerStore;
   pot: number;
   round: number;
