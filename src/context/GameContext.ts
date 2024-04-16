@@ -1,7 +1,6 @@
 import { MessageBarType } from '@fluentui/react';
 import { Dispatch, createContext, useContext } from 'react';
 import { PlayerStore, PlayingCardDeck } from '../classes';
-import { defaultplayersArr } from '../definitions';
 import { GameStatus } from '../enums';
 import { IGameReducerAction } from '../interfaces';
 import { GameState } from '../types';
@@ -25,8 +24,6 @@ export const gameDefaults: GameState = {
     isMultiLine: false
   },
   controllingPlayer: undefined,
-  activePlayerKeys: undefined,
-  currentPlayerKey: undefined,
   playerStore: new PlayerStore(),
 }
 
