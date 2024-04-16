@@ -1,53 +1,41 @@
-import { Player, PlayingCard, PlayingCardDeck } from ".";
-import { gameDefaults } from "../context";
-import { GameStatus, StoreName } from "../enums";
-import { GameState, PlayerCollection, PlayerKey } from "../types";
+import { PlayingCardDeck } from ".";
+import { gameDefaults, settingDefaults } from "../context";
+import { StoreName } from "../enums";
+import { GameState, PlayerCollection, SettingsState } from "../types";
 
 interface IGame {
+  players: PlayerCollection;
+  deck: PlayingCardDeck;
   state: GameState;
+  settings: SettingsState;
   save: (store: StoreName) => void;
   load: (store: StoreName) => void;
+  reset: () => void;
 }
 
 interface IBlackjackProps {
-  players?: Player[] | PlayerCollection;
-  deck?: PlayingCard[] | PlayingCardDeck;
-  gameState?: {
-    activePlayerKeys?: PlayerKey[];
-    controllingPlayer?: PlayerKey;
-    currentPlayerKey?: PlayerKey;
-    dealerHasControl?: boolean;
-    deck?: PlayingCardDeck;
-    gameStatus?: GameStatus;
-    gameStatusFlag?: boolean;
-    isSpinnerVisible?: boolean;
-    lastWriteTime?: string;
-    loser?: PlayerKey;
-    minimumBet?: number;
-    players?: any[];
-    pot?: number;
-    round?: number;
-    turnCount?: number;
-    winner?: PlayerKey;
-  }
+  players: PlayerCollection;
+  deck: PlayingCardDeck;
+  state: GameState;
+  settings: SettingsState;
 }
 
 /**
  * Abstract representation of the game not necessarily for use in production
  */
 export class Blackjack implements IGame {
-  public state: GameState;
+  public players = {};
+  public deck = new PlayingCardDeck();
+  public state = gameDefaults;
+  public settings = settingDefaults;
 
   constructor(options?: IBlackjackProps) {
-    this.state = gameDefaults;
-  }
-
-  public get deck(): PlayingCardDeck {
-    return this.state.deck;
-  }
-
-  public get players(): Player[] {
-    return this.state.playerStore.all;
+    if (!options) return;
+    const { players, deck, state, settings, } = options;
+    if (players) this.players = players;
+    if (deck) this.deck = deck;
+    if (state) this.state = state;
+    if (settings) this.players = settings;
   }
 
   // Save game data to localStorage
@@ -63,4 +51,8 @@ export class Blackjack implements IGame {
     return;
   }
 
+  public reset() {
+    // TODO
+    return;
+  }
 }
