@@ -4,10 +4,10 @@ import { PlayingCardKey } from "../types";
 export interface IPlayingCardDeck {
   cards: PlayingCard[];
   deal: (numberOfCards: number) => void;
-  draw: (numberOfCards: number) => PlayingCard[] | undefined;
-  drawFromBottomOfDeck: (numberOfCards: number) => PlayingCard[];
+  draw: (numberOfCards: number) => PlayingCardKey[] | undefined;
+  drawFromBottomOfDeck: (numberOfCards: number) => PlayingCardKey[];
   drawn: PlayingCard[];
-  drawRandom: (numberOfCards: number) => PlayingCard[];
+  drawRandom: (numberOfCards: number) => PlayingCardKey[];
   length: number;
   putOnBottomOfDeck: (cards: PlayingCard[]) => void;
   putOnTopOfDeck: (cards: PlayingCard[]) => void;

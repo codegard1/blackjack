@@ -1,9 +1,8 @@
 // custom stuff
+import { playerDefaults } from '../definitions';
 import { PlayerAction } from '../enums';
 import { IPlayer, IPlayerOptions, IPlayerStore, IPlayerStoreState } from '../interfaces';
 import { PlayerCollection, PlayerKey, PlayerStats } from '../types';
-import { handValue } from '../functions';
-import { playerDefaults } from '../definitions';
 
 export class PlayerStore implements IPlayerStore {
   private players: PlayerCollection = {};
@@ -299,7 +298,7 @@ export class PlayerStore implements IPlayerStore {
   /**
    * set players' status, hand values
    */
-  _evaluatePlayers() {
+  public _evaluatePlayers() {
 
     let anyPlayerisBusted, allPlayersStaying;
     for (let key in this.players) {
@@ -354,4 +353,5 @@ export class PlayerStore implements IPlayerStore {
     /* recalculate win/loss ratio */
     this.calculateWinLossRatio(key);
   }
+
 }

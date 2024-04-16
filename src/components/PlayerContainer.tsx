@@ -19,6 +19,7 @@ import { handValue } from "../functions";
 // Component
 export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
+  // Props
   const { playerKey } = props;
 
   // Context
@@ -30,17 +31,23 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   const [isStatusCalloutVisible, setStatusCalloutVisible] = React.useState<boolean>(false);
   const [isDeckCalloutVisible, setDeckCalloutVisible] = React.useState<boolean>(false);
 
-  // computed values
-  const player = playerStore.player(playerKey);
-  const playerCards: PlayingCard[] = undefined === deckState.playerHands[props.playerKey] ? [] :
-    deckState.playerHands[playerKey].cards;
-  const playerHandValue = handValue(playerCards.map((c) => c.key));
-
+  // shorthand methods to show and hide the deck callout
   const _showDeckCallout = () => setDeckCalloutVisible(true);
   const _hideDeckCallout = () => setDeckCalloutVisible(false);
+  const _showStatusCallout = () => setStatusCalloutVisible(true);
+  const _hideStatusCallout = () => setStatusCalloutVisible(false);
 
+  // computed values
+  const player = playerStore.player(playerKey);
+  const playerCards: PlayingCard[] = (undefined === deckState.playerHands[props.playerKey]) ? [] :
+    deckState.getHand(playerKey).map((ck) => new PlayingCard(ck));
+  const playerHandValue = deckState.getHandValue(playerKey);
+  const playerStatusFlag = (player.isBusted ||
+    player.isFinished ||
+    player.isStaying ||
+    !player.turn);
 
-  /* style PlayerContainer conditionally */
+  // Styles
   let playerContainerClass = "PlayerContainer ";
   if (player.turn) {
     playerContainerClass += "selected ";
@@ -51,11 +58,6 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   ) {
     playerContainerClass += "staying ";
   }
-
-  const playerStatusFlag = (player.isBusted ||
-    player.isFinished ||
-    player.isStaying ||
-    !player.turn);
 
   /* selectedFlag is true if getSelected() returns an array */
   // const selectedFlag = !!DeckStore.getSelected(playerKey);

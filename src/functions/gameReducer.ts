@@ -35,15 +35,18 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
   switch (type) {
 
     /**
-     * Replace the default state with one from localStorage
+     * Replace the current deck with one initialized from saved options
      */
     case GameAction.SetDeckState: {
-      if (undefined !== deckState) state.deck = new PlayingCardDeck(deckState)
+      if (undefined !== deckState) state.deck = new PlayingCardDeck(deckState);
       return state;
     }
 
+    /**
+     * Replace the current playerStore with one initialize from saved options
+     */
     case GameAction.SetPlayerState: {
-      if (undefined !== playerState) state.playerStore = new PlayerStore(playerState)
+      if (undefined !== playerState) state.playerStore = new PlayerStore(playerState);
       return state;
     }
 
@@ -186,7 +189,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       return state;
     }
 
-    // TODO
+    // TODO: Refactor this inelegant piece of work
     case GameAction.EndGameTrap: {
 
       let nextGameStatus = gameStatus ? gameStatus : GameStatus.InProgress;
@@ -201,9 +204,8 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
         nextGameStatus = GameStatus.HumanWins; // Dealer is busted; Player 0 wins
       } else if (playerStore.all[1].isStaying) {
         if (
-          // TODO: refactor this monstrosity
-          handValue(state.deck.playerHands[playerStore.all[1].key].cards.map((c) => c.key)).highest >
-          handValue(state.deck.playerHands[playerStore.all[0].key].cards.map((c) => c.key)).highest
+          state.deck.getHandValue(playerStore.all[1].key) >
+          state.deck.getHandValue(playerStore.all[0].key)
         ) {
           nextGameStatus = GameStatus.DealerWins; // Dealer has higher hand ; dealer wins
         } else {

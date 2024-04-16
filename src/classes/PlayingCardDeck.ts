@@ -2,9 +2,9 @@
     https://github.com/codegard1/node-shuffle.git */
 
 import { PlayingCard } from ".";
-import { getRandomIndex } from "../functions";
+import { getRandomIndex, handValue } from "../functions";
 import { IPlayingCardDeck } from "../interfaces";
-import { DeckState, PlayerHandList, PlayerKey, PlayingCardKey } from "../types";
+import { DeckState, PlayerHand, PlayerHandList, PlayerKey, PlayingCardKey } from "../types";
 
 /**
  * A set of 52 Playing Cards in random order
@@ -109,11 +109,11 @@ export class PlayingCardDeck implements IPlayingCardDeck {
   }
 
   public getHandValue(key: PlayerKey) {
-    return this.playerHands[key].handValue
+    return handValue(this.playerHands[key].cards);
   }
 
   /**
-   * Generate a set of 52 distinct cards for the deck
+   * Generate a set of cards for the deck
    */
   private makeCards(): void {
     this.cards = PlayingCardDeck.cardKeys().map(this.newCard);
@@ -131,6 +131,10 @@ export class PlayingCardDeck implements IPlayingCardDeck {
     return new PlayingCard(key);
   }
 
+  public card(key: PlayingCardKey): PlayingCard {
+    return this.newCard(key);
+  }
+
   public reset(): void {
     this.makeCards();
     // this.shuffle();
@@ -143,9 +147,9 @@ export class PlayingCardDeck implements IPlayingCardDeck {
    * Distribute a certain number of cards to every playerHand
    * @param numberOfCards 
    */
-  public deal(numberOfCards: number): void {
+  public deal(numberOfCards: number = 2): void {
     for (let key in this.playerHands) {
-      this.playerHands[key].cards.push(...this.draw(2));
+      this.playerHands[key].cards.push(...this.draw(numberOfCards));
     }
   }
 
@@ -188,54 +192,55 @@ export class PlayingCardDeck implements IPlayingCardDeck {
     });
   }
 
-  public draw(num: number): PlayingCard[] {
+  public draw(num: number): PlayingCardKey[] {
     if (this.length === 0) return [];
 
     if (!num || num < 1) num = 1;
-    let _cards = [];
+    let cardKeys = [];
     for (let i = 0; i < num; i++) {
-      const _popped = this.cards.pop();
+      const _popped = this.cards.pop()
       if (_popped !== undefined) {
-        _cards.push(_popped);
+        cardKeys.push(_popped.key);
         this.drawn.push(_popped);
       }
     }
-    return _cards;
+    return cardKeys;
   }
 
-  public drawRandom(num: number): PlayingCard[] {
+  public drawRandom(num: number = 1): PlayingCardKey[] {
     const _draw = () => {
       const index = Math.floor(this.random() * this.length);
       const card = this.cards[index];
-      this.cards.splice(index, 1);
+      this.cards.splice(index, num);
       return card;
     };
 
-    if (!num || num < 1) num = 1;
-    let _cards = [];
+    let cardKeys = [];
     for (let i = 0; i < num; i++) {
       const _drawn = _draw();
       if (_drawn !== undefined) {
-        _cards.push(_drawn);
+        cardKeys.push(_drawn.key);
         this.drawn.push(_drawn);
       }
     }
-    return _cards;
+    return cardKeys;
   }
 
-  public drawFromBottomOfDeck(num: number): PlayingCard[] {
-    if (!num || num < 1) num = 1;
-
-    let _cards = [];
-    for (let i = 0; i < num; i++) {
+  /**
+   * Draw one or more cards from the deck
+   * @param numberOfCards 
+   * @returns 
+   */
+  public drawFromBottomOfDeck(numberOfCards: number = 1): PlayingCardKey[] {
+    let cardKeys = [];
+    for (let i = 0; i < numberOfCards; i++) {
       const _shifted = this.cards.shift();
       if (_shifted !== undefined) {
-        _cards.push(_shifted);
+        cardKeys.push(_shifted.key);
         this.drawn.push(_shifted);
       };
     }
-
-    return _cards;
+    return cardKeys;
   }
 
   /**
@@ -252,9 +257,13 @@ export class PlayingCardDeck implements IPlayingCardDeck {
    */
   public unselect(key: PlayingCardKey) {
     const ix = this.selected.findIndex((v) => v.key === key);
-    if (ix > -1) this.selected.splice(ix, 1);
+    if (ix !== -1) this.selected.splice(ix, 1);
   }
 
+  /**
+   * Create a new, empty playerHand object for the specified player
+   * @param key PlayerKey
+   */
   public newPlayerHand(key: PlayerKey) {
     this.playerHands[key] = {
       cards: [],
@@ -266,6 +275,9 @@ export class PlayingCardDeck implements IPlayingCardDeck {
     }
   }
 
+  /**
+   * Remove all cards from the selected array
+   */
   public clearSelected() {
     this.selected = [];
   }
@@ -286,19 +298,22 @@ export class PlayingCardDeck implements IPlayingCardDeck {
     for (let key in this.playerHands) { this.newPlayerHand(key) }
   }
 
-  public hit(key: PlayerKey): PlayingCard {
-    const card = this.draw(1);
-    this.playerHands[key].cards.push(...card);
-    return card[0];
+  /**
+   * Draw a single card for the specified player
+   * @param key PlayerKey
+   * @returns 
+   */
+  public hit(key: PlayerKey): PlayingCardKey {
+    const cardKey = this.draw(1);
+    this.playerHands[key].cards.push(cardKey[0]);
+    return cardKey[0];
   }
 
-  public removeSelectedFromPlayerHand(key: PlayerKey, cards: PlayingCard[]) {
-    const hand = this.playerHands[key].cards;
-    cards.forEach(card => {
-      let index = hand.findIndex(element => {
-        return element.suit === card.suit && element.sort === card.sort;
-      });
-      hand.splice(index, 1);
+  public removeSelectedFromPlayerHand(key: PlayerKey, cardKeys: PlayingCardKey[]) {
+    const hand = this.playerHands[key].cards.slice();
+    cardKeys.forEach(cardKey => {
+      let index = hand.indexOf(cardKey);
+      if (index !== -1) hand.splice(index, 1);
       this.playerHands[key].cards = hand;
     });
   }
