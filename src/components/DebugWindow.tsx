@@ -34,7 +34,7 @@ export const DebugWindow: React.FC = () => {
       {isGameStateVisible ? <JsonViewer data={{
         activePlayerKeys: gameState.playerStore.activePlayerKeys,
         controllingPlayer: gameState.controllingPlayer,
-        currentPlayerKey: gameState.playerStore.activePlayerKeys,
+        currentPlayerKey: gameState.playerStore.currentPlayerKey,
         dealerHasControl: gameState.dealerHasControl,
         gameStatus: gameState.gameStatus,
         gameStatusFlag: gameState.gameStatusFlag,
