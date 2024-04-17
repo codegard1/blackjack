@@ -14,7 +14,6 @@ import "./PlayerContainer.css";
 // Context
 import { PlayingCard } from "../classes";
 import { useGameContext } from "../context";
-import { handValue } from "../functions";
 
 // Component
 export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
@@ -24,8 +23,16 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
   // Context
   const { gameState } = useGameContext();
-  const playerStore = gameState.playerStore;
-  const deckState = gameState.deck;
+
+  // computed values
+  const playerState = gameState.playerStore.state;
+  const player = playerState.players[playerKey];
+  const playerStatusFlag = (player.isBusted ||
+    player.isFinished ||
+    player.isStaying ||
+    !player.turn);
+  const deckState = gameState.deck.state;
+  const { cards, handValue } = deckState.playerHands[playerKey]
 
   // State
   const [isStatusCalloutVisible, setStatusCalloutVisible] = React.useState<boolean>(false);
@@ -36,16 +43,6 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   const _hideDeckCallout = () => setDeckCalloutVisible(false);
   const _showStatusCallout = () => setStatusCalloutVisible(true);
   const _hideStatusCallout = () => setStatusCalloutVisible(false);
-
-  // computed values
-  const player = playerStore.player(playerKey);
-  const playerCards: PlayingCard[] = (undefined === deckState.playerHands[props.playerKey]) ? [] :
-    deckState.getHand(playerKey).map((ck) => new PlayingCard(ck));
-  const playerHandValue = deckState.getHandValue(playerKey);
-  const playerStatusFlag = (player.isBusted ||
-    player.isFinished ||
-    player.isStaying ||
-    !player.turn);
 
   // Styles
   let playerContainerClass = "PlayerContainer ";
@@ -62,6 +59,10 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   /* selectedFlag is true if getSelected() returns an array */
   // const selectedFlag = !!DeckStore.getSelected(playerKey);
   const selectedFlag = false;
+
+  React.useEffect(() => {
+    console.log('gameState effect');
+  }, [gameState]);
 
   return (
     <Stack className={playerContainerClass}>
@@ -82,7 +83,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
             <Agent
               dealerHasControl={gameState.dealerHasControl}
               gameStatus={gameState.gameStatus}
-              handValue={playerHandValue}
+              handValue={handValue}
               playerKey={playerKey}
             />
           </Stack.Item>
@@ -101,8 +102,8 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
         <Stack.Item className={`DeckCalloutTarget-${player.title}`}>
           <CardStack
-            cards={playerCards}
-            hidden={playerCards.length === 0}
+            cards={cards.map((ck) => new PlayingCard(ck))}
+            hidden={cards.length === 0}
             isSelectable
             player={player}
             title={player.title}
