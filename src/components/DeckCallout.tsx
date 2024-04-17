@@ -5,20 +5,21 @@ import React from "react";
 import { Callout, nullRender, mergeStyleSets, getTheme, FontWeights, DirectionalHint } from "@fluentui/react";
 
 import { IDeckCalloutProps } from "../interfaces";
+import { PlayerAction } from "../enums";
 
 // Component
 export const DeckCallout: React.FC<IDeckCalloutProps> = (props) => {
 
-  // const {
-  //   deck
-  // } = React.useContext(AppContext);
+  // Props
+  const { player, onHideCallout, hidden, target } = props;
 
+  // Computed props
+  const { title, isBlackjack, isStaying, isBusted, lastAction } = player;
   let text;
-  const title = props.player.title;
-  if (props.player.isStaying) text = `${title} stayed`;
-  if (props.player.hasBlackJack) text = `${title} has blackjack`;
-  if (props.player.isBusted) text = `${title} busted`;
-  if (props.player.lastAction === "hit") text = `${title} hit`;
+  if (isStaying) text = `${title} stayed`;
+  if (isBlackjack) text = `${title} has blackjack`;
+  if (isBusted) text = `${title} busted`;
+  if (lastAction === PlayerAction.Hit) text = `${title} hit`;
 
   // Styles for Callout
   const theme = getTheme();
@@ -34,7 +35,7 @@ export const DeckCallout: React.FC<IDeckCalloutProps> = (props) => {
     ],
   });
 
-  return props.isDeckCalloutVisible && text ? (
+  return hidden || !text ? nullRender() : (
     <Callout
       className={styles.callout}
       directionalHint={DirectionalHint.topAutoEdge}
@@ -45,6 +46,6 @@ export const DeckCallout: React.FC<IDeckCalloutProps> = (props) => {
     >
       {text}
     </Callout>
-  ) : nullRender();
+  );
 }
 
