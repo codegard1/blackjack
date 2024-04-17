@@ -1,6 +1,6 @@
 import { PlayerStore, PlayingCard, PlayingCardDeck } from "../classes";
 import { gameDefaults } from "../context";
-import { playerDefaults } from "../definitions";
+import { defaultplayersArr, playerDefaults } from "../definitions";
 import { GameStatus } from "../enums";
 import { GameAction } from "../enums/GameAction";
 import { IGameReducerAction } from "../interfaces";
@@ -14,6 +14,7 @@ import { GameState, PlayerStats } from "../types";
  */
 export function gameReducer(state: GameState, action: IGameReducerAction) {
 
+  // Action props
   const {
     cardKey,
     controllingPlayerKey,
@@ -29,7 +30,10 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     type,
   } = action;
 
+  // Announce
   console.log('## GameAction.' + type, JSON.stringify(action));
+
+  state.lastWriteTime = new Date().toISOString();
 
   switch (type) {
 
@@ -112,13 +116,19 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
       // This is redundant with playerStore.reset(). Consider removing
       if (undefined !== playerKey && typeof playerKey !== 'string') {
-        playerKey.forEach(v => {
-          const { key, title, isNPC, bank, id } = state.playerStore.player(v);
-          state.playerStore.newPlayer({ ...playerDefaults, key, title, isNPC, id, bank, });
-          state.deck.newPlayerHand(v);
+        playerKey.forEach(k => {
+          if (undefined !== state.playerStore.player(k)) {
+            state.playerStore.resetPlayer(k, 'bank');
+          }
+          else {
+            const p = defaultplayersArr.find((i) => i.key === k);
+            if (undefined !== p)
+              state.playerStore.newPlayer({ bank: p.bank, id: p.id, isNPC: p.isNPC, key: k, title: p.title, disabled: p.disabled })
+          }
+          state.deck.newPlayerHand(k);
         });
+        state.playerStore.currentPlayerKey = playerKey[0];
       }
-
       state.controllingPlayer = state.playerStore.currentPlayer?.key;
       state.gameStatus = GameStatus.InProgress;
       state.round = 1;
@@ -344,6 +354,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
         switch (deckSide) {
           case 'top': {
+            console.log('draw from the top')
             const _drawn = state.deck.draw(_num);
             if (undefined !== playerKey && typeof playerKey === 'string')
               state.deck.playerHands[playerKey].cards.push(..._drawn);
@@ -365,6 +376,8 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       } else {
         throw new Error('There are not enough cards left in the deck to draw');
       }
+
+      state.lastWriteTime = new Date().toISOString();
 
       return state;
     }
