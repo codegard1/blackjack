@@ -104,8 +104,11 @@ export class PlayingCardDeck implements IPlayingCardDeck {
    * @param key PlayerKey
    * @returns Array of PlayingCard
    */
-  public getHand(key: PlayerKey) {
-    return this.playerHands[key].cards;
+  public getHand(key: PlayerKey): PlayerHand {
+    return {
+      cards: this.playerHands[key].cards,
+      handValue: this.getHandValue(key),
+    };
   }
 
   public getHandValue(key: PlayerKey) {
