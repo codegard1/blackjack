@@ -3,6 +3,7 @@ import React from "react";
 
 // Fluent UI
 import { Layer, Stack, Text } from "@fluentui/react";
+import { useId } from '@fluentui/react-hooks';
 
 /* custom stuff */
 import { Agent, CardStack, ControlPanel, DeckCallout, StatusDisplay } from '.';
@@ -33,6 +34,8 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
     !player.turn);
   const deckState = gameState.deck.state;
   const { cards, handValue } = deckState.playerHands[playerKey]
+
+  const id = useId(`DeckCalloutTarget-${player.title}`);
 
   // State
   const [isStatusCalloutVisible, setStatusCalloutVisible] = React.useState<boolean>(false);
@@ -100,9 +103,9 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
           />
         </Stack.Item>
 
-        <Stack.Item className={`DeckCalloutTarget-${player.title}`}>
+        <Stack.Item id={id}>
           <CardStack
-            cards={cards.map((ck) => new PlayingCard(ck))}
+            cards={cards}
             hidden={cards.length === 0}
             isSelectable
             player={player}
@@ -113,9 +116,9 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
       <Layer>
         <DeckCallout
           player={player}
-          isDeckCalloutVisible={isDeckCalloutVisible}
+          hidden={!isDeckCalloutVisible}
           onHideCallout={_hideDeckCallout}
-          target={`.DeckCalloutTarget-${player.title}`}
+          target={'#' + id}
         />
       </Layer>
     </Stack>
