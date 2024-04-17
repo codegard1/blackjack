@@ -17,22 +17,20 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
     playerStatusFlag,
     playerKey,
     selectedFlag,
+    hidden,
+    isDeckCalloutVisible,
+    showDeckCallout,
   } = props;
 
   // State from context
   const { gameState, gameDispatch } = useGameContext();
   const { settings, toggleSetting } = useSettingContext();
-  const {
-    deck,
-    gameStatus,
-    gameStatusFlag,
-    minimumBet,
-    playerStore,
-  } = gameState;
+  const { gameStatus, minimumBet } = gameState;
+  const playerStore = gameState.playerStore.state;
 
   // Computed properties
   const currentPlayerKey = playerStore.currentPlayerKey;
-  const player = playerStore.player(props.playerKey);
+  const player = playerStore.players[props.playerKey];
   const npcFlag = player.isNPC;
   const isBtnDisabled = gameStatus > 2 || currentPlayerKey !== playerKey;
 
@@ -40,6 +38,11 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   /* Flag used by put / draw menu items */
   // let selectedCards = selectedFlag ? DeckStore.getSelected(playerKey) : [];
   /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
+
+  const _hit = () => {
+    toggleSetting({ key: 'isMessageBarVisible', value: true });
+    gameDispatch({ type: GameAction.Draw, playerKey, numberOfCards: 1, deckSide: 'top' });
+  }
 
   const drawItems = [
     {
@@ -75,7 +78,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
       ariaLabel: "Hit",
       iconProps: { iconName: "Add" },
       disabled: isBtnDisabled,
-      onClick: () => gameDispatch({ type: GameAction.Draw, playerKey, numberOfCards: 1, deckSide: 'top' }),
+      onClick: _hit,
     },
     {
       key: "bet",
