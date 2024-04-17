@@ -14,18 +14,19 @@ import { CardContainer } from '.';
 import { useGameContext, useSettingContext } from '../context';
 import { ICardStackProps } from '../interfaces';
 import { handValue } from '../functions';
+import { PlayingCard } from '../classes';
 
 
-  // Style tokens for Fluent UI Stacks
-  const tokens = {
-    sectionStack: {
-      childrenGap: 10,
-    },
-    cardStack: {
-      childrenGap: 5,
-      padding: 5
-    },
-  };
+// Style tokens for Fluent UI Stacks
+const tokens = {
+  sectionStack: {
+    childrenGap: 10,
+  },
+  cardStack: {
+    childrenGap: 5,
+    padding: 5
+  },
+};
 
 /**
  * A visual component that displays PlayingCards
@@ -50,14 +51,14 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
   const _toggleDeck = () => setVisible(!isDeckVisible);
 
   // Computed values
-  const handValues = handValue(cards.map((c) => c.key));
+  const handValues = handValue(cards);
 
   // Create CardContainers to display cards
-  const cardElements = cards.map((card, index) =>
+  const cardElements = cards.map((cardKey, index) =>
     <CardContainer
-      {...card}
-      key={`cardContainer-${card.key}-${index}`}
-      id={card.key}
+      {...new PlayingCard(cardKey)}
+      key={`cardContainer-${cardKey}-${index}`}
+      id={cardKey}
       isSelectable={isSelectable}
       isBackFacing={index === 0 && !settings.isDealerHandVisible && player?.isNPC}
       isDescVisible={settings.isCardDescVisible}

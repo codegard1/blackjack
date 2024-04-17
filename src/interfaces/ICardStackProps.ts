@@ -1,8 +1,8 @@
-import { PlayingCard } from '../classes';
-import { IPlayer } from '../interfaces'
+import { IPlayer } from '../interfaces';
+import { PlayingCardKey } from '../types';
 
 export interface ICardStackProps {
-  cards: PlayingCard[];
+  cards: PlayingCardKey[];
   hidden: boolean;
   isSelectable: boolean;
   player?: IPlayer;
