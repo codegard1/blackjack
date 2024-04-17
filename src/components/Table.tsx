@@ -86,7 +86,7 @@ export const Table: React.FC = () => {
 
           <StackItem>
             <CardStack
-              cards={gameState.deck.cards}
+              cards={gameState.deck.cardKeys}
               title="Deck"
               hidden={!settings.isDeckVisible}
               isSelectable={false}
@@ -94,7 +94,7 @@ export const Table: React.FC = () => {
           </StackItem>
           <StackItem>
             <CardStack
-              cards={gameState.deck.drawn}
+              cards={gameState.deck.drawnKeys}
               title="Drawn Cards"
               hidden={!settings.isDrawnVisible}
               isSelectable={false}
@@ -102,7 +102,7 @@ export const Table: React.FC = () => {
           </StackItem>
           <StackItem>
             <CardStack
-              cards={gameState.deck.selected}
+              cards={gameState.deck.selectedKeys}
               title="Selected Cards"
               hidden={!settings.isSelectedVisible}
               isSelectable={false}
