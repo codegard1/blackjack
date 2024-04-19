@@ -140,7 +140,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
 
   public reset(): void {
     this.makeCards();
-    // this.shuffle();
+    this.shuffle();
     this.drawn = [];
     this.selected = [];
     this.playerHands = {};
@@ -320,39 +320,32 @@ export class PlayingCardDeck implements IPlayingCardDeck {
       this.playerHands[key].cards = hand;
     });
   }
-}
 
-/*
-  getSelected(playerKey) {
-    const { selected } = this.state;
+  /**
+   * Return array of cards in the given player's hand that are also in the selected array
+   * @param playerKey 
+   * @returns 
+   */
+  public getSelected(key: PlayerKey): PlayingCardKey[] {
 
-    if (selected.length > 0) {
-      let foundMatch = false;
-      let foundCards = [];
-      const playerHand = this.getHand(playerKey);
+    if (this.state.selectedKeys.length === 0) return [];
 
-      // check each card in selected to see if it's in the specified player's hand 
-      selected.forEach(selectedCard => {
-        playerHand.forEach(playerCard => {
-          // console.log(`comparing ${selectedCard} to ${playerCard}`);
-          if (
-            playerCard.suit === selectedCard.suit &&
-            playerCard.sort === selectedCard.sort
-          ) {
-            // console.log(`Found Match: ${selectedCard}`);
-            foundMatch = true;
-            foundCards.push(selectedCard);
-          }
-        });
+    let foundMatch = false;
+    let foundCards: PlayingCardKey[] = [];
+    const playerHand = this.getHand(key);
+
+    // check each card in selected to see if it's in the specified player's hand 
+    this.state.selectedKeys.forEach(selectedCard => {
+      playerHand.cards.forEach(playerCard => {
+        console.log(`comparing ${selectedCard} to ${playerCard}`);
+        if (playerCard === selectedCard) {
+          console.log(`Found Match: ${selectedCard}`);
+          foundMatch = true;
+          foundCards.push(selectedCard);
+        }
       });
+    });
 
-      if (foundMatch && foundCards.length > 0) {
-        return foundCards;
-      } else {
-        return false;
-      }
-    } else {
-      return false;
-    }
-  },
-*/
+    return (foundMatch && foundCards.length > 0) ? foundCards : [];
+  }
+}
