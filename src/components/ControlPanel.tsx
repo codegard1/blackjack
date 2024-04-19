@@ -34,11 +34,6 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const npcFlag = player.isNPC;
   const isBtnDisabled = gameStatus > 2 || currentPlayerKey !== playerKey;
 
-  /* selectedFlag is true when the player has selected cards in his hand */
-  /* Flag used by put / draw menu items */
-  // let selectedCards = selectedFlag ? DeckStore.getSelected(playerKey) : [];
-  /* when gameStatusFlag is TRUE, most members of blackJackItems are disabled */
-
   const _hit = () => {
     toggleSetting({ key: 'isMessageBarVisible', value: true });
     gameDispatch({ type: GameAction.Draw, playerKey, numberOfCards: 1, deckSide: 'top' });
@@ -106,9 +101,9 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
         name: "Deal",
         ariaLabel: "Deal",
         iconProps: { iconName: "Refresh" },
-        disabled: gameStatus > 0,
+        disabled: isBtnDisabled,
         onClick: () => {
-          gameDispatch({ type: GameAction.NewRound });
+          gameDispatch({ type: GameAction.Deal });
           toggleSetting({ key: 'isMessageBarVisible', value: true });
           gameDispatch({
             type: GameAction.ShowMessageBar,
