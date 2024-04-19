@@ -1,10 +1,10 @@
 import { PlayerStore, PlayingCard, PlayingCardDeck } from "../classes";
 import { gameDefaults } from "../context";
-import { defaultplayersArr, playerDefaults } from "../definitions";
+import { defaultplayersArr } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
 import { IGameReducerAction } from "../interfaces";
-import { GameState, PlayerStats } from "../types";
-import { evaluateGame, endgameTrap } from "./";
+import { GameState } from "../types";
+import { endgameTrap, evaluateGame } from "./";
 
 /**
  * Reducer function for game state
@@ -33,15 +33,14 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
   // Announce
   console.log('## GameAction.' + type, JSON.stringify(action));
 
-  // Evaluate game state
+  // Evaluate game state every time 
   state = evaluateGame(state, action);
-
 
   // Mandatory state mutations
   state.lastWriteTime = new Date().toISOString();
 
 
-
+  // Respond to action dispatch
   switch (type) {
 
     /**
@@ -312,6 +311,11 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     // Shuffle the remaining card in the deck
     case GameAction.Shuffle: {
       state.deck.shuffle();
+      return state;
+    }
+
+    case GameAction.Deal: {
+      state.deck.deal(2);
       return state;
     }
 
