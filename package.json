@@ -1,26 +1,22 @@
 {
-  "name": "blackjack",
   "description": "Chris's own blackjack game, made for fun",
   "author": "Chris Odegard <c.odegard@gmail.com>",
-  "version": "0.9.0",
+  "version": "2.0.0.0",
+  "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/codegard1/blackjack"
   },
-  "main": "./src/index.js",
-  "private": true,
   "dependencies": {
-    "@fluentui/react": "^8.69.0",
-    "@fluentui/react-icons": "^1.1.145",
-    "@fluentui/theme": "^2.6.6",
-    "@uifabric/fluent-theme": "^7.6.27",
-    "flux": "^4.0.3",
-    "fs": "0.0.1-security",
-    "keymirror": "^0.1.1",
-    "prop-types": "^15.8.1",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "typescript": "^4.3.5"
+    "@fluentui/react": "8.120.7",
+    "lodash": "4.17.21",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "react-scripts": "5.0.1",
+    "react-syntax-highlighter": "15.5.0",
+    "throttle-debounce": "5.0.0",
+    "typescript": "4.9.5",
+    "web-vitals": "2.1.4"
   },
   "devDependencies": {
     "eslint": "^7.32.0",
@@ -35,8 +31,14 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
+    "test": "react-scripts test",
     "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
   },
   "browserslist": {
     "production": [
@@ -49,5 +51,26 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@babel/eslint-parser": "7.25.1",
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@babel/plugin-transform-private-property-in-object": "7.24.7",
+    "@testing-library/jest-dom": "5.17.0",
+    "@testing-library/react": "12.1.5",
+    "@testing-library/user-event": "13.5.0",
+    "@types/jest": "28.1.8",
+    "@types/node": "18.19.1",
+    "@types/react": "17.0.2",
+    "@types/react-dom": "17.0.2",
+    "@types/react-syntax-highlighter": "15.5.13",
+    "@types/throttle-debounce": "5.0.0",
+    "@types/webpack-env": "1.18.5",
+    "eslint": "8.57.0",
+    "eslint-plugin-react-hooks": "4.6.2",
+    "ts-node": "^10.9.1"
+  },
+  "engines": {
+    "node": ">=16.13.0 <=18.19.1"
   }
 }
