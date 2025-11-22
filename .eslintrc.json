@@ -5,27 +5,30 @@
     "es6": true,
     "node": true
   },
-  "parser": "@babel/eslint-parser",
+  "parser": "@typescript-eslint/parser",
   "plugins": [
     "react",
     "jsx-a11y",
-    "import"
+    "import",
+    "@typescript-eslint"
   ],
   "parserOptions": {
     "ecmaFeatures": {
       "jsx": true
     },
-    "sourceType": "module"
+    "sourceType": "module",
+    "project": "./tsconfig.json"
   },
   "rules": {
     "constructor-super": "warn",
     "linebreak-style": "off",
     "no-const-assign": "warn",
     "no-this-before-super": "warn",
-    "no-undef": "warn",
+    "no-undef": "off",
     "no-underscore-dangle": "off",
     "no-unreachable": "warn",
     "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": "off",
     "react/jsx-indent-props": "off",
     "react/no-multi-comp": "off",
     "valid-typeof": "warn"
