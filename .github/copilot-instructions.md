@@ -63,7 +63,7 @@ src/
 - Define interfaces in `interfaces/` directory
 - Define enums in `enums/` directory
 - Use explicit types for function parameters and return values
-- Target ES5 for maximum browser compatibility
+- Target ES5 (configured in tsconfig.json, default for Create React App)
 
 ### React
 - Use functional components with hooks
@@ -88,7 +88,7 @@ src/
 - Tests use Jest and React Testing Library
 - Test files should be named `*.test.tsx` or `*.test.ts`
 - Place tests alongside the code they test
-- **Current Known Issue**: ESM module imports from `react-syntax-highlighter` cause test failures
+- **Current Known Issue**: Jest configuration needs updates to handle ESM modules from `react-syntax-highlighter` in test environment
 
 ## Building and Deployment
 
@@ -116,9 +116,8 @@ src/
 ## Known Issues
 
 - Peer dependency conflicts between ESLint packages (use `--legacy-peer-deps`)
-- Test configuration needs updates for ESM module support
+- Test configuration needs updates for ESM module support (Jest handling of react-syntax-highlighter)
 - Several npm package deprecation warnings (non-critical)
-- Node version in development environment may be newer than specified in engines
 
 ## Additional Notes
 
