@@ -2,7 +2,7 @@
 import React from 'react';
 
 // FluentUI
-import { initializeIcons, Layer, MessageBar, nullRender, Stack, } from '@fluentui/react';
+import { FluentProvider, MessageBar, MessageBarBody, webLightTheme } from '@fluentui/react-components';
 
 // Local Resources
 import './App.css';
@@ -11,9 +11,6 @@ import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContex
 import { GameAction, StoreName } from './enums';
 import { gameReducer, settingReducer } from './functions';
 import { SettingsState } from './types';
-
-// Necessary in order for Fluent Icons to render on the page
-initializeIcons();
 
 // Main Component
 const App = () => {
@@ -74,35 +71,31 @@ const App = () => {
   }, [gameState.gameStatus])
 
   return (
-    <SettingContext.Provider value={settings}>
-      <SettingDispatchContext.Provider value={toggleSetting}>
-        <GameContext.Provider value={gameState}>
-          <GameDispatchContext.Provider value={gameDispatch}>
+    <FluentProvider theme={webLightTheme}>
+      <SettingContext.Provider value={settings}>
+        <SettingDispatchContext.Provider value={toggleSetting}>
+          <GameContext.Provider value={gameState}>
+            <GameDispatchContext.Provider value={gameDispatch}>
 
-            {
-              (true === settings.isMessageBarVisible) && ('' !== gameState.messageBarDefinition.text) ?
-                <MessageBar
-                  messageBarType={gameState.messageBarDefinition.type}
-                  isMultiline={gameState.messageBarDefinition.isMultiLine}>
-                  {gameState.messageBarDefinition.text}
+              {settings.isMessageBarVisible && gameState.messageBarDefinition.text !== '' && (
+                <MessageBar intent={gameState.messageBarDefinition.type}>
+                  <MessageBarBody>{gameState.messageBarDefinition.text}</MessageBarBody>
                 </MessageBar>
-                : nullRender()
-            }
+              )}
 
-            <Layer>
               <SplashScreen />
               <OptionsPanel />
-            </Layer>
-            <Stack tokens={{ childrenGap: 15 }} horizontalAlign='space-between' verticalAlign='space-evenly'>
-              <Table />
-              <ActivityLog />
-              <DebugWindow />
-            </Stack>
+              <div className="app-content">
+                <Table />
+                <ActivityLog />
+                <DebugWindow />
+              </div>
 
-          </GameDispatchContext.Provider>
-        </GameContext.Provider>
-      </SettingDispatchContext.Provider>
-    </SettingContext.Provider>
+            </GameDispatchContext.Provider>
+          </GameContext.Provider>
+        </SettingDispatchContext.Provider>
+      </SettingContext.Provider>
+    </FluentProvider>
   );
 }
 

@@ -2,13 +2,14 @@
 // allows you to do things like:
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
+import { vi } from 'vitest';
 
-jest.mock('react-syntax-highlighter', () => ({
+vi.mock('react-syntax-highlighter', () => ({
 	__esModule: true,
 	default: () => null,
 }));
 
-jest.mock('react-syntax-highlighter/dist/esm/styles/prism', () => ({
+vi.mock('react-syntax-highlighter/dist/esm/styles/prism', () => ({
 	vscDarkPlus: {},
 }));

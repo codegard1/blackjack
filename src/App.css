@@ -4,8 +4,24 @@ body {
   margin: 16px;
 }
 
+@keyframes table-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .App {
   text-align: center;
+}
+
+.app-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .App-logo {

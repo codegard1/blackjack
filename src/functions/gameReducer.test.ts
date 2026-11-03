@@ -5,6 +5,7 @@ import { gameDefaults } from '../context';
 import { GameAction, GameStatus } from '../enums';
 import { GameState } from '../types';
 import { gameReducer } from './gameReducer';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const createGameState = (): GameState => ({
   ...gameDefaults,
@@ -19,13 +20,13 @@ const startDefaultGame = (): GameState => gameReducer(createGameState(), {
 });
 
 beforeEach(() => {
-  jest.spyOn(console, 'log').mockImplementation(() => {});
-  jest.spyOn(console, 'time').mockImplementation(() => {});
-  jest.spyOn(console, 'timeEnd').mockImplementation(() => {});
+  vi.spyOn(console, 'log').mockImplementation(() => {});
+  vi.spyOn(console, 'time').mockImplementation(() => {});
+  vi.spyOn(console, 'timeEnd').mockImplementation(() => {});
 });
 
 afterEach(() => {
-  jest.restoreAllMocks();
+  vi.restoreAllMocks();
 });
 
 describe('game behavior baseline', () => {

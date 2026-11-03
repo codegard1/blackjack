@@ -1,4 +1,3 @@
-import { IDropdownOption } from "@fluentui/react";
 import { PlayerStatus } from "./enums";
 import { IPlayer } from "./interfaces";
 import { PlayerKey } from "./types";
@@ -51,7 +50,7 @@ export const defaultSelectedPlayerKeys: PlayerKey[] = defaultplayersArr.slice(0,
 /**
  * default options for the splash dialog dropdown
  */
-export const defaultPlayersDropdownOptions: IDropdownOption[] = defaultplayersArr.map(v => {
+export const defaultPlayersDropdownOptions = defaultplayersArr.map(v => {
   return {
     ...v,
     text: v.title,
