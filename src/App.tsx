@@ -7,7 +7,7 @@ import { FluentProvider, MessageBar, MessageBarBody, webLightTheme } from '@flue
 // Local Resources
 import './App.css';
 import { ActivityLog, OptionsPanel, SplashScreen, Table, DebugWindow } from './components';
-import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, gameDefaults, settingDefaults } from './context';
+import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, createGameState, settingDefaults } from './context';
 import { GameAction, StoreName } from './enums';
 import { gameReducer, settingReducer } from './functions';
 import { SettingsState } from './types';
@@ -17,7 +17,7 @@ const App = () => {
 
   // State from context
   const [settings, toggleSetting] = React.useReducer(settingReducer, settingDefaults);
-  const [gameState, gameDispatch] = React.useReducer(gameReducer, gameDefaults);
+  const [gameState, gameDispatch] = React.useReducer(gameReducer, undefined, createGameState);
   const deckState = gameState.deck.state;
   const playerState = gameState.playerStore.state;
 

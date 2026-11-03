@@ -64,8 +64,8 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
       <Tooltip content="Draw one card from the top of the deck" relationship="label">
         <Button appearance="subtle" icon={<Add20Regular />} disabled={isBtnDisabled} onClick={_hit}>Hit</Button>
       </Tooltip>
-      <Button appearance="subtle" icon={<ArrowUp20Regular />} disabled={isBtnDisabled} onClick={() => gameDispatch({ type: GameAction.SetMinimumBet, playerKey, minimumBet })}>
-        Bet ${minimumBet}
+      <Button appearance="subtle" icon={<ArrowUp20Regular />} disabled={isBtnDisabled} onClick={() => gameDispatch({ type: GameAction.Bet, playerKey, betAmount: minimumBet })}>
+        Wager ${minimumBet}
       </Button>
       <Button appearance="subtle" icon={<ArrowForward20Regular />} disabled={isBtnDisabled} onClick={() => gameDispatch({ type: GameAction.Stay, playerKey })}>
         Stay

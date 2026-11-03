@@ -116,6 +116,11 @@ export class PlayingCardDeck implements IPlayingCardDeck {
     return handValue(this.playerHands[key].cards);
   }
 
+  public updateHandValue(key: PlayerKey): void {
+    const hand = this.playerHands[key];
+    if (hand) hand.handValue = this.getHandValue(key);
+  }
+
   /**
    * Generate a set of cards for the deck
    */
@@ -154,6 +159,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
   public deal(numberOfCards: number = 2): void {
     for (let key in this.playerHands) {
       this.playerHands[key].cards.push(...this.draw(numberOfCards));
+      this.updateHandValue(key);
     }
   }
 
@@ -310,6 +316,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
   public hit(key: PlayerKey): PlayingCardKey {
     const cardKey = this.draw(1);
     this.playerHands[key].cards.push(cardKey[0]);
+    this.updateHandValue(key);
     return cardKey[0];
   }
 

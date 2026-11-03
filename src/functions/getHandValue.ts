@@ -7,11 +7,12 @@ import { PlayerHandValue, PlayingCardKey } from "../types";
  * @returns 
  */
 export function handValue(hand: PlayingCardKey[]): PlayerHandValue {
-  const aceAsOne: number = hand.reduce((prev: number, curr: string) => prev + PlayingCard.pointValue(curr)[1], 0),
-    aceAsEleven: number = hand.reduce((prev: number, curr: string) => prev + PlayingCard.pointValue(curr)[2], 0);
+  const aceAsOne = hand.reduce((total, key) => total + PlayingCard.pointValue(key)[0], 0);
+  const hasAce = hand.some((key) => Number(key.split('_')[1]) === 14);
+  const aceAsEleven = aceAsOne + (hasAce ? 10 : 0);
   return {
     aceAsEleven,
     aceAsOne,
-    highest: Math.max(aceAsEleven, aceAsOne),
+    highest: aceAsEleven <= 21 ? aceAsEleven : aceAsOne,
   }
 }

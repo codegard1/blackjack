@@ -17,9 +17,13 @@ export function evaluateGame(state: GameState, action: IGameReducerAction): Game
       /*   Game in progress; first play  */
       console.log('Game Status: InProgress');
       /*   all players bet the minimum to start  */
-      if (state.turnCount === 0) state.playerStore.allPlayersAnte(state.minimumBet);
-      state.pot = state.minimumBet * 2;
-      state.turnCount = state.turnCount + 1;
+      if (state.turnCount === 0) {
+        state.pot = 0;
+        state.playerStore.all.forEach((player) => {
+          if (state.playerStore.ante(player.key, state.minimumBet)) state.pot += state.minimumBet;
+        });
+        state.turnCount = 1;
+      }
       endgameTrap(state, action);
       break;
 

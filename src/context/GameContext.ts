@@ -4,7 +4,7 @@ import { GameStatus } from '../enums';
 import { IGameReducerAction } from '../interfaces';
 import { GameState } from '../types';
 
-export const gameDefaults: GameState = {
+export const createGameState = (): GameState => ({
   gameStatus: GameStatus.Init,
   deck: new PlayingCardDeck(),
   gameStatusFlag: false,
@@ -24,7 +24,9 @@ export const gameDefaults: GameState = {
   },
   controllingPlayer: undefined,
   playerStore: new PlayerStore(),
-}
+});
+
+export const gameDefaults: GameState = createGameState();
 
 
 export const GameContext = createContext<GameState>(gameDefaults);

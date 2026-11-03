@@ -43,6 +43,7 @@ export const OptionsPanel: React.FC = () => {
   const resetGame = () => {
     gameDispatch({ type: GameAction.ResetGame });
     gameDispatch({ type: GameAction.ShowMessageBar, messageBarDefinition: { text: 'Game Reset', type: 'info', isMultiLine: false } });
+    toggleSetting({ key: 'isSplashScreenVisible', value: true });
     closeOptionsPanel();
   }
 

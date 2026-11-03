@@ -5,6 +5,7 @@ import { gameDefaults } from '../context';
 import { GameAction, GameStatus } from '../enums';
 import { GameState } from '../types';
 import { gameReducer } from './gameReducer';
+import { handValue } from './getHandValue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const createGameState = (): GameState => ({
@@ -14,10 +15,13 @@ const createGameState = (): GameState => ({
   messageBarDefinition: { ...gameDefaults.messageBarDefinition },
 });
 
-const startDefaultGame = (): GameState => gameReducer(createGameState(), {
-  type: GameAction.NewGame,
-  playerKey: ['chris', 'dealer'],
-});
+const startDefaultGame = (): GameState => {
+  const started = gameReducer(createGameState(), {
+    type: GameAction.NewGame,
+    playerKey: ['chris', 'dealer'],
+  });
+  return gameReducer(started, { type: GameAction.EvaluateGame, gameStatus: GameStatus.InProgress });
+};
 
 beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -31,7 +35,7 @@ afterEach(() => {
 
 describe('game behavior baseline', () => {
   it('starts a game with the selected human and dealer', () => {
-    const state = startDefaultGame();
+    let state = startDefaultGame();
 
     expect(state.gameStatus).toBe(GameStatus.InProgress);
     expect(state.round).toBe(1);
@@ -58,18 +62,18 @@ describe('game behavior baseline', () => {
   });
 
   it('draws from the requested end of the deck into the player hand', () => {
-    const state = startDefaultGame();
+    let state = startDefaultGame();
     state.deck.cards = ['Club_2', 'Diamond_5', 'Heart_9'].map(
       (key) => new PlayingCard(key),
     );
 
-    gameReducer(state, {
+    state = gameReducer(state, {
       type: GameAction.Draw,
       playerKey: 'chris',
       deckSide: 'top',
       numberOfCards: 1,
     });
-    gameReducer(state, {
+    state = gameReducer(state, {
       type: GameAction.Draw,
       playerKey: 'chris',
       deckSide: 'bottom',
@@ -79,6 +83,70 @@ describe('game behavior baseline', () => {
     expect(state.deck.playerHands.chris.cards).toEqual(['Heart_9', 'Club_2']);
     expect(state.deck.drawnKeys).toEqual(['Heart_9', 'Club_2']);
     expect(state.deck.cardKeys).toEqual(['Diamond_5']);
+    expect(state.deck.playerHands.chris.handValue).toEqual({
+      aceAsEleven: 11,
+      aceAsOne: 11,
+      highest: 11,
+    });
+  });
+
+  it('returns a new state reference after a draw', () => {
+    const state = startDefaultGame();
+    state.deck.cards = [new PlayingCard('Club_2')];
+
+    const result = gameReducer(state, {
+      type: GameAction.Draw,
+      playerKey: 'chris',
+      deckSide: 'top',
+      numberOfCards: 1,
+    });
+
+    expect(result).not.toBe(state);
+  });
+
+  it('hands control to the dealer when the human stays', () => {
+    const state = startDefaultGame();
+
+    const result = gameReducer(state, { type: GameAction.Stay, playerKey: 'chris' });
+
+    expect(result.playerStore.player('chris').isStaying).toBe(true);
+    expect(result.playerStore.currentPlayerKey).toBe('dealer');
+    expect(result.dealerHasControl).toBe(true);
+  });
+
+  it('calculates playable totals for an ace and a regular card', () => {
+    expect(handValue(['Spade_14', 'Heart_5'])).toEqual({
+      aceAsEleven: 16,
+      aceAsOne: 6,
+      highest: 16,
+    });
+  });
+
+  it('records a wager against the current player and adds it to the pot', () => {
+    const state = startDefaultGame();
+
+    const result = gameReducer(state, {
+      type: GameAction.Bet,
+      playerKey: 'chris',
+      betAmount: 25,
+    });
+
+    expect(result.playerStore.player('chris').bank).toBe(950);
+    expect(result.playerStore.player('chris').lastBet).toBe(25);
+    expect(result.playerStore.player('chris').totalBet).toBe(25);
+    expect(result.pot).toBe(75);
+  });
+
+  it('resets to a fresh game state without retaining players', () => {
+    const state = startDefaultGame();
+
+    const result = gameReducer(state, { type: GameAction.ResetGame });
+
+    expect(result).not.toBe(state);
+    expect(result.playerStore).not.toBe(state.playerStore);
+    expect(result.playerStore.length).toBe(0);
+    expect(result.gameStatus).toBe(GameStatus.Init);
+    expect(result.deck.length).toBe(52);
   });
 
 });

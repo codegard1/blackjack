@@ -141,7 +141,7 @@ export class PlayerStore implements IPlayerStore {
       p.bank -= amount;
       p.lastAction = PlayerAction.Bet;
       p.lastBet = amount;
-      p.totalBet ? p.totalBet += amount : amount;
+      p.totalBet = (p.totalBet ?? 0) + amount;
       console.log(`${p.title} bet ${amount}`);
       return true;
     }
