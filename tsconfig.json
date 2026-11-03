@@ -12,16 +12,16 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "noEmit": true,
     "noFallthroughCasesInSwitch": true,
-    "outDir": "./build",
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
-    "target": "ES5"
+    "target": "ES2022"
   },
   "include": [
-    "src"
+    "src",
+    "vite.config.ts"
   ]
 }
