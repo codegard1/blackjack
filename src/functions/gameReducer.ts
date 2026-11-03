@@ -1,10 +1,13 @@
-import { PlayerStore, PlayingCard, PlayingCardDeck } from "../classes";
+import { PlayerStore } from "../classes/PlayerStore";
+import { PlayingCard } from "../classes/PlayingCard";
+import { PlayingCardDeck } from "../classes/PlayingCardDeck";
 import { gameDefaults } from "../context";
 import { defaultplayersArr } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
 import { IGameReducerAction } from "../interfaces";
 import { GameState } from "../types";
-import { endgameTrap, evaluateGame } from "./";
+import { endgameTrap } from "./endgameTrap";
+import { evaluateGame } from "./evaluateGame";
 
 /**
  * Reducer function for game state

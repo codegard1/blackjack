@@ -1,8 +1,9 @@
 /*  adapted from node-shuffle 
     https://github.com/codegard1/node-shuffle.git */
 
-import { PlayingCard } from ".";
-import { getRandomIndex, handValue } from "../functions";
+import { PlayingCard } from "./PlayingCard";
+import { getRandomIndex } from "../functions/getRandomIndex";
+import { handValue } from "../functions/getHandValue";
 import { IPlayingCardDeck } from "../interfaces";
 import { DeckState, PlayerHand, PlayerHandList, PlayerKey, PlayingCardKey } from "../types";
 

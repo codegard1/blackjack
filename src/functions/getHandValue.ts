@@ -1,4 +1,4 @@
-import { PlayingCard } from "../classes";
+import { PlayingCard } from "../classes/PlayingCard";
 import { PlayerHandValue, PlayingCardKey } from "../types";
 
 /**
