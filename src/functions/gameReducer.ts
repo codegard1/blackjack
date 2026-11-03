@@ -9,6 +9,24 @@ import { GameState } from "../types";
 import { endgameTrap } from "./endgameTrap";
 import { evaluateGame } from "./evaluateGame";
 
+function updatePlayerHandStatus(state: GameState, playerKey: string): void {
+  const player = state.playerStore.player(playerKey);
+  const hand = state.deck.playerHands[playerKey];
+  if (!player || !hand) return;
+
+  const total = state.deck.getHandValue(playerKey).highest;
+  player.isBusted = total > 21;
+  player.isBlackjack = hand.cards.length === 2 && total === 21;
+
+  if (player.isBusted || player.isBlackjack) {
+    state.gameStatus = player.isNPC
+      ? (player.isBusted ? GameStatus.HumanWins : GameStatus.DealerWins)
+      : (player.isBusted ? GameStatus.DealerWins : GameStatus.HumanWins);
+    state.controllingPlayer = undefined;
+    state.dealerHasControl = false;
+  }
+}
+
 /**
  * Reducer function for game state
  * @param state game state object
@@ -218,9 +236,14 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
           state.controllingPlayer = 'dealer';
           state.dealerHasControl = true;
         } else {
+          const dealerTotal = state.deck.getHandValue('dealer').highest;
+          const human = state.playerStore.all.find((player) => !player.isNPC);
+          const humanTotal = human ? state.deck.getHandValue(human.key).highest : 0;
           state.controllingPlayer = undefined;
           state.dealerHasControl = false;
-          state.gameStatus = GameStatus.HumanWins;
+          state.gameStatus = dealerTotal > 21 || humanTotal >= dealerTotal
+            ? GameStatus.HumanWins
+            : GameStatus.DealerWins;
         }
       }
       return state;
@@ -277,6 +300,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
               state.deck.playerHands[playerKey].cards.push(..._drawn);
               state.deck.updateHandValue(playerKey);
               state.playerStore.hit(playerKey);
+              updatePlayerHandStatus(state, playerKey);
             }
             break;
           }
@@ -287,6 +311,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
               state.deck.playerHands[playerKey].cards.push(..._drawn);
               state.deck.updateHandValue(playerKey);
               state.playerStore.hit(playerKey);
+              updatePlayerHandStatus(state, playerKey);
             }
             break;
           }
@@ -297,6 +322,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
               state.deck.playerHands[playerKey].cards.push(..._drawn);
               state.deck.updateHandValue(playerKey);
               state.playerStore.hit(playerKey);
+              updatePlayerHandStatus(state, playerKey);
             }
             break;
           }
@@ -346,7 +372,10 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
     case GameAction.Deal: {
       state.deck.deal(2);
-      state.playerStore.all.forEach((player) => state.deck.updateHandValue(player.key));
+      state.playerStore.all.forEach((player) => {
+        state.deck.updateHandValue(player.key);
+        updatePlayerHandStatus(state, player.key);
+      });
       return state;
     }
 

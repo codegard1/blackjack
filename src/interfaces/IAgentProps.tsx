@@ -1,7 +1,10 @@
 
+import { GameStatus } from '../enums';
+import { PlayerHandValue, PlayerKey } from '../types';
+
 export interface IAgentProps {
-  dealerHasControl: Boolean;
-  gameStatus: Number;
-  handValue: any;
-  playerKey: string;
+  dealerHasControl: boolean;
+  gameStatus: GameStatus;
+  handValue: PlayerHandValue;
+  playerKey: PlayerKey;
 }

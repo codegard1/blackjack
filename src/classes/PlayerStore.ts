@@ -189,6 +189,7 @@ export class PlayerStore implements IPlayerStore {
    */
   public bust(key: PlayerKey) {
     let p = this.playerName(key);
+    this.player(key).isBusted = true;
     this.finish(key);
     console.log(`${p} busted`);
   }

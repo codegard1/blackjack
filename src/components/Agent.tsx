@@ -3,54 +3,34 @@ import React from "react";
 
 import { Spinner } from '@fluentui/react-components';
 
-// Context
-
 // Local Resources
 import { useGameContext } from "../context";
 import { GameAction } from "../enums";
 import { IAgentProps } from "../interfaces/IAgentProps";
+import { GameStatus } from "../enums";
 
 export const Agent: React.FC<IAgentProps> = (props) => {
 
-  // Context
-  const { gameState, gameDispatch } = useGameContext();
+  const { gameDispatch } = useGameContext();
 
   // State
-  const [lastAction, setLastAction] = React.useState<string>('');
   const [spinnerLabel, setSpinnerLabel] = React.useState<string>('Thinking');
 
+  React.useEffect(() => {
+    if (!props.dealerHasControl || props.gameStatus !== GameStatus.InProgress) return;
 
-  if (props.dealerHasControl) {
-    console.log("in agent- dealer has control");
-    // Agent acts on a partially random interval
-    const intervalInMilliseconds = Math.floor(Math.random() * (new Date().getMilliseconds()))
-    const intervalID = setInterval(() => {
-      gameDispatch({ type: GameAction.EvaluateGame, gameStatus: gameState.gameStatus });
-      const { aceAsEleven, aceAsOne } = props.handValue;
-
-      if (props.gameStatus !== 0) {
-        /* when to hit */
-        if (aceAsEleven <= 16 || aceAsOne <= 16) {
-          setSpinnerLabel("Hit");
-          gameDispatch({ type: GameAction.Draw, playerKey: props.playerKey, numberOfCards: 1 });
-        }
-
-        /* when to stay */
-        if (
-          (aceAsOne >= 17 && aceAsOne <= 21) ||
-          (aceAsEleven >= 17 && aceAsEleven <= 21)
-        ) {
-          setSpinnerLabel("Stay");
-          gameDispatch({ type: GameAction.Stay });
-        }
+    const timeoutId = window.setTimeout(() => {
+      if (props.handValue.highest < 17) {
+        setSpinnerLabel('Hit');
+        gameDispatch({ type: GameAction.Draw, playerKey: props.playerKey, deckSide: 'top', numberOfCards: 1 });
       } else {
-        setSpinnerLabel("Okay, that's it!");
-        clearInterval(intervalID);
+        setSpinnerLabel('Stay');
+        gameDispatch({ type: GameAction.Stay, playerKey: props.playerKey });
       }
-    }, intervalInMilliseconds);
-  } else {
-    console.log("in agent- dealer does not have control");
-  }
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [gameDispatch, props.dealerHasControl, props.gameStatus, props.handValue.highest, props.playerKey]);
 
   return (
     <Spinner size="large" label={spinnerLabel} aria-live="assertive" />

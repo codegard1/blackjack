@@ -114,6 +114,38 @@ describe('game behavior baseline', () => {
     expect(result.dealerHasControl).toBe(true);
   });
 
+  it('settles the hand when the dealer stands', () => {
+    const state = startDefaultGame();
+    state.deck.playerHands.chris.cards = ['Club_10', 'Heart_7'];
+    state.deck.playerHands.dealer.cards = ['Spade_10', 'Diamond_7'];
+    state.deck.updateHandValue('chris');
+    state.deck.updateHandValue('dealer');
+
+    const dealerTurn = gameReducer(state, { type: GameAction.Stay, playerKey: 'chris' });
+    const result = gameReducer(dealerTurn, { type: GameAction.Stay, playerKey: 'dealer' });
+
+    expect(result.gameStatus).toBe(GameStatus.HumanWins);
+    expect(result.dealerHasControl).toBe(false);
+  });
+
+  it('ends the game when the dealer busts on a draw', () => {
+    const state = startDefaultGame();
+    state.playerStore.currentPlayerKey = 'dealer';
+    state.deck.playerHands.dealer.cards = ['Spade_10', 'Diamond_9'];
+    state.deck.cards = [new PlayingCard('Club_5')];
+
+    const result = gameReducer(state, {
+      type: GameAction.Draw,
+      playerKey: 'dealer',
+      deckSide: 'top',
+      numberOfCards: 1,
+    });
+
+    expect(result.playerStore.player('dealer').isBusted).toBe(true);
+    expect(result.gameStatus).toBe(GameStatus.HumanWins);
+    expect(result.dealerHasControl).toBe(false);
+  });
+
   it('calculates playable totals for an ace and a regular card', () => {
     expect(handValue(['Spade_14', 'Heart_5'])).toEqual({
       aceAsEleven: 16,
