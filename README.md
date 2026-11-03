@@ -10,13 +10,18 @@ https://mango-cliff-08390e60f.azurestaticapps.net/
 ### How to Play
 1. Clone the repo 
 2. `cd` into the repo directory
-3. Run `npm install`
-4. Run `npm start`
-5. Navigate to `localhost:3000`
+3. Use Node.js 26.x
+4. Run `npm install --legacy-peer-deps`
+5. Run `npm start`
+6. Navigate to `http://localhost:3000`
+
+Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, and `npm run build` to create the static site in `dist/`.
 
 #### Technologies Used
 * [React](https://facebook.github.io/react/)
 * Flux
+* [Vite](https://vite.dev/)
+* TypeScript
 * [Fluent UI](https://developer.microsoft.com/en-us/fluentui)
 * [node-shuffle](https://github.com/codegard1/node-shuffle) (forked)
 
