@@ -61,6 +61,38 @@ describe('game behavior baseline', () => {
     expect(result.pot).toBe(50);
   });
 
+  it('starts a new round instead of appending cards on subsequent deals', () => {
+    const state = startDefaultGame();
+    state.deck.cards = PlayingCardDeck.cardKeys().map((key) => new PlayingCard(key));
+
+    const firstDeal = gameReducer(state, { type: GameAction.Deal });
+    const firstHand = firstDeal.deck.playerHands.chris.cards.slice();
+    const nextDeal = gameReducer(firstDeal, { type: GameAction.Deal });
+
+    expect(firstDeal.round).toBe(1);
+    expect(nextDeal.round).toBe(2);
+    expect(nextDeal.deck.playerHands.chris.cards).toHaveLength(2);
+    expect(nextDeal.deck.playerHands.dealer.cards).toHaveLength(2);
+    expect(nextDeal.deck.playerHands.chris.cards).not.toEqual(firstHand);
+    expect(nextDeal.playerStore.player('chris').bank).toBe(950);
+    expect(nextDeal.pot).toBe(50);
+  });
+
+  it('records player actions in the game activity log', () => {
+    const state = startDefaultGame();
+
+    const result = gameReducer(state, {
+      type: GameAction.Bet,
+      playerKey: 'chris',
+      betAmount: 25,
+    });
+
+    expect(result.activityLog.at(-1)).toMatchObject({
+      name: 'Chris',
+      description: 'wagered $25',
+    });
+  });
+
   it('draws from the requested end of the deck into the player hand', () => {
     let state = startDefaultGame();
     state.deck.cards = ['Club_2', 'Diamond_5', 'Heart_9'].map(

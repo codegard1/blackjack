@@ -55,7 +55,7 @@ export const CardContainer: React.FC<ICardContainerProps> = (props) => {
         width: 65,
       }}
     >
-      {!props.isBackFacing && <span style={{ fontSize: 18, fontWeight: 600, whiteSpace: 'nowrap' }}>{cardTitle}{cardIcon}</span>}
+      {!props.isBackFacing && <span style={{ fontSize: 18, fontWeight: 600, whiteSpace: 'nowrap' }}>{props.isTitleVisible && cardTitle}{cardIcon}</span>}
       {!props.isBackFacing && props.isDescVisible && <span style={{ alignSelf: 'center', fontSize: 12, whiteSpace: 'nowrap' }}>{description}</span>}
     </button>
   );

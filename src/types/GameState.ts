@@ -3,6 +3,7 @@ import { GameStatus } from "../enums";
 import { MessageBarDefinition, PlayerKey } from "./";
 
 export type GameState = {
+  activityLog: ActivityLogEntry[];
   controllingPlayer?: PlayerKey;
   dealerHasControl: boolean;
   deck: PlayingCardDeck;
@@ -18,4 +19,11 @@ export type GameState = {
   round: number;
   turnCount: number;
   winner?: PlayerKey;
+}
+
+export type ActivityLogEntry = {
+  id: number;
+  timestamp: number;
+  name: string;
+  description: string;
 }

@@ -9,6 +9,7 @@ export interface ICardContainerProps {
   isBackFacing?: boolean;
   isSelectable?: boolean;
   isDescVisible?: boolean;
+  isTitleVisible?: boolean;
   select?: () => void;
   sort: IPlayingCardSort;
   suit: IPlayingCardSuit;

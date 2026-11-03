@@ -22,7 +22,7 @@ import {
 } from '@fluentui/react-icons';
 
 // Context
-import { useGameContext, useSettingContext } from "../context";
+import { settingDefaults, useGameContext, useSettingContext } from "../context";
 import { GameAction } from "../enums";
 import { clearStores } from "../functions";
 
@@ -47,8 +47,14 @@ export const OptionsPanel: React.FC = () => {
     closeOptionsPanel();
   }
 
+  const clearApplicationData = () => {
+    clearStores();
+    gameDispatch({ type: GameAction.ResetGame });
+    Object.entries(settingDefaults).forEach(([key, value]) => toggleSetting({ key, value }));
+  }
+
   const newDeal = () => {
-    playerStore.all.forEach(p => gameDispatch({ type: GameAction.Draw, playerKey: p.key, numberOfCards: 2 }));
+    gameDispatch({ type: GameAction.Deal });
     closeOptionsPanel();
   }
 
@@ -93,7 +99,7 @@ export const OptionsPanel: React.FC = () => {
             <Button icon={<ArrowSync20Regular />} onClick={shuffle}>Shuffle Deck</Button>
           </Tooltip>
           <Tooltip content="Clear application data stored locally in the browser" relationship="label">
-            <Button icon={<Delete20Regular />} onClick={() => clearStores()}>Clear Stores</Button>
+            <Button icon={<Delete20Regular />} onClick={clearApplicationData}>Clear Stores</Button>
           </Tooltip>
         </div>
 
