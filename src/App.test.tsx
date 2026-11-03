@@ -20,7 +20,7 @@ it('starts a new game with the default human and dealer', () => {
   expect(screen.getByRole('alertdialog')).toBeInTheDocument();
 });
 
-it('applies card-title and activity-log settings to rendered content', () => {
+it('shows card ranks by default and toggles rank and activity visibility', () => {
   const { container } = render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Start' }));
@@ -28,6 +28,12 @@ it('applies card-title and activity-log settings to rendered content', () => {
 
   const cards = () => Array.from(container.querySelector('.PlayerContainer')?.querySelectorAll('button[aria-pressed]') ?? []);
   expect(cards()).toHaveLength(2);
+  expect(cards().every((card) => (card.textContent?.trim().length ?? 0) > 1)).toBe(true);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  fireEvent.click(screen.getByRole('switch', { name: 'Show Card Titles' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+
   expect(cards().every((card) => card.textContent?.trim().length === 1)).toBe(true);
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
