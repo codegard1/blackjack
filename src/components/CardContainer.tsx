@@ -1,64 +1,11 @@
 // React
 import React from 'react';
 
-// Fluent UI
-import {
-  DefaultPalette, mergeStyles, Stack, StackItem, Text,
-} from '@fluentui/react';
-import {
-  MotionAnimations,
-} from '@fluentui/theme';
-
 // Local Resources
 import { useGameContext } from '../context';
 import { GameAction } from '../enums';
 import { ICardContainerProps } from '../interfaces';
 
-
-// Fluent UI styles
-const cardStyles = {
-  root: {
-    animation: MotionAnimations.slideUpIn,
-    height: 100,
-    overflow: 'hidden',
-    width: 65,
-    borderRadius: '5px',
-    padding: '2px'
-  },
-  cardTitleTop: {
-    // border: '1px solid orange',
-  },
-  cardTitleBottom: {
-    // border: '1px solid green',
-  },
-  cardDescription: {
-    textAlign: 'center',
-    fontWeight: 'light',
-  },
-  hearts: { color: DefaultPalette.red },
-  diamonds: { color: DefaultPalette.red },
-  spades: { color: DefaultPalette.neutralDark },
-  clubs: { color: DefaultPalette.neutralDark },
-  selectable: { cursor: 'pointer' },
-  unselectable: { cursor: 'default' },
-  unselected: {
-    boxShadow: '2px 2px 2px rgba(25, 25, 25, 0.2)',
-    border: '1px solid #ddd',
-  },
-  selected: {
-    border: '1px solid' + DefaultPalette.blue,
-    boxShadow: '4px 4px 10px rgba(25, 25, 25, 0.2)',
-  },
-  frontFacing: {
-    backgroundColor: DefaultPalette.neutralLighterAlt,
-  },
-  backFacing: {
-    backgroundColor: DefaultPalette.blueLight,
-    backgroundImage: 'radial-gradient(closest-side, transparent 98%, rgba(10, 10, 90, .3) 99%), radial-gradient(closest-side, transparent 98%, rgba(10, 10, 90, .3) 99%)',
-    backgroundSize: '80px 80px',
-    backgroundPosition: '0 0, 40px 40px',
-  }
-};
 
 export const CardContainer: React.FC<ICardContainerProps> = (props) => {
 
@@ -78,48 +25,38 @@ export const CardContainer: React.FC<ICardContainerProps> = (props) => {
     setSelected(!isSelected);
   }
 
-  // Determine styles 
-  const cardStylesBySuit: { [index: string]: any } = {
-    'Heart': cardStyles.hearts,
-    'Spade': cardStyles.spades,
-    'Diamond': cardStyles.diamonds,
-    'Club': cardStyles.clubs,
-  }
-  const suitKey: string = props.suit.single
-  const cardTitleClassName = cardStylesBySuit[suitKey];
-
-  let cardClassNames = [cardTitleClassName, cardStyles.root];
-  if (props.isBackFacing) cardClassNames.push([cardStyles.root, cardStyles.backFacing])
-  else cardClassNames.push(cardStyles.root, cardStyles.frontFacing);
-
-  if (props.isSelectable) cardClassNames.push(cardStyles.selectable)
-  else cardClassNames.push(cardStyles.unselectable);
-
-  if (isSelected) cardClassNames.push(cardStyles.selected)
-  else cardClassNames.push(cardStyles.unselected);
+  const isRedSuit = props.suit.single === 'Heart' || props.suit.single === 'Diamond';
 
   return (
-    <Stack
-      verticalAlign='space-between'
-      className={mergeStyles(cardClassNames)}
+    <button
+      type="button"
+      aria-label={`${description} of ${props.suit.plural}`}
+      aria-pressed={props.isSelectable ? isSelected : undefined}
       onClick={props.isSelectable ? _toggleSelect : undefined}
+      style={{
+        alignItems: 'flex-start',
+        animation: 'card-enter 180ms ease-out',
+        backgroundColor: props.isBackFacing ? '#d9e8f7' : '#f7f9fa',
+        backgroundImage: props.isBackFacing ? 'radial-gradient(closest-side, transparent 98%, rgba(10, 10, 90, .3) 99%), radial-gradient(closest-side, transparent 98%, rgba(10, 10, 90, .3) 99%)' : undefined,
+        backgroundPosition: props.isBackFacing ? '0 0, 40px 40px' : undefined,
+        backgroundSize: props.isBackFacing ? '80px 80px' : undefined,
+        border: isSelected ? '1px solid #0078d4' : '1px solid #ddd',
+        borderRadius: 5,
+        boxShadow: isSelected ? '4px 4px 10px rgba(25, 25, 25, 0.2)' : '2px 2px 2px rgba(25, 25, 25, 0.2)',
+        color: isRedSuit ? '#c50f1f' : '#242424',
+        cursor: props.isSelectable ? 'pointer' : 'default',
+        display: 'flex',
+        flexDirection: 'column',
+        height: 100,
+        justifyContent: 'space-between',
+        overflow: 'hidden',
+        padding: 2,
+        textAlign: 'left',
+        width: 65,
+      }}
     >
-      {!props.isBackFacing &&
-        <StackItem align='start' >
-          <Text variant='large' block nowrap className={mergeStyles(cardTitleClassName, cardStyles.cardTitleTop)} >
-            {cardTitle}{cardIcon}
-          </Text>
-        </StackItem>
-      }
-
-      {
-        !props.isBackFacing && props.isDescVisible &&
-        <Stack.Item>
-          <Text variant='small' block nowrap className={mergeStyles(cardStyles.cardDescription)}>
-            {description}
-          </Text>
-        </Stack.Item>
-      }
-    </Stack>
+      {!props.isBackFacing && <span style={{ fontSize: 18, fontWeight: 600, whiteSpace: 'nowrap' }}>{cardTitle}{cardIcon}</span>}
+      {!props.isBackFacing && props.isDescVisible && <span style={{ alignSelf: 'center', fontSize: 12, whiteSpace: 'nowrap' }}>{description}</span>}
+    </button>
   );
 }

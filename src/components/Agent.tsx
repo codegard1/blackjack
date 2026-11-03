@@ -1,9 +1,7 @@
 /* React */
 import React from "react";
 
-// Fluent UI
-import { Spinner, SpinnerSize } from '@fluentui/react';
-import { MotionAnimations } from '@fluentui/theme';
+import { Spinner } from '@fluentui/react-components';
 
 // Context
 
@@ -55,12 +53,6 @@ export const Agent: React.FC<IAgentProps> = (props) => {
   }
 
   return (
-    <Spinner
-      size={SpinnerSize.large}
-      label={spinnerLabel}
-      ariaLive="assertive"
-      labelPosition="right"
-      style={{ animation: MotionAnimations.scaleDownIn }}
-    />
+    <Spinner size="large" label={spinnerLabel} aria-live="assertive" />
   );
 }

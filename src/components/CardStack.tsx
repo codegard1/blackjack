@@ -1,13 +1,8 @@
 // React
 import React from 'react';
 
-// Fluent UI
-import {
-  Icon,
-  Stack,
-  Text,
-  nullRender
-} from "@fluentui/react";
+import { Button, Text } from '@fluentui/react-components';
+import { ChevronDown16Regular, ChevronUp16Regular } from '@fluentui/react-icons';
 
 /* custom stuff */
 import { CardContainer } from '.';
@@ -16,17 +11,6 @@ import { ICardStackProps } from '../interfaces';
 import { handValue } from '../functions';
 import { PlayingCard } from '../classes';
 
-
-// Style tokens for Fluent UI Stacks
-const tokens = {
-  sectionStack: {
-    childrenGap: 10,
-  },
-  cardStack: {
-    childrenGap: 5,
-    padding: 5
-  },
-};
 
 /**
  * A visual component that displays PlayingCards
@@ -73,18 +57,21 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
     `Hand Value: ${handValues.highest}` :
     `Hand Value: ${handValues.aceAsOne} / ${handValues.aceAsEleven}`;
 
-  return hidden ? nullRender() : (
-    <Stack verticalAlign="stretch" tokens={tokens.sectionStack}>
-      <Text variant="mediumPlus" nowrap block onClick={_toggleDeck}>
-        {deckTitleString}&nbsp;<Icon iconName={isDeckVisible ? "ChevronUp" : "ChevronDown"} />
-      </Text>
+  return hidden ? null : (
+    <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <Button
+        appearance="transparent"
+        icon={isDeckVisible ? <ChevronUp16Regular /> : <ChevronDown16Regular />}
+        onClick={_toggleDeck}
+        aria-expanded={isDeckVisible}
+      >
+        {deckTitleString}
+      </Button>
       {!player?.isNPC &&
         settings.isHandValueVisible && (
-          <Text variant="large">{handValueString}</Text>
+          <Text size={400}>{handValueString}</Text>
         )}
-      <Stack horizontal horizontalAlign="start" tokens={tokens.cardStack} wrap>
-        {isDeckVisible ? (cardElements) : nullRender}
-      </Stack>
-    </Stack>
+      {isDeckVisible && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{cardElements}</div>}
+    </section>
   );
 }

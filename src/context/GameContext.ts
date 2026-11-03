@@ -1,4 +1,3 @@
-import { MessageBarType } from '@fluentui/react';
 import { Dispatch, createContext, useContext } from 'react';
 import { PlayerStore, PlayingCardDeck } from '../classes';
 import { GameStatus } from '../enums';
@@ -19,7 +18,7 @@ export const gameDefaults: GameState = {
   turnCount: 0,
   lastWriteTime: new Date().toISOString(),
   messageBarDefinition: {
-    type: MessageBarType.info,
+    type: 'info',
     text: "",
     isMultiLine: false
   },

@@ -1,8 +1,22 @@
 // React
 import React from "react";
 
-// Fluent UI
-import { CommandBar, ICommandBarItemProps, MessageBarType, nullRender } from "@fluentui/react";
+import {
+  Button,
+  Menu,
+  MenuItem,
+  MenuList,
+  MenuPopover,
+  MenuTrigger,
+  Tooltip,
+} from '@fluentui/react-components';
+import {
+  Add20Regular,
+  ArrowClockwise20Regular,
+  ArrowDown20Regular,
+  ArrowForward20Regular,
+  ArrowUp20Regular,
+} from '@fluentui/react-icons';
 
 // Local Resources
 import { useGameContext, useSettingContext } from "../context";
@@ -13,18 +27,11 @@ import { IControlPanelProps } from "../interfaces";
 export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
 
   // Props
-  const {
-    playerStatusFlag,
-    playerKey,
-    selectedFlag,
-    hidden,
-    isDeckCalloutVisible,
-    showDeckCallout,
-  } = props;
+  const { playerKey, hidden } = props;
 
   // State from context
   const { gameState, gameDispatch } = useGameContext();
-  const { settings, toggleSetting } = useSettingContext();
+  const { toggleSetting } = useSettingContext();
   const { gameStatus, minimumBet } = gameState;
   const playerStore = gameState.playerStore.state;
 
@@ -39,87 +46,47 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
     gameDispatch({ type: GameAction.Draw, playerKey, numberOfCards: 1, deckSide: 'top' });
   }
 
-  const drawItems = [
-    {
-      key: "draw",
-      name: "Draw",
-      ariaLabel: "Draw",
-      iconProps: { iconName: "HandsFree" },
-      disabled: isBtnDisabled,
-      onClick: () => gameDispatch({ type: GameAction.Draw, playerKey, deckSide: 'top', numberOfCards: 1 }),
-    },
-    {
-      key: "draw-from-bottom-of-deck",
-      name: "Draw from Bottom of Deck",
-      ariaLabel: "Draw from Bottom of Deck",
-      iconProps: { iconName: "HandsFree" },
-      disabled: isBtnDisabled,
-      onClick: () => gameDispatch({ type: GameAction.Draw, playerKey, deckSide: 'bottom', numberOfCards: 1 }),
-    },
-    {
-      key: "draw-random",
-      name: "Draw Random",
-      ariaLabel: "Draw Random",
-      iconProps: { iconName: "HandsFree" },
-      disabled: isBtnDisabled,
-      onClick: () => gameDispatch({ type: GameAction.Draw, playerKey, deckSide: 'random', numberOfCards: 1 }),
-    },
-  ];
+  const draw = (deckSide: 'top' | 'bottom' | 'random') => {
+    gameDispatch({ type: GameAction.Draw, playerKey, deckSide, numberOfCards: 1 });
+  };
 
-  let blackJackItems: ICommandBarItemProps[] = [
-    {
-      key: "hit",
-      name: "Hit",
-      ariaLabel: "Hit",
-      iconProps: { iconName: "Add" },
-      disabled: isBtnDisabled,
-      onClick: _hit,
-    },
-    {
-      key: "bet",
-      name: `Bet $${minimumBet}`,
-      ariaLabel: `Bet $${minimumBet}`,
-      iconProps: { iconName: "Up" },
-      disabled: isBtnDisabled,
-      onClick: () => gameDispatch({ type: GameAction.SetMinimumBet, playerKey, minimumBet }),
-    },
-    {
-      key: "stay",
-      name: "Stay",
-      ariaLabel: "Stay",
-      iconProps: { iconName: "Forward" },
-      disabled: isBtnDisabled,
-      onClick: () => gameDispatch({ type: GameAction.Stay, playerKey }),
-    }
-  ];
+  const deal = () => {
+    gameDispatch({ type: GameAction.Deal });
+    toggleSetting({ key: 'isMessageBarVisible', value: true });
+    gameDispatch({
+      type: GameAction.ShowMessageBar,
+      messageBarDefinition: { text: 'New Round', type: 'info', isMultiLine: false },
+    });
+  };
 
-  const farItems: ICommandBarItemProps[] = npcFlag
-    ? []
-    : [
-      {
-        key: "new-round",
-        name: "Deal",
-        ariaLabel: "Deal",
-        iconProps: { iconName: "Refresh" },
-        disabled: isBtnDisabled,
-        onClick: () => {
-          gameDispatch({ type: GameAction.Deal });
-          toggleSetting({ key: 'isMessageBarVisible', value: true });
-          gameDispatch({
-            type: GameAction.ShowMessageBar,
-            messageBarDefinition: { text: "New Round", type: MessageBarType.info, isMultiLine: false }
-          })
-        }
-      }
-    ];
-
-  const overFlowItems: ICommandBarItemProps[] = [...drawItems];
-
-  return props.hidden ? nullRender() :
-    <CommandBar
-      items={blackJackItems}
-      farItems={farItems}
-      overflowItems={overFlowItems}
-      className="player-controlpanel"
-    />
+  return hidden ? null : (
+    <div className="player-controlpanel" style={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+      <Tooltip content="Draw one card from the top of the deck" relationship="label">
+        <Button appearance="subtle" icon={<Add20Regular />} disabled={isBtnDisabled} onClick={_hit}>Hit</Button>
+      </Tooltip>
+      <Button appearance="subtle" icon={<ArrowUp20Regular />} disabled={isBtnDisabled} onClick={() => gameDispatch({ type: GameAction.SetMinimumBet, playerKey, minimumBet })}>
+        Bet ${minimumBet}
+      </Button>
+      <Button appearance="subtle" icon={<ArrowForward20Regular />} disabled={isBtnDisabled} onClick={() => gameDispatch({ type: GameAction.Stay, playerKey })}>
+        Stay
+      </Button>
+      {!npcFlag && (
+        <Button appearance="subtle" icon={<ArrowClockwise20Regular />} disabled={isBtnDisabled} onClick={deal}>
+          Deal
+        </Button>
+      )}
+      <Menu>
+        <MenuTrigger disableButtonEnhancement>
+          <Button appearance="subtle" icon={<ArrowDown20Regular />} disabled={isBtnDisabled}>Draw</Button>
+        </MenuTrigger>
+        <MenuPopover>
+          <MenuList>
+            <MenuItem onClick={() => draw('top')}>Draw from Top</MenuItem>
+            <MenuItem onClick={() => draw('bottom')}>Draw from Bottom of Deck</MenuItem>
+            <MenuItem onClick={() => draw('random')}>Draw Random</MenuItem>
+          </MenuList>
+        </MenuPopover>
+      </Menu>
+    </div>
+  );
 }

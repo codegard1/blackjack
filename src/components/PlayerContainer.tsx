@@ -1,9 +1,7 @@
 // React
 import React from "react";
 
-// Fluent UI
-import { Layer, Stack, Text } from "@fluentui/react";
-import { useId } from '@fluentui/react-hooks';
+import { Text } from '@fluentui/react-components';
 
 /* custom stuff */
 import { Agent, CardStack, ControlPanel, DeckCallout, StatusDisplay } from '.';
@@ -33,9 +31,13 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
     player.isStaying ||
     !player.turn);
   const deckState = gameState.deck.state;
-  const { cards, handValue } = deckState.playerHands[playerKey]
+  const playerHand = deckState.playerHands[playerKey] ?? {
+    cards: [],
+    handValue: { aceAsEleven: 0, aceAsOne: 0, highest: 0 },
+  };
+  const { cards, handValue } = playerHand;
 
-  const id = useId(`DeckCalloutTarget-${player.title}`);
+  const id = `DeckCalloutTarget-${player.title}`;
 
   // State
   const [isStatusCalloutVisible, setStatusCalloutVisible] = React.useState<boolean>(false);
@@ -68,31 +70,25 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   }, [gameState]);
 
   return (
-    <Stack className={playerContainerClass}>
+    <section className={playerContainerClass}>
+      <header style={{ alignItems: 'center', display: 'flex', justifyContent: 'space-between', padding: 5 }}>
+        <Text size={500}>{`${player.title} ($${player.bank || 0})`}</Text>
+        <StatusDisplay player={player} stats={player.stats} />
+      </header>
 
-      <Stack horizontal horizontalAlign="space-between" style={{ padding: '5px' }} className={`${player.title}-titleBar playerContainerClass`}>
-        <Stack.Item align="start">
-          <Text block nowrap variant="large">
-            {`${player.title} ($${player.bank || 0})  `}</Text>
-        </Stack.Item>
-        <Stack.Item>
-          <StatusDisplay player={player} stats={player.stats} />
-        </Stack.Item>
-      </Stack>
-
-      <Stack horizontalAlign="space-between">
+      <div style={{ alignItems: 'flex-start', display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between', padding: 5 }}>
         {player.isNPC && gameState.dealerHasControl &&
-          <Stack.Item>
+          <div>
             <Agent
               dealerHasControl={gameState.dealerHasControl}
               gameStatus={gameState.gameStatus}
               handValue={handValue}
               playerKey={playerKey}
             />
-          </Stack.Item>
+          </div>
         }
 
-        <Stack.Item>
+        <div>
           <ControlPanel
             hidden={player.isNPC}
             playerKey={props.playerKey}
@@ -101,9 +97,9 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
             showDeckCallout={_showDeckCallout}
             isDeckCalloutVisible={isDeckCalloutVisible}
           />
-        </Stack.Item>
+        </div>
 
-        <Stack.Item id={id}>
+        <div id={id}>
           <CardStack
             cards={cards}
             hidden={cards.length === 0}
@@ -111,16 +107,9 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
             player={player}
             title={player.title}
           />
-        </Stack.Item>
-      </Stack>
-      <Layer>
-        <DeckCallout
-          player={player}
-          hidden={!isDeckCalloutVisible}
-          onHideCallout={_hideDeckCallout}
-          target={'#' + id}
-        />
-      </Layer>
-    </Stack>
+        </div>
+      </div>
+      <DeckCallout player={player} hidden={!isDeckCalloutVisible} onHideCallout={_hideDeckCallout} target={'#' + id} />
+    </section>
   );
 }
