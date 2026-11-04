@@ -27,9 +27,9 @@ const useStyles = makeStyles({
   },
   diamond: {
     position: 'absolute',
-    // in the exposed lower-left corner of the back card
-    left: '16%',
-    top: '54%',
+    // centred on the back card (x 2-14.5, y 7-22 of the 24px Copy glyph)
+    left: '24.9%',
+    top: '50.9%',
     width: '19%',
     height: '19%',
     color: tokens.colorPaletteRedForeground1,
