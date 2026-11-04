@@ -1,127 +1,29 @@
-# Copilot Instructions
+# Blackjack Project Instructions
 
-This repository contains Chris's blackjack game built with React and TypeScript.
+This repository is a browser-based blackjack game where one human plays against a dealer who hits below 17. Game and settings state persist in `localStorage`. It is built with React 19, TypeScript 6, Fluent UI v9, Vite 8, and Vitest 5.
 
-## Project Overview
+## Architecture
 
-A web-based blackjack game where a human player can compete against a dealer algorithm. The project demonstrates React patterns, TypeScript, and UI design with Fluent UI components.
+- `src/App.tsx` owns the game and settings reducers and provides state through React context. Components read state with `useGameContext()` / `useSettingContext()` and dispatch actions; keep shared state changes in reducers.
+- Game rules and state transitions belong in `src/functions/` and `src/classes/`, not in UI components. `src/components/Agent.tsx` automates the dealer's turn.
+- `src/functions/evaluateGame.ts` handles antes, round settlement, payouts, and stats. `src/functions/persistence.ts` restores and saves the deck, player store, game snapshot, and settings in `localStorage`.
+- Tests live beside the code they cover. See the scoped instructions in `.github/instructions/` for game logic, UI, and test-specific guidance.
 
-## Technologies Used
+## Development
 
-- **React** 17.0.2 - UI framework
-- **TypeScript** 4.9.5 - Type-safe JavaScript
-- **Fluent UI** (@fluentui/react 8.120.7) - Microsoft's design system
-- **Create React App** (react-scripts 5.0.1) - Build tooling
-- **Jest** - Testing framework (via react-scripts)
-- **ESLint** - Code linting
+- Use strict TypeScript and the existing interfaces, types, enums, class methods, and barrel exports where available. Follow nearby code style and avoid unrelated refactors.
+- Use `debugLog` from `src/functions/debugLog.ts` for development-only diagnostics.
+- Update the README when adding a significant player-facing feature.
+- Use Node.js versions allowed by `package.json` (`.nvmrc` pins Node 22).
 
-## Setup Instructions
+Common commands:
 
-1. **Install Dependencies**
-   ```bash
-   npm install --legacy-peer-deps
-   ```
-   Note: Use `--legacy-peer-deps` flag due to peer dependency conflicts between packages.
-
-2. **Development Server**
-   ```bash
-   npm start
-   ```
-   Opens the app at `localhost:3000`
-
-3. **Build for Production**
-   ```bash
-   npm run build
-   ```
-   Creates optimized production build in `build/` directory
-
-4. **Run Tests**
-   ```bash
-   npm test
-   ```
-   Note: There are currently known test configuration issues with ESM modules that need resolution.
-
-## Project Structure
-
-```
-src/
-├── classes/       # Game logic classes (e.g., Card, Deck, Player)
-├── components/    # React components
-├── context/       # React Context providers
-├── enums/         # TypeScript enums
-├── functions/     # Utility functions
-├── interfaces/    # TypeScript interfaces
-├── types/         # TypeScript type definitions
-├── App.tsx        # Main application component
-└── index.tsx      # Application entry point
+```bash
+npm start
+npm test
+npm run typecheck
+npm run lint
+npm run build
 ```
 
-## Code Style and Conventions
-
-### TypeScript
-- Use TypeScript strict mode
-- Define interfaces in `interfaces/` directory
-- Define enums in `enums/` directory
-- Use explicit types for function parameters and return values
-- Target ES5 (configured in tsconfig.json, default for Create React App)
-
-### React
-- Use functional components with hooks
-- Follow React best practices
-- Use JSX syntax with TypeScript (.tsx extension)
-- Import React components from `components/index.ts`
-
-### ESLint Configuration
-- ESLint is configured via `.eslintrc.json`
-- Rules include TypeScript-specific linting
-- Unused variables warnings are disabled
-- Follow existing code style for consistency
-
-### File Organization
-- Group related functionality in dedicated directories
-- Keep components modular and reusable
-- Use index files for clean imports
-- Separate concerns: UI components, business logic (classes), and utilities (functions)
-
-## Testing
-
-- Tests use Jest and React Testing Library
-- Test files should be named `*.test.tsx` or `*.test.ts`
-- Place tests alongside the code they test
-- **Current Known Issue**: Jest configuration needs updates to handle ESM modules from `react-syntax-highlighter` in test environment
-
-## Building and Deployment
-
-- The project is deployed to Azure Static Web Apps
-- Build process uses Create React App's build system
-- Output directory is `build/`
-- Deployment is automated via GitHub Actions (`.github/workflows/azure-static-web-apps-lemon-ocean-0d87ac20f.yml`)
-
-## Dependencies Management
-
-- Use npm for package management
-- Node version: 16.13.0 to 18.19.1 (specified in `engines`)
-- Always use `--legacy-peer-deps` when installing packages
-- Check for security vulnerabilities with `npm audit`
-
-## Development Guidelines
-
-1. **Minimal Changes**: Make surgical, focused changes to existing code
-2. **Test Before Merging**: Verify builds complete successfully
-3. **Type Safety**: Leverage TypeScript's type system fully
-4. **Code Quality**: Run ESLint before committing (implicit in build process)
-5. **Documentation**: Update README.md if adding significant features
-6. **Consistency**: Match existing code patterns and style
-
-## Known Issues
-
-- Peer dependency conflicts between ESLint packages (use `--legacy-peer-deps`)
-- Test configuration needs updates for ESM module support (Jest handling of react-syntax-highlighter)
-- Several npm package deprecation warnings (non-critical)
-
-## Additional Notes
-
-- The game implements basic blackjack rules with a dealer AI
-- UI uses Fluent UI components for consistent Microsoft-style design
-- State management uses React Context API
-- The project demonstrates Flux-like patterns for state management
+Run the relevant tests and checks for each change. Before finishing a code change, run `npm test`, `npm run typecheck`, and `npm run lint` when practical; `npm run build` also type-checks before producing `dist/`.
