@@ -6,7 +6,6 @@ import { defaultplayersArr } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
 import { IGameReducerAction } from "../interfaces";
 import { ActivityLogEntry, GameState } from "../types";
-import { endgameTrap } from "./endgameTrap";
 import { evaluateGame } from "./evaluateGame";
 import { debugLog } from "./debugLog";
 
@@ -152,11 +151,6 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       return state;
     }
 
-    // TODO
-    case GameAction.EndGame: {
-      return state;
-    }
-
     /**
      * Initiate a new game from scratch
      */
@@ -188,14 +182,11 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       return state;
     }
 
-    // TODO
+    /**
+     * Run status-driven bookkeeping (opening ante, payouts, stats)
+     */
     case GameAction.EvaluateGame: {
       return evaluateGame(state, action);
-    }
-
-    // TODO: Refactor this inelegant piece of work
-    case GameAction.EndGameTrap: {
-      return endgameTrap(state, action);
     }
 
     /**
@@ -205,14 +196,14 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       return { ...createGameState(), activityLog: action.clearActivityLog ? [] : state.activityLog };
     }
 
-    // TODO
+    // Record the loser of the current round
     case GameAction.SetLoser: {
       if (undefined !== playerKey && typeof playerKey === 'string')
         state.loser = playerKey;
       return state;
     }
 
-    // TODO
+    // Record the winner of the current round
     case GameAction.SetWinner: {
       if (undefined !== playerKey && typeof playerKey === 'string')
         state.winner = playerKey;
@@ -265,12 +256,6 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
           if (winner) recordActivity(state, winner.title, 'won the round', 'win');
         }
       }
-      return state;
-    }
-
-    // TODO
-    case GameAction.Ante: {
-      state.playerStore.allPlayersAnte(state.minimumBet);
       return state;
     }
 
