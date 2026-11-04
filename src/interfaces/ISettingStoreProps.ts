@@ -11,7 +11,6 @@ export interface ISettingStoreState {
   isMessageBarVisible: boolean;
   isOptionsPanelVisible: boolean;
   isSelectedVisible: boolean;
-  isSplashScreenVisible: boolean;
 }
 
 export interface ISettingStoreProps extends ISettingStoreState {
@@ -25,5 +24,4 @@ export interface ISettingStoreProps extends ISettingStoreState {
   setMessageBarVisible: React.Dispatch<React.SetStateAction<boolean>>;
   setOptionsPanelVisible: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedVisible: React.Dispatch<React.SetStateAction<boolean>>;
-  setSplashScreenVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }

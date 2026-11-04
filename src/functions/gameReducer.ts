@@ -4,7 +4,7 @@ import { PlayingCardDeck } from "../classes/PlayingCardDeck";
 import { createGameState, gameDefaults } from "../context";
 import { defaultplayersArr } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
-import { IGameReducerAction } from "../interfaces";
+import { IGameReducerAction, IPlayerOptions } from "../interfaces";
 import { ActivityLogEntry, GameState } from "../types";
 import { evaluateGame, roundStake } from "./evaluateGame";
 import { debugLog } from "./debugLog";
@@ -109,6 +109,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     numberOfCards,
     playerKey,
     playerState,
+    players,
     potIncrement,
     type,
   } = action;
@@ -210,16 +211,18 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       state.loser = undefined;
       state.gameStatusFlag = false;
 
-      if (undefined !== playerKey && typeof playerKey !== 'string') {
-        playerKey.forEach(k => {
+      // seats come from the players payload; otherwise the keys name default players
+      const seats: IPlayerOptions[] = players ?? (Array.isArray(playerKey)
+        ? playerKey.flatMap((k) => {
           const p = defaultplayersArr.find((i) => i.key === k);
-          if (undefined !== p) {
-            state.playerStore.newPlayer({ bank: p.bank, id: p.id, isNPC: p.isNPC, key: k, title: p.title, disabled: p.disabled });
-          }
-          state.deck.newPlayerHand(k);
-        });
-        state.playerStore.currentPlayerKey = state.playerStore.activePlayerKeys[0];
-      }
+          return p ? [{ bank: p.bank, id: p.id, isNPC: p.isNPC, key: k, title: p.title, disabled: p.disabled }] : [];
+        })
+        : []);
+      seats.forEach((seat) => {
+        state.playerStore.newPlayer(seat);
+        state.deck.newPlayerHand(seat.key);
+      });
+      if (seats.length > 0) state.playerStore.currentPlayerKey = state.playerStore.activePlayerKeys[0];
       state.controllingPlayer = state.playerStore.currentPlayer?.key;
       state.dealerHasControl = state.playerStore.currentPlayer?.key === 'dealer';
       if (state.controllingPlayer) state.playerStore.startTurn(state.controllingPlayer);

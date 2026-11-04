@@ -33,6 +33,7 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, an
 
 #### Project Status
 * Game state and settings are saved in the browser, so a reload resumes the current game
+* Players: create named players from the Players dialog and choose who plays the next game. Each player's lifetime statistics (rounds, wins, losses, pushes, blackjacks, busts, pots won) are kept in the browser and shown in the same dialog
 * The activity log records each deal, draw, wager, stay, and result
 * Cards are styled with CSS and animate onto the table
 * Seats collapse into name-and-bank chips until a round is dealt; the seat in control takes the right two thirds of the table (full width on phones), and its cards scale to fill their container

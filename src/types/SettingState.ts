@@ -13,7 +13,6 @@ export type SettingsState = {
   isHandValueVisible: boolean;
   isOptionsPanelVisible: boolean;
   isSelectedVisible: boolean;
-  isSplashScreenVisible: boolean;
   isMessageBarVisible: boolean;
 }
 

@@ -22,7 +22,7 @@ import {
 } from '@fluentui/react-icons';
 
 // Context
-import { settingDefaults, useGameContext, useSettingContext } from "../context";
+import { settingDefaults, useGameContext, useProfileContext, useSettingContext } from "../context";
 import { GameAction } from "../enums";
 import { clearStores } from "../functions";
 
@@ -31,6 +31,7 @@ export const OptionsPanel: React.FC = () => {
   // Context
   const { settings, toggleSetting } = useSettingContext();
   const { gameState, gameDispatch } = useGameContext();
+  const { profileDispatch } = useProfileContext();
   const playerStore = gameState.playerStore;
 
   const closeOptionsPanel = () => {
@@ -43,13 +44,13 @@ export const OptionsPanel: React.FC = () => {
   const resetGame = () => {
     gameDispatch({ type: GameAction.ResetGame });
     gameDispatch({ type: GameAction.ShowMessageBar, messageBarDefinition: { text: 'Game Reset', type: 'info', isMultiLine: false } });
-    toggleSetting({ key: 'isSplashScreenVisible', value: true });
     closeOptionsPanel();
   }
 
   const clearApplicationData = () => {
     clearStores();
     gameDispatch({ type: GameAction.ResetGame, clearActivityLog: true });
+    profileDispatch({ type: 'reset' });
     Object.entries(settingDefaults).forEach(([key, value]) => toggleSetting({ key, value }));
   }
 

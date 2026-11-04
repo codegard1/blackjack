@@ -25,7 +25,7 @@ it.each([
     });
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
   if (hit) {
     vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
@@ -46,13 +46,14 @@ it.each([
   expect(screen.getByText('New Round')).toBeInTheDocument();
 });
 
-it('starts a new game with the default human and dealer', () => {
+it('starts a new game with the selected player and the dealer', () => {
   render(<App />);
 
-  expect(screen.getByRole('alertdialog')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+  // before the game starts, the seats for the next game float on the table
+  expect(screen.getByText('Chris ($1000)')).toBeInTheDocument();
+  expect(screen.getByText('Dealer ($1000)')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
 
-  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   expect(screen.getByText('Chris ($975)')).toBeInTheDocument();
   expect(screen.getByText('Dealer ($975)')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Wager $25' })).toBeInTheDocument();
@@ -62,13 +63,13 @@ it('starts a new game with the default human and dealer', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
   fireEvent.click(screen.getByText('Reset Game'));
 
-  expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Start game' })).toBeInTheDocument();
 });
 
 it('shows card ranks by default and toggles rank and activity visibility', () => {
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
   const cards = () => Array.from(screen.getByRole('region', { name: "Chris's hand" }).querySelectorAll('button[aria-pressed]'));
@@ -105,13 +106,12 @@ it('shows card ranks by default and toggles rank and activity visibility', () =>
 it('clears in-memory game state and returns to player selection', () => {
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
   fireEvent.click(screen.getByRole('button', { name: 'Clear application data stored locally in the browser' }));
 
-  expect(screen.getByRole('alertdialog')).toBeInTheDocument();
-  expect(screen.queryByText(/^Chris \(\$/)).toBeInTheDocument();
-  expect(screen.queryByText('No players')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Start game' })).toBeInTheDocument();
+  expect(screen.getByText('Chris ($1000)')).toBeInTheDocument();
 });
 
 it('resumes a saved game after a reload', () => {
@@ -120,20 +120,19 @@ it('resumes a saved game after a reload', () => {
     this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
   });
   const first = render(<App />);
-  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
   first.unmount();
 
   const { container } = render(<App />);
 
-  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   expect(screen.getByText('Chris ($975)')).toBeInTheDocument();
   expect(container.querySelector('.PlayerContainer')?.querySelectorAll('button[aria-pressed]')).toHaveLength(2);
 });
 
 it('hides the debug window by default and remembers the setting across reloads', () => {
   const first = render(<App />);
-  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
 
   expect(screen.queryByRole('button', { name: 'Player Hands' })).not.toBeInTheDocument();
 
@@ -149,7 +148,7 @@ it('hides the debug window by default and remembers the setting across reloads',
 
 it('shows the app name in the header and opens the About dialog', () => {
   render(<App />);
-  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
 
   expect(screen.getByRole('heading', { level: 1, name: "Chris's Blackjack" })).toBeInTheDocument();
 
@@ -170,7 +169,7 @@ it("announces the dealer's turn as a toast that leaves on its own", () => {
   vi.useFakeTimers();
   render(<App />);
 
-  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
   fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
 
@@ -188,7 +187,7 @@ it("shows the collapsed players' hands as cards in the rail during the human's t
     this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
   });
   render(<App />);
-  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
   const dealerHand = screen.getByRole('region', { name: "Dealer's hand" });
@@ -199,4 +198,63 @@ it("shows the collapsed players' hands as cards in the rail during the human's t
   expect(dealerCards[1].querySelectorAll('.playing-card-corner')).toHaveLength(2);
   expect(dealerHand.closest('.table-rail')).not.toBeNull();
   expect(screen.getByRole('region', { name: "Chris's hand" }).closest('.table-focus')).not.toBeNull();
+});
+
+it('creates a player, selects it for the next game, and starts with its name', () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  const dialog = screen.getByRole('dialog', { name: 'Players' });
+  fireEvent.change(within(dialog).getByPlaceholderText('Name'), { target: { value: 'Alex' } });
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Add player' }));
+  // a new player is selected straight away
+  expect(within(dialog).getByRole('radio', { name: 'Alex' })).toBeChecked();
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+
+  expect(screen.getByText('Alex ($1000)')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  expect(screen.getByText('Alex ($975)')).toBeInTheDocument();
+});
+
+it('rejects a duplicate or empty player name', () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  const dialog = screen.getByRole('dialog', { name: 'Players' });
+  fireEvent.change(within(dialog).getByPlaceholderText('Name'), { target: { value: 'chris' } });
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Add player' }));
+  expect(within(dialog).getByText('That name is already in use.')).toBeInTheDocument();
+
+  fireEvent.change(within(dialog).getByPlaceholderText('Name'), { target: { value: '   ' } });
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Add player' }));
+  expect(within(dialog).getByText('Enter a name.')).toBeInTheDocument();
+});
+
+it('carries a settled round into each player\'s statistics, including the next game', () => {
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_11', 'Diamond_14'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+
+  // Chris has blackjack: a $25 stake, the $50 pot and a 3:2 bonus of $12
+  const statsRow = (name: string) => {
+    const table = screen.getByRole('table', { name: 'Player statistics' });
+    const row = within(table).getAllByRole('row').find((candidate) => candidate.textContent?.startsWith(name));
+    return within(row!).getAllByRole('cell').map((cell) => cell.textContent).slice(1);
+  };
+
+  fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  expect(statsRow('Chris')).toEqual(['1', '1', '0', '0', '100%', '1', '0', '$62']);
+  expect(statsRow('Dealer')).toEqual(['1', '0', '1', '0', '0%', '0', '0', '$0']);
+  fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  fireEvent.click(screen.getByText('Reset Game'));
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+
+  fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  expect(statsRow('Chris')[0]).toBe('1');
 });

@@ -9,4 +9,5 @@ export function clearStores() {
   localStorage.removeItem(StoreName.PLAYERSTORE);
   localStorage.removeItem(StoreName.SETTINGSTORE);
   localStorage.removeItem(StoreName.STATSTORE);
+  localStorage.removeItem(StoreName.PROFILESTORE);
 };

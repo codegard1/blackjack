@@ -16,7 +16,6 @@ export const settingDefaults: SettingsState = {
   isHandValueVisible: false,
   isOptionsPanelVisible: false,
   isSelectedVisible: false,
-  isSplashScreenVisible: true,
   isMessageBarVisible: false,
 }
 

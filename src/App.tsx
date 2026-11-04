@@ -6,20 +6,18 @@ import { FluentProvider, MessageBar, MessageBarBody, webLightTheme } from '@flue
 
 // Local Resources
 import './App.css';
-import { ActivityLog, AppHeader, OptionsPanel, SplashScreen, Table, DebugWindow } from './components';
-import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext } from './context';
+import { ActivityLog, AppHeader, OptionsPanel, Table, DebugWindow } from './components';
+import { GameContext, GameDispatchContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
 import { GameAction, GameStatus } from './enums';
-import { defaultSelectedPlayerKeys } from './definitions';
-import { PlayerKey } from './types';
-import { gameReducer, loadGameState, loadSettings, saveGameState, saveSettings, settingReducer } from './functions';
+import { collectStats, gameReducer, loadGameState, loadProfiles, loadSettings, profileReducer, saveGameState, saveProfiles, saveSettings, settingReducer } from './functions';
 
 // Main Component
 const App = () => {
 
   // State from context
   const [gameState, gameDispatch] = React.useReducer(gameReducer, undefined, loadGameState);
-  const [settings, toggleSetting] = React.useReducer(settingReducer, gameState.playerStore.length > 0, loadSettings);
-  const [selectedPlayers, setSelectedPlayers] = React.useState<PlayerKey[]>(defaultSelectedPlayerKeys);
+  const [settings, toggleSetting] = React.useReducer(settingReducer, undefined, loadSettings);
+  const [profiles, profileDispatch] = React.useReducer(profileReducer, undefined, loadProfiles);
   const human = gameState.playerStore.all.find((player) => !player.isNPC);
   const dealer = gameState.playerStore.all.find((player) => player.isNPC);
   const roundWinner = gameState.gameStatus === GameStatus.HumanWins ? human
@@ -32,9 +30,10 @@ const App = () => {
     : gameState.gameStatus === GameStatus.Push ? 'Push. Stakes are returned.'
     : gameState.gameStatus === GameStatus.GameOver ? 'Game over.' : '';
 
-  // Persist game and settings so a reload resumes where the player left off
+  // Persist game, settings and player profiles so a reload resumes where the player left off
   React.useEffect(() => saveSettings(settings), [settings]);
   React.useEffect(() => saveGameState(gameState), [gameState]);
+  React.useEffect(() => saveProfiles(profiles), [profiles]);
 
   // Evaluate game whenever the status changes. Start from the loaded status
   // so a restored round that already ended is not paid out a second time.
@@ -45,35 +44,49 @@ const App = () => {
     gameDispatch({ type: GameAction.EvaluateGame, gameStatus: gameState.gameStatus });
   }, [gameState.gameStatus])
 
+  // When a round settles, carry each player's updated stats back to their profile.
+  // Only the transition counts, so a restored settled round is not added twice.
+  const wasSettled = React.useRef(gameState.gameStatusFlag);
+  React.useEffect(() => {
+    const wasSettledBefore = wasSettled.current;
+    wasSettled.current = gameState.gameStatusFlag;
+    if (!wasSettledBefore && gameState.gameStatusFlag) {
+      profileDispatch({ type: 'syncStats', stats: collectStats(gameState.playerStore.all) });
+    }
+  }, [gameState]);
+
   return (
     <FluentProvider theme={webLightTheme}>
       <SettingContext.Provider value={settings}>
         <SettingDispatchContext.Provider value={toggleSetting}>
-          <GameContext.Provider value={gameState}>
-            <GameDispatchContext.Provider value={gameDispatch}>
+          <ProfileContext.Provider value={profiles}>
+            <ProfileDispatchContext.Provider value={profileDispatch}>
+              <GameContext.Provider value={gameState}>
+                <GameDispatchContext.Provider value={gameDispatch}>
 
-              <AppHeader />
+                  <AppHeader />
 
-              {resultText !== '' ? (
-                <MessageBar intent={gameState.gameStatus === GameStatus.HumanWins ? 'success' : gameState.gameStatus === GameStatus.Push ? 'info' : 'warning'}>
-                  <MessageBarBody>{resultText}</MessageBarBody>
-                </MessageBar>
-              ) : settings.isMessageBarVisible && gameState.messageBarDefinition.text !== '' && (
-                <MessageBar intent={gameState.messageBarDefinition.type}>
-                  <MessageBarBody>{gameState.messageBarDefinition.text}</MessageBarBody>
-                </MessageBar>
-              )}
+                  {resultText !== '' ? (
+                    <MessageBar intent={gameState.gameStatus === GameStatus.HumanWins ? 'success' : gameState.gameStatus === GameStatus.Push ? 'info' : 'warning'}>
+                      <MessageBarBody>{resultText}</MessageBarBody>
+                    </MessageBar>
+                  ) : settings.isMessageBarVisible && gameState.messageBarDefinition.text !== '' && (
+                    <MessageBar intent={gameState.messageBarDefinition.type}>
+                      <MessageBarBody>{gameState.messageBarDefinition.text}</MessageBarBody>
+                    </MessageBar>
+                  )}
 
-              <SplashScreen selectedPlayers={selectedPlayers} onSelectedPlayersChange={setSelectedPlayers} />
-              <OptionsPanel />
-              <div className="app-content">
-                <Table pendingPlayerKeys={selectedPlayers} />
-                <ActivityLog />
-                <DebugWindow />
-              </div>
+                  <OptionsPanel />
+                  <div className="app-content">
+                    <Table />
+                    <ActivityLog />
+                    <DebugWindow />
+                  </div>
 
-            </GameDispatchContext.Provider>
-          </GameContext.Provider>
+                </GameDispatchContext.Provider>
+              </GameContext.Provider>
+            </ProfileDispatchContext.Provider>
+          </ProfileContext.Provider>
         </SettingDispatchContext.Provider>
       </SettingContext.Provider>
     </FluentProvider>

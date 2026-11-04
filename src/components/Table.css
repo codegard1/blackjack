@@ -63,6 +63,13 @@
   width: 100%;
 }
 
+/* the start button before a game, left-aligned under the chips */
+.table-start {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0 10px 10px;
+}
+
 .table-pot {
   display: flex;
   align-items: center;

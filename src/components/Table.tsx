@@ -1,7 +1,7 @@
 // React
 import React from "react";
 
-import { Badge, Spinner } from '@fluentui/react-components';
+import { Badge, Button, Spinner } from '@fluentui/react-components';
 
 // Local Resources
 import {
@@ -12,28 +12,28 @@ import { useSeatFlip } from "./useSeatFlip";
 import "./Table.css";
 
 // Context
-import { useGameContext, useSettingContext } from '../context';
-import { defaultplayersArr } from "../definitions";
-import { GameStatus } from "../enums";
+import { useGameContext, useProfileContext, useSettingContext } from '../context';
+import { playerDefaults } from "../definitions";
+import { GameAction, GameStatus } from "../enums";
 import { seatStatus, isRoundOver } from "../functions/seatStatus";
-import { IPlayer, ITableProps } from "../interfaces";
+import { seatsFor } from "../functions/profiles";
+import { IPlayer } from "../interfaces";
 import { PlayerHandValue } from "../types";
 
 const EMPTY_HAND_VALUE: PlayerHandValue = { aceAsEleven: 0, aceAsOne: 0, highest: 0 };
 
 /**
- * The board. Before the game starts, the chosen players float as chips on the left.
- * Once it starts, the seat in control expands into the right two thirds, and the
- * other seats collapse into chips on the left. Clicking a chip brings that seat forward.
+ * The board. Before the game starts, the selected player and the dealer float as chips
+ * on the left, with a button to start. Once it starts, the seat in control expands into
+ * the right two thirds, and the other seats collapse into chips on the left. Clicking a
+ * chip brings that seat forward.
  */
-export const Table: React.FC<ITableProps> = (props) => {
-
-  // Props
-  const { pendingPlayerKeys } = props;
+export const Table: React.FC = () => {
 
   // Context
   const { settings } = useSettingContext();
-  const { gameState } = useGameContext();
+  const { gameState, gameDispatch } = useGameContext();
+  const { profiles } = useProfileContext();
   const { deck, gameStatus, gameStatusFlag, pot, playerStore } = gameState;
   const players = playerStore.all;
   const human = players.find((player) => !player.isNPC);
@@ -54,10 +54,10 @@ export const Table: React.FC<ITableProps> = (props) => {
   // Dealer autoplay runs here, not in a seat, so it keeps going while its seat is collapsed
   const dealerHandValue = dealer ? deck.state.playerHands[dealer.key]?.handValue : undefined;
 
-  // Pre-game chips follow the players chosen on the splash screen
-  const pendingPlayers = pendingPlayerKeys
-    .map((key) => defaultplayersArr.find((player) => player.key === key))
-    .filter((player): player is IPlayer => player !== undefined);
+  // Before the game starts, the seats the next game will use: the selected player and the dealer
+  const seats = seatsFor(profiles);
+  const pendingPlayers: IPlayer[] = seats.map((seat) => ({ ...playerDefaults, ...seat, stats: { ...playerDefaults.stats, ...seat.stats } }));
+  const startGame = () => gameDispatch({ type: GameAction.NewGame, players: seats });
 
   const { toasts, dismiss } = useTableToasts(gameState, revealDealerTotal);
 
@@ -107,13 +107,17 @@ export const Table: React.FC<ITableProps> = (props) => {
           </div>
         ) : (
           <div className="table-layout is-pregame">
-            {pendingPlayers.length === 0
-              ? <div>No players</div>
-              : pendingPlayers.map((player, index) => (
-                <div key={player.key} className="table-pregame-slot" data-seat-key={player.key} data-seat-role="pregame">
-                  <SeatChip player={player} floating index={index} />
-                </div>
-              ))}
+            {pendingPlayers.map((player, index) => (
+              <div key={player.key} className="table-pregame-slot" data-seat-key={player.key} data-seat-role="pregame">
+                <SeatChip player={player} floating index={index} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!isStarted && (
+          <div className="table-start">
+            <Button appearance="primary" size="large" onClick={startGame}>Start game</Button>
           </div>
         )}
 
@@ -128,7 +132,7 @@ export const Table: React.FC<ITableProps> = (props) => {
 
         <TableToasts toasts={toasts} onDismiss={dismiss} />
 
-        {!settings.isSplashScreenVisible && gameState.deck.length > 0 &&
+        {gameState.deck.length > 0 &&
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
               <CardStack
                 cards={gameState.deck.cardKeys}
