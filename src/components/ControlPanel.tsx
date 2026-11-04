@@ -2,11 +2,6 @@
 import React from "react";
 
 import {
-  Menu,
-  MenuItem,
-  MenuList,
-  MenuPopover,
-  MenuTrigger,
   Toolbar,
   ToolbarButton,
   ToolbarDivider,
@@ -17,7 +12,6 @@ import {
 import {
   Add20Regular,
   ArrowClockwise20Regular,
-  ArrowDown20Regular,
   ArrowForward20Regular,
   ArrowUp20Regular,
   ArrowUpload20Regular,
@@ -84,10 +78,6 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
     gameDispatch({ type: GameAction.Draw, playerKey, numberOfCards: 1, deckSide: 'top' });
   }
 
-  const draw = (deckSide: 'top' | 'bottom' | 'random') => {
-    gameDispatch({ type: GameAction.Draw, playerKey, deckSide, numberOfCards: 1 });
-  };
-
   const deal = () => {
     gameDispatch({ type: GameAction.Deal });
     toggleSetting({ key: 'isMessageBarVisible', value: true });
@@ -131,22 +121,6 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
           </ToolbarButton>
         </Tooltip>
       )}
-      <Menu>
-        <MenuTrigger disableButtonEnhancement>
-          <Tooltip content="Draw from a specific part of the deck" relationship="description">
-            <ToolbarButton className={styles.button} aria-label="Draw" icon={<ArrowDown20Regular />} disabled={isBtnDisabled}>
-              <Label>Draw</Label>
-            </ToolbarButton>
-          </Tooltip>
-        </MenuTrigger>
-        <MenuPopover>
-          <MenuList>
-            <MenuItem onClick={() => draw('top')}>Draw from Top</MenuItem>
-            <MenuItem onClick={() => draw('bottom')}>Draw from Bottom of Deck</MenuItem>
-            <MenuItem onClick={() => draw('random')}>Draw Random</MenuItem>
-          </MenuList>
-        </MenuPopover>
-      </Menu>
     </Toolbar>
   );
 }

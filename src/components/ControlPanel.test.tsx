@@ -53,7 +53,7 @@ describe('player controls', () => {
     expect(screen.getByRole('button', { name: 'Draw one card from the top of the deck' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Stay' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Wager $25' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Draw' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Draw' })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
