@@ -10,7 +10,7 @@ https://mango-cliff-08390e60f.azurestaticapps.net/
 ### How to Play
 1. Clone the repo 
 2. `cd` into the repo directory
-3. Use Node.js 26.x
+3. Use Node.js 22.22+ (version in `.nvmrc`), 24.15+, or 26+
 4. Run `npm install --legacy-peer-deps`
 5. Run `npm start`
 6. Navigate to `http://localhost:3000`
