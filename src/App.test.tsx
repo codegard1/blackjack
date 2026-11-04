@@ -10,10 +10,10 @@ afterEach(() => {
 });
 
 it.each([
-  { humanCards: ['Spade_11', 'Diamond_14'], dealerCards: ['Club_10', 'Heart_7'], hit: false, message: 'Chris: won the pot with blackjack. Dealer: lost the round.' },
-  { humanCards: ['Spade_10', 'Diamond_7'], dealerCards: ['Club_11', 'Heart_14'], hit: false, message: 'Chris: lost the round. Dealer: won the pot with blackjack.' },
-  { humanCards: ['Spade_10', 'Diamond_10'], dealerCards: ['Club_10', 'Heart_7'], hit: true, message: 'Chris: lost the round. Dealer: won the pot.' },
-])('expires the result after three seconds: $message', ({ humanCards, dealerCards, hit, message }) => {
+  { humanCards: ['Spade_11', 'Diamond_14'], dealerCards: ['Club_10', 'Heart_7'], hit: false, humanStatus: '✨ Blackjack', dealerStatus: '💔 Loser', message: 'Chris: won the pot with blackjack. Dealer: lost the round.' },
+  { humanCards: ['Spade_10', 'Diamond_7'], dealerCards: ['Club_11', 'Heart_14'], hit: false, humanStatus: '💔 Loser', dealerStatus: '✨ Blackjack', message: 'Chris: lost the round. Dealer: won the pot with blackjack.' },
+  { humanCards: ['Spade_10', 'Diamond_10'], dealerCards: ['Club_10', 'Heart_7'], hit: true, humanStatus: '💔 Loser', dealerStatus: '🏆 Winner', message: 'Chris: lost the round. Dealer: won the pot.' },
+])('expires the result after three seconds: $message', ({ humanCards, dealerCards, hit, humanStatus, dealerStatus, message }) => {
   vi.spyOn(PlayingCardDeck.prototype, 'deal')
     .mockImplementationOnce(function (this: PlayingCardDeck) {
       this.playerHands.chris.cards = humanCards;
@@ -35,6 +35,8 @@ it.each([
 
   expect(screen.getByText(message)).toBeInTheDocument();
   expect(screen.queryByText('New Round')).not.toBeInTheDocument();
+  expect(screen.getByText(humanStatus)).toBeInTheDocument();
+  expect(screen.getByText(dealerStatus)).toBeInTheDocument();
 
   act(() => vi.advanceTimersByTime(2999));
   expect(screen.getByText(message)).toBeInTheDocument();

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { GameStatus } from '../enums';
 import { GameSnapshot, PlayerSnapshot } from '../types';
 import { diffAnnouncements } from './announcements';
-import { isRoundOver, seatStatus } from './seatStatus';
+import { isRoundOver, isSeatLoser, seatStatus } from './seatStatus';
 import { playerDefaults } from '../definitions';
 import { IPlayer } from '../interfaces';
 
@@ -167,6 +167,19 @@ describe('seatStatus', () => {
   it('shows the result before anything else', () => {
     const status = seatStatus(seat({ isNPC: false, isBusted: true, turn: true }), GameStatus.HumanWins);
     expect(status?.text).toBe('🏆 Winner');
+  });
+
+  it('marks the losing player after a settled hand', () => {
+    expect(seatStatus(seat({ isNPC: true }), GameStatus.HumanWins)?.text).toBe('💔 Loser');
+    expect(seatStatus(seat({ isNPC: false }), GameStatus.DealerWins)?.text).toBe('💔 Loser');
+    expect(isSeatLoser(seat({ isNPC: true }), GameStatus.HumanWins)).toBe(true);
+    expect(isSeatLoser(seat({ isNPC: false }), GameStatus.DealerWins)).toBe(true);
+  });
+
+  it('does not mark either player as a loser on a push', () => {
+    expect(isSeatLoser(seat({ isNPC: false }), GameStatus.Push)).toBe(false);
+    expect(isSeatLoser(seat({ isNPC: true }), GameStatus.Push)).toBe(false);
+    expect(seatStatus(seat({ isNPC: false }), GameStatus.Push)?.text).toBe('🤝 Push');
   });
 
   it('shows busted over standing', () => {
