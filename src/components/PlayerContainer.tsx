@@ -65,10 +65,6 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   // const selectedFlag = !!DeckStore.getSelected(playerKey);
   const selectedFlag = false;
 
-  React.useEffect(() => {
-    console.log('gameState effect');
-  }, [gameState]);
-
   return (
     <section className={playerContainerClass}>
       <header style={{ alignItems: 'center', display: 'flex', justifyContent: 'space-between', padding: 5 }}>

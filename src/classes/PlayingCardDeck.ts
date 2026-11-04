@@ -345,9 +345,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
     // check each card in selected to see if it's in the specified player's hand 
     this.state.selectedKeys.forEach(selectedCard => {
       playerHand.cards.forEach(playerCard => {
-        console.log(`comparing ${selectedCard} to ${playerCard}`);
         if (playerCard === selectedCard) {
-          console.log(`Found Match: ${selectedCard}`);
           foundMatch = true;
           foundCards.push(selectedCard);
         }

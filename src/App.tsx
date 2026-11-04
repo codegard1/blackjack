@@ -33,7 +33,6 @@ const App = () => {
 
   // Initialization effect 
   React.useEffect(() => {
-    // console.log('Initialization effect');
 
     const _settingStore = localStorage.getItem(StoreName.SETTINGSTORE);
     if (null !== _settingStore) {
@@ -76,7 +75,6 @@ const App = () => {
 
   // Evaluate game whenever state changes
   React.useEffect(() => {
-    // console.log('Evaluate Game effect');
     gameDispatch({ type: GameAction.EvaluateGame, gameStatus: gameState.gameStatus });
   }, [gameState.gameStatus])
 

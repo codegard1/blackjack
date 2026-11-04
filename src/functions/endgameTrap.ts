@@ -3,8 +3,6 @@ import { IGameReducerAction } from "../interfaces";
 import { GameState, PlayerStats } from "../types";
 
 export function endgameTrap(state: GameState, action: IGameReducerAction): GameState {
-const timerName = 'endgameTrap';
-console.time(timerName)
 
   let nextGameStatus = state.gameStatus ? state.gameStatus : GameStatus.InProgress;
   const playerStore = state.playerStore;
@@ -55,6 +53,5 @@ console.time(timerName)
     state.gameStatusFlag = true;
   }
 
-  console.timeEnd(timerName)
   return state;
 }

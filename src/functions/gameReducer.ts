@@ -8,6 +8,7 @@ import { IGameReducerAction } from "../interfaces";
 import { ActivityLogEntry, GameState } from "../types";
 import { endgameTrap } from "./endgameTrap";
 import { evaluateGame } from "./evaluateGame";
+import { debugLog } from "./debugLog";
 
 function recordActivity(state: GameState, name: string, description: string, event: ActivityLogEntry['event']): void {
   const lastEntry = state.activityLog[state.activityLog.length - 1];
@@ -66,7 +67,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
   } = action;
 
   // Announce
-  console.log('## GameAction.' + type, JSON.stringify(action));
+  debugLog('GameAction.' + type, action);
 
   // Mandatory state mutations
   state.lastWriteTime = new Date().toISOString();
@@ -311,7 +312,6 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
         switch (deckSide) {
           case 'top': {
-            console.log('draw from the top')
             const _drawn = state.deck.draw(_num);
             if (undefined !== playerKey && typeof playerKey === 'string') {
               if (!state.deck.playerHands[playerKey]) state.deck.newPlayerHand(playerKey);

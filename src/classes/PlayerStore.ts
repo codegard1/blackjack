@@ -142,7 +142,6 @@ export class PlayerStore implements IPlayerStore {
       p.lastAction = PlayerAction.Bet;
       p.lastBet = amount;
       p.totalBet = (p.totalBet ?? 0) + amount;
-      console.log(`${p.title} bet ${amount}`);
       return true;
     }
   }
@@ -159,7 +158,6 @@ export class PlayerStore implements IPlayerStore {
       p.bank -= amount;
       p.lastAction = PlayerAction.Ante;
       p.lastAnte = amount;
-      console.log(`${p.title} ante ${amount}`);
       return true;
     }
   }
@@ -179,7 +177,6 @@ export class PlayerStore implements IPlayerStore {
   public hit(key: PlayerKey) {
     let p = this.player(key);
     p.lastAction = PlayerAction.Hit;
-    console.log(`${p.title} hit`);
   }
 
   // cause the given player to become busted
@@ -191,7 +188,6 @@ export class PlayerStore implements IPlayerStore {
     let p = this.playerName(key);
     this.player(key).isBusted = true;
     this.finish(key);
-    console.log(`${p} busted`);
   }
 
 
@@ -204,7 +200,6 @@ export class PlayerStore implements IPlayerStore {
     p.isStaying = true;
     p.lastAction = PlayerAction.Stand;
     this.finish(key);
-    console.log(`${p.title} stayed`);
   }
 
 
@@ -221,7 +216,6 @@ export class PlayerStore implements IPlayerStore {
     let p = this.player(key);
     p.isFinished = true;
     this.endTurn(key);
-    console.log(`${p.title} finished`);
   }
 
   /**
@@ -242,7 +236,6 @@ export class PlayerStore implements IPlayerStore {
     p.turn = true;
     p.isFinished = false;
     p.lastAction = PlayerAction.StartTurn;
-    console.log(`${p.title} started turn`);
   }
 
   /**
@@ -253,7 +246,6 @@ export class PlayerStore implements IPlayerStore {
     let p = this.player(key);
     p.turn = false;
     p.lastAction = PlayerAction.EndTurn;
-    console.log(`${p.title} ended turn`);
   }
 
   /**
