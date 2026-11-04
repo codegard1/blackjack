@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { PlayingCardDeck } from './classes/PlayingCardDeck';
 import App from './App';
@@ -78,8 +78,8 @@ it('shows card ranks by default and toggles rank and activity visibility', () =>
   expect(screen.queryByRole('button', { name: 'Chris (2)' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Dealer (2)' })).not.toBeInTheDocument();
   expect(screen.getByRole('region', { name: "Chris's hand" })).toBeVisible();
-  // the dealer's seat is collapsed while Chris is in control; clicking its chip brings it forward
-  expect(screen.queryByRole('region', { name: "Dealer's hand" })).not.toBeInTheDocument();
+  // the dealer's seat is collapsed while Chris is in control; its hand shows in the rail and its chip brings the seat forward
+  expect(screen.getByRole('region', { name: "Dealer's hand" })).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: /^Dealer \(\$/ }));
   expect(screen.getByRole('region', { name: "Dealer's hand" })).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: /^Chris \(\$/ }));
@@ -176,4 +176,23 @@ it("announces the dealer's turn as a toast that leaves on its own", () => {
 
   act(() => vi.advanceTimersByTime(1500));
   expect(screen.queryByText("Dealer's turn")).not.toBeInTheDocument();
+});
+
+it("shows the collapsed players' hands as cards in the rail during the human's turn", () => {
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+
+  const dealerHand = screen.getByRole('region', { name: "Dealer's hand" });
+  const dealerCards = within(dealerHand).getAllByRole('button');
+  expect(dealerCards).toHaveLength(2);
+  // the hole card stays face down unless "Show Dealer Hand" is on
+  expect(dealerCards[0].querySelectorAll('.playing-card-corner')).toHaveLength(0);
+  expect(dealerCards[1].querySelectorAll('.playing-card-corner')).toHaveLength(2);
+  expect(dealerHand.closest('.table-rail')).not.toBeNull();
+  expect(screen.getByRole('region', { name: "Chris's hand" }).closest('.table-focus')).not.toBeNull();
 });

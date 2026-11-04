@@ -4,6 +4,7 @@ import React from 'react';
 import { Badge, makeStyles, mergeClasses, tokens } from '@fluentui/react-components';
 
 // Local Resources
+import { CardStack } from '.';
 import { ISeatChipProps } from '../interfaces';
 
 const floatKeyframes = {
@@ -17,7 +18,7 @@ const useStyles = makeStyles({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-start',
-    gap: tokens.spacingVerticalXXS,
+    gap: tokens.spacingVerticalS,
     width: 'fit-content',
     minWidth: '180px',
     maxWidth: '100%',
@@ -28,7 +29,6 @@ const useStyles = makeStyles({
     backgroundColor: tokens.colorNeutralBackground1,
     boxShadow: tokens.shadow4,
     color: tokens.colorNeutralForeground1,
-    fontFamily: 'inherit',
     textAlign: 'left',
     transitionProperty: 'box-shadow, transform',
     transitionDuration: tokens.durationGentle,
@@ -36,9 +36,7 @@ const useStyles = makeStyles({
     '@media (prefers-reduced-motion: reduce)': { transitionDuration: '0.01ms' },
   },
   interactive: {
-    cursor: 'pointer',
     ':hover': { boxShadow: tokens.shadow8 },
-    ':focus-visible': { outline: `2px solid ${tokens.colorStrokeFocus2}`, outlineOffset: '2px' },
   },
   floating: {
     animationName: floatKeyframes,
@@ -46,6 +44,25 @@ const useStyles = makeStyles({
     animationIterationCount: 'infinite',
     animationTimingFunction: 'ease-in-out',
     '@media (prefers-reduced-motion: reduce)': { animationName: 'none' },
+  },
+  // the name, bank, status and total; a button when the chip can be selected
+  info: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: tokens.spacingVerticalXXS,
+    margin: 0,
+    padding: 0,
+    border: 'none',
+    background: 'none',
+    color: 'inherit',
+    font: 'inherit',
+    textAlign: 'left',
+    cursor: 'default',
+  },
+  selectable: {
+    cursor: 'pointer',
+    ':focus-visible': { outline: `2px solid ${tokens.colorStrokeFocus2}`, outlineOffset: '2px' },
   },
   name: {
     fontSize: tokens.fontSizeBase400,
@@ -59,10 +76,11 @@ const useStyles = makeStyles({
 });
 
 /**
- * A collapsed seat: the player's name and bank, with an optional status and hand total
+ * A collapsed seat: the player's name and bank, an optional status and hand total,
+ * and the player's cards when given
  */
 export const SeatChip: React.FC<ISeatChipProps> = (props) => {
-  const { player, status, total, floating, index, onSelect } = props;
+  const { player, status, total, cards, floating, index, onSelect } = props;
   const styles = useStyles();
 
   const className = mergeClasses(
@@ -72,7 +90,7 @@ export const SeatChip: React.FC<ISeatChipProps> = (props) => {
   );
   const style: React.CSSProperties | undefined = floating ? { animationDelay: `${(index ?? 0) * 450}ms` } : undefined;
 
-  const content = (
+  const infoContent = (
     <>
       <span className={styles.name}>{`${player.title} ($${player.bank || 0})`}</span>
       {status && <Badge size="small" appearance={status.appearance} color={status.color}>{status.text}</Badge>}
@@ -80,7 +98,14 @@ export const SeatChip: React.FC<ISeatChipProps> = (props) => {
     </>
   );
 
-  return onSelect
-    ? <button type="button" className={className} style={style} onClick={onSelect}>{content}</button>
-    : <div className={className} style={style}>{content}</div>;
+  const info = onSelect
+    ? <button type="button" className={mergeClasses(styles.info, styles.selectable)} onClick={onSelect}>{infoContent}</button>
+    : <div className={styles.info}>{infoContent}</div>;
+
+  return (
+    <div className={className} style={style}>
+      {info}
+      {cards && cards.length > 0 && <CardStack cards={cards} hidden={false} isSelectable={false} player={player} title={player.title} variant="mini" />}
+    </div>
+  );
 }

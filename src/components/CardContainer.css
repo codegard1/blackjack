@@ -53,6 +53,22 @@
   container-type: size;
 }
 
+/* a collapsed seat's hand: fixed-size cards that wrap, with no aspect box */
+.card-row.is-mini {
+  aspect-ratio: auto;
+  container-type: normal;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 6px;
+  width: auto;
+}
+
+.card-row.is-mini .playing-card {
+  --playing-card-height: 84px;
+  height: var(--playing-card-height);
+  width: calc(var(--playing-card-height) * 0.65);
+}
+
 /* a narrow board gives the hand more height, so the cards can grow */
 @container table-board (max-width: 719px) {
   .card-row {

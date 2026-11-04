@@ -92,6 +92,7 @@ export const Table: React.FC<ITableProps> = (props) => {
                     player={player}
                     status={seatStatus(player, gameStatus)}
                     total={showTotal ? hand.handValue.highest : undefined}
+                    cards={hand?.cards}
                     onSelect={() => setPinnedKey(player.key)}
                   />
                 );
