@@ -9,7 +9,6 @@ export const settingDefaults: SettingsState = {
   isActivityLogVisible: false,
   isDebugWindowVisible: false,
   isCardDescVisible: false,
-  isCardTitleVisible: true,
   isDealerHandVisible: false,
   isDeckVisible: false,
   isDrawnVisible: false,

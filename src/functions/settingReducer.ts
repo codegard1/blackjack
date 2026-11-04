@@ -20,8 +20,6 @@ export function settingReducer(settings: SettingsState, action: ISettingReducerA
       return { ...settings, isActivityLogVisible: value }
     case 'isCardDescVisible':
       return { ...settings, isCardDescVisible: value }
-    case 'isCardTitleVisible':
-      return { ...settings, isCardTitleVisible: value }
     case 'isDealerHandVisible':
       return { ...settings, isDealerHandVisible: value }
     case 'isDeckVisible':

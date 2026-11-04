@@ -50,7 +50,6 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
       id={cardKey}
       index={index}
       isSelectable={isSelectable}
-      isTitleVisible={settings.isCardTitleVisible}
       isBackFacing={index === 0 && !settings.isDealerHandVisible && !isRoundOver && player?.isNPC}
       isDescVisible={settings.isCardDescVisible}
     />

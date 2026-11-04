@@ -58,11 +58,11 @@ export const CardContainer: React.FC<ICardContainerProps> = (props) => {
       <span className="playing-card-frame" aria-hidden="true" />
       {!props.isBackFacing && <>
         <span className="playing-card-corner playing-card-corner-top" aria-hidden="true">
-          {props.isTitleVisible && <span>{cardTitle}</span>}
+          <span>{cardTitle}</span>
           <span>{cardIcon}</span>
         </span>
         <span className="playing-card-corner playing-card-corner-bottom" style={{ transform: 'rotate(180deg)' }} aria-hidden="true">
-          {props.isTitleVisible && <span>{cardTitle}</span>}
+          <span>{cardTitle}</span>
           <span>{cardIcon}</span>
         </span>
       </>}
