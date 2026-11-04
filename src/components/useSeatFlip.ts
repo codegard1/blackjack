@@ -10,7 +10,7 @@ const EXPAND_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
 
 type Box = { left: number; top: number; width: number; height: number };
 type SeatSnapshot = { role: string; box: Box };
-type Move = { element: HTMLElement; from: Box; to: Box; role: string };
+type Move = { key: string; element: HTMLElement; from: Box; to: Box; role: string };
 
 function measure(element: HTMLElement): Box {
   const rect = element.getBoundingClientRect();
@@ -72,7 +72,7 @@ export function useSeatFlip(rootRef: React.RefObject<HTMLElement | null>): void 
       after.set(key, { role, box });
 
       const prior = before.get(key);
-      if (prior && prior.role !== role) moves.push({ element, from: prior.box, to: box, role });
+      if (prior && prior.role !== role) moves.push({ key, element, from: prior.box, to: box, role });
     });
     previous.current = after;
 
@@ -80,7 +80,8 @@ export function useSeatFlip(rootRef: React.RefObject<HTMLElement | null>): void 
     const collapsing = moves.some((move) => move.role !== 'focus');
     moves.forEach((move) => {
       const expanding = move.role === 'focus';
-      animateMove(move, expanding && collapsing ? COLLAPSE_MS : 0, reduceMotion);
+      const delay = expanding && collapsing && move.key !== 'pot' ? COLLAPSE_MS : 0;
+      animateMove(move, delay, reduceMotion);
     });
   });
 }

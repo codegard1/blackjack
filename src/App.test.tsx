@@ -174,6 +174,29 @@ it('opens and closes the in-app blackjack rules from the header', () => {
   expect(screen.queryByRole('dialog', { name: 'Blackjack rules' })).not.toBeInTheDocument();
 });
 
+it('floats the pot in the rail except while the contribution toast is visible', () => {
+  const { container } = render(<App />);
+
+  expect(container.querySelector('.table-pot-pregame-slot')).toBeInTheDocument();
+  expect(screen.getByText('Pot: $0')).toBeInTheDocument();
+
+  vi.useFakeTimers();
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+
+  expect(container.querySelector('.table-pot-center-slot')).not.toBeInTheDocument();
+  expect(container.querySelector('.table-pot-rail-slot')).toBeInTheDocument();
+  expect(screen.getByText('Pot: $50')).toBeInTheDocument();
+
+  act(() => vi.advanceTimersByTime(900));
+  expect(screen.getByText('+$50 added to the pot')).toBeInTheDocument();
+  expect(container.querySelector('.table-pot-center-slot')).toBeInTheDocument();
+
+  act(() => vi.advanceTimersByTime(1400));
+  expect(container.querySelector('.table-pot-center-slot')).not.toBeInTheDocument();
+  expect(container.querySelector('.table-pot-rail-slot')).toBeInTheDocument();
+  vi.useRealTimers();
+});
+
 it("announces the dealer's turn as a toast that leaves on its own", () => {
   vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
     this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
@@ -186,8 +209,8 @@ it("announces the dealer's turn as a toast that leaves on its own", () => {
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
   fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
 
-  // toasts are spaced apart, so the dealer's turn appears after the previous one
-  act(() => vi.advanceTimersByTime(900));
+  // the pot contribution toast takes its turn before the dealer's turn toast
+  act(() => vi.advanceTimersByTime(1800));
   expect(screen.getByText("Dealer's turn")).toBeInTheDocument();
 
   act(() => vi.advanceTimersByTime(2000));

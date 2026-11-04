@@ -13,6 +13,7 @@ applyTo:
 - Preserve accessible names for interactive controls with labels or `aria-label`; retain useful tooltip relationships and keyboard-operable controls.
 - There is no splash screen. Before a game, `src/components/Table.tsx` shows the selected player and dealer as floating seat chips and starts play with the Start game button. Do not reintroduce splash-screen visibility settings or a separate player-selection start dialog.
 - The Players dialog in `src/components/PlayersDialog.tsx` is opened from the header. It creates named profiles, selects the human profile for the next game, and shows profile statistics; selecting a player does not change an already active game.
+- The pot begins as a floating chip beside the pre-game seats and stays in the rail during play. Move it to center stage only while its contribution toast is visible, then return it to the rail; respect reduced-motion preferences for these transitions.
 - Keep the in-app rules in `src/components/RulesDialog.tsx` and the README's Rules section accurate with the reducer/domain behavior. When blackjack rules or available actions change, update both descriptions and their relevant tests.
 - Preserve the responsive table and seat behavior, and respect reduced-motion preferences when adding animation.
 - Keep dealer automation in `src/components/Agent.tsx`; clean up timers and other effects when dependencies change or components unmount.

@@ -10,6 +10,7 @@ export type Announcement = {
   title: string;
   subtitle?: string;
   tone: AnnouncementTone;
+  kind?: 'pot-contribution';
 };
 
 /** An announcement that has been queued for display */
@@ -31,6 +32,8 @@ export type PlayerSnapshot = {
 export type GameSnapshot = {
   gameStatus: GameStatus;
   round: number;
+  pot: number;
+  totalPotContributions: number;
   controllingPlayer?: PlayerKey;
   players: PlayerSnapshot[];
 };

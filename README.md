@@ -40,6 +40,7 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, an
 * The activity log records each deal, draw, wager, stay, and result
 * Cards are styled with CSS and animate onto the table
 * Seats collapse into name-and-bank chips until a round is dealt; the seat in control takes the right two thirds of the table (full width on phones), and its cards scale to fill their container
+* The pot floats beside the pre-game seats and stays in the rail during play, moving to the center only while a contribution toast is visible
 * Turn changes, hits, stands, busts, blackjacks, and results appear as brief toast notices over the table
 
 #### Wish List

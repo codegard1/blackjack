@@ -18,6 +18,8 @@ const player = (overrides: Partial<PlayerSnapshot> & Pick<PlayerSnapshot, 'key' 
 const snapshot = (overrides: Partial<GameSnapshot> = {}, players: PlayerSnapshot[] = []): GameSnapshot => ({
   gameStatus: GameStatus.InProgress,
   round: 1,
+  pot: 0,
+  totalPotContributions: 0,
   controllingPlayer: 'chris',
   players: players.length ? players : [
     player({ key: 'chris', title: 'Chris', isNPC: false }),
@@ -35,6 +37,28 @@ describe('diffAnnouncements', () => {
   it('announces nothing when nothing changed', () => {
     const state = snapshot();
     expect(diffAnnouncements(state, state, true)).toEqual([]);
+  });
+
+  it('announces the combined ante amount even when a new hand refills the pot to the same total', () => {
+    const before = snapshot({ pot: 50, totalPotContributions: 100 });
+    const after = snapshot({ pot: 50, totalPotContributions: 150 });
+
+    expect(diffAnnouncements(before, after, true)[0]).toEqual({
+      title: '+$50 added to the pot',
+      subtitle: 'Pot: $50',
+      tone: 'brand',
+      kind: 'pot-contribution',
+    });
+  });
+
+  it('announces an added wager', () => {
+    const before = snapshot({ pot: 50, totalPotContributions: 50 });
+    const after = snapshot({ pot: 75, totalPotContributions: 75 });
+
+    expect(diffAnnouncements(before, after, true)[0]).toMatchObject({
+      title: '+$25 added to the pot',
+      subtitle: 'Pot: $75',
+    });
   });
 
   it('announces the human turn at the start of a game', () => {

@@ -1,7 +1,7 @@
 // React
 import React from "react";
 
-import { Badge, Button, Spinner } from '@fluentui/react-components';
+import { Badge, Button, Spinner, makeStyles, tokens } from '@fluentui/react-components';
 
 // Local Resources
 import {
@@ -22,6 +22,28 @@ import { PlayerHandValue } from "../types";
 
 const EMPTY_HAND_VALUE: PlayerHandValue = { aceAsEleven: 0, aceAsOne: 0, highest: 0 };
 
+const useStyles = makeStyles({
+  potBadge: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalS,
+    minWidth: '180px',
+    minHeight: '128px',
+    height: 'auto',
+    padding: `${tokens.spacingVerticalM} ${tokens.spacingHorizontalL}`,
+    borderRadius: tokens.borderRadiusXLarge,
+    boxShadow: tokens.shadow8,
+    backgroundColor: tokens.colorBrandBackground2,
+    color: tokens.colorBrandForeground2,
+    fontSize: tokens.fontSizeBase500,
+    lineHeight: tokens.lineHeightBase500,
+  },
+  potIcon: {
+    fontSize: '48px',
+    lineHeight: 1,
+  },
+});
+
 /**
  * The board. Before the game starts, the selected player and the dealer float as chips
  * on the left, with a button to start. Once it starts, the seat in control expands into
@@ -34,6 +56,7 @@ export const Table: React.FC = () => {
   const { settings } = useSettingContext();
   const { gameState, gameDispatch } = useGameContext();
   const { profiles } = useProfileContext();
+  const styles = useStyles();
   const { deck, gameStatus, gameStatusFlag, pot, playerStore } = gameState;
   const players = playerStore.all;
   const human = players.find((player) => !player.isNPC);
@@ -60,6 +83,13 @@ export const Table: React.FC = () => {
   const startGame = () => gameDispatch({ type: GameAction.NewGame, players: seats });
 
   const { toasts, dismiss } = useTableToasts(gameState, revealDealerTotal);
+  const isPotInSpotlight = toasts.slice(-2).some((toast) => toast.kind === 'pot-contribution');
+  const renderPotBadge = (floating = false) => (
+    <Badge key={pot} size="extra-large" appearance="tint" color="brand" shape="rounded" className={`${styles.potBadge} table-pot-badge${floating ? ' is-floating' : ''}`}>
+      <span className={styles.potIcon} aria-hidden="true">💰</span>
+      <span>Pot: ${pot}</span>
+    </Badge>
+  );
 
   // Seats that change between the focus column and the rail flow between their positions
   const boardRef = React.useRef<HTMLElement>(null);
@@ -71,42 +101,49 @@ export const Table: React.FC = () => {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
 
-        <div className="table-pot" aria-live="polite">
-          {!gameStatusFlag && (
-            <Badge size="extra-large" appearance="tint" color="brand" shape="rounded" className="table-pot-badge">
-              <span aria-hidden="true">💰</span>&nbsp;Pot: ${pot}
-            </Badge>
-          )}
-        </div>
-
         {isStarted ? (
-          <div className="table-layout is-started">
-            {focusPlayer && (
-              <div key={focusPlayer.key} className="table-focus" data-seat-key={focusPlayer.key} data-seat-role="focus">
-                <PlayerContainer playerKey={focusPlayer.key} />
+          <>
+            {!gameStatusFlag && isPotInSpotlight && (
+              <div className="table-pot table-pot-center-slot" data-seat-key="pot" data-seat-role="focus">
+                {renderPotBadge()}
               </div>
             )}
+            <div className="table-layout is-started">
+              {focusPlayer && (
+                <div key={focusPlayer.key} className="table-focus" data-seat-key={focusPlayer.key} data-seat-role="focus">
+                  <PlayerContainer playerKey={focusPlayer.key} />
+                </div>
+              )}
 
-            <div className="table-rail">
-              {railPlayers.map((player) => {
-                const hand = deck.state.playerHands[player.key];
-                const showTotal = settings.isHandValueVisible && !!hand?.cards.length && (!player.isNPC || revealDealerTotal);
-                return (
-                  <div key={player.key} className="table-rail-slot" data-seat-key={player.key} data-seat-role="rail">
-                    <SeatChip
-                      player={player}
-                      status={seatStatus(player, gameStatus)}
-                      total={showTotal ? hand.handValue.highest : undefined}
-                      cards={hand?.cards}
-                      onSelect={() => setPinnedKey(player.key)}
-                    />
+              <div className="table-rail">
+                {!gameStatusFlag && !isPotInSpotlight && (
+                  <div className="table-pot table-pot-rail-slot" data-seat-key="pot" data-seat-role="rail">
+                    {renderPotBadge()}
                   </div>
-                );
-              })}
+                )}
+                {railPlayers.map((player) => {
+                  const hand = deck.state.playerHands[player.key];
+                  const showTotal = settings.isHandValueVisible && !!hand?.cards.length && (!player.isNPC || revealDealerTotal);
+                  return (
+                    <div key={player.key} className="table-rail-slot" data-seat-key={player.key} data-seat-role="rail">
+                      <SeatChip
+                        player={player}
+                        status={seatStatus(player, gameStatus)}
+                        total={showTotal ? hand.handValue.highest : undefined}
+                        cards={hand?.cards}
+                        onSelect={() => setPinnedKey(player.key)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          </>
         ) : (
           <div className="table-layout is-pregame">
+            <div className="table-pot table-pot-pregame-slot" data-seat-key="pot" data-seat-role="pregame">
+              {renderPotBadge(true)}
+            </div>
             {pendingPlayers.map((player, index) => (
               <div key={player.key} className="table-pregame-slot" data-seat-key={player.key} data-seat-role="pregame">
                 <SeatChip player={player} floating index={index} />

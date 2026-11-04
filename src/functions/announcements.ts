@@ -9,6 +9,12 @@ export function snapshotGame(state: GameState): GameSnapshot {
   return {
     gameStatus: state.gameStatus,
     round: state.round,
+    pot: state.pot,
+    totalPotContributions: state.activityLog.reduce((total, entry) => (
+      entry.event === 'ante' || entry.event === 'bet' || entry.event === 'double'
+        ? total + Math.max(0, -(entry.amount ?? 0))
+        : total
+    ), 0),
     controllingPlayer: state.controllingPlayer,
     players: state.playerStore.all.map((player): PlayerSnapshot => {
       const hand = state.deck.playerHands[player.key];
@@ -58,6 +64,18 @@ function resultAnnouncement(next: GameSnapshot): Announcement {
 export function diffAnnouncements(prev: GameSnapshot, next: GameSnapshot, revealDealerTotal: boolean): Announcement[] {
   const announcements: Announcement[] = [];
   const before = new Map(prev.players.map((player) => [player.key, player] as const));
+  const potContribution = next.totalPotContributions >= prev.totalPotContributions
+    ? next.totalPotContributions - prev.totalPotContributions
+    : next.totalPotContributions;
+
+  if (potContribution > 0) {
+    announcements.push({
+      title: `+$${potContribution} added to the pot`,
+      subtitle: `Pot: $${next.pot}`,
+      tone: 'brand',
+      kind: 'pot-contribution',
+    });
+  }
 
   // Turn changes, including the first turn of a new round or game
   const controller = next.players.find((player) => player.key === next.controllingPlayer);
