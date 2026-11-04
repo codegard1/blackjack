@@ -5,14 +5,16 @@ import { createGameState, gameDefaults } from "../context";
 import { defaultplayersArr } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
 import { IGameReducerAction } from "../interfaces";
-import { GameState } from "../types";
+import { ActivityLogEntry, GameState } from "../types";
 import { endgameTrap } from "./endgameTrap";
 import { evaluateGame } from "./evaluateGame";
 
-function recordActivity(state: GameState, name: string, description: string): void {
+function recordActivity(state: GameState, name: string, description: string, event: ActivityLogEntry['event']): void {
   const lastEntry = state.activityLog[state.activityLog.length - 1];
   state.activityLog = [...state.activityLog, {
     id: (lastEntry?.id ?? 0) + 1,
+    sessionId: event === 'game' ? (lastEntry ? (lastEntry.sessionId ?? 1) + 1 : 1) : (lastEntry?.sessionId ?? 1),
+    event,
     timestamp: Date.now(),
     name,
     description,
@@ -113,7 +115,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     case GameAction.Bet: {
       if (typeof playerKey === 'string' && undefined !== betAmount && state.playerStore.bet(playerKey, betAmount)) {
         state.pot += betAmount;
-        recordActivity(state, state.playerStore.player(playerKey).title, `wagered $${betAmount}`);
+        recordActivity(state, state.playerStore.player(playerKey).title, `wagered $${betAmount}`, 'bet');
       }
       return state;
     }
@@ -164,7 +166,6 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       state.winner = undefined;
       state.loser = undefined;
       state.gameStatusFlag = false;
-      state.activityLog = [];
 
       if (undefined !== playerKey && typeof playerKey !== 'string') {
         playerKey.forEach(k => {
@@ -182,7 +183,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       state.gameStatus = GameStatus.InProgress;
       state.round = 1;
       state.turnCount = 0;
-      recordActivity(state, '', 'Game started');
+      recordActivity(state, '', 'Game started', 'game');
       return state;
     }
 
@@ -200,7 +201,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
      * Reset game state to default
      */
     case GameAction.ResetGame: {
-      return createGameState();
+      return { ...createGameState(), activityLog: action.clearActivityLog ? [] : state.activityLog };
     }
 
     // TODO
@@ -236,14 +237,14 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       });
       state.round += 1;
       state.turnCount = 1;
-      recordActivity(state, '', `Round ${state.round} started`);
+      recordActivity(state, '', `Round ${state.round} started`, 'round');
       return state;
     }
 
     case GameAction.Stay: {
       const stayingPlayerKey = typeof playerKey === 'string' ? playerKey : state.playerStore.currentPlayerKey;
       if (stayingPlayerKey && state.playerStore.player(stayingPlayerKey)) {
-        recordActivity(state, state.playerStore.player(stayingPlayerKey).title, 'stayed');
+        recordActivity(state, state.playerStore.player(stayingPlayerKey).title, 'stayed', 'stay');
         state.playerStore.stay(stayingPlayerKey);
         if (stayingPlayerKey !== 'dealer' && state.playerStore.player('dealer')) {
           state.playerStore.currentPlayerKey = 'dealer';
@@ -260,7 +261,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
             ? GameStatus.HumanWins
             : GameStatus.DealerWins;
           const winner = state.gameStatus === GameStatus.HumanWins ? human : state.playerStore.player('dealer');
-          if (winner) recordActivity(state, winner.title, 'won the round');
+          if (winner) recordActivity(state, winner.title, 'won the round', 'win');
         }
       }
       return state;
@@ -318,7 +319,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
               state.deck.updateHandValue(playerKey);
               state.playerStore.hit(playerKey);
               updatePlayerHandStatus(state, playerKey);
-              recordActivity(state, state.playerStore.player(playerKey).title, `drew ${_num} card${_num === 1 ? '' : 's'} from the top`);
+              recordActivity(state, state.playerStore.player(playerKey).title, `drew ${_num} card${_num === 1 ? '' : 's'} from the top`, 'draw');
             }
             break;
           }
@@ -330,7 +331,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
               state.deck.updateHandValue(playerKey);
               state.playerStore.hit(playerKey);
               updatePlayerHandStatus(state, playerKey);
-              recordActivity(state, state.playerStore.player(playerKey).title, `drew ${_num} card${_num === 1 ? '' : 's'} at random`);
+              recordActivity(state, state.playerStore.player(playerKey).title, `drew ${_num} card${_num === 1 ? '' : 's'} at random`, 'draw');
             }
             break;
           }
@@ -342,7 +343,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
               state.deck.updateHandValue(playerKey);
               state.playerStore.hit(playerKey);
               updatePlayerHandStatus(state, playerKey);
-              recordActivity(state, state.playerStore.player(playerKey).title, `drew ${_num} card${_num === 1 ? '' : 's'} from the bottom`);
+              recordActivity(state, state.playerStore.player(playerKey).title, `drew ${_num} card${_num === 1 ? '' : 's'} from the bottom`, 'draw');
             }
             break;
           }
@@ -387,7 +388,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     // Shuffle the remaining card in the deck
     case GameAction.Shuffle: {
       state.deck.shuffle();
-      recordActivity(state, '', 'Deck shuffled');
+      recordActivity(state, '', 'Deck shuffled', 'shuffle');
       return state;
     }
 
@@ -401,7 +402,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       state.playerStore.all.forEach((player) => {
         state.deck.updateHandValue(player.key);
         updatePlayerHandStatus(state, player.key);
-        recordActivity(state, player.title, 'was dealt two cards');
+        recordActivity(state, player.title, 'was dealt two cards', 'deal');
       });
       return state;
     }

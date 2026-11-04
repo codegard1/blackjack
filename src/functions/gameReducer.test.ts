@@ -90,7 +90,27 @@ describe('game behavior baseline', () => {
     expect(result.activityLog.at(-1)).toMatchObject({
       name: 'Chris',
       description: 'wagered $25',
+      sessionId: 1,
+      event: 'bet',
     });
+  });
+
+  it('retains previous sessions after resetting and starting another game', () => {
+    const firstGame = startDefaultGame();
+    const wagered = gameReducer(firstGame, { type: GameAction.Bet, playerKey: 'chris', betAmount: 25 });
+    const reset = gameReducer(wagered, { type: GameAction.ResetGame });
+    const secondGame = gameReducer(reset, { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] });
+
+    expect(secondGame.activityLog.map((entry) => entry.sessionId)).toEqual([1, 1, 2]);
+    expect(secondGame.activityLog.map((entry) => entry.id)).toEqual([1, 2, 3]);
+    expect(secondGame.activityLog.at(-1)).toMatchObject({ event: 'game', description: 'Game started' });
+    expect(firstGame.activityLog).toHaveLength(1);
+  });
+
+  it('clears activity history when explicitly clearing application data', () => {
+    const result = gameReducer(startDefaultGame(), { type: GameAction.ResetGame, clearActivityLog: true });
+
+    expect(result.activityLog).toEqual([]);
   });
 
   it('draws from the requested end of the deck into the player hand', () => {

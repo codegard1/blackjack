@@ -20,7 +20,7 @@ import {
 
 // Local Resources
 import { useGameContext, useSettingContext } from "../context";
-import { GameAction } from "../enums";
+import { GameAction, GameStatus } from "../enums";
 import { IControlPanelProps } from "../interfaces";
 
 // Component
@@ -39,7 +39,9 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const currentPlayerKey = playerStore.currentPlayerKey;
   const player = playerStore.players[props.playerKey];
   const npcFlag = player.isNPC;
-  const isBtnDisabled = gameStatus > 2 || currentPlayerKey !== playerKey;
+  const isRoundComplete = gameStatus >= GameStatus.HumanWins;
+  const isBtnDisabled = isRoundComplete || currentPlayerKey !== playerKey;
+  const isDealDisabled = !isRoundComplete && currentPlayerKey !== playerKey;
 
   const _hit = () => {
     toggleSetting({ key: 'isMessageBarVisible', value: true });
@@ -71,7 +73,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
         Stay
       </Button>
       {!npcFlag && (
-        <Button appearance="subtle" icon={<ArrowClockwise20Regular />} disabled={isBtnDisabled} onClick={deal}>
+        <Button appearance="subtle" icon={<ArrowClockwise20Regular />} disabled={isDealDisabled} onClick={deal}>
           Deal
         </Button>
       )}

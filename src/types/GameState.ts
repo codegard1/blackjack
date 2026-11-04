@@ -23,6 +23,8 @@ export type GameState = {
 
 export type ActivityLogEntry = {
   id: number;
+  sessionId?: number;
+  event?: 'game' | 'round' | 'deal' | 'draw' | 'bet' | 'stay' | 'win' | 'shuffle';
   timestamp: number;
   name: string;
   description: string;

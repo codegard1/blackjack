@@ -5,6 +5,7 @@ import React from 'react';
 import { useGameContext } from '../context';
 import { GameAction } from '../enums';
 import { ICardContainerProps } from '../interfaces';
+import './CardContainer.css';
 
 
 export const CardContainer: React.FC<ICardContainerProps> = (props) => {
@@ -48,15 +49,26 @@ export const CardContainer: React.FC<ICardContainerProps> = (props) => {
         display: 'flex',
         flexDirection: 'column',
         height: 100,
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         overflow: 'hidden',
-        padding: 2,
+        padding: 0,
+        position: 'relative',
         textAlign: 'left',
         width: 65,
       }}
     >
-      {!props.isBackFacing && <span style={{ fontSize: 18, fontWeight: 600, whiteSpace: 'nowrap' }}>{props.isTitleVisible && cardTitle}{cardIcon}</span>}
-      {!props.isBackFacing && props.isDescVisible && <span style={{ alignSelf: 'center', fontSize: 12, whiteSpace: 'nowrap' }}>{description}</span>}
+      <span className="playing-card-frame" aria-hidden="true" />
+      {!props.isBackFacing && <>
+        <span className="playing-card-corner playing-card-corner-top" aria-hidden="true">
+          {props.isTitleVisible && <span>{cardTitle}</span>}
+          <span>{cardIcon}</span>
+        </span>
+        <span className="playing-card-corner playing-card-corner-bottom" style={{ transform: 'rotate(180deg)' }} aria-hidden="true">
+          {props.isTitleVisible && <span>{cardTitle}</span>}
+          <span>{cardIcon}</span>
+        </span>
+      </>}
+      {!props.isBackFacing && props.isDescVisible && <span className="playing-card-description">{description}</span>}
     </button>
   );
 }

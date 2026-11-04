@@ -49,7 +49,7 @@ export const OptionsPanel: React.FC = () => {
 
   const clearApplicationData = () => {
     clearStores();
-    gameDispatch({ type: GameAction.ResetGame });
+    gameDispatch({ type: GameAction.ResetGame, clearActivityLog: true });
     Object.entries(settingDefaults).forEach(([key, value]) => toggleSetting({ key, value }));
   }
 
@@ -119,7 +119,7 @@ export const OptionsPanel: React.FC = () => {
 
         <Text weight="semibold">Chris's Blackjack</Text>
         <Text size={200}>
-          &copy;2024 <Link href="https://github.com/codegard1/blackjack">Chris Odegard</Link>
+          &copy;2026 <Link href="https://github.com/codegard1/blackjack">Chris Odegard</Link>
           <br />
           Made in Brooklyn with <Link href="https://react.dev/">React</Link> and <Link href="https://developer.microsoft.com/en-us/fluentui">Fluent UI</Link>.
         </Text>

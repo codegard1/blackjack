@@ -99,7 +99,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
           />
         </div>
 
-        <div id={id}>
+        <div id={id} className="player-hand">
           <CardStack
             cards={cards}
             hidden={cards.length === 0}

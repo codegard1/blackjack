@@ -59,20 +59,20 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
     `Hand Value: ${handValues.aceAsOne} / ${handValues.aceAsEleven}`;
 
   return hidden ? null : (
-    <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <Button
+    <section aria-label={player ? `${player.title}'s hand` : undefined} style={{ alignItems: player ? 'center' : undefined, display: 'flex', flexDirection: 'column', gap: 8, maxWidth: '100%' }}>
+      {!player && <Button
         appearance="transparent"
         icon={isDeckVisible ? <ChevronUp16Regular /> : <ChevronDown16Regular />}
         onClick={_toggleDeck}
         aria-expanded={isDeckVisible}
       >
         {deckTitleString}
-      </Button>
+      </Button>}
       {!player?.isNPC &&
         settings.isHandValueVisible && (
           <Text size={400}>{handValueString}</Text>
         )}
-      {isDeckVisible && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{cardElements}</div>}
+      {(player || isDeckVisible) && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, justifyContent: player ? 'center' : undefined }}>{cardElements}</div>}
     </section>
   );
 }

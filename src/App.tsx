@@ -8,7 +8,7 @@ import { FluentProvider, MessageBar, MessageBarBody, webLightTheme } from '@flue
 import './App.css';
 import { ActivityLog, OptionsPanel, SplashScreen, Table, DebugWindow } from './components';
 import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, createGameState, settingDefaults } from './context';
-import { GameAction, StoreName } from './enums';
+import { GameAction, GameStatus, StoreName } from './enums';
 import { gameReducer, settingReducer } from './functions';
 import { SettingsState } from './types';
 
@@ -20,6 +20,16 @@ const App = () => {
   const [gameState, gameDispatch] = React.useReducer(gameReducer, undefined, createGameState);
   const deckState = gameState.deck.state;
   const playerState = gameState.playerStore.state;
+  const human = gameState.playerStore.all.find((player) => !player.isNPC);
+  const dealer = gameState.playerStore.all.find((player) => player.isNPC);
+  const roundWinner = gameState.gameStatus === GameStatus.HumanWins ? human
+    : gameState.gameStatus === GameStatus.DealerWins ? dealer : undefined;
+  const roundLoser = gameState.gameStatus === GameStatus.HumanWins ? dealer : human;
+  const resultText = roundWinner
+    ? roundLoser?.isBusted
+      ? `${roundLoser.title} busted. ${roundWinner.title} wins the round.`
+      : `${roundWinner.title} wins the round${roundWinner.isBlackjack ? ' with blackjack' : ''}.`
+    : gameState.gameStatus === GameStatus.GameOver ? 'Game over.' : '';
 
   // Initialization effect 
   React.useEffect(() => {
@@ -77,7 +87,11 @@ const App = () => {
           <GameContext.Provider value={gameState}>
             <GameDispatchContext.Provider value={gameDispatch}>
 
-              {settings.isMessageBarVisible && gameState.messageBarDefinition.text !== '' && (
+              {resultText !== '' ? (
+                <MessageBar intent={gameState.gameStatus === GameStatus.HumanWins ? 'success' : 'warning'}>
+                  <MessageBarBody>{resultText}</MessageBarBody>
+                </MessageBar>
+              ) : settings.isMessageBarVisible && gameState.messageBarDefinition.text !== '' && (
                 <MessageBar intent={gameState.messageBarDefinition.type}>
                   <MessageBarBody>{gameState.messageBarDefinition.text}</MessageBarBody>
                 </MessageBar>
