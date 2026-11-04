@@ -24,6 +24,72 @@ body {
   gap: 15px;
 }
 
+.activity-log {
+  min-width: 0;
+  padding: 16px;
+}
+
+.activity-log h2,
+.activity-log h3 {
+  margin: 0;
+}
+
+.activity-log-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.activity-session-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  padding-bottom: 12px;
+}
+
+.activity-session-header time {
+  color: #616161;
+  font-size: 12px;
+}
+
+.activity-table-scroll {
+  overflow-x: auto;
+}
+
+.activity-table {
+  table-layout: fixed;
+  min-width: 480px;
+}
+
+.activity-table th,
+.activity-table td {
+  width: 25%;
+  padding: 6px 16px;
+  overflow-wrap: anywhere;
+}
+
+.activity-table th:last-child,
+.activity-table td:last-child {
+  width: 50%;
+}
+
+.activity-table tbody tr:nth-child(even) {
+  background-color: #f5f5f5;
+}
+
+.activity-table time {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.activity-event-icon {
+  display: inline-flex;
+  color: #00796b;
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
