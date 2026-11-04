@@ -192,6 +192,10 @@ it('floats the pot in the rail except while the contribution toast is visible', 
   expect(container.querySelector('.table-pot-center-slot')).toBeInTheDocument();
 
   act(() => vi.advanceTimersByTime(1400));
+  expect(screen.getByText('+$50 added to the pot')).toBeInTheDocument();
+  expect(container.querySelector('.table-pot-center-slot')).toBeInTheDocument();
+
+  act(() => vi.advanceTimersByTime(900));
   expect(container.querySelector('.table-pot-center-slot')).not.toBeInTheDocument();
   expect(container.querySelector('.table-pot-rail-slot')).toBeInTheDocument();
   vi.useRealTimers();

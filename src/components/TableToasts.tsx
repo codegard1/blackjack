@@ -10,6 +10,8 @@ import { GameState, GameSnapshot, ToastItem } from '../types';
 
 /** how long a toast stays fully visible */
 const HOLD_MS = 1100;
+/** keep the pot in the spotlight long enough for its contribution to register */
+const POT_CONTRIBUTION_HOLD_MS = 2000;
 /** how long a toast takes to animate out */
 const EXIT_MS = 260;
 /** minimum time between one toast appearing and the next, so they do not stack at once */
@@ -91,19 +93,20 @@ interface ITableToastProps {
 const TableToast: React.FC<ITableToastProps> = ({ toast, isRetiring, onDismiss }) => {
   const styles = useStyles();
   const [isTimedOut, setTimedOut] = React.useState(false);
+  const holdMs = toast.kind === 'pot-contribution' ? POT_CONTRIBUTION_HOLD_MS : HOLD_MS;
 
   React.useEffect(() => {
     if (isRetiring) {
       const removeId = window.setTimeout(() => onDismiss(toast.id), EXIT_MS);
       return () => window.clearTimeout(removeId);
     }
-    const leaveId = window.setTimeout(() => setTimedOut(true), HOLD_MS);
-    const removeId = window.setTimeout(() => onDismiss(toast.id), HOLD_MS + EXIT_MS);
+    const leaveId = window.setTimeout(() => setTimedOut(true), holdMs);
+    const removeId = window.setTimeout(() => onDismiss(toast.id), holdMs + EXIT_MS);
     return () => {
       window.clearTimeout(leaveId);
       window.clearTimeout(removeId);
     };
-  }, [toast.id, isRetiring, onDismiss]);
+  }, [toast.id, isRetiring, holdMs, onDismiss]);
 
   const isLeaving = isRetiring || isTimedOut;
 
