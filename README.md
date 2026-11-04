@@ -18,23 +18,25 @@ https://mango-cliff-08390e60f.azurestaticapps.net/
 Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, and `npm run build` to create the static site in `dist/`.
 
 #### Technologies Used
-* [React](https://facebook.github.io/react/)
-* Flux
-* [Vite](https://vite.dev/)
+* [React](https://react.dev/) 19
 * TypeScript
-* [Fluent UI](https://developer.microsoft.com/en-us/fluentui)
-* [node-shuffle](https://github.com/codegard1/node-shuffle) (forked)
+* [Vite](https://vite.dev/) and [Vitest](https://vitest.dev/)
+* [Fluent UI](https://react.fluentui.dev/) v9
+* Deck logic adapted from [node-shuffle](https://github.com/codegard1/node-shuffle) (forked)
 
-#### Project Status as of 10/27/2017
-* The Dealer can now play for itself, allowing a single human player to compete against a simple algorithm
-* Endgame conditions are now handled more or less as expected
-* Game options are now sequestered in a panel  
-* Extraneous UI elements have been hidden from the game table by default
-* Player actions are displayed in callouts beneath each player deck
-* Many small updates to the styles used in Player Containers 
+#### Rules
+* One human player against a dealer that hits below 17 and stands otherwise
+* Each round starts with an ante from every player; the human can add wagers
+* Natural blackjacks are settled right after the deal; a human natural pays a 3:2 bonus on the stake
+* Equal totals push and return each player's stake
+* Double down on any two-card hand: match your stake, take one card, then stand
+
+#### Project Status
+* Game state and settings are saved in the browser, so a reload resumes the current game
+* The activity log records each deal, draw, wager, stay, and result
+* Cards are styled with CSS and animate onto the table
 
 #### Wish List
-* Use [CSS Card Tricks](https://designshack.net/articles/css/css-card-tricks/) to style cards (6/13/17)
-* Use CSS transitions to flip / move cards (6/13/17)
-* Convert entire project to TypeScript (9/6/2017) 
-* Show recommended moves to teach the human player good strategy (9/6/2017)
+* Split pairs (requires multiple hands per player)
+* Show recommended moves to teach the human player good strategy
+* Use CSS transitions to flip cards

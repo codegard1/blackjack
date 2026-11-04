@@ -4,124 +4,77 @@ This repository contains Chris's blackjack game built with React and TypeScript.
 
 ## Project Overview
 
-A web-based blackjack game where a human player can compete against a dealer algorithm. The project demonstrates React patterns, TypeScript, and UI design with Fluent UI components.
+A browser-based blackjack game where one human player competes against a dealer that hits below 17 and stands otherwise. Game and settings state persist in `localStorage`, so a reload resumes the current game.
 
 ## Technologies Used
 
-- **React** 17.0.2 - UI framework
-- **TypeScript** 4.9.5 - Type-safe JavaScript
-- **Fluent UI** (@fluentui/react 8.120.7) - Microsoft's design system
-- **Create React App** (react-scripts 5.0.1) - Build tooling
-- **Jest** - Testing framework (via react-scripts)
-- **ESLint** - Code linting
+- **React** 19 with function components and hooks
+- **TypeScript** 6 (strict mode)
+- **Fluent UI** v9 (`@fluentui/react-components`, `@fluentui/react-icons`)
+- **Vite** 8 for the dev server and build (`@vitejs/plugin-react`, `@vitejs/plugin-legacy`)
+- **Vitest** 5 with jsdom and React Testing Library
+- **ESLint** 8 with the TypeScript, React, jsx-a11y and import plugins
 
-## Setup Instructions
+## Setup and Commands
 
-1. **Install Dependencies**
-   ```bash
-   npm install --legacy-peer-deps
-   ```
-   Note: Use `--legacy-peer-deps` flag due to peer dependency conflicts between packages.
+Node.js 22.22+, 24.15+ or 26+ (see `engines` in `package.json`; `.nvmrc` pins 22).
 
-2. **Development Server**
-   ```bash
-   npm start
-   ```
-   Opens the app at `localhost:3000`
+```bash
+npm install --legacy-peer-deps   # install dependencies
+npm start                        # dev server on http://localhost:3000
+npm test                         # run the test suite once (vitest run)
+npm run test:watch               # tests in watch mode
+npm run typecheck                # tsc --noEmit
+npm run lint                     # eslint over src/**/*.{ts,tsx}
+npm run build                    # typecheck, then build to dist/
+```
 
-3. **Build for Production**
-   ```bash
-   npm run build
-   ```
-   Creates optimized production build in `build/` directory
-
-4. **Run Tests**
-   ```bash
-   npm test
-   ```
-   Note: There are currently known test configuration issues with ESM modules that need resolution.
+Run `npm test`, `npm run typecheck` and `npm run lint` before committing.
 
 ## Project Structure
 
 ```
 src/
-├── classes/       # Game logic classes (e.g., Card, Deck, Player)
-├── components/    # React components
-├── context/       # React Context providers
-├── enums/         # TypeScript enums
-├── functions/     # Utility functions
+├── classes/       # PlayingCard, PlayingCardDeck (cards and hands), PlayerStore (players, banks, stats)
+├── components/    # React components (Table, PlayerContainer, ControlPanel, Agent, ActivityLog, ...)
+├── context/       # GameContext and SettingContext, default state, useGameContext/useSettingContext
+├── enums/         # GameAction, GameStatus, PlayerAction, StoreName, ...
+├── functions/     # gameReducer, settingReducer, evaluateGame, persistence, helpers
 ├── interfaces/    # TypeScript interfaces
-├── types/         # TypeScript type definitions
-├── App.tsx        # Main application component
-└── index.tsx      # Application entry point
+├── types/         # TypeScript types (GameState, SettingsState, DeckState, ...)
+├── App.tsx        # Root component: reducers, persistence effects, providers
+└── index.tsx      # Entry point
 ```
+
+## Architecture
+
+- **State**: `App.tsx` holds two `useReducer` stores, game state (`gameReducer`) and settings (`settingReducer`), and exposes them through context. Components read state with `useGameContext()` / `useSettingContext()` and dispatch actions; they do not mutate state directly.
+- **Game flow**: `NewGame` creates players and hands; `Deal` deals two cards each and resolves natural blackjacks; `Draw`, `Stay`, `Bet` and `DoubleDown` drive a turn; the dealer's turn is automated by `components/Agent.tsx`. Outcomes are `HumanWins`, `DealerWins` or `Push`.
+- **Settlement**: whenever `gameStatus` changes, `App.tsx` dispatches `EvaluateGame`. `functions/evaluateGame.ts` antes at the start of a game and settles finished rounds (pot payout, 3:2 natural bonus, push refunds, stats). Settlement is guarded by `gameStatusFlag` so a round is paid only once.
+- **Persistence**: `functions/persistence.ts` loads and saves the deck, player store, a versioned game snapshot and settings. Bump `GAME_STORE_VERSION` whenever the saved shape or `GameStatus` values change.
+- **Logging**: use `debugLog` from `functions/debugLog.ts` instead of `console.log`; it only logs in development.
 
 ## Code Style and Conventions
 
-### TypeScript
-- Use TypeScript strict mode
-- Define interfaces in `interfaces/` directory
-- Define enums in `enums/` directory
-- Use explicit types for function parameters and return values
-- Target ES5 (configured in tsconfig.json, default for Create React App)
-
-### React
-- Use functional components with hooks
-- Follow React best practices
-- Use JSX syntax with TypeScript (.tsx extension)
-- Import React components from `components/index.ts`
-
-### ESLint Configuration
-- ESLint is configured via `.eslintrc.json`
-- Rules include TypeScript-specific linting
-- Unused variables warnings are disabled
-- Follow existing code style for consistency
-
-### File Organization
-- Group related functionality in dedicated directories
-- Keep components modular and reusable
-- Use index files for clean imports
-- Separate concerns: UI components, business logic (classes), and utilities (functions)
+- Use TypeScript strict mode and explicit types for function parameters and return values.
+- Define interfaces in `interfaces/`, types in `types/`, enums in `enums/`.
+- Use function components with hooks and Fluent UI v9 components.
+- Import through the `index.ts` barrel files where they exist.
+- Keep game rules in reducers and `functions/`, not in components.
 
 ## Testing
 
-- Tests use Jest and React Testing Library
-- Test files should be named `*.test.tsx` or `*.test.ts`
-- Place tests alongside the code they test
-- **Current Known Issue**: Jest configuration needs updates to handle ESM modules from `react-syntax-highlighter` in test environment
+- Tests are named `*.test.ts` / `*.test.tsx` and live next to the code they cover.
+- `src/setupTests.ts` loads jest-dom matchers, stubs `ResizeObserver`, mocks `react-syntax-highlighter`, and clears `localStorage` after each test.
+- Make dealt cards deterministic in tests (set `deck.cards`, or spy on `PlayingCardDeck.prototype.deal`), since a random natural blackjack ends the round immediately.
 
 ## Building and Deployment
 
-- The project is deployed to Azure Static Web Apps
-- Build process uses Create React App's build system
-- Output directory is `build/`
-- Deployment is automated via GitHub Actions (`.github/workflows/azure-static-web-apps-lemon-ocean-0d87ac20f.yml`)
-
-## Dependencies Management
-
-- Use npm for package management
-- Node version: 16.13.0 to 18.19.1 (specified in `engines`)
-- Always use `--legacy-peer-deps` when installing packages
-- Check for security vulnerabilities with `npm audit`
+- `npm run build` outputs a static site to `dist/`.
+- The site is hosted on Azure Static Web Apps.
 
 ## Development Guidelines
 
-1. **Minimal Changes**: Make surgical, focused changes to existing code
-2. **Test Before Merging**: Verify builds complete successfully
-3. **Type Safety**: Leverage TypeScript's type system fully
-4. **Code Quality**: Run ESLint before committing (implicit in build process)
-5. **Documentation**: Update README.md if adding significant features
-6. **Consistency**: Match existing code patterns and style
-
-## Known Issues
-
-- Peer dependency conflicts between ESLint packages (use `--legacy-peer-deps`)
-- Test configuration needs updates for ESM module support (Jest handling of react-syntax-highlighter)
-- Several npm package deprecation warnings (non-critical)
-
-## Additional Notes
-
-- The game implements basic blackjack rules with a dealer AI
-- UI uses Fluent UI components for consistent Microsoft-style design
-- State management uses React Context API
-- The project demonstrates Flux-like patterns for state management
+1. Make focused changes that match existing patterns.
+2. Add or update tests for rule and reducer changes.
+3. Update `README.md` when adding significant features.
