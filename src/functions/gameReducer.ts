@@ -8,18 +8,7 @@ import { IGameReducerAction } from "../interfaces";
 import { ActivityLogEntry, GameState } from "../types";
 import { evaluateGame, roundStake } from "./evaluateGame";
 import { debugLog } from "./debugLog";
-
-function recordActivity(state: GameState, name: string, description: string, event: ActivityLogEntry['event']): void {
-  const lastEntry = state.activityLog[state.activityLog.length - 1];
-  state.activityLog = [...state.activityLog, {
-    id: (lastEntry?.id ?? 0) + 1,
-    sessionId: event === 'game' ? (lastEntry ? (lastEntry.sessionId ?? 1) + 1 : 1) : (lastEntry?.sessionId ?? 1),
-    event,
-    timestamp: Date.now(),
-    name,
-    description,
-  }];
-}
+import { recordActivity } from "./activity";
 
 function endRound(state: GameState, outcome: GameStatus.HumanWins | GameStatus.DealerWins | GameStatus.Push): void {
   state.gameStatus = outcome;
@@ -52,15 +41,13 @@ function resolveNaturals(state: GameState): void {
   const dealer = state.playerStore.all.find((player) => player.isNPC);
   if (!human || !dealer) return;
 
+  // results are recorded once the round settles, with the amounts that moved
   if (human.isBlackjack && dealer.isBlackjack) {
     endRound(state, GameStatus.Push);
-    recordActivity(state, '', 'Both players have blackjack; round pushed', 'push');
   } else if (human.isBlackjack) {
     endRound(state, GameStatus.HumanWins);
-    recordActivity(state, human.title, 'won the round with blackjack', 'win');
   } else if (dealer.isBlackjack) {
     endRound(state, GameStatus.DealerWins);
-    recordActivity(state, dealer.title, 'won the round with blackjack', 'win');
   }
 }
 
@@ -77,13 +64,10 @@ function resolveShowdown(state: GameState): void {
 
   if (dealerTotal > 21 || humanTotal > dealerTotal) {
     endRound(state, GameStatus.HumanWins);
-    recordActivity(state, human.title, 'won the round', 'win');
   } else if (humanTotal === dealerTotal) {
     endRound(state, GameStatus.Push);
-    recordActivity(state, '', `Round pushed at ${humanTotal}`, 'push');
   } else {
     endRound(state, GameStatus.DealerWins);
-    recordActivity(state, dealer.title, 'won the round', 'win');
   }
 }
 
@@ -179,7 +163,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     case GameAction.Bet: {
       if (typeof playerKey === 'string' && undefined !== betAmount && state.playerStore.bet(playerKey, betAmount)) {
         state.pot += betAmount;
-        recordActivity(state, state.playerStore.player(playerKey).title, `wagered $${betAmount}`, 'bet');
+        recordActivity(state, state.playerStore.player(playerKey).title, `wagered $${betAmount}`, 'bet', { amount: -betAmount });
       }
       return state;
     }
@@ -288,12 +272,16 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       state.gameStatus = GameStatus.InProgress;
       state.gameStatusFlag = false;
       state.pot = 0;
-      state.playerStore.all.forEach((player) => {
-        if (state.playerStore.ante(player.key, state.minimumBet)) state.pot += state.minimumBet;
-      });
       state.round += 1;
       state.turnCount = 1;
       recordActivity(state, '', `Round ${state.round} started`, 'round');
+      // antes come after the round starts, so they belong to the new hand
+      state.playerStore.all.forEach((player) => {
+        if (state.playerStore.ante(player.key, state.minimumBet)) {
+          state.pot += state.minimumBet;
+          recordActivity(state, player.title, `anted $${state.minimumBet}`, 'ante', { amount: -state.minimumBet });
+        }
+      });
       return state;
     }
 
@@ -458,7 +446,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       const stake = roundStake(state, key);
       state.playerStore.bet(key, stake);
       state.pot += stake;
-      recordActivity(state, state.playerStore.player(key).title, `doubled down for $${stake}`, 'double');
+      recordActivity(state, state.playerStore.player(key).title, `doubled down for $${stake}`, 'double', { amount: -stake });
 
       state = gameReducer(state, { type: GameAction.Draw, playerKey: key, deckSide: 'top', numberOfCards: 1 });
       if (state.gameStatus === GameStatus.InProgress) {

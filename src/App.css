@@ -66,18 +66,51 @@ body {
 
 .activity-table th,
 .activity-table td {
-  width: 25%;
+  width: 20%;
   padding: 6px 16px;
   overflow-wrap: anywhere;
 }
 
+.activity-table th:nth-child(3),
+.activity-table td:nth-child(3) {
+  width: 44%;
+}
+
 .activity-table th:last-child,
 .activity-table td:last-child {
-  width: 50%;
+  width: 16%;
 }
 
 .activity-table tbody tr:nth-child(even) {
   background-color: #f5f5f5;
+}
+
+/* wins and pot increases in green, losses and decreases in red */
+.activity-table tbody tr.activity-row-gain > td {
+  background-color: #e6f4ea;
+}
+
+.activity-table tbody tr.activity-row-loss > td {
+  background-color: #fde7e9;
+}
+
+.activity-change {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.activity-change-gain {
+  color: #0e6027;
+}
+
+.activity-change-loss {
+  color: #a4262c;
+}
+
+.activity-hand {
+  display: flex;
+  flex-direction: column;
 }
 
 .activity-table time {
