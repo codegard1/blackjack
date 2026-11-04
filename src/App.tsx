@@ -6,7 +6,7 @@ import { FluentProvider, MessageBar, MessageBarBody, webLightTheme } from '@flue
 
 // Local Resources
 import './App.css';
-import { ActivityLog, OptionsPanel, SplashScreen, Table, DebugWindow } from './components';
+import { ActivityLog, AppHeader, OptionsPanel, SplashScreen, Table, DebugWindow } from './components';
 import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext } from './context';
 import { GameAction, GameStatus } from './enums';
 import { gameReducer, loadGameState, loadSettings, saveGameState, saveSettings, settingReducer } from './functions';
@@ -48,6 +48,8 @@ const App = () => {
         <SettingDispatchContext.Provider value={toggleSetting}>
           <GameContext.Provider value={gameState}>
             <GameDispatchContext.Provider value={gameDispatch}>
+
+              <AppHeader />
 
               {resultText !== '' ? (
                 <MessageBar intent={gameState.gameStatus === GameStatus.HumanWins ? 'success' : gameState.gameStatus === GameStatus.Push ? 'info' : 'warning'}>

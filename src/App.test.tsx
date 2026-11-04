@@ -139,3 +139,18 @@ it('hides the debug window by default and remembers the setting across reloads',
   render(<App />);
   expect(screen.getByRole('button', { name: 'Player Hands' })).toBeInTheDocument();
 });
+
+it('shows the app name in the header and opens the About dialog', () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+
+  expect(screen.getByRole('heading', { level: 1, name: "Chris's Blackjack" })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'About' }));
+  const dialog = screen.getByRole('dialog', { name: "About Chris's Blackjack" });
+  expect(dialog).toHaveTextContent(/Version \d/);
+  expect(dialog).toHaveTextContent('Chris Odegard');
+
+  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  expect(screen.queryByRole('dialog', { name: "About Chris's Blackjack" })).not.toBeInTheDocument();
+});
