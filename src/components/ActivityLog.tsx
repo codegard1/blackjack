@@ -2,7 +2,7 @@
 import React from "react";
 
 import { Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow, Text, Tooltip } from '@fluentui/react-components';
-import { Add20Regular, ArrowForward20Regular, ArrowShuffle20Regular, ArrowUp20Regular, Flag20Regular, Info20Regular, Play20Regular, Stack20Regular, Trophy20Regular } from '@fluentui/react-icons';
+import { Add20Regular, ArrowForward20Regular, ArrowSwap20Regular, ArrowShuffle20Regular, ArrowUp20Regular, Flag20Regular, Info20Regular, Play20Regular, Stack20Regular, Trophy20Regular } from '@fluentui/react-icons';
 
 import { useGameContext, useSettingContext } from '../context';
 import { ActivityLogEntry } from '../types';
@@ -15,8 +15,10 @@ const eventIcons = {
   deal: { icon: <Stack20Regular />, label: 'Cards dealt' },
   draw: { icon: <Add20Regular />, label: 'Card drawn' },
   bet: { icon: <ArrowUp20Regular />, label: 'Wager' },
+  double: { icon: <ArrowUp20Regular />, label: 'Double down' },
   stay: { icon: <ArrowForward20Regular />, label: 'Stay' },
   win: { icon: <Trophy20Regular />, label: 'Round won' },
+  push: { icon: <ArrowSwap20Regular />, label: 'Push' },
   shuffle: { icon: <ArrowShuffle20Regular />, label: 'Deck shuffled' },
 };
 

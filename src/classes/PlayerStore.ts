@@ -116,7 +116,7 @@ export class PlayerStore implements IPlayerStore {
    */
   public resetPlayer(key: PlayerKey, omit: string) {
     const p = this.players[key];
-    this.players[key] = { ...playerDefaults, key, title: p.title, isNPC: p.isNPC, bank: p.bank, id: p.id }
+    this.players[key] = { ...playerDefaults, key, title: p.title, isNPC: p.isNPC, bank: p.bank, id: p.id, stats: { ...p.stats } }
   }
 
   /**
@@ -334,9 +334,10 @@ export class PlayerStore implements IPlayerStore {
    */
   public updateStats(key: PlayerKey, statsFrame: PlayerStats) {
     const p = this.players[key];
-    for (const key in statsFrame) {
-      /* add the value of stasFrame[key] to the corresponding key in statsstore */
-      if (p.stats[key]) p.stats[key] += statsFrame[key];
+    p.stats = { ...p.stats };
+    for (const statKey in statsFrame) {
+      if (statKey === 'winLossRatio') continue;
+      p.stats[statKey] = (p.stats[statKey] ?? 0) + statsFrame[statKey];
     }
     /* recalculate win/loss ratio */
     this.calculateWinLossRatio(key);

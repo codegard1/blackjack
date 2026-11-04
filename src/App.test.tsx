@@ -108,6 +108,10 @@ it('clears in-memory game state and returns to player selection', () => {
 });
 
 it('resumes a saved game after a reload', () => {
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
   const first = render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Start' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));

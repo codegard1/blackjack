@@ -26,6 +26,7 @@ const App = () => {
     ? roundLoser?.isBusted
       ? `${roundLoser.title} busted. ${roundWinner.title} wins the round.`
       : `${roundWinner.title} wins the round${roundWinner.isBlackjack ? ' with blackjack' : ''}.`
+    : gameState.gameStatus === GameStatus.Push ? 'Push. Stakes are returned.'
     : gameState.gameStatus === GameStatus.GameOver ? 'Game over.' : '';
 
   // Persist game and settings so a reload resumes where the player left off
@@ -49,7 +50,7 @@ const App = () => {
             <GameDispatchContext.Provider value={gameDispatch}>
 
               {resultText !== '' ? (
-                <MessageBar intent={gameState.gameStatus === GameStatus.HumanWins ? 'success' : 'warning'}>
+                <MessageBar intent={gameState.gameStatus === GameStatus.HumanWins ? 'success' : gameState.gameStatus === GameStatus.Push ? 'info' : 'warning'}>
                   <MessageBarBody>{resultText}</MessageBarBody>
                 </MessageBar>
               ) : settings.isMessageBarVisible && gameState.messageBarDefinition.text !== '' && (

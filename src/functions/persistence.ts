@@ -7,7 +7,7 @@ import { IPlayerStoreState } from "../interfaces";
 import { DeckState, GameState, SettingsState } from "../types";
 
 /** Bump when the shape of the saved game snapshot changes. */
-const GAME_STORE_VERSION = 1;
+const GAME_STORE_VERSION = 2;
 
 /** Scalar game fields saved alongside the deck and player stores. */
 type SavedGame = Pick<GameState,

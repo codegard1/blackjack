@@ -3,6 +3,7 @@ export enum GameAction {
   Bet = 'Bet',
   ClearSelected = 'ClearSelected',
   Deal = 'Deal',
+  DoubleDown = 'DoubleDown',
   Draw = 'Draw',
   EvaluateGame = 'EvaluateGame',
   IncrementRound = 'IncrementRound',

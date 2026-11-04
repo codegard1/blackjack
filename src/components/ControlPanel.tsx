@@ -16,11 +16,13 @@ import {
   ArrowDown20Regular,
   ArrowForward20Regular,
   ArrowUp20Regular,
+  ArrowUpload20Regular,
 } from '@fluentui/react-icons';
 
 // Local Resources
 import { useGameContext, useSettingContext } from "../context";
 import { GameAction, GameStatus } from "../enums";
+import { canDoubleDown } from "../functions/gameReducer";
 import { IControlPanelProps } from "../interfaces";
 
 // Component
@@ -42,6 +44,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const isRoundComplete = gameStatus >= GameStatus.HumanWins;
   const isBtnDisabled = isRoundComplete || currentPlayerKey !== playerKey;
   const isDealDisabled = !isRoundComplete && currentPlayerKey !== playerKey;
+  const isDoubleDownDisabled = !canDoubleDown(gameState, playerKey);
 
   const _hit = () => {
     toggleSetting({ key: 'isMessageBarVisible', value: true });
@@ -72,6 +75,13 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
       <Button appearance="subtle" icon={<ArrowForward20Regular />} disabled={isBtnDisabled} onClick={() => gameDispatch({ type: GameAction.Stay, playerKey })}>
         Stay
       </Button>
+      {!npcFlag && (
+        <Tooltip content="Double your stake, take exactly one more card, then stand" relationship="description">
+          <Button appearance="subtle" icon={<ArrowUpload20Regular />} disabled={isDoubleDownDisabled} onClick={() => gameDispatch({ type: GameAction.DoubleDown, playerKey })}>
+            Double Down
+          </Button>
+        </Tooltip>
+      )}
       {!npcFlag && (
         <Button appearance="subtle" icon={<ArrowClockwise20Regular />} disabled={isDealDisabled} onClick={deal}>
           Deal

@@ -1,6 +1,5 @@
 export * from './clearStores';
 export * from './debugLog';
-export * from './endgameTrap';
 export * from './evaluateGame';
 export * from './fisherYates';
 export * from './gameReducer';
