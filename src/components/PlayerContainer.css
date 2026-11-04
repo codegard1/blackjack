@@ -1,43 +1,71 @@
-/* container for the player's cards and control panel */
-.PlayerContainer {
-  width:100%;
-  background-color: whitesmoke;
-  border-radius: 0.25em;
-  transition: all 300ms ease-in;
-  border: 1px solid rgba(25, 25, 25, 0.1);
+/* Table layout: dealer seat on top, pot in the middle, player seat below */
+.table-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 10px;
 }
 
-.PlayerContainer.selected {
-  -webkit-box-shadow: 15px 15px 20px -9px rgba(184, 184, 184, 1);
-  -moz-box-shadow: 15px 15px 20px -9px rgba(184, 184, 184, 1);
-  box-shadow: 15px 15px 20px -9px rgba(184, 184, 184, 1);
-  border: 2px solid blue;
+.table-seats {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 760px;
 }
 
-.PlayerContainer.staying {
-  border: 2px solid green;
-  background-color: ghostwhite;
+.table-pot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5em;
+  width: 100%;
+  max-width: 760px;
 }
 
+/* reserve room for one row of cards so seats keep a steady height */
 .player-hand {
   display: flex;
-  flex: 0 0 100%;
   justify-content: center;
+  min-height: 104px;
+  width: 100%;
   min-width: 0;
 }
 
-/* the span that display's the player's name */
-.PlayerContainer > .player-titlebar {
-  margin-left: 1.5em;
-  margin-top: 1em;
-  /* border: 1px solid gold; */
+.player-agent {
+  text-align: center;
 }
 
-/* the CommandBar in each PlayerContainer */
-.PlayerContainer > .player-controlpanel {
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
-  /* border: 1px solid green; */
+/* Collapse the action toolbar to icon-only buttons when the seat is narrow.
+   Seats are size containers named "seat" (see PlayerContainer styles). */
+@container seat (max-width: 560px) {
+  .seat-control-label {
+    display: none;
+  }
+
+  .player-controlpanel {
+    flex-wrap: nowrap;
+    gap: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .player-controlpanel .fui-Button {
+    min-width: 32px;
+    max-width: 40px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .player-controlpanel .fui-Divider {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+
+  .player-controlpanel .fui-Button__icon {
+    margin-right: 0;
+  }
 }
 
 /* the callout that appears beneath the deck when a player action occurs */
@@ -48,4 +76,10 @@
 /* the text children of the Agent component */
 #Agent {
   text-align: center;
+}
+
+.table-pot-badge {
+  font-size: 18px;
+  padding: 18px 16px;
+  transition: transform 300ms cubic-bezier(0.33, 0, 0.67, 1);
 }

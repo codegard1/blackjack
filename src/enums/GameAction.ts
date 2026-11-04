@@ -1,12 +1,10 @@
 export enum GameAction {
   AddToPot = 'AddToPot',
-  Ante = 'Ante',
   Bet = 'Bet',
   ClearSelected = 'ClearSelected',
   Deal = 'Deal',
+  DoubleDown = 'DoubleDown',
   Draw = 'Draw',
-  EndGame = 'EndGame',
-  EndGameTrap = 'EndGameTrap',
   EvaluateGame = 'EvaluateGame',
   IncrementRound = 'IncrementRound',
   IncrementTurn = 'IncrementTurn',

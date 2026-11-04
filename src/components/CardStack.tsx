@@ -8,6 +8,7 @@ import { ChevronDown16Regular, ChevronUp16Regular } from '@fluentui/react-icons'
 import { CardContainer } from '.';
 import { useGameContext, useSettingContext } from '../context';
 import { ICardStackProps } from '../interfaces';
+import { GameStatus } from '../enums';
 import { handValue } from '../functions';
 import { PlayingCard } from '../classes';
 
@@ -29,6 +30,8 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
 
   // Context props
   const { settings } = useSettingContext();
+  const { gameState } = useGameContext();
+  const isRoundOver = gameState.gameStatus === GameStatus.HumanWins || gameState.gameStatus === GameStatus.DealerWins || gameState.gameStatus === GameStatus.Push;
 
   // State
   const [isDeckVisible, setVisible] = React.useState<boolean>(true);
@@ -43,9 +46,10 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
       {...new PlayingCard(cardKey)}
       key={`cardContainer-${cardKey}-${index}`}
       id={cardKey}
+      index={index}
       isSelectable={isSelectable}
       isTitleVisible={settings.isCardTitleVisible}
-      isBackFacing={index === 0 && !settings.isDealerHandVisible && player?.isNPC}
+      isBackFacing={index === 0 && !settings.isDealerHandVisible && !isRoundOver && player?.isNPC}
       isDescVisible={settings.isCardDescVisible}
     />
   );

@@ -1,22 +1,89 @@
 import { GameStatus } from "../enums";
 import { IGameReducerAction } from "../interfaces";
-import { GameState } from "../types";
-import { endgameTrap } from "./endgameTrap";
+import { GameState, PlayerKey } from "../types";
 
-export function evaluateGame(state: GameState, action: IGameReducerAction): GameState {
-  const timerName = 'evaluateGame';
-  console.time(timerName);
+/** Amount a player has put into the pot this round (ante plus wagers). */
+export function roundStake(state: GameState, key: PlayerKey): number {
+  const player = state.playerStore.player(key);
+  return (player?.lastAnte ?? 0) + (player?.totalBet ?? 0);
+}
 
-  // Evalute Game State
+/**
+ * Pay out the pot and record stats for a finished round.
+ * - Win: the winner takes the pot. A human natural blackjack also collects
+ *   a 3:2 bonus (half their stake) from the dealer.
+ * - Push: every player gets their own stake back.
+ * Guarded by gameStatusFlag so a round is never settled twice.
+ */
+function settleRound(state: GameState): void {
+  if (state.gameStatusFlag) return;
+
+  const { playerStore } = state;
+  const human = playerStore.all.find((player) => !player.isNPC);
+  const dealer = playerStore.all.find((player) => player.isNPC);
+  if (!human || !dealer) return;
+
+  const winnings: Record<PlayerKey, number> = {};
+
   switch (state.gameStatus) {
-    case GameStatus.Init:
-      console.log('Game Status: Init');
+    case GameStatus.HumanWins: {
+      state.winner = human.key;
+      state.loser = dealer.key;
+      winnings[human.key] = state.pot;
+      if (human.isBlackjack) {
+        const bonus = Math.min(Math.floor(roundStake(state, human.key) / 2), dealer.bank);
+        dealer.bank -= bonus;
+        winnings[human.key] += bonus;
+      }
       break;
+    }
+    case GameStatus.DealerWins: {
+      state.winner = dealer.key;
+      state.loser = human.key;
+      winnings[dealer.key] = state.pot;
+      break;
+    }
+    case GameStatus.Push: {
+      state.winner = undefined;
+      state.loser = undefined;
+      playerStore.all.forEach((player) => { winnings[player.key] = roundStake(state, player.key); });
+      break;
+    }
+    default:
+      return;
+  }
 
+  playerStore.all.forEach((player) => {
+    const amount = winnings[player.key] ?? 0;
+    if (amount > 0) playerStore.payout(player.key, amount);
+    playerStore.updateStats(player.key, {
+      numberOfGamesLost: player.key === state.loser ? 1 : 0,
+      numberOfGamesPlayed: 1,
+      numberOfGamesWon: player.key === state.winner ? 1 : 0,
+      numberOfTimesBlackjack: player.isBlackjack ? 1 : 0,
+      numberOfTimesBusted: player.isBusted ? 1 : 0,
+      totalWinnings: player.key === state.winner ? amount : 0,
+      winLossRatio: 0,
+    });
+  });
+
+  state.gameStatusFlag = true;
+}
+
+/**
+ * Apply status-driven bookkeeping to the game state.
+ *
+ * Starts a game's ante, advances to the next player, settles completed rounds,
+ * or resets a game-over status. The supplied state is updated and returned.
+ *
+ * @param state Current game state to evaluate.
+ * @param action Reducer action that requested the evaluation.
+ * @returns The updated game state.
+ */
+export function evaluateGame(state: GameState, action: IGameReducerAction): GameState {
+  switch (state.gameStatus) {
     case GameStatus.InProgress:
-      /*   Game in progress; first play  */
-      console.log('Game Status: InProgress');
-      /*   all players bet the minimum to start  */
+      /* First play of a new game: all players ante the minimum */
       if (state.turnCount === 0) {
         state.pot = 0;
         state.playerStore.all.forEach((player) => {
@@ -24,48 +91,28 @@ export function evaluateGame(state: GameState, action: IGameReducerAction): Game
         });
         state.turnCount = 1;
       }
-      endgameTrap(state, action);
       break;
 
     case GameStatus.NextTurn:
-      console.log('Game Status: NextTurn');
-      /*   stay (go to next turn)  */
-      /* If endgame conditions not met   */
       if (!state.gameStatusFlag) {
-        /* increment currentPlayerIndex */
         state.playerStore.nextPlayer();
         state.gameStatus = GameStatus.InProgress;
       }
       break;
 
-    case GameStatus.GameOver:
-      console.log('Game Status: GameOver');
-      state.gameStatus = GameStatus.Init;
-      break;
-
     case GameStatus.HumanWins:
-      console.log('Game Status: HumanWins');
-      const winningPlayerTitle = state.playerStore.all[0].title;
-      // newActivityLogItem(winningPlayerTitle, 'wins!', 'Crown');
-
-      state.winner = state.playerStore.all[0].key;
-      state.loser = state.playerStore.all[1].key;
-      state.playerStore.payout(state.playerStore.all[0].key, state.pot);
+    case GameStatus.DealerWins:
+    case GameStatus.Push:
+      settleRound(state);
       break;
 
-    case GameStatus.DealerWins:
-      console.log('Game Status: DealerWins');
-      state.winner = state.playerStore.all[1].key;
-      state.loser = state.playerStore.all[0].key;
-      state.playerStore.payout(state.playerStore.all[1].key, state.pot);
-      // newActivityLogItem(playerStore.all[1].title, 'wins!', 'Crown');
-      endgameTrap(state, action);
+    case GameStatus.GameOver:
+      state.gameStatus = GameStatus.Init;
       break;
 
     default:
       break;
   }
 
-  console.timeEnd(timerName);
   return state;
 }

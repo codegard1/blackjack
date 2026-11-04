@@ -1,12 +1,13 @@
 import React from "react";
 import { Button } from '@fluentui/react-components';
-import { useGameContext } from "../context";
+import { useGameContext, useSettingContext } from "../context";
 import { JsonViewer } from './';
 
 export const DebugWindow: React.FC = () => {
 
   // State from context
   const { gameState } = useGameContext();
+  const { settings } = useSettingContext();
 
   // Local State
   const [isDeckStateVisible, setDeckStateVisible] = React.useState<boolean>(false);
@@ -15,7 +16,7 @@ export const DebugWindow: React.FC = () => {
   const [isGameStateVisible, setGameStateVisible] = React.useState<boolean>(false);
   const [isPlayerStoreVisible, setPlayerStoreVisible] = React.useState<boolean>(false);
 
-  return (
+  return !settings.isDebugWindowVisible ? null : (
     <aside className="debug-window">
       <Button appearance="transparent" onClick={() => setDeckStateVisible(!isDeckStateVisible)}>Deck</Button>
       {isDeckStateVisible && <JsonViewer data={gameState.deck.cardKeys} />}

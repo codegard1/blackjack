@@ -7,6 +7,7 @@ import { SettingsState } from '../types';
  */
 export const settingDefaults: SettingsState = {
   isActivityLogVisible: false,
+  isDebugWindowVisible: false,
   isCardDescVisible: false,
   isCardTitleVisible: true,
   isDealerHandVisible: false,

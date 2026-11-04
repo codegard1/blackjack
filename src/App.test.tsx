@@ -64,12 +64,12 @@ it('starts a new game with the default human and dealer', () => {
 });
 
 it('shows card ranks by default and toggles rank and activity visibility', () => {
-  const { container } = render(<App />);
+  render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Start' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
-  const cards = () => Array.from(container.querySelector('.PlayerContainer')?.querySelectorAll('button[aria-pressed]') ?? []);
+  const cards = () => Array.from(screen.getByRole('region', { name: "Chris's hand" }).querySelectorAll('button[aria-pressed]'));
   expect(cards()).toHaveLength(2);
   expect(cards().every((card) => (card.textContent?.trim().length ?? 0) > 1)).toBe(true);
   expect(cards()[0].querySelectorAll('.playing-card-corner')).toHaveLength(2);
@@ -105,4 +105,52 @@ it('clears in-memory game state and returns to player selection', () => {
 
   expect(screen.getByRole('alertdialog')).toBeInTheDocument();
   expect(screen.getByText('No players')).toBeInTheDocument();
+});
+
+it('resumes a saved game after a reload', () => {
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
+  const first = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  first.unmount();
+
+  const { container } = render(<App />);
+
+  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  expect(screen.getByText('Chris ($975)')).toBeInTheDocument();
+  expect(container.querySelector('.PlayerContainer')?.querySelectorAll('button[aria-pressed]')).toHaveLength(2);
+});
+
+it('hides the debug window by default and remembers the setting across reloads', () => {
+  const first = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+
+  expect(screen.queryByRole('button', { name: 'Player Hands' })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  fireEvent.click(screen.getByRole('switch', { name: 'Show Debug Window' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+  expect(screen.getByRole('button', { name: 'Player Hands' })).toBeInTheDocument();
+  first.unmount();
+
+  render(<App />);
+  expect(screen.getByRole('button', { name: 'Player Hands' })).toBeInTheDocument();
+});
+
+it('shows the app name in the header and opens the About dialog', () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+
+  expect(screen.getByRole('heading', { level: 1, name: "Chris's Blackjack" })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'About' }));
+  const dialog = screen.getByRole('dialog', { name: "About Chris's Blackjack" });
+  expect(dialog).toHaveTextContent(/Version \d/);
+  expect(dialog).toHaveTextContent('Chris Odegard');
+
+  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  expect(screen.queryByRole('dialog', { name: "About Chris's Blackjack" })).not.toBeInTheDocument();
 });
