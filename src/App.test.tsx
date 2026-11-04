@@ -56,6 +56,8 @@ it('starts a new game with the default human and dealer', () => {
   expect(screen.getByText('Chris ($975)')).toBeInTheDocument();
   expect(screen.getByText('Dealer ($975)')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Wager $25' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Stay' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Draw one card from the top of the deck' })).toBeDisabled();
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
   fireEvent.click(screen.getByText('Reset Game'));

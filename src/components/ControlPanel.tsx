@@ -69,6 +69,9 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const npcFlag = player.isNPC;
   const isRoundComplete = gameStatus >= GameStatus.HumanWins;
   const isBtnDisabled = isRoundComplete || currentPlayerKey !== playerKey;
+  // Hit and Stay need a dealt hand; a new game has no cards until the first deal
+  const isRoundDealt = Object.values(gameState.deck.state.playerHands).some((hand) => hand.cards.length > 0);
+  const isPlayDisabled = isBtnDisabled || !isRoundDealt;
   const isDealDisabled = !isRoundComplete && currentPlayerKey !== playerKey;
   const isDoubleDownDisabled = !canDoubleDown(gameState, playerKey);
   const wagerLabel = `Wager $${minimumBet}`;
@@ -90,12 +93,12 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   return hidden ? null : (
     <Toolbar aria-label={`${player.title}'s actions`} className={`player-controlpanel ${styles.toolbar}`}>
       <Tooltip content="Draw one card from the top of the deck" relationship="label">
-        <ToolbarButton className={styles.button} appearance={isBtnDisabled ? 'subtle' : 'primary'} icon={<Add20Regular />} disabled={isBtnDisabled} onClick={_hit}>
+        <ToolbarButton className={styles.button} appearance={isPlayDisabled ? 'subtle' : 'primary'} icon={<Add20Regular />} disabled={isPlayDisabled} onClick={_hit}>
           <Label>Hit</Label>
         </ToolbarButton>
       </Tooltip>
       <Tooltip content="Stand on your current hand" relationship="description">
-        <ToolbarButton className={styles.button} aria-label="Stay" icon={<ArrowForward20Regular />} disabled={isBtnDisabled} onClick={() => gameDispatch({ type: GameAction.Stay, playerKey })}>
+        <ToolbarButton className={styles.button} aria-label="Stay" icon={<ArrowForward20Regular />} disabled={isPlayDisabled} onClick={() => gameDispatch({ type: GameAction.Stay, playerKey })}>
           <Label>Stay</Label>
         </ToolbarButton>
       </Tooltip>

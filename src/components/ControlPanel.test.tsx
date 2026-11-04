@@ -66,6 +66,13 @@ describe('player controls', () => {
     screen.getAllByRole('button').forEach((button) => expect(button).toBeEnabled());
   });
 
+  it('keeps Hit and Stay disabled until the hand is dealt', () => {
+    renderControls(GameStatus.InProgress, 'chris');
+
+    expect(screen.getByRole('button', { name: 'Draw one card from the top of the deck' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Stay' })).toBeDisabled();
+  });
+
   it('only offers double down on a two-card hand', () => {
     const dispatch = renderControls(GameStatus.InProgress, 'chris', ['Club_10', 'Heart_6']);
     fireEvent.click(screen.getByRole('button', { name: 'Double Down' }));
