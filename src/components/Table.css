@@ -45,7 +45,13 @@
 .table-focus {
   min-width: 0;
   width: 100%;
-  animation: table-enter 180ms ease-out;
+}
+
+/* a slot wraps one collapsed seat; useSeatFlip animates the slot itself */
+.table-rail-slot,
+.table-pregame-slot {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .table-rail {

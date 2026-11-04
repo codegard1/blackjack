@@ -8,6 +8,7 @@ import {
   Agent, CardStack, PlayerContainer, SeatChip, TableToasts,
 } from ".";
 import { useTableToasts } from "./TableToasts";
+import { useSeatFlip } from "./useSeatFlip";
 import "./Table.css";
 
 // Context
@@ -60,8 +61,12 @@ export const Table: React.FC<ITableProps> = (props) => {
 
   const { toasts, dismiss } = useTableToasts(gameState, revealDealerTotal);
 
+  // Seats that change between the focus column and the rail flow between their positions
+  const boardRef = React.useRef<HTMLElement>(null);
+  useSeatFlip(boardRef);
+
   return (
-    <main className="table-board" style={{ animation: 'table-enter 180ms ease-out', backgroundColor: 'ghostwhite', borderRadius: 6, boxShadow: '0 6px 16px rgba(0, 0, 0, 0.16)', display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
+    <main ref={boardRef} className="table-board" style={{ animation: 'table-enter 180ms ease-out', backgroundColor: 'ghostwhite', borderRadius: 6, boxShadow: '0 6px 16px rgba(0, 0, 0, 0.16)', display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
       {gameState.isSpinnerVisible && <Spinner size="large" label="Wait, wait..." aria-live="assertive" />}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
@@ -77,7 +82,7 @@ export const Table: React.FC<ITableProps> = (props) => {
         {isStarted ? (
           <div className="table-layout is-started">
             {focusPlayer && (
-              <div key={focusPlayer.key} className="table-focus">
+              <div key={focusPlayer.key} className="table-focus" data-seat-key={focusPlayer.key} data-seat-role="focus">
                 <PlayerContainer playerKey={focusPlayer.key} />
               </div>
             )}
@@ -87,14 +92,15 @@ export const Table: React.FC<ITableProps> = (props) => {
                 const hand = deck.state.playerHands[player.key];
                 const showTotal = settings.isHandValueVisible && !!hand?.cards.length && (!player.isNPC || revealDealerTotal);
                 return (
-                  <SeatChip
-                    key={player.key}
-                    player={player}
-                    status={seatStatus(player, gameStatus)}
-                    total={showTotal ? hand.handValue.highest : undefined}
-                    cards={hand?.cards}
-                    onSelect={() => setPinnedKey(player.key)}
-                  />
+                  <div key={player.key} className="table-rail-slot" data-seat-key={player.key} data-seat-role="rail">
+                    <SeatChip
+                      player={player}
+                      status={seatStatus(player, gameStatus)}
+                      total={showTotal ? hand.handValue.highest : undefined}
+                      cards={hand?.cards}
+                      onSelect={() => setPinnedKey(player.key)}
+                    />
+                  </div>
                 );
               })}
             </div>
@@ -103,7 +109,11 @@ export const Table: React.FC<ITableProps> = (props) => {
           <div className="table-layout is-pregame">
             {pendingPlayers.length === 0
               ? <div>No players</div>
-              : pendingPlayers.map((player, index) => <SeatChip key={player.key} player={player} floating index={index} />)}
+              : pendingPlayers.map((player, index) => (
+                <div key={player.key} className="table-pregame-slot" data-seat-key={player.key} data-seat-role="pregame">
+                  <SeatChip player={player} floating index={index} />
+                </div>
+              ))}
           </div>
         )}
 

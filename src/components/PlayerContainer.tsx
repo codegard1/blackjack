@@ -32,11 +32,6 @@ const sparkleKeyframes = {
   '100%': { opacity: 0, transform: 'translate(-50%, -50%) scale(0.4) rotate(90deg)' },
 };
 
-const seatEnterKeyframes = {
-  from: { opacity: 0, transform: 'translateX(24px)' },
-  to: { opacity: 1, transform: 'translateX(0)' },
-};
-
 const useStyles = makeStyles({
   seat: {
     position: 'relative',
@@ -53,12 +48,6 @@ const useStyles = makeStyles({
     containerType: 'inline-size',
     containerName: 'seat',
     '@media (prefers-reduced-motion: reduce)': { transitionDuration: '0.01ms' },
-  },
-  enter: {
-    animationName: seatEnterKeyframes,
-    animationDuration: '320ms',
-    animationTimingFunction: tokens.curveDecelerateMid,
-    '@media (prefers-reduced-motion: reduce)': { animationName: 'none' },
   },
   active: {
     boxShadow: tokens.shadow16,
@@ -165,7 +154,6 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   const seatClass = mergeClasses(
     'PlayerContainer',
     styles.seat,
-    styles.enter,
     isActive && styles.active,
     player.isStaying && !isActive && styles.staying,
     isWinner && styles.winner,
