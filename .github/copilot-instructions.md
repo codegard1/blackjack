@@ -15,7 +15,7 @@ This repository is a browser-based blackjack game where one human plays against 
 - Use strict TypeScript and the existing interfaces, types, enums, class methods, and barrel exports where available. Follow nearby code style and avoid unrelated refactors.
 - Use `debugLog` from `src/functions/debugLog.ts` for development-only diagnostics.
 - Update the README when adding a significant player-facing feature.
-- Use Node.js versions allowed by `package.json` (`.nvmrc` pins Node 22).
+- Use Node.js versions allowed by `package.json` (`.nvmrc` pins Node 24).
 
 Common commands:
 
