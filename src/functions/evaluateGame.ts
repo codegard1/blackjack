@@ -70,6 +70,16 @@ function settleRound(state: GameState): void {
   state.gameStatusFlag = true;
 }
 
+/**
+ * Apply status-driven bookkeeping to the game state.
+ *
+ * Starts a game's ante, advances to the next player, settles completed rounds,
+ * or resets a game-over status. The supplied state is updated and returned.
+ *
+ * @param state Current game state to evaluate.
+ * @param action Reducer action that requested the evaluation.
+ * @returns The updated game state.
+ */
 export function evaluateGame(state: GameState, action: IGameReducerAction): GameState {
   switch (state.gameStatus) {
     case GameStatus.InProgress:
