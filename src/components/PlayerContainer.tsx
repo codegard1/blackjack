@@ -179,7 +179,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
             {status && <Badge appearance={status.appearance} color={status.color}>{status.text}</Badge>}
           </div>
         }
-        action={<StatusDisplay player={player} stats={player.stats} />}
+        action={<StatusDisplay player={player} />}
       />
 
       <div className={styles.body}>

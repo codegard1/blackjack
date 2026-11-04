@@ -1,36 +1,27 @@
 import React from "react";
-import { Button, Popover, PopoverSurface, PopoverTrigger, Text } from '@fluentui/react-components';
+import { Button, Popover, PopoverSurface, PopoverTrigger, Table, TableBody, TableCell, TableRow, Text } from '@fluentui/react-components';
 import { Info24Regular } from '@fluentui/react-icons';
 
 /* custom stuff */
 import { IStatusDisplayProps } from "../interfaces";
+import { summarizeStats } from "../functions/profiles";
 import "./StatusDisplay.css";
 
 export const StatusDisplay: React.FC<IStatusDisplayProps> = (props) => {
 
   // State
   const [isCalloutVisible, setCalloutVisible] = React.useState<boolean>(false);
-
-  let playerInfo = [],
-    playerStats = [];
-
-  for (const key in props.player) {
-    if (props.player.hasOwnProperty(key)) {
-      playerInfo.push(
-        <li key={`statusdisplay-${key}`}>{`${key}: ${props.player[key]
-          }`}</li>
-      );
-    }
-  }
-
-  for (const key in props.stats) {
-    if (props.stats.hasOwnProperty(key)) {
-      playerStats.push(
-        <li key={`statusdisplay-${key}`}>{`${key}: ${props.stats[key]
-          }`}</li>
-      );
-    }
-  }
+  const summary = summarizeStats(props.player.stats);
+  const statistics = [
+    ['Rounds', summary.rounds],
+    ['Won', summary.won],
+    ['Lost', summary.lost],
+    ['Pushed', summary.pushed],
+    ['Win rate', summary.winRate === undefined ? '—' : `${Math.round(summary.winRate * 100)}%`],
+    ['Blackjacks', summary.blackjacks],
+    ['Busts', summary.busts],
+    ['Pots won', `$${summary.potsWon}`],
+  ] as const;
 
   const labelId = `${props.player.title}-statsCalloutLabel`;
   const descriptionId = `${props.player.title}-statsCalloutDescription`;
@@ -41,11 +32,17 @@ export const StatusDisplay: React.FC<IStatusDisplayProps> = (props) => {
         <Button appearance="subtle" aria-label={`${props.player.title} stats`} icon={<Info24Regular />} />
       </PopoverTrigger>
       <PopoverSurface aria-labelledby={labelId} aria-describedby={descriptionId}>
-        <Text id={labelId} weight="semibold">Stats &amp; Variables</Text>
-        <div id={descriptionId} className="status-display-content">
-          <ul className="playerStats">{playerStats}</ul>
-          <ul className="playerInfo">{playerInfo}</ul>
-        </div>
+        <Text id={labelId} weight="semibold">Statistics</Text>
+        <Table id={descriptionId} aria-label={`${props.player.title} gameplay statistics`} size="small" className="status-display-content">
+          <TableBody>
+            {statistics.map(([label, value]) => (
+              <TableRow key={label}>
+                <TableCell>{label}</TableCell>
+                <TableCell>{value}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </PopoverSurface>
     </Popover>
   );

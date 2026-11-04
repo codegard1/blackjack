@@ -10,10 +10,10 @@ afterEach(() => {
 });
 
 it.each([
-  { humanCards: ['Spade_11', 'Diamond_14'], dealerCards: ['Club_10', 'Heart_7'], hit: false, message: 'Chris wins the round with blackjack.' },
-  { humanCards: ['Spade_10', 'Diamond_7'], dealerCards: ['Club_11', 'Heart_14'], hit: false, message: 'Dealer wins the round with blackjack.' },
-  { humanCards: ['Spade_10', 'Diamond_10'], dealerCards: ['Club_10', 'Heart_7'], hit: true, message: 'Chris busted. Dealer wins the round.' },
-])('keeps the result visible until the next round: $message', ({ humanCards, dealerCards, hit, message }) => {
+  { humanCards: ['Spade_11', 'Diamond_14'], dealerCards: ['Club_10', 'Heart_7'], hit: false, message: 'Chris: won the pot with blackjack. Dealer: lost the round.' },
+  { humanCards: ['Spade_10', 'Diamond_7'], dealerCards: ['Club_11', 'Heart_14'], hit: false, message: 'Chris: lost the round. Dealer: won the pot with blackjack.' },
+  { humanCards: ['Spade_10', 'Diamond_10'], dealerCards: ['Club_10', 'Heart_7'], hit: true, message: 'Chris: lost the round. Dealer: won the pot.' },
+])('expires the result after three seconds: $message', ({ humanCards, dealerCards, hit, message }) => {
   vi.spyOn(PlayingCardDeck.prototype, 'deal')
     .mockImplementationOnce(function (this: PlayingCardDeck) {
       this.playerHands.chris.cards = humanCards;
@@ -26,6 +26,7 @@ it.each([
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  vi.useFakeTimers();
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
   if (hit) {
     vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
@@ -35,15 +36,31 @@ it.each([
   expect(screen.getByText(message)).toBeInTheDocument();
   expect(screen.queryByText('New Round')).not.toBeInTheDocument();
 
-  vi.useFakeTimers();
-  act(() => vi.advanceTimersByTime(30000));
+  act(() => vi.advanceTimersByTime(2999));
   expect(screen.getByText(message)).toBeInTheDocument();
-  vi.useRealTimers();
+  act(() => vi.advanceTimersByTime(1));
+  expect(screen.queryByText(message)).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
   expect(screen.queryByText(message)).not.toBeInTheDocument();
-  expect(screen.getByText('New Round')).toBeInTheDocument();
+  expect(screen.getByText('Round 2 started')).toBeInTheDocument();
+});
+
+it('allows dismissing the result message before it expires', () => {
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_11', 'Diamond_14'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  const message = screen.getByText('Chris: won the pot with blackjack. Dealer: lost the round.');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Dismiss message' }));
+
+  expect(message).not.toBeInTheDocument();
 });
 
 it('starts a new game with the selected player and the dealer', () => {
@@ -66,7 +83,7 @@ it('starts a new game with the selected player and the dealer', () => {
   expect(screen.getByRole('button', { name: 'Start game' })).toBeInTheDocument();
 });
 
-it('shows card ranks by default and toggles rank and activity visibility', () => {
+it('always shows card ranks and toggles activity visibility', () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
@@ -88,13 +105,12 @@ it('shows card ranks by default and toggles rank and activity visibility', () =>
   fireEvent.click(screen.getByRole('button', { name: /^Chris \(\$/ }));
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-  fireEvent.click(screen.getByRole('switch', { name: 'Show Card Titles' }));
+  expect(screen.queryByRole('switch', { name: 'Show Card Titles' })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
 
-  expect(cards().every((card) => Array.from(card.querySelectorAll('.playing-card-corner')).every((corner) => corner.children.length === 1))).toBe(true);
+  expect(cards().every((card) => Array.from(card.querySelectorAll('.playing-card-corner')).every((corner) => corner.children.length === 2))).toBe(true);
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-  fireEvent.click(screen.getByRole('switch', { name: 'Show Card Titles' }));
   fireEvent.click(screen.getByRole('switch', { name: 'Show Activity Log' }));
   fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
 

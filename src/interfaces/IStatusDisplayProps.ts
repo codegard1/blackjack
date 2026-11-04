@@ -1,5 +1,6 @@
 
+import { IPlayer } from './IPlayer';
+
 export interface IStatusDisplayProps {
-  player: any;
-  stats: any;
+  player: IPlayer;
 }
