@@ -5,6 +5,7 @@ import {
   Toolbar,
   ToolbarButton,
   ToolbarDivider,
+  Text,
   Tooltip,
   makeStyles,
   tokens,
@@ -91,39 +92,46 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   };
 
   return hidden ? null : (
-    <Toolbar aria-label={`${player.title}'s actions`} className={`player-controlpanel ${styles.toolbar}`}>
-      <Tooltip content="Draw one card from the top of the deck" relationship="label">
-        <ToolbarButton className={styles.button} appearance={isPlayDisabled ? 'subtle' : 'primary'} icon={<Add20Regular />} disabled={isPlayDisabled} onClick={_hit}>
-          <Label>Hit</Label>
-        </ToolbarButton>
-      </Tooltip>
-      <Tooltip content="Stand on your current hand" relationship="description">
-        <ToolbarButton className={styles.button} aria-label="Stay" icon={<ArrowForward20Regular />} disabled={isPlayDisabled} onClick={() => gameDispatch({ type: GameAction.Stay, playerKey })}>
-          <Label>Stay</Label>
-        </ToolbarButton>
-      </Tooltip>
-      {!npcFlag && (
-        <Tooltip content="Double your stake, take exactly one more card, then stand" relationship="description">
-          <ToolbarButton className={styles.button} aria-label="Double Down" icon={<ArrowUpload20Regular />} disabled={isDoubleDownDisabled} onClick={() => gameDispatch({ type: GameAction.DoubleDown, playerKey })}>
-            <Label>Double Down</Label>
+    <>
+      {!npcFlag && !isRoundDealt && !isRoundComplete && currentPlayerKey === playerKey && (
+        <Text as="p" size={200}>
+          Before dealing, use Wager to add ${minimumBet} to your stake. You can add more than once.
+        </Text>
+      )}
+      <Toolbar aria-label={`${player.title}'s actions`} className={`player-controlpanel ${styles.toolbar}`}>
+        <Tooltip content="Draw one card from the top of the deck" relationship="label">
+          <ToolbarButton className={styles.button} appearance={isPlayDisabled ? 'subtle' : 'primary'} icon={<Add20Regular />} disabled={isPlayDisabled} onClick={_hit}>
+            <Label>Hit</Label>
           </ToolbarButton>
         </Tooltip>
-      )}
-      <Tooltip content={`Add $${minimumBet} to the pot`} relationship="description">
-        <ToolbarButton className={styles.button} aria-label={wagerLabel} icon={<ArrowUp20Regular />} disabled={isBtnDisabled} onClick={() => gameDispatch({ type: GameAction.Bet, playerKey, betAmount: minimumBet })}>
-          <Label>{wagerLabel}</Label>
-        </ToolbarButton>
-      </Tooltip>
-
-      <ToolbarDivider />
-
-      {!npcFlag && (
-        <Tooltip content="Deal a new round" relationship="description">
-          <ToolbarButton className={styles.button} aria-label="Deal" appearance={isRoundComplete ? 'primary' : 'subtle'} icon={<ArrowClockwise20Regular />} disabled={isDealDisabled} onClick={deal}>
-            <Label>Deal</Label>
+        <Tooltip content="Stand on your current hand" relationship="description">
+          <ToolbarButton className={styles.button} aria-label="Stay" icon={<ArrowForward20Regular />} disabled={isPlayDisabled} onClick={() => gameDispatch({ type: GameAction.Stay, playerKey })}>
+            <Label>Stay</Label>
           </ToolbarButton>
         </Tooltip>
-      )}
-    </Toolbar>
+        {!npcFlag && (
+          <Tooltip content="Double your stake, take exactly one more card, then stand" relationship="description">
+            <ToolbarButton className={styles.button} aria-label="Double Down" icon={<ArrowUpload20Regular />} disabled={isDoubleDownDisabled} onClick={() => gameDispatch({ type: GameAction.DoubleDown, playerKey })}>
+              <Label>Double Down</Label>
+            </ToolbarButton>
+          </Tooltip>
+        )}
+        <Tooltip content={`Add $${minimumBet} to the pot`} relationship="description">
+          <ToolbarButton className={styles.button} aria-label={wagerLabel} icon={<ArrowUp20Regular />} disabled={isBtnDisabled} onClick={() => gameDispatch({ type: GameAction.Bet, playerKey, betAmount: minimumBet })}>
+            <Label>{wagerLabel}</Label>
+          </ToolbarButton>
+        </Tooltip>
+
+        <ToolbarDivider />
+
+        {!npcFlag && (
+          <Tooltip content="Deal a new round" relationship="description">
+            <ToolbarButton className={styles.button} aria-label="Deal" appearance={isRoundComplete ? 'primary' : 'subtle'} icon={<ArrowClockwise20Regular />} disabled={isDealDisabled} onClick={deal}>
+              <Label>Deal</Label>
+            </ToolbarButton>
+          </Tooltip>
+        )}
+      </Toolbar>
+    </>
   );
 }

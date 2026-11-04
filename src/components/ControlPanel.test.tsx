@@ -67,14 +67,19 @@ describe('player controls', () => {
   });
 
   it('keeps Hit and Stay disabled until the hand is dealt', () => {
-    renderControls(GameStatus.InProgress, 'chris');
+    const dispatch = renderControls(GameStatus.InProgress, 'chris');
 
     expect(screen.getByRole('button', { name: 'Draw one card from the top of the deck' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Stay' })).toBeDisabled();
+    expect(screen.getByText('Before dealing, use Wager to add $25 to your stake. You can add more than once.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wager $25' }));
+    expect(dispatch).toHaveBeenCalledWith({ type: GameAction.Bet, playerKey: 'chris', betAmount: 25 });
   });
 
   it('only offers double down on a two-card hand', () => {
     const dispatch = renderControls(GameStatus.InProgress, 'chris', ['Club_10', 'Heart_6']);
+    expect(screen.queryByText(/Before dealing/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Double Down' }));
     expect(dispatch).toHaveBeenCalledWith({ type: GameAction.DoubleDown, playerKey: 'chris' });
 
