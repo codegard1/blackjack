@@ -15,4 +15,6 @@ applyTo:
 - Keep settlement idempotent through `gameStatusFlag`. Round stake includes the ante and any added wagers.
 - `gameReducer` creates a new outer state while its deck and player store are class instances. A shallow spread does not clone those nested instances; account for this when changing state updates.
 - When changing the persisted game snapshot or `GameStatus` values, update `GAME_STORE_VERSION` in `src/functions/persistence.ts` and cover restoration behavior with tests.
+- Keep profile changes in `profileReducer` and profile helpers in `src/functions/profiles.ts`. Profiles are persisted separately from the active game under `StoreName.PROFILESTORE`; `seatsFor` supplies the selected human and dealer, including their lifetime stats, to a new game. When a round settles, sync the game stats back to profiles only on the settlement transition so restored rounds are not counted twice.
+- When changing profile persistence, profile-to-seat mapping, or stats synchronization, cover defaults, restoration/normalization, and cross-game accumulation with tests.
 - For reducer and rule tests, use a known deck order rather than relying on random deals. Add explicit cases for outcomes, stakes, payouts, and state transitions affected by the change.
