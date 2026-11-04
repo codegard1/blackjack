@@ -4,6 +4,8 @@ import { DeckState, MessageBarDefinition, PlayerKey, PlayingCardKey } from "../t
 
 export interface IGameReducerAction {
   cardKey?: PlayingCardKey;
+  betAmount?: number;
+  clearActivityLog?: boolean;
   controllingPlayerKey?: PlayerKey;
   deckSide?: 'top' | 'bottom' | 'random';
   deckState?: DeckState;

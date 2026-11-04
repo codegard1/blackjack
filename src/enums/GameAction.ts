@@ -1,6 +1,7 @@
 export enum GameAction {
   AddToPot = 'AddToPot',
   Ante = 'Ante',
+  Bet = 'Bet',
   ClearSelected = 'ClearSelected',
   Deal = 'Deal',
   Draw = 'Draw',

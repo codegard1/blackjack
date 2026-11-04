@@ -1,11 +1,11 @@
-import { MessageBarType } from '@fluentui/react';
 import { Dispatch, createContext, useContext } from 'react';
 import { PlayerStore, PlayingCardDeck } from '../classes';
 import { GameStatus } from '../enums';
 import { IGameReducerAction } from '../interfaces';
 import { GameState } from '../types';
 
-export const gameDefaults: GameState = {
+export const createGameState = (): GameState => ({
+  activityLog: [],
   gameStatus: GameStatus.Init,
   deck: new PlayingCardDeck(),
   gameStatusFlag: false,
@@ -19,13 +19,15 @@ export const gameDefaults: GameState = {
   turnCount: 0,
   lastWriteTime: new Date().toISOString(),
   messageBarDefinition: {
-    type: MessageBarType.info,
+    type: 'info',
     text: "",
     isMultiLine: false
   },
   controllingPlayer: undefined,
   playerStore: new PlayerStore(),
-}
+});
+
+export const gameDefaults: GameState = createGameState();
 
 
 export const GameContext = createContext<GameState>(gameDefaults);

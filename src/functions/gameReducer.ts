@@ -1,10 +1,43 @@
-import { PlayerStore, PlayingCard, PlayingCardDeck } from "../classes";
-import { gameDefaults } from "../context";
+import { PlayerStore } from "../classes/PlayerStore";
+import { PlayingCard } from "../classes/PlayingCard";
+import { PlayingCardDeck } from "../classes/PlayingCardDeck";
+import { createGameState, gameDefaults } from "../context";
 import { defaultplayersArr } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
 import { IGameReducerAction } from "../interfaces";
-import { GameState } from "../types";
-import { endgameTrap, evaluateGame } from "./";
+import { ActivityLogEntry, GameState } from "../types";
+import { endgameTrap } from "./endgameTrap";
+import { evaluateGame } from "./evaluateGame";
+
+function recordActivity(state: GameState, name: string, description: string, event: ActivityLogEntry['event']): void {
+  const lastEntry = state.activityLog[state.activityLog.length - 1];
+  state.activityLog = [...state.activityLog, {
+    id: (lastEntry?.id ?? 0) + 1,
+    sessionId: event === 'game' ? (lastEntry ? (lastEntry.sessionId ?? 1) + 1 : 1) : (lastEntry?.sessionId ?? 1),
+    event,
+    timestamp: Date.now(),
+    name,
+    description,
+  }];
+}
+
+function updatePlayerHandStatus(state: GameState, playerKey: string): void {
+  const player = state.playerStore.player(playerKey);
+  const hand = state.deck.playerHands[playerKey];
+  if (!player || !hand) return;
+
+  const total = state.deck.getHandValue(playerKey).highest;
+  player.isBusted = total > 21;
+  player.isBlackjack = hand.cards.length === 2 && total === 21;
+
+  if (player.isBusted || player.isBlackjack) {
+    state.gameStatus = player.isNPC
+      ? (player.isBusted ? GameStatus.HumanWins : GameStatus.DealerWins)
+      : (player.isBusted ? GameStatus.DealerWins : GameStatus.HumanWins);
+    state.controllingPlayer = undefined;
+    state.dealerHasControl = false;
+  }
+}
 
 /**
  * Reducer function for game state
@@ -13,10 +46,12 @@ import { endgameTrap, evaluateGame } from "./";
  * @returns modified game state
  */
 export function gameReducer(state: GameState, action: IGameReducerAction) {
+  state = { ...state };
 
   // Action props
   const {
     cardKey,
+    betAmount,
     controllingPlayerKey,
     deckSide,
     deckState,
@@ -32,9 +67,6 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
   // Announce
   console.log('## GameAction.' + type, JSON.stringify(action));
-
-  // Evaluate game state every time 
-  state = evaluateGame(state, action);
 
   // Mandatory state mutations
   state.lastWriteTime = new Date().toISOString();
@@ -80,6 +112,14 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       return state;
     }
 
+    case GameAction.Bet: {
+      if (typeof playerKey === 'string' && undefined !== betAmount && state.playerStore.bet(playerKey, betAmount)) {
+        state.pot += betAmount;
+        recordActivity(state, state.playerStore.player(playerKey).title, `wagered $${betAmount}`, 'bet');
+      }
+      return state;
+    }
+
     case GameAction.AddToPot: {
       if (undefined !== potIncrement)
         state.pot += potIncrement;
@@ -99,6 +139,10 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     case GameAction.SetControllingPlayer: {
       state.controllingPlayer = controllingPlayerKey;
       state.dealerHasControl = controllingPlayerKey === 'dealer';
+      if (undefined !== controllingPlayerKey) {
+        state.playerStore.currentPlayerKey = controllingPlayerKey;
+        state.playerStore.startTurn(controllingPlayerKey);
+      }
       return state;
     }
 
@@ -116,28 +160,30 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
      * Initiate a new game from scratch
      */
     case GameAction.NewGame: {
-      state.playerStore.reset();
-      state.deck.reset();
+      state.playerStore = new PlayerStore();
+      state.deck = new PlayingCardDeck();
+      state.pot = 0;
+      state.winner = undefined;
+      state.loser = undefined;
+      state.gameStatusFlag = false;
 
-      // This is redundant with playerStore.reset(). Consider removing
       if (undefined !== playerKey && typeof playerKey !== 'string') {
         playerKey.forEach(k => {
-          if (undefined !== state.playerStore.player(k)) {
-            state.playerStore.resetPlayer(k, 'bank');
-          }
-          else {
-            const p = defaultplayersArr.find((i) => i.key === k);
-            if (undefined !== p)
-              state.playerStore.newPlayer({ bank: p.bank, id: p.id, isNPC: p.isNPC, key: k, title: p.title, disabled: p.disabled })
+          const p = defaultplayersArr.find((i) => i.key === k);
+          if (undefined !== p) {
+            state.playerStore.newPlayer({ bank: p.bank, id: p.id, isNPC: p.isNPC, key: k, title: p.title, disabled: p.disabled });
           }
           state.deck.newPlayerHand(k);
         });
-        state.playerStore.currentPlayerKey = playerKey[0];
+        state.playerStore.currentPlayerKey = state.playerStore.activePlayerKeys[0];
       }
       state.controllingPlayer = state.playerStore.currentPlayer?.key;
+      state.dealerHasControl = state.playerStore.currentPlayer?.key === 'dealer';
+      if (state.controllingPlayer) state.playerStore.startTurn(state.controllingPlayer);
       state.gameStatus = GameStatus.InProgress;
       state.round = 1;
       state.turnCount = 0;
+      recordActivity(state, '', 'Game started', 'game');
       return state;
     }
 
@@ -155,23 +201,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
      * Reset game state to default
      */
     case GameAction.ResetGame: {
-      state.deck.reset();
-      state.playerStore.reset();
-      state.controllingPlayer = gameDefaults.controllingPlayer;
-      state.dealerHasControl = gameDefaults.dealerHasControl;
-      state.gameStatus = gameDefaults.gameStatus;
-      state.gameStatusFlag = gameDefaults.gameStatusFlag;
-      state.isSpinnerVisible = gameDefaults.isSpinnerVisible;
-      state.lastWriteTime = gameDefaults.lastWriteTime;
-      state.loser = gameDefaults.loser;
-      state.messageBarDefinition = gameDefaults.messageBarDefinition;
-      state.minimumBet = gameDefaults.minimumBet;
-      state.playerStore = gameDefaults.playerStore;
-      state.pot = gameDefaults.pot;
-      state.round = gameDefaults.round;
-      state.turnCount = gameDefaults.turnCount;
-      state.winner = gameDefaults.winner;
-      return state;
+      return { ...createGameState(), activityLog: action.clearActivityLog ? [] : state.activityLog };
     }
 
     // TODO
@@ -192,18 +222,47 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
      * Start a new round of a continuous game
      */
     case GameAction.NewRound: {
-      state.controllingPlayer = state.playerStore.currentPlayerKey;
+      state.deck.clearHands();
+      state.playerStore.reset();
+      const firstHuman = state.playerStore.all.find((player) => !player.isNPC) ?? state.playerStore.all[0];
+      state.playerStore.currentPlayerKey = firstHuman?.key;
+      if (firstHuman) state.playerStore.startTurn(firstHuman.key);
+      state.controllingPlayer = firstHuman?.key;
+      state.dealerHasControl = false;
       state.gameStatus = GameStatus.InProgress;
+      state.gameStatusFlag = false;
       state.pot = 0;
-      state.round = state.round + 1;
-      state.turnCount = 0;
+      state.playerStore.all.forEach((player) => {
+        if (state.playerStore.ante(player.key, state.minimumBet)) state.pot += state.minimumBet;
+      });
+      state.round += 1;
+      state.turnCount = 1;
+      recordActivity(state, '', `Round ${state.round} started`, 'round');
       return state;
     }
 
-    // TODO
     case GameAction.Stay: {
-      if (state.gameStatus !== GameStatus.Init && state.gameStatusFlag) {
-        state.controllingPlayer = 'dealer';
+      const stayingPlayerKey = typeof playerKey === 'string' ? playerKey : state.playerStore.currentPlayerKey;
+      if (stayingPlayerKey && state.playerStore.player(stayingPlayerKey)) {
+        recordActivity(state, state.playerStore.player(stayingPlayerKey).title, 'stayed', 'stay');
+        state.playerStore.stay(stayingPlayerKey);
+        if (stayingPlayerKey !== 'dealer' && state.playerStore.player('dealer')) {
+          state.playerStore.currentPlayerKey = 'dealer';
+          state.playerStore.startTurn('dealer');
+          state.controllingPlayer = 'dealer';
+          state.dealerHasControl = true;
+        } else {
+          const dealerTotal = state.deck.getHandValue('dealer').highest;
+          const human = state.playerStore.all.find((player) => !player.isNPC);
+          const humanTotal = human ? state.deck.getHandValue(human.key).highest : 0;
+          state.controllingPlayer = undefined;
+          state.dealerHasControl = false;
+          state.gameStatus = dealerTotal > 21 || humanTotal >= dealerTotal
+            ? GameStatus.HumanWins
+            : GameStatus.DealerWins;
+          const winner = state.gameStatus === GameStatus.HumanWins ? human : state.playerStore.player('dealer');
+          if (winner) recordActivity(state, winner.title, 'won the round', 'win');
+        }
       }
       return state;
     }
@@ -247,27 +306,45 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
     // Draw card(s) from the deck
     case GameAction.Draw: {
-      const _num = (undefined === numberOfCards) ? 0 : numberOfCards;
-      if (state.deck.length > _num) {
+      const _num = numberOfCards ?? 1;
+      if (_num > 0 && state.deck.length >= _num) {
 
         switch (deckSide) {
           case 'top': {
             console.log('draw from the top')
             const _drawn = state.deck.draw(_num);
-            if (undefined !== playerKey && typeof playerKey === 'string')
+            if (undefined !== playerKey && typeof playerKey === 'string') {
+              if (!state.deck.playerHands[playerKey]) state.deck.newPlayerHand(playerKey);
               state.deck.playerHands[playerKey].cards.push(..._drawn);
+              state.deck.updateHandValue(playerKey);
+              state.playerStore.hit(playerKey);
+              updatePlayerHandStatus(state, playerKey);
+              recordActivity(state, state.playerStore.player(playerKey).title, `drew ${_num} card${_num === 1 ? '' : 's'} from the top`, 'draw');
+            }
             break;
           }
           case 'random': {
             const _drawn = state.deck.drawRandom(_num);
-            if (undefined !== playerKey && typeof playerKey === 'string')
+            if (undefined !== playerKey && typeof playerKey === 'string') {
+              if (!state.deck.playerHands[playerKey]) state.deck.newPlayerHand(playerKey);
               state.deck.playerHands[playerKey].cards.push(..._drawn);
+              state.deck.updateHandValue(playerKey);
+              state.playerStore.hit(playerKey);
+              updatePlayerHandStatus(state, playerKey);
+              recordActivity(state, state.playerStore.player(playerKey).title, `drew ${_num} card${_num === 1 ? '' : 's'} at random`, 'draw');
+            }
             break;
           }
           default: {
             const _drawn = state.deck.drawFromBottomOfDeck(_num);
-            if (undefined !== playerKey && typeof playerKey === 'string')
+            if (undefined !== playerKey && typeof playerKey === 'string') {
+              if (!state.deck.playerHands[playerKey]) state.deck.newPlayerHand(playerKey);
               state.deck.playerHands[playerKey].cards.push(..._drawn);
+              state.deck.updateHandValue(playerKey);
+              state.playerStore.hit(playerKey);
+              updatePlayerHandStatus(state, playerKey);
+              recordActivity(state, state.playerStore.player(playerKey).title, `drew ${_num} card${_num === 1 ? '' : 's'} from the bottom`, 'draw');
+            }
             break;
           }
         }
@@ -311,11 +388,22 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     // Shuffle the remaining card in the deck
     case GameAction.Shuffle: {
       state.deck.shuffle();
+      recordActivity(state, '', 'Deck shuffled', 'shuffle');
       return state;
     }
 
     case GameAction.Deal: {
+      const hasCardsInHands = state.playerStore.all.some((player) => state.deck.playerHands[player.key]?.cards.length);
+      if (hasCardsInHands || state.gameStatus >= GameStatus.HumanWins) {
+        state = gameReducer(state, { type: GameAction.NewRound });
+      }
+      if (state.playerStore.length === 0) return state;
       state.deck.deal(2);
+      state.playerStore.all.forEach((player) => {
+        state.deck.updateHandValue(player.key);
+        updatePlayerHandStatus(state, player.key);
+        recordActivity(state, player.title, 'was dealt two cards', 'deal');
+      });
       return state;
     }
 

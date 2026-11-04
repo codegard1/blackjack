@@ -1,18 +1,8 @@
 // React
 import React from "react";
 
-// Fluent UI
-import {
-  DefaultEffects,
-  Icon,
-  MotionAnimations,
-  Spinner,
-  SpinnerSize,
-  Stack,
-  StackItem,
-  Text,
-  nullRender,
-} from '@fluentui/react';
+import { Button, Spinner, Text } from '@fluentui/react-components';
+import { Settings24Regular } from '@fluentui/react-icons';
 
 // Local Resources
 import {
@@ -41,76 +31,53 @@ export const Table: React.FC = () => {
 
 
   // Ad-hod styles for the Table
-  const tableStyles = {
-    boxShadow: DefaultEffects.elevation16,
-    borderRadius: DefaultEffects.roundedCorner6,
-    backgroundColor: 'ghostwhite',
-    animation: MotionAnimations.fadeIn
-  }
-
   return (
-    <Stack verticalAlign="start" wrap tokens={{ childrenGap: 10, padding: 10 }} style={tableStyles}>
+    <main style={{ animation: 'table-enter 180ms ease-out', backgroundColor: 'ghostwhite', borderRadius: 6, boxShadow: '0 6px 16px rgba(0, 0, 0, 0.16)', display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Button appearance="subtle" aria-label="Settings" icon={<Settings24Regular />} onClick={toggleOptionsPanel} />
+      </div>
 
-      <Stack horizontal horizontalAlign="end" disableShrink>
-        <Icon iconName="Settings" aria-label="Settings" style={{ fontSize: "24px" }} onClick={toggleOptionsPanel} />
-      </Stack>
+      {gameState.isSpinnerVisible && <Spinner size="large" label="Wait, wait..." aria-live="assertive" />}
 
-      {!gameState.isSpinnerVisible ? nullRender() :
-        <Spinner
-          size={SpinnerSize.large}
-          label="Wait, wait..."
-          ariaLive="assertive"
-          labelPosition="right"
-          style={{ animation: MotionAnimations.scaleDownIn }}
-        />}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
 
-      <Stack verticalAlign="space-around" tokens={{ childrenGap: 10, padding: 10, }}>
+        {!gameState.gameStatusFlag && <Text size={600}>Pot: ${gameState.pot}</Text>}
 
-        {!gameState.gameStatusFlag && <Text block nowrap variant="xLarge">Pot: ${gameState.pot}</Text>}
-
-        <Stack horizontal horizontalAlign="stretch" disableShrink wrap tokens={{ childrenGap: 10, padding: 10 }}>
+        <div style={{ alignItems: 'stretch', display: 'flex', flexWrap: 'wrap', gap: 10, padding: 10 }}>
 
           {null === playerStore || playerStore.length === 0
-            ? <StackItem>No players</StackItem>
+            ? <div>No players</div>
             : playerStore.all.map(p =>
-              <StackItem align="stretch" grow={1} key={`PlayerStack-${p.key}`}>
-                <Text block>{p.title}</Text>
+              <div key={`PlayerStack-${p.key}`} style={{ flex: '1 1 260px' }}>
                 <PlayerContainer key={`PlayerContainer-${p.key}`} playerKey={p.key} />
-              </StackItem>
+              </div>
             )}
-        </Stack>
-      </Stack>
+        </div>
 
       {!settings.isSplashScreenVisible && gameState.deck.length > 0 &&
-        <Stack verticalAlign="stretch" wrap tokens={{ childrenGap: 10, padding: 10 }} verticalFill>
-
-          <StackItem>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
             <CardStack
               cards={gameState.deck.cardKeys}
               title="Deck"
               hidden={!settings.isDeckVisible}
               isSelectable={false}
             />
-          </StackItem>
-          <StackItem>
             <CardStack
               cards={gameState.deck.drawnKeys}
               title="Drawn Cards"
               hidden={!settings.isDrawnVisible}
               isSelectable={false}
             />
-          </StackItem>
-          <StackItem>
             <CardStack
               cards={gameState.deck.selectedKeys}
               title="Selected Cards"
               hidden={!settings.isSelectedVisible}
               isSelectable={false}
             />
-          </StackItem>
-        </Stack>
+        </div>
       }
-    </Stack>
+      </div>
+    </main>
   );
 }
 

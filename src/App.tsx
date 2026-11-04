@@ -2,27 +2,34 @@
 import React from 'react';
 
 // FluentUI
-import { initializeIcons, Layer, MessageBar, nullRender, Stack, } from '@fluentui/react';
+import { FluentProvider, MessageBar, MessageBarBody, webLightTheme } from '@fluentui/react-components';
 
 // Local Resources
 import './App.css';
 import { ActivityLog, OptionsPanel, SplashScreen, Table, DebugWindow } from './components';
-import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, gameDefaults, settingDefaults } from './context';
-import { GameAction, StoreName } from './enums';
+import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext, createGameState, settingDefaults } from './context';
+import { GameAction, GameStatus, StoreName } from './enums';
 import { gameReducer, settingReducer } from './functions';
 import { SettingsState } from './types';
-
-// Necessary in order for Fluent Icons to render on the page
-initializeIcons();
 
 // Main Component
 const App = () => {
 
   // State from context
   const [settings, toggleSetting] = React.useReducer(settingReducer, settingDefaults);
-  const [gameState, gameDispatch] = React.useReducer(gameReducer, gameDefaults);
+  const [gameState, gameDispatch] = React.useReducer(gameReducer, undefined, createGameState);
   const deckState = gameState.deck.state;
   const playerState = gameState.playerStore.state;
+  const human = gameState.playerStore.all.find((player) => !player.isNPC);
+  const dealer = gameState.playerStore.all.find((player) => player.isNPC);
+  const roundWinner = gameState.gameStatus === GameStatus.HumanWins ? human
+    : gameState.gameStatus === GameStatus.DealerWins ? dealer : undefined;
+  const roundLoser = gameState.gameStatus === GameStatus.HumanWins ? dealer : human;
+  const resultText = roundWinner
+    ? roundLoser?.isBusted
+      ? `${roundLoser.title} busted. ${roundWinner.title} wins the round.`
+      : `${roundWinner.title} wins the round${roundWinner.isBlackjack ? ' with blackjack' : ''}.`
+    : gameState.gameStatus === GameStatus.GameOver ? 'Game over.' : '';
 
   // Initialization effect 
   React.useEffect(() => {
@@ -74,35 +81,35 @@ const App = () => {
   }, [gameState.gameStatus])
 
   return (
-    <SettingContext.Provider value={settings}>
-      <SettingDispatchContext.Provider value={toggleSetting}>
-        <GameContext.Provider value={gameState}>
-          <GameDispatchContext.Provider value={gameDispatch}>
+    <FluentProvider theme={webLightTheme}>
+      <SettingContext.Provider value={settings}>
+        <SettingDispatchContext.Provider value={toggleSetting}>
+          <GameContext.Provider value={gameState}>
+            <GameDispatchContext.Provider value={gameDispatch}>
 
-            {
-              (true === settings.isMessageBarVisible) && ('' !== gameState.messageBarDefinition.text) ?
-                <MessageBar
-                  messageBarType={gameState.messageBarDefinition.type}
-                  isMultiline={gameState.messageBarDefinition.isMultiLine}>
-                  {gameState.messageBarDefinition.text}
+              {resultText !== '' ? (
+                <MessageBar intent={gameState.gameStatus === GameStatus.HumanWins ? 'success' : 'warning'}>
+                  <MessageBarBody>{resultText}</MessageBarBody>
                 </MessageBar>
-                : nullRender()
-            }
+              ) : settings.isMessageBarVisible && gameState.messageBarDefinition.text !== '' && (
+                <MessageBar intent={gameState.messageBarDefinition.type}>
+                  <MessageBarBody>{gameState.messageBarDefinition.text}</MessageBarBody>
+                </MessageBar>
+              )}
 
-            <Layer>
               <SplashScreen />
               <OptionsPanel />
-            </Layer>
-            <Stack tokens={{ childrenGap: 15 }} horizontalAlign='space-between' verticalAlign='space-evenly'>
-              <Table />
-              <ActivityLog />
-              <DebugWindow />
-            </Stack>
+              <div className="app-content">
+                <Table />
+                <ActivityLog />
+                <DebugWindow />
+              </div>
 
-          </GameDispatchContext.Provider>
-        </GameContext.Provider>
-      </SettingDispatchContext.Provider>
-    </SettingContext.Provider>
+            </GameDispatchContext.Provider>
+          </GameContext.Provider>
+        </SettingDispatchContext.Provider>
+      </SettingContext.Provider>
+    </FluentProvider>
   );
 }
 

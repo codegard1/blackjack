@@ -1,5 +1,5 @@
-import { Stack, Text, nullRender } from "@fluentui/react";
 import React from "react";
+import { Button } from '@fluentui/react-components';
 import { useGameContext } from "../context";
 import { JsonViewer } from './';
 
@@ -16,22 +16,18 @@ export const DebugWindow: React.FC = () => {
   const [isPlayerStoreVisible, setPlayerStoreVisible] = React.useState<boolean>(false);
 
   return (
-    <Stack styles={{ root: { backgroundColor: '#eee' } }}>
-      <Text as='h1' block onClick={() => setDeckStateVisible(!isDeckStateVisible)}>
-        Deck</Text>
-      {isDeckStateVisible ? <JsonViewer data={gameState.deck.cardKeys} /> : nullRender()}
+    <aside className="debug-window">
+      <Button appearance="transparent" onClick={() => setDeckStateVisible(!isDeckStateVisible)}>Deck</Button>
+      {isDeckStateVisible && <JsonViewer data={gameState.deck.cardKeys} />}
 
-      <Text as='h1' block onClick={() => setSelectedStateVisible(!isSelectedStateVisible)}>
-        Selected</Text>
-      {isSelectedStateVisible ? <JsonViewer data={gameState.deck.selectedKeys} /> : nullRender()}
+      <Button appearance="transparent" onClick={() => setSelectedStateVisible(!isSelectedStateVisible)}>Selected</Button>
+      {isSelectedStateVisible && <JsonViewer data={gameState.deck.selectedKeys} />}
 
-      <Text as='h1' block onClick={() => setPlayerHandStateVisible(!isPlayerHandStateVisible)}>
-        Player Hands</Text>
-      {isPlayerHandStateVisible ? <JsonViewer data={gameState.deck.playerHands} /> : nullRender()}
+      <Button appearance="transparent" onClick={() => setPlayerHandStateVisible(!isPlayerHandStateVisible)}>Player Hands</Button>
+      {isPlayerHandStateVisible && <JsonViewer data={gameState.deck.playerHands} />}
 
-      <Text as='h1' block onClick={() => setGameStateVisible(!isGameStateVisible)}>
-        Game</Text>
-      {isGameStateVisible ? <JsonViewer data={{
+      <Button appearance="transparent" onClick={() => setGameStateVisible(!isGameStateVisible)}>Game</Button>
+      {isGameStateVisible && <JsonViewer data={{
         activePlayerKeys: gameState.playerStore.activePlayerKeys,
         controllingPlayer: gameState.controllingPlayer,
         currentPlayerKey: gameState.playerStore.currentPlayerKey,
@@ -48,13 +44,12 @@ export const DebugWindow: React.FC = () => {
         round: gameState.round,
         turnCount: gameState.turnCount,
         winner: gameState.winner,
-      }} /> : nullRender()}
+      }} />}
 
-      <Text as='h1' block onClick={() => setPlayerStoreVisible(!isPlayerStoreVisible)}>
-        Players</Text>
-      {isPlayerStoreVisible ? <JsonViewer data={gameState.playerStore.state} /> : nullRender()}
+      <Button appearance="transparent" onClick={() => setPlayerStoreVisible(!isPlayerStoreVisible)}>Players</Button>
+      {isPlayerStoreVisible && <JsonViewer data={gameState.playerStore.state} />}
 
-    </Stack>
+    </aside>
   );
 
 }

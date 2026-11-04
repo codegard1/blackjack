@@ -1,19 +1,28 @@
 // React
 import React from "react";
 
-// Fluent UI
 import {
-  Dialog, DialogFooter, DialogType, Dropdown, IDropdownOption, PrimaryButton, ResponsiveMode, Text,
-} from '@fluentui/react';
+  Button,
+  Dialog,
+  DialogActions,
+  DialogBody,
+  DialogContent,
+  DialogSurface,
+  DialogTitle,
+  Dropdown,
+  Label,
+  Option,
+  Text,
+} from '@fluentui/react-components';
+import { Dismiss24Regular } from '@fluentui/react-icons';
 
 import { useGameContext, useSettingContext } from '../context';
 import {
-  defaultPlayersDropdownOptions,
+  defaultplayersArr,
   defaultSelectedPlayerKeys
 } from "../definitions";
 import { GameAction } from "../enums";
 import { PlayerKey } from "../types";
-import { IPlayer } from "../interfaces";
 
 
 export const SplashScreen: React.FC = () => {
@@ -25,17 +34,6 @@ export const SplashScreen: React.FC = () => {
   // State
   const [selectedPlayers, setSelectedPlayers] = React.useState<PlayerKey[]>(defaultSelectedPlayerKeys);
   const [errorMessage, setErrorMessage] = React.useState<string>();
-
-  const onChangeDropDown = (event: React.FormEvent<HTMLDivElement>, option: IDropdownOption<IPlayer> | undefined, index?: number): void => {
-    if (!!option) {
-      const { key, selected } = option;
-      const _selectedPlayers = selectedPlayers.slice();
-      const _ix = _selectedPlayers.indexOf(key as PlayerKey);
-      if (true === selected && _ix === -1) _selectedPlayers.push(key as PlayerKey);
-      if (false === selected && _ix !== -1) _selectedPlayers.splice(_ix, 1);
-      setSelectedPlayers(_selectedPlayers);
-    }
-  }
 
   function onDismissDialog() {
     toggleSetting({ key: 'isSplashScreenVisible', value: false })
@@ -55,39 +53,47 @@ export const SplashScreen: React.FC = () => {
 
   return (
     <Dialog
-      hidden={!settings.isSplashScreenVisible}
-      dialogContentProps={{
-        type: DialogType.normal,
-        title: 'Blackjack',
-        subText: 'This is the splash screen',
-        onDismiss: onDismissDialog,
-        showCloseButton: true,
-        // responsiveMode: ResponsiveMode.small,
-        closeButtonAriaLabel: 'Close dialog',
+      open={settings.isSplashScreenVisible}
+      onOpenChange={(_, data) => {
+        if (!data.open) onDismissDialog();
       }}
-      modalProps={{
-        isBlocking: true,
-        styles: { main: { maxWidth: 450, top: 125 } },
-        isDarkOverlay: true,
-        topOffsetFixed: true,
-        onDismiss: () => onDismissDialog,
-        onDismissed: () => onDismissDialog,
-      }}
-      responsiveMode={ResponsiveMode.medium}
-      onDismiss={onDismissDialog}
+      modalType="alert"
     >
-      <Dropdown
-        placeholder="Choose"
-        label="Select at least two players"
-        multiSelect
-        onChange={onChangeDropDown}
-        options={defaultPlayersDropdownOptions}
-        defaultSelectedKeys={selectedPlayers}
-      />
-      <Text block styles={{ root: { margin: '1em', color: 'salmon' } }}>{errorMessage}</Text>
-      <DialogFooter>
-        <PrimaryButton text="Start" onClick={onClickStartButton} />
-      </DialogFooter>
-    </Dialog >
+      <DialogSurface>
+        <DialogBody>
+          <DialogTitle
+            action={
+              <Button
+                appearance="subtle"
+                aria-label="Close dialog"
+                icon={<Dismiss24Regular />}
+                onClick={onDismissDialog}
+              />
+            }
+          >
+            Blackjack
+          </DialogTitle>
+          <DialogContent>
+            <p>This is the splash screen</p>
+            <Label id="player-selection-label">Select at least two players</Label>
+            <Dropdown
+              aria-labelledby="player-selection-label"
+              placeholder="Choose"
+              multiselect
+              selectedOptions={selectedPlayers}
+              onOptionSelect={(_, data) => setSelectedPlayers(data.selectedOptions as PlayerKey[])}
+            >
+              {defaultplayersArr.map((player) => (
+                <Option key={player.key} value={player.key}>{player.title}</Option>
+              ))}
+            </Dropdown>
+            {errorMessage && <Text style={{ color: 'salmon', marginTop: '1em' }}>{errorMessage}</Text>}
+          </DialogContent>
+          <DialogActions>
+            <Button appearance="primary" onClick={onClickStartButton}>Start</Button>
+          </DialogActions>
+        </DialogBody>
+      </DialogSurface>
+    </Dialog>
   );
 }

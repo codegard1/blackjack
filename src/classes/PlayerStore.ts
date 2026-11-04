@@ -141,7 +141,7 @@ export class PlayerStore implements IPlayerStore {
       p.bank -= amount;
       p.lastAction = PlayerAction.Bet;
       p.lastBet = amount;
-      p.totalBet ? p.totalBet += amount : amount;
+      p.totalBet = (p.totalBet ?? 0) + amount;
       console.log(`${p.title} bet ${amount}`);
       return true;
     }
@@ -189,6 +189,7 @@ export class PlayerStore implements IPlayerStore {
    */
   public bust(key: PlayerKey) {
     let p = this.playerName(key);
+    this.player(key).isBusted = true;
     this.finish(key);
     console.log(`${p} busted`);
   }

@@ -1,13 +1,28 @@
 // React
 import React from "react";
 
-// Fluent UI
 import {
-  ActionButton, DirectionalHint, Link, MessageBarType, Panel, PanelType, Separator, Stack, StackItem, Text, Toggle, TooltipDelay, TooltipHost,
-} from "@fluentui/react";
+  Button,
+  Drawer,
+  DrawerBody,
+  DrawerHeader,
+  DrawerHeaderTitle,
+  Divider,
+  Link,
+  Switch,
+  Text,
+  Tooltip,
+} from '@fluentui/react-components';
+import {
+  ArrowClockwise20Regular,
+  ArrowSync20Regular,
+  Delete20Regular,
+  Dismiss20Regular,
+  Stack20Regular,
+} from '@fluentui/react-icons';
 
 // Context
-import { useGameContext, useSettingContext } from "../context";
+import { settingDefaults, useGameContext, useSettingContext } from "../context";
 import { GameAction } from "../enums";
 import { clearStores } from "../functions";
 
@@ -27,12 +42,19 @@ export const OptionsPanel: React.FC = () => {
    */
   const resetGame = () => {
     gameDispatch({ type: GameAction.ResetGame });
-    gameDispatch({ type: GameAction.ShowMessageBar, messageBarDefinition: { text: 'Game Reset', type: MessageBarType.info, isMultiLine: false } });
+    gameDispatch({ type: GameAction.ShowMessageBar, messageBarDefinition: { text: 'Game Reset', type: 'info', isMultiLine: false } });
+    toggleSetting({ key: 'isSplashScreenVisible', value: true });
     closeOptionsPanel();
   }
 
+  const clearApplicationData = () => {
+    clearStores();
+    gameDispatch({ type: GameAction.ResetGame, clearActivityLog: true });
+    Object.entries(settingDefaults).forEach(([key, value]) => toggleSetting({ key, value }));
+  }
+
   const newDeal = () => {
-    playerStore.all.forEach(p => gameDispatch({ type: GameAction.Draw, playerKey: p.key, numberOfCards: 2 }));
+    gameDispatch({ type: GameAction.Deal });
     closeOptionsPanel();
   }
 
@@ -41,183 +63,67 @@ export const OptionsPanel: React.FC = () => {
     closeOptionsPanel();
   }
 
-  const tooltipCalloutProps = { gapSpace: 0, };
-
   return (
-    <Panel
-      id="OptionsPanel"
-      isOpen={settings.isOptionsPanelVisible}
-      onDismiss={closeOptionsPanel}
-      type={PanelType.smallFixedFar}
-      headerText="Options"
-      isLightDismiss
+    <Drawer
+      open={settings.isOptionsPanelVisible}
+      onOpenChange={(_, data) => {
+        if (!data.open) closeOptionsPanel();
+      }}
+      position="end"
+      size="small"
+      modalType="modal"
     >
-      <Stack verticalAlign="start" tokens={{ childrenGap: 5 }}>
-
-        <TooltipHost
-          content="Start a new round with the selected players"
-          id="tooltip-NewDeal"
-          calloutProps={tooltipCalloutProps}
-          directionalHint={DirectionalHint.bottomLeftEdge}
-          delay={TooltipDelay.long}
+      <DrawerHeader>
+        <DrawerHeaderTitle
+          action={
+            <Button
+              appearance="subtle"
+              aria-label="Close options"
+              icon={<Dismiss20Regular />}
+              onClick={closeOptionsPanel}
+            />
+          }
         >
-          <ActionButton
-            iconProps={{ iconName: "StackIndicator" }}
-            disabled={false}
-            checked={false}
-            onClick={newDeal}
-            ariaLabel="Deal"
-            aria-describedby="tooltip-NewDeal"
-          >
-            Deal
-          </ActionButton>
-        </TooltipHost>
+          Options
+        </DrawerHeaderTitle>
+      </DrawerHeader>
+      <DrawerBody>
+        <div className="options-panel-actions">
+          <Tooltip content="Start a new round with the selected players" relationship="label">
+            <Button icon={<Stack20Regular />} onClick={newDeal}>Deal</Button>
+          </Tooltip>
+          <Tooltip content="Reset the game with initial parameters" relationship="label">
+            <Button icon={<ArrowClockwise20Regular />} onClick={resetGame}>Reset Game</Button>
+          </Tooltip>
+          <Tooltip content="Shuffle the remaining deck" relationship="label">
+            <Button icon={<ArrowSync20Regular />} onClick={shuffle}>Shuffle Deck</Button>
+          </Tooltip>
+          <Tooltip content="Clear application data stored locally in the browser" relationship="label">
+            <Button icon={<Delete20Regular />} onClick={clearApplicationData}>Clear Stores</Button>
+          </Tooltip>
+        </div>
 
-        <TooltipHost
-          content="Reset the game with initial parameters"
-          id=""
-          calloutProps={tooltipCalloutProps}
-          directionalHint={DirectionalHint.bottomLeftEdge}
-          delay={TooltipDelay.long}
-        >
-          <ActionButton
-            iconProps={{ iconName: "Refresh" }}
-            disabled={false}
-            checked={false}
-            onClick={resetGame}
-            ariaLabel="Reset Game"
-            aria-describedby="tooltip-ResetGame"
-          >
-            Reset Game
-          </ActionButton>
-        </TooltipHost>
+        <Divider />
 
-        <TooltipHost
-          content="Reset the game with initial parameters"
-          id="tooltip-ShuffleDeck"
-          calloutProps={tooltipCalloutProps}
-          directionalHint={DirectionalHint.bottomLeftEdge}
-          delay={TooltipDelay.long}
-        >
-          <ActionButton
-            iconProps={{ iconName: "Sync" }}
-            disabled={false}
-            checked={false}
-            onClick={shuffle}
-            ariaLabel="Shuffle Deck"
-            aria-describedby="tooltip-ShuffleDeck"
-          >
-            Shuffle Deck
-          </ActionButton>
-        </TooltipHost>
+        <div className="options-panel-switches">
+          <Switch checked={settings.isDeckVisible} label="Show Deck" onChange={(_, data) => toggleSetting({ key: 'isDeckVisible', value: data.checked })} />
+          <Switch checked={settings.isDrawnVisible} label="Show Drawn" onChange={(_, data) => toggleSetting({ key: 'isDrawnVisible', value: data.checked })} />
+          <Switch checked={settings.isSelectedVisible} label="Show Selected" onChange={(_, data) => toggleSetting({ key: 'isSelectedVisible', value: data.checked })} />
+          <Switch checked={settings.isDealerHandVisible} label="Show Dealer Hand" onChange={(_, data) => toggleSetting({ key: 'isDealerHandVisible', value: data.checked })} />
+          <Switch checked={settings.isHandValueVisible} label="Show Hand Value" onChange={(_, data) => toggleSetting({ key: 'isHandValueVisible', value: data.checked })} />
+          <Switch checked={settings.isCardTitleVisible} label="Show Card Titles" onChange={(_, data) => toggleSetting({ key: 'isCardTitleVisible', value: data.checked })} />
+          <Switch checked={settings.isActivityLogVisible} label="Show Activity Log" onChange={(_, data) => toggleSetting({ key: 'isActivityLogVisible', value: data.checked })} />
+        </div>
 
-        <TooltipHost
-          content="Clear application data stored locally in the browser"
-          id="tooltip-ClearStores"
-          calloutProps={tooltipCalloutProps}
-          directionalHint={DirectionalHint.bottomLeftEdge}
-          delay={TooltipDelay.zero}
-        >
-          <ActionButton
-            iconProps={{ iconName: "Trash" }}
-            disabled={false}
-            checked={false}
-            onClick={() => clearStores()}
-            ariaLabel="Clear Stores"
-            aria-describedby="tooltip-ClearStores"
-          >
-            Clear Stores
-          </ActionButton>
-        </TooltipHost>
+        <Divider />
 
-        <Separator />
-
-        <Toggle
-          checked={settings.isDeckVisible}
-          label="Show Deck"
-          ariaLabel="The deck is visible. Press to hide it."
-          onText="On"
-          offText="Off"
-          onChange={(e, checked) => {
-            toggleSetting({ key: "isDeckVisible", value: !!checked });
-          }}
-        />
-        <Toggle
-          checked={settings.isDrawnVisible}
-          label="Show Drawn"
-          ariaLabel="The Drawn cards are visible. Press to hide it."
-          onText="On"
-          offText="Off"
-          onChange={(e, checked) => {
-            toggleSetting({ key: "isDrawnVisible", value: !!checked });
-          }}
-        />
-        <Toggle
-          checked={settings.isSelectedVisible}
-          label="Show Selected"
-          ariaLabel="The Selected cards are visible. Press to hide it."
-          onText="On"
-          offText="Off"
-          onChange={(e, checked) => {
-            toggleSetting({ key: "isSelectedVisible", value: !!checked });
-          }}
-        />
-        <Toggle
-          checked={settings.isDealerHandVisible}
-          label="Show Dealer Hand"
-          ariaLabel="The dealer's hand is visible. Press to hide it."
-          onText="On"
-          offText="Off"
-          onChange={(e, checked) => {
-            toggleSetting({ key: "isDealerHandVisible", value: !!checked });
-          }}
-        />
-        <Toggle
-          checked={settings.isHandValueVisible}
-          label="Show Hand Value"
-          ariaLabel="The hand value display is visible. Press to hide it."
-          onText="On"
-          offText="Off"
-          onChange={(e, checked) => {
-            toggleSetting({ key: 'isHandValueVisible', value: !!checked });
-          }}
-        />
-        <Toggle
-          checked={settings.isCardTitleVisible}
-          label="Show Card Titles"
-          ariaLabel="The card titles are visible. Press to hide them."
-          onText="On"
-          offText="Off"
-          onChange={(e, checked) => {
-            toggleSetting({ key: "isCardTitleVisible", value: !!checked });
-          }}
-        />
-        <Toggle
-          checked={settings.isActivityLogVisible}
-          label="Show Activity Log"
-          ariaLabel="The Activity Log visible. Press to hide it."
-          onText="On"
-          offText="Off"
-          onChange={(e, checked) => {
-            toggleSetting({ key: "isActivityLogVisible", value: !!checked });
-          }}
-        />
-
-
-        <Separator />
-
-        <StackItem>
-          <Text variant="medium">
-            <strong>Chris's Blackjack</strong>
-          </Text>
-          <Text variant="smallPlus" nowrap block>
-            &copy;2024 <Link href="https://github.com/codegard1/blackjack">Chris Odegard</Link>
-            <br />
-            Made in Brooklyn with <Link href="https://reactjs.org/">React</Link> and <Link href="https://developer.microsoft.com/en-us/fluentui">Fluent UI</Link>.
-          </Text>
-        </StackItem>
-
-      </Stack>
-    </Panel>
+        <Text weight="semibold">Chris's Blackjack</Text>
+        <Text size={200}>
+          &copy;2026 <Link href="https://github.com/codegard1/blackjack">Chris Odegard</Link>
+          <br />
+          Made in Brooklyn with <Link href="https://react.dev/">React</Link> and <Link href="https://developer.microsoft.com/en-us/fluentui">Fluent UI</Link>.
+        </Text>
+      </DrawerBody>
+    </Drawer>
   );
 }
