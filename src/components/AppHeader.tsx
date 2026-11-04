@@ -17,7 +17,7 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components';
-import { Info24Regular, Settings24Regular } from '@fluentui/react-icons';
+import { LayerDiagonal24Filled, Info24Regular, Settings24Regular } from '@fluentui/react-icons';
 
 // Local Resources
 import { useSettingContext } from '../context';
@@ -47,8 +47,11 @@ const useStyles = makeStyles({
     minWidth: 0,
   },
   logo: {
-    fontSize: tokens.fontSizeBase600,
-    lineHeight: 1,
+    display: 'block',
+    width: '28px',
+    height: '28px',
+    color: tokens.colorBrandForeground1,
+    flexShrink: 0,
   },
   title: {
     margin: 0,
@@ -73,8 +76,11 @@ const useStyles = makeStyles({
     gap: tokens.spacingHorizontalM,
   },
   aboutLogo: {
-    fontSize: '48px',
-    lineHeight: 1,
+    display: 'block',
+    width: '56px',
+    height: '56px',
+    color: tokens.colorBrandForeground1,
+    flexShrink: 0,
   },
   aboutMeta: {
     display: 'grid',
@@ -106,7 +112,7 @@ export const AppHeader: React.FC = () => {
   return (
     <header className={styles.header}>
       <div className={styles.brand}>
-        <span className={styles.logo} aria-hidden="true">🃏</span>
+        <LayerDiagonal24Filled className={styles.logo} aria-hidden="true" />
         <Text as="h1" size={500} weight="semibold" className={styles.title}>{APP_NAME}</Text>
       </div>
 
@@ -122,7 +128,7 @@ export const AppHeader: React.FC = () => {
               <DialogTitle>About {APP_NAME}</DialogTitle>
               <DialogContent className={styles.about}>
                 <div className={styles.aboutHero}>
-                  <span className={styles.aboutLogo} aria-hidden="true">🃏</span>
+                  <LayerDiagonal24Filled className={styles.aboutLogo} aria-hidden="true" />
                   <div>
                     <Text as="p" size={500} weight="semibold" block>{APP_NAME}</Text>
                     <Text as="p" block>Version {version}</Text>
