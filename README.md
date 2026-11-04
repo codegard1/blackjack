@@ -26,10 +26,13 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, an
 
 #### Rules
 * One human player against a dealer that hits below 17 and stands otherwise
-* Each round starts with an ante from every player; the human can add wagers
-* Natural blackjacks are settled right after the deal; a human natural pays a 3:2 bonus on the stake
-* Equal totals push and return each player's stake
-* Double down on any two-card hand: match your stake, take one card, then stand
+* Number cards count as shown, face cards count as 10, and aces count as 1 or 11
+* Each round starts with a minimum ante from both players; the human can add minimum-bet increments before dealing or during their turn
+* A natural blackjack is 21 with two cards and settles immediately; if both players have one, the round pushes
+* After the human stays, the higher total wins; equal totals push and return each player's stake
+* A human natural blackjack wins the pot plus a bonus equal to half their stake, paid from the dealer's bank
+* Double Down is available on the human's turn with exactly two cards if their bank can match the current stake; it adds that amount, draws one card, and stands unless the human busts
+* Open Blackjack rules from the book icon in the header for the in-app guide
 
 #### Project Status
 * Game state and settings are saved in the browser, so a reload resumes the current game

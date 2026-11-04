@@ -10,6 +10,7 @@ export * from './DeckCallout';
 export * from './JsonViewer';
 export * from './OptionsPanel';
 export * from './PlayerContainer';
+export * from './RulesDialog';
 export * from './SeatChip';
 export * from './PlayersDialog';
 export * from './StatusDisplay';

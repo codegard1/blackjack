@@ -17,12 +17,13 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components';
-import { Info24Regular, People24Regular, Settings24Regular } from '@fluentui/react-icons';
+import { BookOpen24Regular, Info24Regular, People24Regular, Settings24Regular } from '@fluentui/react-icons';
 
 // Local Resources
 import { useSettingContext } from '../context';
 import { AppLogo } from './AppLogo';
 import { PlayersDialog } from './PlayersDialog';
+import { RulesDialog } from './RulesDialog';
 import { description, repository, version } from '../../package.json';
 
 export const APP_NAME = "Chris's Blackjack";
@@ -95,6 +96,7 @@ export const AppHeader: React.FC = () => {
   const { settings, toggleSetting } = useSettingContext();
 
   const [isPlayersOpen, setPlayersOpen] = React.useState(false);
+  const [isRulesOpen, setRulesOpen] = React.useState(false);
 
   const toggleOptionsPanel = () =>
     toggleSetting({ key: 'isOptionsPanelVisible', value: !settings.isOptionsPanelVisible });
@@ -107,6 +109,10 @@ export const AppHeader: React.FC = () => {
       </div>
 
       <div className={styles.actions}>
+        <Tooltip content="Blackjack rules" relationship="label">
+          <Button appearance="subtle" aria-label="Blackjack rules" icon={<BookOpen24Regular />} onClick={() => setRulesOpen(true)} />
+        </Tooltip>
+        <RulesDialog open={isRulesOpen} onOpenChange={setRulesOpen} />
         <Tooltip content="Players" relationship="label">
           <Button appearance="subtle" aria-label="Players" icon={<People24Regular />} onClick={() => setPlayersOpen(true)} />
         </Tooltip>

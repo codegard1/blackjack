@@ -161,6 +161,19 @@ it('shows the app name in the header and opens the About dialog', () => {
   expect(screen.queryByRole('dialog', { name: "About Chris's Blackjack" })).not.toBeInTheDocument();
 });
 
+it('opens and closes the in-app blackjack rules from the header', () => {
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Blackjack rules' }));
+  const dialog = screen.getByRole('dialog', { name: 'Blackjack rules' });
+  expect(within(dialog).getByText(/minimum bet of \$25/)).toBeInTheDocument();
+  expect(within(dialog).getByText(/Double Down is available on your turn with exactly two cards/)).toBeInTheDocument();
+  expect(within(dialog).getByText(/dealer draws below 17 and stands on 17 or higher/)).toBeInTheDocument();
+
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+  expect(screen.queryByRole('dialog', { name: 'Blackjack rules' })).not.toBeInTheDocument();
+});
+
 it("announces the dealer's turn as a toast that leaves on its own", () => {
   vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
     this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
