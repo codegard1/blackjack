@@ -64,12 +64,12 @@ it('starts a new game with the default human and dealer', () => {
 });
 
 it('shows card ranks by default and toggles rank and activity visibility', () => {
-  const { container } = render(<App />);
+  render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Start' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
-  const cards = () => Array.from(container.querySelector('.PlayerContainer')?.querySelectorAll('button[aria-pressed]') ?? []);
+  const cards = () => Array.from(screen.getByRole('region', { name: "Chris's hand" }).querySelectorAll('button[aria-pressed]'));
   expect(cards()).toHaveLength(2);
   expect(cards().every((card) => (card.textContent?.trim().length ?? 0) > 1)).toBe(true);
   expect(cards()[0].querySelectorAll('.playing-card-corner')).toHaveLength(2);

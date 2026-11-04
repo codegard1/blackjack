@@ -65,7 +65,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   };
 
   return hidden ? null : (
-    <div className="player-controlpanel" style={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+    <div className="player-controlpanel">
       <Tooltip content="Draw one card from the top of the deck" relationship="label">
         <Button appearance="subtle" icon={<Add20Regular />} disabled={isBtnDisabled} onClick={_hit}>Hit</Button>
       </Tooltip>

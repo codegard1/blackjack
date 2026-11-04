@@ -19,11 +19,53 @@
   background-color: ghostwhite;
 }
 
+/* Table layout: dealer seat on top, pot in the middle, player seat below */
+.table-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+}
+
+.table-seats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 760px;
+}
+
+.table-pot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5em;
+  width: 100%;
+  max-width: 760px;
+  border-top: 1px dashed rgba(25, 25, 25, 0.2);
+  border-bottom: 1px dashed rgba(25, 25, 25, 0.2);
+}
+
+.player-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 5px 10px;
+}
+
+/* reserve room for two cards so seats keep a steady height */
 .player-hand {
   display: flex;
-  flex: 0 0 100%;
   justify-content: center;
+  min-height: 104px;
+  width: 100%;
   min-width: 0;
+}
+
+.player-agent {
+  text-align: center;
 }
 
 /* the span that display's the player's name */
@@ -33,11 +75,13 @@
   /* border: 1px solid gold; */
 }
 
-/* the CommandBar in each PlayerContainer */
-.PlayerContainer > .player-controlpanel {
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
-  /* border: 1px solid green; */
+/* the row of player actions beneath the hand */
+.player-controlpanel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 /* the callout that appears beneath the deck when a player action occurs */

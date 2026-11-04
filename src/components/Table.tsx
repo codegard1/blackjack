@@ -41,18 +41,27 @@ export const Table: React.FC = () => {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
 
-        {!gameState.gameStatusFlag && <Text size={600}>Pot: ${gameState.pot}</Text>}
-
-        <div style={{ alignItems: 'stretch', display: 'flex', flexWrap: 'wrap', gap: 10, padding: 10 }}>
-
-          {null === playerStore || playerStore.length === 0
-            ? <div>No players</div>
-            : playerStore.all.map(p =>
-              <div key={`PlayerStack-${p.key}`} style={{ flex: '1 1 260px' }}>
-                <PlayerContainer key={`PlayerContainer-${p.key}`} playerKey={p.key} />
+        {null === playerStore || playerStore.length === 0
+          ? <div>No players</div>
+          : (
+            <div className="table-layout">
+              <div className="table-seats table-seats-dealer">
+                {playerStore.all.filter((p) => p.isNPC).map((p) =>
+                  <PlayerContainer key={`PlayerContainer-${p.key}`} playerKey={p.key} />
+                )}
               </div>
-            )}
-        </div>
+
+              <div className="table-pot" aria-live="polite">
+                {!gameState.gameStatusFlag && <Text size={600} weight="semibold">Pot: ${gameState.pot}</Text>}
+              </div>
+
+              <div className="table-seats table-seats-player">
+                {playerStore.all.filter((p) => !p.isNPC).map((p) =>
+                  <PlayerContainer key={`PlayerContainer-${p.key}`} playerKey={p.key} />
+                )}
+              </div>
+            </div>
+          )}
 
       {!settings.isSplashScreenVisible && gameState.deck.length > 0 &&
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>

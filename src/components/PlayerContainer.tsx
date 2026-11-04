@@ -72,29 +72,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
         <StatusDisplay player={player} stats={player.stats} />
       </header>
 
-      <div style={{ alignItems: 'flex-start', display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between', padding: 5 }}>
-        {player.isNPC && gameState.dealerHasControl &&
-          <div>
-            <Agent
-              dealerHasControl={gameState.dealerHasControl}
-              gameStatus={gameState.gameStatus}
-              handValue={handValue}
-              playerKey={playerKey}
-            />
-          </div>
-        }
-
-        <div>
-          <ControlPanel
-            hidden={player.isNPC}
-            playerKey={props.playerKey}
-            playerStatusFlag={playerStatusFlag}
-            selectedFlag={selectedFlag}
-            showDeckCallout={_showDeckCallout}
-            isDeckCalloutVisible={isDeckCalloutVisible}
-          />
-        </div>
-
+      <div className="player-body">
         <div id={id} className="player-hand">
           <CardStack
             cards={cards}
@@ -104,6 +82,26 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
             title={player.title}
           />
         </div>
+
+        {player.isNPC && gameState.dealerHasControl &&
+          <div className="player-agent">
+            <Agent
+              dealerHasControl={gameState.dealerHasControl}
+              gameStatus={gameState.gameStatus}
+              handValue={handValue}
+              playerKey={playerKey}
+            />
+          </div>
+        }
+
+        <ControlPanel
+          hidden={player.isNPC}
+          playerKey={props.playerKey}
+          playerStatusFlag={playerStatusFlag}
+          selectedFlag={selectedFlag}
+          showDeckCallout={_showDeckCallout}
+          isDeckCalloutVisible={isDeckCalloutVisible}
+        />
       </div>
       <DeckCallout player={player} hidden={!isDeckCalloutVisible} onHideCallout={_hideDeckCallout} target={'#' + id} />
     </section>
