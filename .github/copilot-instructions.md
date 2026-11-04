@@ -1,80 +1,29 @@
-# Copilot Instructions
+# Blackjack Project Instructions
 
-This repository contains Chris's blackjack game built with React and TypeScript.
-
-## Project Overview
-
-A browser-based blackjack game where one human player competes against a dealer that hits below 17 and stands otherwise. Game and settings state persist in `localStorage`, so a reload resumes the current game.
-
-## Technologies Used
-
-- **React** 19 with function components and hooks
-- **TypeScript** 6 (strict mode)
-- **Fluent UI** v9 (`@fluentui/react-components`, `@fluentui/react-icons`)
-- **Vite** 8 for the dev server and build (`@vitejs/plugin-react`, `@vitejs/plugin-legacy`)
-- **Vitest** 5 with jsdom and React Testing Library
-- **ESLint** 8 with the TypeScript, React, jsx-a11y and import plugins
-
-## Setup and Commands
-
-Node.js 22.22+, 24.15+ or 26+ (see `engines` in `package.json`; `.nvmrc` pins 22).
-
-```bash
-npm install --legacy-peer-deps   # install dependencies
-npm start                        # dev server on http://localhost:3000
-npm test                         # run the test suite once (vitest run)
-npm run test:watch               # tests in watch mode
-npm run typecheck                # tsc --noEmit
-npm run lint                     # eslint over src/**/*.{ts,tsx}
-npm run build                    # typecheck, then build to dist/
-```
-
-Run `npm test`, `npm run typecheck` and `npm run lint` before committing.
-
-## Project Structure
-
-```
-src/
-├── classes/       # PlayingCard, PlayingCardDeck (cards and hands), PlayerStore (players, banks, stats)
-├── components/    # React components (Table, PlayerContainer, ControlPanel, Agent, ActivityLog, ...)
-├── context/       # GameContext and SettingContext, default state, useGameContext/useSettingContext
-├── enums/         # GameAction, GameStatus, PlayerAction, StoreName, ...
-├── functions/     # gameReducer, settingReducer, evaluateGame, persistence, helpers
-├── interfaces/    # TypeScript interfaces
-├── types/         # TypeScript types (GameState, SettingsState, DeckState, ...)
-├── App.tsx        # Root component: reducers, persistence effects, providers
-└── index.tsx      # Entry point
-```
+This repository is a browser-based blackjack game where one human plays against a dealer who hits below 17. Game and settings state persist in `localStorage`. It is built with React 19, TypeScript 6, Fluent UI v9, Vite 8, and Vitest 5.
 
 ## Architecture
 
-- **State**: `App.tsx` holds two `useReducer` stores, game state (`gameReducer`) and settings (`settingReducer`), and exposes them through context. Components read state with `useGameContext()` / `useSettingContext()` and dispatch actions; they do not mutate state directly.
-- **Game flow**: `NewGame` creates players and hands; `Deal` deals two cards each and resolves natural blackjacks; `Draw`, `Stay`, `Bet` and `DoubleDown` drive a turn; the dealer's turn is automated by `components/Agent.tsx`. Outcomes are `HumanWins`, `DealerWins` or `Push`.
-- **Settlement**: whenever `gameStatus` changes, `App.tsx` dispatches `EvaluateGame`. `functions/evaluateGame.ts` antes at the start of a game and settles finished rounds (pot payout, 3:2 natural bonus, push refunds, stats). Settlement is guarded by `gameStatusFlag` so a round is paid only once.
-- **Persistence**: `functions/persistence.ts` loads and saves the deck, player store, a versioned game snapshot and settings. Bump `GAME_STORE_VERSION` whenever the saved shape or `GameStatus` values change.
-- **Logging**: use `debugLog` from `functions/debugLog.ts` instead of `console.log`; it only logs in development.
+- `src/App.tsx` owns the game and settings reducers and provides state through React context. Components read state with `useGameContext()` / `useSettingContext()` and dispatch actions; keep shared state changes in reducers.
+- Game rules and state transitions belong in `src/functions/` and `src/classes/`, not in UI components. `src/components/Agent.tsx` automates the dealer's turn.
+- `src/functions/evaluateGame.ts` handles antes, round settlement, payouts, and stats. `src/functions/persistence.ts` restores and saves the deck, player store, game snapshot, and settings in `localStorage`.
+- Tests live beside the code they cover. See the scoped instructions in `.github/instructions/` for game logic, UI, and test-specific guidance.
 
-## Code Style and Conventions
+## Development
 
-- Use TypeScript strict mode and explicit types for function parameters and return values.
-- Define interfaces in `interfaces/`, types in `types/`, enums in `enums/`.
-- Use function components with hooks and Fluent UI v9 components.
-- Import through the `index.ts` barrel files where they exist.
-- Keep game rules in reducers and `functions/`, not in components.
+- Use strict TypeScript and the existing interfaces, types, enums, class methods, and barrel exports where available. Follow nearby code style and avoid unrelated refactors.
+- Use `debugLog` from `src/functions/debugLog.ts` for development-only diagnostics.
+- Update the README when adding a significant player-facing feature.
+- Use Node.js versions allowed by `package.json` (`.nvmrc` pins Node 22).
 
-## Testing
+Common commands:
 
-- Tests are named `*.test.ts` / `*.test.tsx` and live next to the code they cover.
-- `src/setupTests.ts` loads jest-dom matchers, stubs `ResizeObserver`, mocks `react-syntax-highlighter`, and clears `localStorage` after each test.
-- Make dealt cards deterministic in tests (set `deck.cards`, or spy on `PlayingCardDeck.prototype.deal`), since a random natural blackjack ends the round immediately.
+```bash
+npm start
+npm test
+npm run typecheck
+npm run lint
+npm run build
+```
 
-## Building and Deployment
-
-- `npm run build` outputs a static site to `dist/`.
-- The site is hosted on Azure Static Web Apps.
-
-## Development Guidelines
-
-1. Make focused changes that match existing patterns.
-2. Add or update tests for rule and reducer changes.
-3. Update `README.md` when adding significant features.
+Run the relevant tests and checks for each change. Before finishing a code change, run `npm test`, `npm run typecheck`, and `npm run lint` when practical; `npm run build` also type-checks before producing `dist/`.
