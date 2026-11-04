@@ -7,6 +7,9 @@ import { GameAction } from "../enums";
 import { IAgentProps } from "../interfaces/IAgentProps";
 import { GameStatus } from "../enums";
 
+/** pause before each dealer action, so its card animation and toast can play out */
+export const DEALER_ACTION_DELAY_MS = 1200;
+
 /**
  * Headless dealer autoplay. Mounted by the Table rather than a seat so the dealer keeps
  * playing even when the dealer's seat is collapsed. Renders nothing.
@@ -24,7 +27,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
       } else {
         gameDispatch({ type: GameAction.Stay, playerKey: props.playerKey });
       }
-    }, 250);
+    }, DEALER_ACTION_DELAY_MS);
 
     return () => window.clearTimeout(timeoutId);
   }, [gameDispatch, props.dealerHasControl, props.gameStatus, props.handValue.highest, props.playerKey]);

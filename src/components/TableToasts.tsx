@@ -9,9 +9,11 @@ import { ITableToastsProps } from '../interfaces';
 import { GameState, GameSnapshot, ToastItem } from '../types';
 
 /** how long a toast stays fully visible */
-const HOLD_MS = 950;
+const HOLD_MS = 1100;
 /** how long a toast takes to animate out */
-const EXIT_MS = 220;
+const EXIT_MS = 260;
+/** minimum time between one toast appearing and the next, so they do not stack at once */
+const TOAST_GAP_MS = 900;
 /** toasts shown at once; older ones animate out to make room */
 const VISIBLE_LIMIT = 2;
 /** toasts kept while the dealer is busy, so a burst cannot grow without bound */
@@ -56,7 +58,7 @@ const useStyles = makeStyles({
     fontWeight: tokens.fontWeightBold,
     lineHeight: 1.15,
     animationName: enterKeyframes,
-    animationDuration: '260ms',
+    animationDuration: '320ms',
     animationTimingFunction: 'cubic-bezier(0.2, 0.9, 0.3, 1.2)',
     animationFillMode: 'both',
     '@media (prefers-reduced-motion: reduce)': { animationName: 'none' },
@@ -142,6 +144,15 @@ export function useTableToasts(gameState: GameState, revealDealerTotal: boolean)
   const [queue, setQueue] = React.useState<ToastItem[]>([]);
   const previous = React.useRef<GameSnapshot | null>(null);
   const nextId = React.useRef(1);
+  /** earliest time the next toast may appear */
+  const nextShowAt = React.useRef(0);
+  /** scheduled appearances, cancelled on unmount */
+  const pending = React.useRef<Set<number>>(new Set());
+
+  React.useEffect(() => {
+    const scheduled = pending.current;
+    return () => scheduled.forEach((timerId) => window.clearTimeout(timerId));
+  }, []);
 
   React.useEffect(() => {
     const current = snapshotGame(gameState);
@@ -152,8 +163,22 @@ export function useTableToasts(gameState: GameState, revealDealerTotal: boolean)
     const items = diffAnnouncements(prior, current, revealDealerTotal);
     if (items.length === 0) return;
 
-    const withIds = items.map((item) => ({ ...item, id: nextId.current++ }));
-    setQueue((list) => [...list, ...withIds].slice(-QUEUE_LIMIT));
+    // Each toast appears no sooner than TOAST_GAP_MS after the previous one
+    for (const item of items) {
+      const toast: ToastItem = { ...item, id: nextId.current++ };
+      const showAt = Math.max(Date.now(), nextShowAt.current);
+      nextShowAt.current = showAt + TOAST_GAP_MS;
+      const show = () => setQueue((list) => [...list, toast].slice(-QUEUE_LIMIT));
+      if (showAt <= Date.now()) {
+        show();
+      } else {
+        const timerId = window.setTimeout(() => {
+          pending.current.delete(timerId);
+          show();
+        }, showAt - Date.now());
+        pending.current.add(timerId);
+      }
+    }
   }, [gameState, revealDealerTotal]);
 
   const dismiss = React.useCallback((id: number) => {

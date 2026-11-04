@@ -172,9 +172,11 @@ it("announces the dealer's turn as a toast that leaves on its own", () => {
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
   fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
 
+  // toasts are spaced apart, so the dealer's turn appears after the previous one
+  act(() => vi.advanceTimersByTime(900));
   expect(screen.getByText("Dealer's turn")).toBeInTheDocument();
 
-  act(() => vi.advanceTimersByTime(1500));
+  act(() => vi.advanceTimersByTime(2000));
   expect(screen.queryByText("Dealer's turn")).not.toBeInTheDocument();
 });
 
