@@ -6,6 +6,7 @@
   pointer-events: none;
 }
 
+/* Text scales with the card height (--playing-card-height, set in .card-row below) */
 .playing-card-corner {
   position: absolute;
   z-index: 1;
@@ -13,27 +14,59 @@
   flex-direction: column;
   align-items: center;
   min-width: 20px;
-  font-size: 15px;
+  font-size: calc(var(--playing-card-height, 100px) * 0.15);
   font-weight: 700;
-  line-height: 15px;
+  line-height: 1;
   white-space: nowrap;
 }
 
 .playing-card-corner-top {
-  top: 7px;
-  left: 7px;
+  top: calc(var(--playing-card-height, 100px) * 0.07);
+  left: calc(var(--playing-card-height, 100px) * 0.07);
 }
 
 .playing-card-corner-bottom {
-  right: 7px;
-  bottom: 7px;
+  right: calc(var(--playing-card-height, 100px) * 0.07);
+  bottom: calc(var(--playing-card-height, 100px) * 0.07);
 }
 
 .playing-card-description {
   z-index: 1;
   align-self: center;
-  font-size: 12px;
+  font-size: calc(var(--playing-card-height, 100px) * 0.12);
   white-space: nowrap;
+}
+
+/*
+ * A player's hand. The row is a size container with a fixed 2:1 box, so its aspect
+ * ratio is kept at any width. Each card is then sized to the largest height that fits
+ * the box, both vertically and across the row (--card-count is set inline).
+ */
+.card-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  container-type: size;
+}
+
+/* a narrow board gives the hand more height, so the cards can grow */
+@container table-board (max-width: 719px) {
+  .card-row {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+.card-row .playing-card {
+  --playing-card-height: min(
+    calc(100cqh * 0.94),
+    calc((100cqw - (var(--card-count, 1) - 1) * 8px) / (0.65 * var(--card-count, 1)))
+  );
+  height: var(--playing-card-height);
+  width: calc(var(--playing-card-height) * 0.65);
 }
 /* Cards slide and settle onto the table, staggered by position (see animationDelay).
    Easing matches Fluent's curveDecelerateMax / curveEasyEase motion tokens. */
@@ -51,7 +84,11 @@
   }
 }
 
+/* Default card size. Cards in a player's hand are sized by .card-row below. */
 .playing-card {
+  width: 65px;
+  height: 100px;
+  flex-shrink: 0;
   animation: playing-card-deal 420ms cubic-bezier(0.1, 0.9, 0.2, 1) both;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.1);
   transition:

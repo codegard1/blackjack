@@ -1,0 +1,16 @@
+import { IPlayer } from './IPlayer';
+import { SeatStatus } from '../types';
+
+export interface ISeatChipProps {
+  player: IPlayer;
+  /** status label, if any */
+  status?: SeatStatus;
+  /** hand total to show; omit to hide it */
+  total?: number;
+  /** gently bob the chip, used before the game starts */
+  floating?: boolean;
+  /** position in a group; staggers the floating animation */
+  index?: number;
+  /** when given, the chip is a button that brings this seat into focus */
+  onSelect?: () => void;
+}

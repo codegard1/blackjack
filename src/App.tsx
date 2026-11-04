@@ -9,6 +9,8 @@ import './App.css';
 import { ActivityLog, AppHeader, OptionsPanel, SplashScreen, Table, DebugWindow } from './components';
 import { GameContext, GameDispatchContext, SettingContext, SettingDispatchContext } from './context';
 import { GameAction, GameStatus } from './enums';
+import { defaultSelectedPlayerKeys } from './definitions';
+import { PlayerKey } from './types';
 import { gameReducer, loadGameState, loadSettings, saveGameState, saveSettings, settingReducer } from './functions';
 
 // Main Component
@@ -17,6 +19,7 @@ const App = () => {
   // State from context
   const [gameState, gameDispatch] = React.useReducer(gameReducer, undefined, loadGameState);
   const [settings, toggleSetting] = React.useReducer(settingReducer, gameState.playerStore.length > 0, loadSettings);
+  const [selectedPlayers, setSelectedPlayers] = React.useState<PlayerKey[]>(defaultSelectedPlayerKeys);
   const human = gameState.playerStore.all.find((player) => !player.isNPC);
   const dealer = gameState.playerStore.all.find((player) => player.isNPC);
   const roundWinner = gameState.gameStatus === GameStatus.HumanWins ? human
@@ -61,10 +64,10 @@ const App = () => {
                 </MessageBar>
               )}
 
-              <SplashScreen />
+              <SplashScreen selectedPlayers={selectedPlayers} onSelectedPlayersChange={setSelectedPlayers} />
               <OptionsPanel />
               <div className="app-content">
-                <Table />
+                <Table pendingPlayerKeys={selectedPlayers} />
                 <ActivityLog />
                 <DebugWindow />
               </div>

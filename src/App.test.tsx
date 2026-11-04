@@ -78,7 +78,11 @@ it('shows card ranks by default and toggles rank and activity visibility', () =>
   expect(screen.queryByRole('button', { name: 'Chris (2)' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Dealer (2)' })).not.toBeInTheDocument();
   expect(screen.getByRole('region', { name: "Chris's hand" })).toBeVisible();
+  // the dealer's seat is collapsed while Chris is in control; clicking its chip brings it forward
+  expect(screen.queryByRole('region', { name: "Dealer's hand" })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /^Dealer \(\$/ }));
   expect(screen.getByRole('region', { name: "Dealer's hand" })).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: /^Chris \(\$/ }));
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
   fireEvent.click(screen.getByRole('switch', { name: 'Show Card Titles' }));
@@ -104,7 +108,8 @@ it('clears in-memory game state and returns to player selection', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Clear application data stored locally in the browser' }));
 
   expect(screen.getByRole('alertdialog')).toBeInTheDocument();
-  expect(screen.getByText('No players')).toBeInTheDocument();
+  expect(screen.queryByText(/^Chris \(\$/)).toBeInTheDocument();
+  expect(screen.queryByText('No players')).not.toBeInTheDocument();
 });
 
 it('resumes a saved game after a reload', () => {
@@ -153,4 +158,22 @@ it('shows the app name in the header and opens the About dialog', () => {
 
   fireEvent.click(screen.getByRole('button', { name: 'OK' }));
   expect(screen.queryByRole('dialog', { name: "About Chris's Blackjack" })).not.toBeInTheDocument();
+});
+
+it("announces the dealer's turn as a toast that leaves on its own", () => {
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
+  vi.useFakeTimers();
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
+
+  expect(screen.getByText("Dealer's turn")).toBeInTheDocument();
+
+  act(() => vi.advanceTimersByTime(1500));
+  expect(screen.queryByText("Dealer's turn")).not.toBeInTheDocument();
 });

@@ -6,6 +6,7 @@ import {
   Badge,
   Card,
   CardHeader,
+  Spinner,
   Text,
   makeStyles,
   mergeClasses,
@@ -14,9 +15,10 @@ import {
 import { Bot20Regular } from '@fluentui/react-icons';
 
 /* custom stuff */
-import { Agent, CardStack, ControlPanel, DeckCallout, StatusDisplay } from '.';
+import { CardStack, ControlPanel, DeckCallout, StatusDisplay } from '.';
 import { IPlayerContainerProps } from "../interfaces";
 import { GameStatus } from "../enums";
+import { isRoundOver, isSeatWinner, seatStatus } from "../functions/seatStatus";
 
 // Styles
 import "./PlayerContainer.css";
@@ -28,6 +30,11 @@ const sparkleKeyframes = {
   '0%': { opacity: 0, transform: 'translate(-50%, -50%) scale(0.2) rotate(0deg)' },
   '35%': { opacity: 1, transform: 'translate(-50%, -50%) scale(1) rotate(45deg)' },
   '100%': { opacity: 0, transform: 'translate(-50%, -50%) scale(0.4) rotate(90deg)' },
+};
+
+const seatEnterKeyframes = {
+  from: { opacity: 0, transform: 'translateX(24px)' },
+  to: { opacity: 1, transform: 'translateX(0)' },
 };
 
 const useStyles = makeStyles({
@@ -46,6 +53,12 @@ const useStyles = makeStyles({
     containerType: 'inline-size',
     containerName: 'seat',
     '@media (prefers-reduced-motion: reduce)': { transitionDuration: '0.01ms' },
+  },
+  enter: {
+    animationName: seatEnterKeyframes,
+    animationDuration: '320ms',
+    animationTimingFunction: tokens.curveDecelerateMid,
+    '@media (prefers-reduced-motion: reduce)': { animationName: 'none' },
   },
   active: {
     boxShadow: tokens.shadow16,
@@ -104,7 +117,9 @@ const SPARKLES = [
   { left: '96%', top: '58%', delay: 880 },
 ];
 
-// Component
+/**
+ * The expanded seat: name, bank, status, cards, and (for the human) the action toolbar
+ */
 export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
   // Props
@@ -129,9 +144,8 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   const { cards, handValue } = playerHand;
 
   const { gameStatus } = gameState;
-  const isRoundOver = gameStatus === GameStatus.HumanWins || gameStatus === GameStatus.DealerWins || gameStatus === GameStatus.Push;
-  const isWinner = (gameStatus === GameStatus.HumanWins && !player.isNPC) || (gameStatus === GameStatus.DealerWins && player.isNPC);
-  const isActive = !!player.turn && !isRoundOver;
+  const isWinner = isSeatWinner(player, gameStatus);
+  const isActive = !!player.turn && !isRoundOver(gameStatus);
 
   const id = `DeckCalloutTarget-${player.title}`;
 
@@ -145,18 +159,13 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   /* selectedFlag is true if getSelected() returns an array */
   const selectedFlag = false;
 
-  // Status badges (one at a time, most important first)
-  let statusBadge: React.ReactNode = null;
-  if (isRoundOver && player.isBlackjack && isWinner) statusBadge = <Badge appearance="tint" color="success">✨ Blackjack</Badge>;
-  else if (isRoundOver && isWinner) statusBadge = <Badge appearance="tint" color="success">🏆 Winner</Badge>;
-  else if (gameStatus === GameStatus.Push) statusBadge = <Badge appearance="tint" color="informative">🤝 Push</Badge>;
-  else if (player.isBusted) statusBadge = <Badge appearance="tint" color="danger">💥 Busted</Badge>;
-  else if (isActive) statusBadge = <Badge appearance="filled" color="brand">{player.isNPC ? 'Dealer playing' : 'Your turn'}</Badge>;
-  else if (player.isStaying && !isRoundOver) statusBadge = <Badge appearance="tint" color="subtle">Standing</Badge>;
+  // Status badge (one at a time, most important first)
+  const status = seatStatus(player, gameStatus);
 
   const seatClass = mergeClasses(
     'PlayerContainer',
     styles.seat,
+    styles.enter,
     isActive && styles.active,
     player.isStaying && !isActive && styles.staying,
     isWinner && styles.winner,
@@ -179,7 +188,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
         header={
           <div className={styles.title}>
             <Text size={500} weight="semibold">{`${player.title} ($${player.bank || 0})`}</Text>
-            {statusBadge}
+            {status && <Badge appearance={status.appearance} color={status.color}>{status.text}</Badge>}
           </div>
         }
         action={<StatusDisplay player={player} stats={player.stats} />}
@@ -198,12 +207,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
         {player.isNPC && gameState.dealerHasControl &&
           <div className="player-agent">
-            <Agent
-              dealerHasControl={gameState.dealerHasControl}
-              gameStatus={gameState.gameStatus}
-              handValue={handValue}
-              playerKey={playerKey}
-            />
+            <Spinner size="large" label="Thinking" aria-live="assertive" />
           </div>
         }
 

@@ -1,0 +1,72 @@
+/* The board is a size container so the layout can respond to the board's width,
+   not the window's. Below 720px the focused seat takes the full width. */
+.table-board {
+  position: relative;
+  container: table-board / inline-size;
+}
+
+/* Pre-game: floating chips, left-aligned */
+.table-layout {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px;
+}
+
+/* In play: the focused seat on top, the rail of collapsed seats below */
+.table-layout.is-started {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+/* the focused seat takes the right two thirds; the rail takes the left third */
+@container table-board (min-width: 720px) {
+  .table-layout.is-started {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  }
+
+  .table-layout.is-started .table-focus {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .table-layout.is-started .table-rail {
+    grid-column: 1;
+    grid-row: 1;
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+}
+
+.table-focus {
+  min-width: 0;
+  width: 100%;
+  animation: table-enter 180ms ease-out;
+}
+
+.table-rail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  width: 100%;
+}
+
+.table-pot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5em;
+  width: 100%;
+}
+
+.table-pot-badge {
+  font-size: 18px;
+  padding: 18px 16px;
+  transition: transform 300ms cubic-bezier(0.33, 0, 0.67, 1);
+}

@@ -17,3 +17,7 @@ export * from './IPlayingCardSuit';
 export * from './ISettingReducerAction';
 export * from './ISettingStoreProps';
 export * from './IStatusDisplayProps';
+export * from './ISeatChipProps';
+export * from './ISplashScreenProps';
+export * from './ITableProps';
+export * from './ITableToastsProps';

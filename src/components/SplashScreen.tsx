@@ -17,22 +17,22 @@ import {
 import { Dismiss24Regular } from '@fluentui/react-icons';
 
 import { useGameContext, useSettingContext } from '../context';
-import {
-  defaultplayersArr,
-  defaultSelectedPlayerKeys
-} from "../definitions";
+import { defaultplayersArr } from "../definitions";
 import { GameAction } from "../enums";
 import { PlayerKey } from "../types";
+import { ISplashScreenProps } from "../interfaces";
 
 
-export const SplashScreen: React.FC = () => {
+export const SplashScreen: React.FC<ISplashScreenProps> = (props) => {
+
+  // Props: the selection is owned by App so the table can preview it
+  const { selectedPlayers, onSelectedPlayersChange } = props;
 
   // Context
   const { settings, toggleSetting } = useSettingContext();
   const { gameState, gameDispatch } = useGameContext();
 
   // State
-  const [selectedPlayers, setSelectedPlayers] = React.useState<PlayerKey[]>(defaultSelectedPlayerKeys);
   const [errorMessage, setErrorMessage] = React.useState<string>();
 
   function onDismissDialog() {
@@ -81,7 +81,7 @@ export const SplashScreen: React.FC = () => {
               placeholder="Choose"
               multiselect
               selectedOptions={selectedPlayers}
-              onOptionSelect={(_, data) => setSelectedPlayers(data.selectedOptions as PlayerKey[])}
+              onOptionSelect={(_, data) => onSelectedPlayersChange(data.selectedOptions as PlayerKey[])}
             >
               {defaultplayersArr.map((player) => (
                 <Option key={player.key} value={player.key}>{player.title}</Option>

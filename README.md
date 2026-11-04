@@ -35,6 +35,8 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, an
 * Game state and settings are saved in the browser, so a reload resumes the current game
 * The activity log records each deal, draw, wager, stay, and result
 * Cards are styled with CSS and animate onto the table
+* Seats collapse into name-and-bank chips until a round is dealt; the seat in control takes the right two thirds of the table (full width on phones), and its cards scale to fill their container
+* Turn changes, hits, stands, busts, blackjacks, and results appear as brief toast notices over the table
 
 #### Wish List
 * Split pairs (requires multiple hands per player)
