@@ -106,3 +106,16 @@ it('clears in-memory game state and returns to player selection', () => {
   expect(screen.getByRole('alertdialog')).toBeInTheDocument();
   expect(screen.getByText('No players')).toBeInTheDocument();
 });
+
+it('resumes a saved game after a reload', () => {
+  const first = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  first.unmount();
+
+  const { container } = render(<App />);
+
+  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  expect(screen.getByText('Chris ($975)')).toBeInTheDocument();
+  expect(container.querySelector('.PlayerContainer')?.querySelectorAll('button[aria-pressed]')).toHaveLength(2);
+});

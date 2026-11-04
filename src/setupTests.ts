@@ -7,7 +7,10 @@ import { cleanup } from '@testing-library/react';
 import { vi } from 'vitest';
 import { afterEach } from 'vitest';
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	localStorage.clear();
+});
 
 globalThis.ResizeObserver = class ResizeObserver {
 	observe(): void {}
