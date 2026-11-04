@@ -123,3 +123,19 @@ it('resumes a saved game after a reload', () => {
   expect(screen.getByText('Chris ($975)')).toBeInTheDocument();
   expect(container.querySelector('.PlayerContainer')?.querySelectorAll('button[aria-pressed]')).toHaveLength(2);
 });
+
+it('hides the debug window by default and remembers the setting across reloads', () => {
+  const first = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+
+  expect(screen.queryByRole('button', { name: 'Player Hands' })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  fireEvent.click(screen.getByRole('switch', { name: 'Show Debug Window' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+  expect(screen.getByRole('button', { name: 'Player Hands' })).toBeInTheDocument();
+  first.unmount();
+
+  render(<App />);
+  expect(screen.getByRole('button', { name: 'Player Hands' })).toBeInTheDocument();
+});

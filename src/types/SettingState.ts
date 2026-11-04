@@ -4,6 +4,7 @@
 export type SettingsState = {
   [index: string]: boolean;
   isActivityLogVisible: boolean;
+  isDebugWindowVisible: boolean;
   isCardDescVisible: boolean;
   isCardTitleVisible: boolean;
   isDealerHandVisible: boolean;

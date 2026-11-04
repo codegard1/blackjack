@@ -16,6 +16,8 @@ export function settingReducer(settings: SettingsState, action: ISettingReducerA
       return { ...settings, isOptionsPanelVisible: value }
     case 'isSplashScreenVisible':
       return { ...settings, isSplashScreenVisible: value }
+    case 'isDebugWindowVisible':
+      return { ...settings, isDebugWindowVisible: value }
     case 'isActivityLogVisible':
       return { ...settings, isActivityLogVisible: value }
     case 'isCardDescVisible':
