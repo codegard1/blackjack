@@ -1,7 +1,7 @@
 // React
 import React from "react";
 
-import { Button, Spinner, Text } from '@fluentui/react-components';
+import { Badge, Button, Spinner } from '@fluentui/react-components';
 import { Settings24Regular } from '@fluentui/react-icons';
 
 // Local Resources
@@ -52,7 +52,11 @@ export const Table: React.FC = () => {
               </div>
 
               <div className="table-pot" aria-live="polite">
-                {!gameState.gameStatusFlag && <Text size={600} weight="semibold">Pot: ${gameState.pot}</Text>}
+                {!gameState.gameStatusFlag && (
+                  <Badge size="extra-large" appearance="tint" color="brand" shape="rounded" className="table-pot-badge">
+                    <span aria-hidden="true">💰</span>&nbsp;Pot: ${gameState.pot}
+                  </Badge>
+                )}
               </div>
 
               <div className="table-seats table-seats-player">

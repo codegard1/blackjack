@@ -5,6 +5,8 @@ export interface ICardContainerProps {
   description: string;
   key: string;
   id: PlayingCardKey;
+  /** position in the hand; staggers the deal-in animation */
+  index?: number;
   deselect?: () => void;
   isBackFacing?: boolean;
   isSelectable?: boolean;

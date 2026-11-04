@@ -34,16 +34,16 @@ export const CardContainer: React.FC<ICardContainerProps> = (props) => {
       aria-label={`${description} of ${props.suit.plural}`}
       aria-pressed={props.isSelectable ? isSelected : undefined}
       onClick={props.isSelectable ? _toggleSelect : undefined}
+      className={`playing-card${isSelected ? ' is-selected' : ''}`}
       style={{
+        animationDelay: `${(props.index ?? 0) * 90}ms`,
         alignItems: 'flex-start',
-        animation: 'card-enter 180ms ease-out',
         backgroundColor: props.isBackFacing ? '#d9e8f7' : '#f7f9fa',
         backgroundImage: props.isBackFacing ? 'radial-gradient(closest-side, transparent 98%, rgba(10, 10, 90, .3) 99%), radial-gradient(closest-side, transparent 98%, rgba(10, 10, 90, .3) 99%)' : undefined,
         backgroundPosition: props.isBackFacing ? '0 0, 40px 40px' : undefined,
         backgroundSize: props.isBackFacing ? '80px 80px' : undefined,
-        border: isSelected ? '1px solid #0078d4' : '1px solid #ddd',
-        borderRadius: 5,
-        boxShadow: isSelected ? '4px 4px 10px rgba(25, 25, 25, 0.2)' : '2px 2px 2px rgba(25, 25, 25, 0.2)',
+        border: isSelected ? '1px solid #0078d4' : '1px solid #e0e0e0',
+        borderRadius: 8,
         color: isRedSuit ? '#c50f1f' : '#242424',
         cursor: props.isSelectable ? 'pointer' : 'default',
         display: 'flex',
