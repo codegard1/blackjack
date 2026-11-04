@@ -1,5 +1,6 @@
 export * from './ActivityLog';
 export * from './AppHeader';
+export * from './AppLogo';
 export * from './Agent';
 export * from "./CardContainer";
 export * from "./CardStack";
