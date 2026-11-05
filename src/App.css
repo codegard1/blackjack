@@ -39,6 +39,38 @@ body {
   padding-block: 16px;
 }
 
+.options-panel-appearance {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-block: 16px;
+}
+
+.options-panel-appearance h3 {
+  margin: 0;
+}
+
+/* horizontal radio groups wrap on a narrow drawer instead of overflowing */
+.options-panel-appearance .fui-RadioGroup {
+  flex-wrap: wrap;
+}
+
+/* the card back preview beside its pattern and color fields; below the fields on a phone */
+.options-panel-card-back {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.options-panel-card-back-fields {
+  display: flex;
+  flex: 1 1 240px;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
 .activity-log {
   min-width: 0;
   max-height: calc(100vh - 180px);
