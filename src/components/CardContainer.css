@@ -110,14 +110,67 @@
   font-size: calc(var(--playing-card-height, 100px) * 0.075);
 }
 
-/* the back of a face-down card; the pattern is drawn from the brand tokens */
+/*
+ * The back of a face-down card. The color setting puts two theme tokens in
+ * --card-back-primary (the body) and --card-back-secondary (the lines) inline;
+ * the pattern classes draw with them, scaled to the card height. Every back has
+ * a light margin and a thin inner line, like a printed card.
+ */
 .playing-card.is-back {
-  background-color: var(--colorBrandBackground2);
+  --card-back-primary: var(--colorBrandBackground);
+  --card-back-secondary: var(--colorBrandBackground2);
+  --card-back-unit: calc(var(--playing-card-height, 100px) * 0.12);
+  --card-back-margin: calc(var(--playing-card-height, 100px) * 0.05);
+  background-color: var(--card-back-primary);
+  background-clip: content-box;
+  background-origin: content-box;
+  padding: var(--card-back-margin);
+}
+
+.playing-card.is-back::after {
+  content: '';
+  position: absolute;
+  inset: var(--card-back-margin);
+  border: 1px solid var(--card-back-secondary);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.playing-card.is-pattern-rings {
   background-image:
-    radial-gradient(closest-side, transparent 98%, var(--colorBrandStroke2) 99%),
-    radial-gradient(closest-side, transparent 98%, var(--colorBrandStroke2) 99%);
-  background-position: 0 0, 40px 40px;
-  background-size: 80px 80px;
+    radial-gradient(closest-side, transparent 96%, var(--card-back-secondary) 97%),
+    radial-gradient(closest-side, transparent 96%, var(--card-back-secondary) 97%);
+  background-position: 0 0, calc(var(--card-back-unit) * 2) calc(var(--card-back-unit) * 2);
+  background-size: calc(var(--card-back-unit) * 4) calc(var(--card-back-unit) * 4);
+}
+
+.playing-card.is-pattern-lattice {
+  background-image:
+    repeating-linear-gradient(45deg, var(--card-back-secondary) 0 1px, transparent 1px var(--card-back-unit)),
+    repeating-linear-gradient(-45deg, var(--card-back-secondary) 0 1px, transparent 1px var(--card-back-unit));
+}
+
+.playing-card.is-pattern-stripes {
+  background-image:
+    repeating-linear-gradient(
+      135deg,
+      var(--card-back-secondary) 0 calc(var(--card-back-unit) * 0.35),
+      transparent calc(var(--card-back-unit) * 0.35) var(--card-back-unit)
+    );
+}
+
+.playing-card.is-pattern-checker {
+  background-image:
+    conic-gradient(var(--card-back-secondary) 25%, transparent 0 50%, var(--card-back-secondary) 0 75%, transparent 0);
+  background-size: calc(var(--card-back-unit) * 1.5) calc(var(--card-back-unit) * 1.5);
+}
+
+.playing-card.is-pattern-solid {
+  background-image: none;
+}
+
+.playing-card.is-pattern-solid::after {
+  border-width: 2px;
 }
 
 /*
@@ -217,6 +270,13 @@
   --playing-card-border: var(--colorBrandStroke1);
   transform: translateY(-8px);
   box-shadow: 0 0 0 2px var(--colorBrandStroke1), var(--shadow16);
+}
+
+/* a preview in the options panel sits still */
+.playing-card.is-preview {
+  display: inline-block;
+  animation: none;
+  transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

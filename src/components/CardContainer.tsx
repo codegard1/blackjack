@@ -5,13 +5,15 @@ import React from 'react';
 import { useGameContext, useSettingContext } from '../context';
 import { GameAction } from '../enums';
 import { ICardContainerProps } from '../interfaces';
+import { cardBackClassNames, cardBackColorVariables } from '../theme';
 import './CardContainer.css';
 
 
 /**
  * One playing card, face up or face down. Colors come from the Fluent theme
- * through its CSS variables (see CardContainer.css), and the face layout follows
- * the card style setting unless a style is given as a prop.
+ * through its CSS variables (see CardContainer.css). The face layout follows the
+ * card style setting, and the back its pattern and color settings, unless they
+ * are given as props.
  */
 export const CardContainer: React.FC<ICardContainerProps> = (props) => {
 
@@ -24,6 +26,8 @@ export const CardContainer: React.FC<ICardContainerProps> = (props) => {
   const cardTitle = props.sort.name;
   const cardIcon = props.suit.icon;
   const cardStyle = props.cardStyle ?? settings.cardStyle;
+  const cardBackPattern = props.cardBackPattern ?? settings.cardBackPattern;
+  const cardBackColor = props.cardBackColor ?? settings.cardBackColor;
 
   // State
   const [isSelected, setSelected] = React.useState<boolean>(false);
@@ -37,7 +41,7 @@ export const CardContainer: React.FC<ICardContainerProps> = (props) => {
   const className = [
     'playing-card',
     `is-style-${cardStyle}`,
-    props.isBackFacing ? 'is-back' : 'is-face',
+    ...(props.isBackFacing ? cardBackClassNames(cardBackPattern) : ['is-face']),
     isRedSuit ? 'is-red' : 'is-black',
     props.isSelectable ? 'is-selectable' : '',
     isSelected ? 'is-selected' : '',
@@ -50,7 +54,7 @@ export const CardContainer: React.FC<ICardContainerProps> = (props) => {
       aria-pressed={props.isSelectable ? isSelected : undefined}
       onClick={props.isSelectable ? _toggleSelect : undefined}
       className={className}
-      style={{ animationDelay: `${(props.index ?? 0) * 90}ms` }}
+      style={{ animationDelay: `${(props.index ?? 0) * 90}ms`, ...(props.isBackFacing ? cardBackColorVariables(cardBackColor) : undefined) }}
     >
       {!props.isBackFacing && cardStyle === 'classic' && <span className="playing-card-frame" aria-hidden="true" />}
       {!props.isBackFacing && <>

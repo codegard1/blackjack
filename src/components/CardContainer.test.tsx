@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { PlayingCard } from '../classes';
 import { GameDispatchContext, SettingContext, settingDefaults } from '../context';
@@ -48,9 +48,26 @@ describe('CardContainer', () => {
 
   it('renders a face-down card with no indices and an accessible name', () => {
     const card = renderCard('Club_10', { isBackFacing: true });
-    expect(card).toHaveClass('is-back');
+    expect(card).toHaveClass('is-back', 'is-pattern-rings');
     expect(card).toHaveAccessibleName('Ten of Clubs');
     expect(card.querySelectorAll('.playing-card-corner, .playing-card-frame, .playing-card-center')).toHaveLength(0);
+    expect(card.style.getPropertyValue('--card-back-primary')).toBe('var(--colorBrandBackground)');
+  });
+
+  it('draws the back from the pattern and color settings, or from props', () => {
+    const card = renderCard('Club_10', { isBackFacing: true }, { cardBackPattern: 'lattice', cardBackColor: 'red' });
+    expect(card).toHaveClass('is-pattern-lattice');
+    expect(card.style.getPropertyValue('--card-back-primary')).toBe('var(--colorPaletteRedBackground3)');
+    expect(card.style.getPropertyValue('--card-back-secondary')).toBe('var(--colorPaletteRedBackground1)');
+    cleanup();
+
+    const overridden = renderCard('Club_10', { isBackFacing: true, cardBackPattern: 'solid', cardBackColor: 'graphite' }, { cardBackPattern: 'lattice' });
+    expect(overridden).toHaveClass('is-pattern-solid');
+    expect(overridden.style.getPropertyValue('--card-back-primary')).toBe('var(--colorNeutralForeground2)');
+  });
+
+  it('does not set back colors on a face-up card', () => {
+    expect(renderCard('Club_10').style.getPropertyValue('--card-back-primary')).toBe('');
   });
 
   it('toggles selection and dispatches when selectable', () => {
