@@ -38,7 +38,8 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, an
 * Game state and settings are saved in the browser, so a reload resumes the current game
 * Players: create named players from the Players dialog and choose who plays the next game. Each player's lifetime statistics (rounds, wins, losses, pushes, blackjacks, busts, pots won) are kept in the browser and shown in the same dialog
 * The activity log records each deal, draw, wager, stay, and result
-* Cards are styled with CSS and animate onto the table
+* Appearance settings in the Options panel: a light, dark, system or high contrast theme; five accent colors that recolor the Fluent UI theme and the table felt; three card face layouts (classic, minimal, bold); and a card back chosen from five patterns and five colors with a live preview. A Reset appearance button restores the defaults
+* Cards are styled with CSS from the Fluent UI theme tokens, so they follow the chosen theme, and animate onto the table
 * Seats collapse into name-and-bank chips until a round is dealt; the seat in control takes the right two thirds of the table (full width on phones), and its cards scale to fill their container
 * The pot floats beside the pre-game seats and stays in the rail during play, moving to the center only while a contribution toast is visible
 * Turn changes, hits, stands, busts, blackjacks, and results appear as brief toast notices over the table
