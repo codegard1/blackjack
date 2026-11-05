@@ -22,7 +22,7 @@ import {
 } from '@fluentui/react-icons';
 
 // Context
-import { settingDefaults, useGameContext, useProfileContext, useSettingContext } from "../context";
+import { useGameContext, useProfileContext, useSettingContext } from "../context";
 import { GameAction } from "../enums";
 import { clearStores } from "../functions";
 
@@ -51,7 +51,7 @@ export const OptionsPanel: React.FC = () => {
     clearStores();
     gameDispatch({ type: GameAction.ResetGame, clearActivityLog: true });
     profileDispatch({ type: 'reset' });
-    Object.entries(settingDefaults).forEach(([key, value]) => toggleSetting({ key, value }));
+    toggleSetting({ key: 'reset' });
   }
 
   const newDeal = () => {

@@ -1,39 +1,24 @@
+import { settingDefaults } from "../context/SettingContext";
 import { ISettingReducerAction } from "../interfaces";
-import { SettingsState } from "../types";
+import { SettingKey, SettingsState } from "../types";
+
+/** Copy the named settings from `source` onto a new settings object */
+export function assignSettings(settings: SettingsState, source: SettingsState, keys: readonly SettingKey[]): SettingsState {
+  const next: Record<string, unknown> = { ...settings };
+  keys.forEach((key) => { next[key] = source[key]; });
+  return next as SettingsState;
+}
 
 /**
  * Reducer function for app settings
  * @param settings settings state object
- * @param action action containing the setting name and new value (optional)
- * @returns 
+ * @param action a setting key with its new value, or a reset of some or all settings
+ * @returns the next settings state
  */
-export function settingReducer(settings: SettingsState, action: ISettingReducerAction) {
-
-  const { key, value } = action;
-
-  switch (key) {
-    case 'isOptionsPanelVisible':
-      return { ...settings, isOptionsPanelVisible: value }
-    case 'isDebugWindowVisible':
-      return { ...settings, isDebugWindowVisible: value }
-    case 'isActivityLogVisible':
-      return { ...settings, isActivityLogVisible: value }
-    case 'isCardDescVisible':
-      return { ...settings, isCardDescVisible: value }
-    case 'isDealerHandVisible':
-      return { ...settings, isDealerHandVisible: value }
-    case 'isDeckVisible':
-      return { ...settings, isDeckVisible: value }
-    case 'isDrawnVisible':
-      return { ...settings, isDrawnVisible: value }
-    case 'isHandValueVisible':
-      return { ...settings, isHandValueVisible: value }
-    case 'isSelectedVisible':
-      return { ...settings, isSelectedVisible: value }
-    case 'isMessageBarVisible':
-      return { ...settings, isMessageBarVisible: value }
-    default: {
-      return settings;
-    }
+export function settingReducer(settings: SettingsState, action: ISettingReducerAction): SettingsState {
+  if (action.key === 'reset') {
+    return assignSettings(settings, settingDefaults, action.keys ?? Object.keys(settingDefaults) as SettingKey[]);
   }
+  if (!(action.key in settingDefaults)) return settings;
+  return { ...settings, [action.key]: action.value };
 }

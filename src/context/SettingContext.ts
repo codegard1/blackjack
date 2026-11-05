@@ -16,6 +16,11 @@ export const settingDefaults: SettingsState = {
   isOptionsPanelVisible: false,
   isSelectedVisible: false,
   isMessageBarVisible: false,
+  themeMode: 'light',
+  accent: 'blue',
+  cardStyle: 'classic',
+  cardBackPattern: 'rings',
+  cardBackColor: 'brand',
 }
 
 // Create context with default values
