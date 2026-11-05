@@ -6,6 +6,7 @@ import {
   Badge,
   Card,
   CardHeader,
+  Spinner,
   Text,
   makeStyles,
   mergeClasses,
@@ -14,9 +15,10 @@ import {
 import { Bot20Regular } from '@fluentui/react-icons';
 
 /* custom stuff */
-import { Agent, CardStack, ControlPanel, DeckCallout, StatusDisplay } from '.';
+import { CardStack, ControlPanel, DeckCallout, StatusDisplay } from '.';
 import { IPlayerContainerProps } from "../interfaces";
 import { GameStatus } from "../enums";
+import { isRoundOver, isSeatWinner, seatStatus } from "../functions/seatStatus";
 
 // Styles
 import "./PlayerContainer.css";
@@ -104,7 +106,9 @@ const SPARKLES = [
   { left: '96%', top: '58%', delay: 880 },
 ];
 
-// Component
+/**
+ * The expanded seat: name, bank, status, cards, and (for the human) the action toolbar
+ */
 export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
   // Props
@@ -129,9 +133,8 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   const { cards, handValue } = playerHand;
 
   const { gameStatus } = gameState;
-  const isRoundOver = gameStatus === GameStatus.HumanWins || gameStatus === GameStatus.DealerWins || gameStatus === GameStatus.Push;
-  const isWinner = (gameStatus === GameStatus.HumanWins && !player.isNPC) || (gameStatus === GameStatus.DealerWins && player.isNPC);
-  const isActive = !!player.turn && !isRoundOver;
+  const isWinner = isSeatWinner(player, gameStatus);
+  const isActive = !!player.turn && !isRoundOver(gameStatus);
 
   const id = `DeckCalloutTarget-${player.title}`;
 
@@ -145,14 +148,8 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   /* selectedFlag is true if getSelected() returns an array */
   const selectedFlag = false;
 
-  // Status badges (one at a time, most important first)
-  let statusBadge: React.ReactNode = null;
-  if (isRoundOver && player.isBlackjack && isWinner) statusBadge = <Badge appearance="tint" color="success">✨ Blackjack</Badge>;
-  else if (isRoundOver && isWinner) statusBadge = <Badge appearance="tint" color="success">🏆 Winner</Badge>;
-  else if (gameStatus === GameStatus.Push) statusBadge = <Badge appearance="tint" color="informative">🤝 Push</Badge>;
-  else if (player.isBusted) statusBadge = <Badge appearance="tint" color="danger">💥 Busted</Badge>;
-  else if (isActive) statusBadge = <Badge appearance="filled" color="brand">{player.isNPC ? 'Dealer playing' : 'Your turn'}</Badge>;
-  else if (player.isStaying && !isRoundOver) statusBadge = <Badge appearance="tint" color="subtle">Standing</Badge>;
+  // Status badge (one at a time, most important first)
+  const status = seatStatus(player, gameStatus);
 
   const seatClass = mergeClasses(
     'PlayerContainer',
@@ -179,10 +176,10 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
         header={
           <div className={styles.title}>
             <Text size={500} weight="semibold">{`${player.title} ($${player.bank || 0})`}</Text>
-            {statusBadge}
+            {status && <Badge appearance={status.appearance} color={status.color}>{status.text}</Badge>}
           </div>
         }
-        action={<StatusDisplay player={player} stats={player.stats} />}
+        action={<StatusDisplay player={player} />}
       />
 
       <div className={styles.body}>
@@ -198,12 +195,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
         {player.isNPC && gameState.dealerHasControl &&
           <div className="player-agent">
-            <Agent
-              dealerHasControl={gameState.dealerHasControl}
-              gameStatus={gameState.gameStatus}
-              handValue={handValue}
-              playerKey={playerKey}
-            />
+            <Spinner size="large" label="Thinking" aria-live="assertive" />
           </div>
         }
 

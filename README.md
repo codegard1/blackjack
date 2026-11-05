@@ -10,7 +10,7 @@ https://mango-cliff-08390e60f.azurestaticapps.net/
 ### How to Play
 1. Clone the repo 
 2. `cd` into the repo directory
-3. Use Node.js 22.22+ (version in `.nvmrc`), 24.15+, or 26+
+3. Use Node.js 24.15+ (version in `.nvmrc`) or 26+
 4. Run `npm install --legacy-peer-deps`
 5. Run `npm start`
 6. Navigate to `http://localhost:3000`
@@ -26,15 +26,22 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, an
 
 #### Rules
 * One human player against a dealer that hits below 17 and stands otherwise
-* Each round starts with an ante from every player; the human can add wagers
-* Natural blackjacks are settled right after the deal; a human natural pays a 3:2 bonus on the stake
-* Equal totals push and return each player's stake
-* Double down on any two-card hand: match your stake, take one card, then stand
+* Number cards count as shown, face cards count as 10, and aces count as 1 or 11
+* Each round starts with a minimum ante from both players; the human can add minimum-bet increments before dealing or during their turn
+* A natural blackjack is 21 with two cards and settles immediately; if both players have one, the round pushes
+* After the human stays, the higher total wins; equal totals push and return each player's stake
+* A human natural blackjack wins the pot plus a bonus equal to half their stake, paid from the dealer's bank
+* Double Down is available on the human's turn with exactly two cards if their bank can match the current stake; it adds that amount, draws one card, and stands unless the human busts
+* Open Blackjack rules from the book icon in the header for the in-app guide
 
 #### Project Status
 * Game state and settings are saved in the browser, so a reload resumes the current game
+* Players: create named players from the Players dialog and choose who plays the next game. Each player's lifetime statistics (rounds, wins, losses, pushes, blackjacks, busts, pots won) are kept in the browser and shown in the same dialog
 * The activity log records each deal, draw, wager, stay, and result
 * Cards are styled with CSS and animate onto the table
+* Seats collapse into name-and-bank chips until a round is dealt; the seat in control takes the right two thirds of the table (full width on phones), and its cards scale to fill their container
+* The pot floats beside the pre-game seats and stays in the rail during play, moving to the center only while a contribution toast is visible
+* Turn changes, hits, stands, busts, blackjacks, and results appear as brief toast notices over the table
 
 #### Wish List
 * Split pairs (requires multiple hands per player)

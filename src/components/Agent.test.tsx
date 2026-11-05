@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameContext, GameDispatchContext, createGameState } from '../context';
 import { GameAction, GameStatus } from '../enums';
 import { IGameReducerAction } from '../interfaces';
-import { Agent } from './Agent';
+import { Agent, DEALER_ACTION_DELAY_MS } from './Agent';
 
 const createAgentTree = (
   gameState: ReturnType<typeof createGameState>,
@@ -44,7 +44,7 @@ describe('dealer autoplay', () => {
     const { rerender } = render(tree);
 
     rerender(createAgentTree(gameState, gameDispatch, true));
-    act(() => vi.advanceTimersByTime(250));
+    act(() => vi.advanceTimersByTime(DEALER_ACTION_DELAY_MS));
 
     const drawCalls = gameDispatch.mock.calls.filter(([action]) => action.type === GameAction.Draw);
     expect(drawCalls).toHaveLength(1);
@@ -63,7 +63,7 @@ describe('dealer autoplay', () => {
 
     gameState.dealerHasControl = false;
     rerender(createAgentTree(gameState, gameDispatch, false));
-    act(() => vi.advanceTimersByTime(250));
+    act(() => vi.advanceTimersByTime(DEALER_ACTION_DELAY_MS));
 
     expect(gameDispatch).not.toHaveBeenCalled();
   });
@@ -87,7 +87,7 @@ describe('dealer autoplay', () => {
         </GameDispatchContext.Provider>
       </GameContext.Provider>,
     );
-    act(() => vi.advanceTimersByTime(250));
+    act(() => vi.advanceTimersByTime(DEALER_ACTION_DELAY_MS));
 
     expect(gameDispatch).toHaveBeenCalledWith({ type: GameAction.Stay, playerKey: 'dealer' });
   });

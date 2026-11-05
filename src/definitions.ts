@@ -34,30 +34,14 @@ export const playerDefaults: IPlayer = {
   turn: false,
 };
 
-//  Default players as array
+/** bank each player brings to a new game */
+export const STARTING_BANK = 1000;
+
+/**
+ * The two seats in every game: the human and the dealer. Used when a game is started
+ * with player keys rather than explicit seats.
+ */
 export const defaultplayersArr: IPlayer[] = [
-  { ...playerDefaults, key: 'chris', title: 'Chris', disabled: false, bank: 1000, isNPC: false, },
-  { ...playerDefaults, key: 'dealer', title: 'Dealer', disabled: false, bank: 1000, isNPC: true },
-  { ...playerDefaults, key: 'john', title: 'John', disabled: false, bank: 1000, isNPC: true },
-  { ...playerDefaults, key: 'ralph', title: 'Ralph', disabled: false, bank: 1000, isNPC: true }
+  { ...playerDefaults, key: 'chris', title: 'Chris', disabled: false, bank: STARTING_BANK, isNPC: false, },
+  { ...playerDefaults, key: 'dealer', title: 'Dealer', disabled: false, bank: STARTING_BANK, isNPC: true },
 ];
-
-/**
- * default keys for the Dropdown on  the splash dialog
- */
-export const defaultSelectedPlayerKeys: PlayerKey[] = defaultplayersArr.slice(0, 2).map((p) => p.key);
-
-/**
- * default options for the splash dialog dropdown
- */
-export const defaultPlayersDropdownOptions = defaultplayersArr.map(v => {
-  return {
-    ...v,
-    text: v.title,
-    id: v.id.toString(),
-    index: v.id,
-    selected: v.key in defaultSelectedPlayerKeys,
-  }
-})
-
-export const defaultSelectedPlayerKey: PlayerKey = "chris";

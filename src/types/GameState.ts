@@ -24,8 +24,12 @@ export type GameState = {
 export type ActivityLogEntry = {
   id: number;
   sessionId?: number;
-  event?: 'game' | 'round' | 'deal' | 'draw' | 'bet' | 'double' | 'stay' | 'win' | 'push' | 'shuffle';
+  /** the hand this entry belongs to; absent in logs saved before hands were tracked */
+  round?: number;
+  event?: 'game' | 'round' | 'deal' | 'draw' | 'ante' | 'bet' | 'double' | 'stay' | 'win' | 'loss' | 'push' | 'shuffle';
   timestamp: number;
   name: string;
   description: string;
+  /** change to the player's bank from this entry; negative when money is put in */
+  amount?: number;
 }

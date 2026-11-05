@@ -47,8 +47,8 @@ export class PlayerStore implements IPlayerStore {
    */
   public newPlayer(options: IPlayerOptions): void {
     // Create new player record
-    const { key, title, isNPC, id, bank, disabled, } = options;
-    const _newPlayer: IPlayer = { ...playerDefaults, key, title, isNPC, id, bank, disabled: disabled ? disabled : false, };
+    const { key, title, isNPC, id, bank, disabled, stats } = options;
+    const _newPlayer: IPlayer = { ...playerDefaults, key, title, isNPC, id, bank, disabled: disabled ? disabled : false, stats: { ...playerDefaults.stats, ...stats } };
     // Add the new Player to the players collection
     if (!(key in this.players)) this.players[key] = _newPlayer;
   }

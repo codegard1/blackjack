@@ -14,16 +14,12 @@ export function settingReducer(settings: SettingsState, action: ISettingReducerA
   switch (key) {
     case 'isOptionsPanelVisible':
       return { ...settings, isOptionsPanelVisible: value }
-    case 'isSplashScreenVisible':
-      return { ...settings, isSplashScreenVisible: value }
     case 'isDebugWindowVisible':
       return { ...settings, isDebugWindowVisible: value }
     case 'isActivityLogVisible':
       return { ...settings, isActivityLogVisible: value }
     case 'isCardDescVisible':
       return { ...settings, isCardDescVisible: value }
-    case 'isCardTitleVisible':
-      return { ...settings, isCardTitleVisible: value }
     case 'isDealerHandVisible':
       return { ...settings, isDealerHandVisible: value }
     case 'isDeckVisible':

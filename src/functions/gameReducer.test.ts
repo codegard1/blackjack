@@ -101,10 +101,11 @@ describe('game behavior baseline', () => {
     const reset = gameReducer(wagered, { type: GameAction.ResetGame });
     const secondGame = gameReducer(reset, { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] });
 
-    expect(secondGame.activityLog.map((entry) => entry.sessionId)).toEqual([1, 1, 2]);
-    expect(secondGame.activityLog.map((entry) => entry.id)).toEqual([1, 2, 3]);
+    // first game: game started, two antes, one wager; second game: game started
+    expect(secondGame.activityLog.map((entry) => entry.sessionId)).toEqual([1, 1, 1, 1, 2]);
+    expect(secondGame.activityLog.map((entry) => entry.id)).toEqual([1, 2, 3, 4, 5]);
     expect(secondGame.activityLog.at(-1)).toMatchObject({ event: 'game', description: 'Game started' });
-    expect(firstGame.activityLog).toHaveLength(1);
+    expect(firstGame.activityLog).toHaveLength(3);
   });
 
   it('clears activity history when explicitly clearing application data', () => {
@@ -249,12 +250,28 @@ describe('blackjack rules', () => {
     const dealt = dealHands(startDefaultGame(), ['Spade_14', 'Heart_13'], ['Club_14', 'Diamond_12']);
 
     expect(dealt.gameStatus).toBe(GameStatus.Push);
-    expect(dealt.activityLog.at(-1)).toMatchObject({ event: 'push' });
 
     const result = settle(dealt);
     expect(result.playerStore.player('chris').bank).toBe(1000);
     expect(result.playerStore.player('dealer').bank).toBe(1000);
     expect(result.winner).toBeUndefined();
+    expect(result.activityLog.filter((entry) => entry.event === 'push').map((entry) => entry.amount)).toEqual([25, 25]);
+  });
+
+  it('records every bank movement, so the logged amounts add up to each bank change', () => {
+    let state = dealHands(startDefaultGame(), ['Spade_10', 'Heart_9'], ['Club_10', 'Diamond_7']);
+    state = gameReducer(state, { type: GameAction.Stay, playerKey: 'chris' });
+    state = gameReducer(state, { type: GameAction.Stay, playerKey: 'dealer' });
+    state = settle(state);
+
+    expect(state.activityLog.find((entry) => entry.event === 'win')).toMatchObject({ name: 'Chris', amount: 50 });
+    for (const key of ['chris', 'dealer']) {
+      const player = state.playerStore.player(key);
+      const logged = state.activityLog
+        .filter((entry) => entry.name === player.title)
+        .reduce((sum, entry) => sum + (entry.amount ?? 0), 0);
+      expect(logged).toBe(player.bank - 1000);
+    }
   });
 
   it('pays a human natural the pot plus a 3:2 bonus from the dealer', () => {

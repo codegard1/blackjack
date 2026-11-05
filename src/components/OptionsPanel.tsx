@@ -22,7 +22,7 @@ import {
 } from '@fluentui/react-icons';
 
 // Context
-import { settingDefaults, useGameContext, useSettingContext } from "../context";
+import { settingDefaults, useGameContext, useProfileContext, useSettingContext } from "../context";
 import { GameAction } from "../enums";
 import { clearStores } from "../functions";
 
@@ -31,6 +31,7 @@ export const OptionsPanel: React.FC = () => {
   // Context
   const { settings, toggleSetting } = useSettingContext();
   const { gameState, gameDispatch } = useGameContext();
+  const { profileDispatch } = useProfileContext();
   const playerStore = gameState.playerStore;
 
   const closeOptionsPanel = () => {
@@ -43,13 +44,13 @@ export const OptionsPanel: React.FC = () => {
   const resetGame = () => {
     gameDispatch({ type: GameAction.ResetGame });
     gameDispatch({ type: GameAction.ShowMessageBar, messageBarDefinition: { text: 'Game Reset', type: 'info', isMultiLine: false } });
-    toggleSetting({ key: 'isSplashScreenVisible', value: true });
     closeOptionsPanel();
   }
 
   const clearApplicationData = () => {
     clearStores();
     gameDispatch({ type: GameAction.ResetGame, clearActivityLog: true });
+    profileDispatch({ type: 'reset' });
     Object.entries(settingDefaults).forEach(([key, value]) => toggleSetting({ key, value }));
   }
 
@@ -111,7 +112,6 @@ export const OptionsPanel: React.FC = () => {
           <Switch checked={settings.isSelectedVisible} label="Show Selected" onChange={(_, data) => toggleSetting({ key: 'isSelectedVisible', value: data.checked })} />
           <Switch checked={settings.isDealerHandVisible} label="Show Dealer Hand" onChange={(_, data) => toggleSetting({ key: 'isDealerHandVisible', value: data.checked })} />
           <Switch checked={settings.isHandValueVisible} label="Show Hand Value" onChange={(_, data) => toggleSetting({ key: 'isHandValueVisible', value: data.checked })} />
-          <Switch checked={settings.isCardTitleVisible} label="Show Card Titles" onChange={(_, data) => toggleSetting({ key: 'isCardTitleVisible', value: data.checked })} />
           <Switch checked={settings.isActivityLogVisible} label="Show Activity Log" onChange={(_, data) => toggleSetting({ key: 'isActivityLogVisible', value: data.checked })} />
           <Switch checked={settings.isDebugWindowVisible} label="Show Debug Window" onChange={(_, data) => toggleSetting({ key: 'isDebugWindowVisible', value: data.checked })} />
         </div>

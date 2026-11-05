@@ -2,14 +2,10 @@
 import React from "react";
 
 import {
-  Menu,
-  MenuItem,
-  MenuList,
-  MenuPopover,
-  MenuTrigger,
   Toolbar,
   ToolbarButton,
   ToolbarDivider,
+  Text,
   Tooltip,
   makeStyles,
   tokens,
@@ -17,7 +13,6 @@ import {
 import {
   Add20Regular,
   ArrowClockwise20Regular,
-  ArrowDown20Regular,
   ArrowForward20Regular,
   ArrowUp20Regular,
   ArrowUpload20Regular,
@@ -75,6 +70,9 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const npcFlag = player.isNPC;
   const isRoundComplete = gameStatus >= GameStatus.HumanWins;
   const isBtnDisabled = isRoundComplete || currentPlayerKey !== playerKey;
+  // Hit and Stay need a dealt hand; a new game has no cards until the first deal
+  const isRoundDealt = Object.values(gameState.deck.state.playerHands).some((hand) => hand.cards.length > 0);
+  const isPlayDisabled = isBtnDisabled || !isRoundDealt;
   const isDealDisabled = !isRoundComplete && currentPlayerKey !== playerKey;
   const isDoubleDownDisabled = !canDoubleDown(gameState, playerKey);
   const wagerLabel = `Wager $${minimumBet}`;
@@ -83,10 +81,6 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
     toggleSetting({ key: 'isMessageBarVisible', value: true });
     gameDispatch({ type: GameAction.Draw, playerKey, numberOfCards: 1, deckSide: 'top' });
   }
-
-  const draw = (deckSide: 'top' | 'bottom' | 'random') => {
-    gameDispatch({ type: GameAction.Draw, playerKey, deckSide, numberOfCards: 1 });
-  };
 
   const deal = () => {
     gameDispatch({ type: GameAction.Deal });
@@ -98,55 +92,46 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   };
 
   return hidden ? null : (
-    <Toolbar aria-label={`${player.title}'s actions`} className={`player-controlpanel ${styles.toolbar}`}>
-      <Tooltip content="Draw one card from the top of the deck" relationship="label">
-        <ToolbarButton className={styles.button} appearance={isBtnDisabled ? 'subtle' : 'primary'} icon={<Add20Regular />} disabled={isBtnDisabled} onClick={_hit}>
-          <Label>Hit</Label>
-        </ToolbarButton>
-      </Tooltip>
-      <Tooltip content="Stand on your current hand" relationship="description">
-        <ToolbarButton className={styles.button} aria-label="Stay" icon={<ArrowForward20Regular />} disabled={isBtnDisabled} onClick={() => gameDispatch({ type: GameAction.Stay, playerKey })}>
-          <Label>Stay</Label>
-        </ToolbarButton>
-      </Tooltip>
-      {!npcFlag && (
-        <Tooltip content="Double your stake, take exactly one more card, then stand" relationship="description">
-          <ToolbarButton className={styles.button} aria-label="Double Down" icon={<ArrowUpload20Regular />} disabled={isDoubleDownDisabled} onClick={() => gameDispatch({ type: GameAction.DoubleDown, playerKey })}>
-            <Label>Double Down</Label>
+    <>
+      {!npcFlag && !isRoundDealt && !isRoundComplete && currentPlayerKey === playerKey && (
+        <Text as="p" size={200}>
+          Before dealing, use Wager to add ${minimumBet} to your stake. You can add more than once.
+        </Text>
+      )}
+      <Toolbar aria-label={`${player.title}'s actions`} className={`player-controlpanel ${styles.toolbar}`}>
+        <Tooltip content="Draw one card from the top of the deck" relationship="label">
+          <ToolbarButton className={styles.button} appearance={isPlayDisabled ? 'subtle' : 'primary'} icon={<Add20Regular />} disabled={isPlayDisabled} onClick={_hit}>
+            <Label>Hit</Label>
           </ToolbarButton>
         </Tooltip>
-      )}
-      <Tooltip content={`Add $${minimumBet} to the pot`} relationship="description">
-        <ToolbarButton className={styles.button} aria-label={wagerLabel} icon={<ArrowUp20Regular />} disabled={isBtnDisabled} onClick={() => gameDispatch({ type: GameAction.Bet, playerKey, betAmount: minimumBet })}>
-          <Label>{wagerLabel}</Label>
-        </ToolbarButton>
-      </Tooltip>
-
-      <ToolbarDivider />
-
-      {!npcFlag && (
-        <Tooltip content="Deal a new round" relationship="description">
-          <ToolbarButton className={styles.button} aria-label="Deal" appearance={isRoundComplete ? 'primary' : 'subtle'} icon={<ArrowClockwise20Regular />} disabled={isDealDisabled} onClick={deal}>
-            <Label>Deal</Label>
+        <Tooltip content="Stand on your current hand" relationship="description">
+          <ToolbarButton className={styles.button} aria-label="Stay" icon={<ArrowForward20Regular />} disabled={isPlayDisabled} onClick={() => gameDispatch({ type: GameAction.Stay, playerKey })}>
+            <Label>Stay</Label>
           </ToolbarButton>
         </Tooltip>
-      )}
-      <Menu>
-        <MenuTrigger disableButtonEnhancement>
-          <Tooltip content="Draw from a specific part of the deck" relationship="description">
-            <ToolbarButton className={styles.button} aria-label="Draw" icon={<ArrowDown20Regular />} disabled={isBtnDisabled}>
-              <Label>Draw</Label>
+        {!npcFlag && (
+          <Tooltip content="Double your stake, take exactly one more card, then stand" relationship="description">
+            <ToolbarButton className={styles.button} aria-label="Double Down" icon={<ArrowUpload20Regular />} disabled={isDoubleDownDisabled} onClick={() => gameDispatch({ type: GameAction.DoubleDown, playerKey })}>
+              <Label>Double Down</Label>
             </ToolbarButton>
           </Tooltip>
-        </MenuTrigger>
-        <MenuPopover>
-          <MenuList>
-            <MenuItem onClick={() => draw('top')}>Draw from Top</MenuItem>
-            <MenuItem onClick={() => draw('bottom')}>Draw from Bottom of Deck</MenuItem>
-            <MenuItem onClick={() => draw('random')}>Draw Random</MenuItem>
-          </MenuList>
-        </MenuPopover>
-      </Menu>
-    </Toolbar>
+        )}
+        <Tooltip content={`Add $${minimumBet} to the pot`} relationship="description">
+          <ToolbarButton className={styles.button} aria-label={wagerLabel} icon={<ArrowUp20Regular />} disabled={isBtnDisabled} onClick={() => gameDispatch({ type: GameAction.Bet, playerKey, betAmount: minimumBet })}>
+            <Label>{wagerLabel}</Label>
+          </ToolbarButton>
+        </Tooltip>
+
+        <ToolbarDivider />
+
+        {!npcFlag && (
+          <Tooltip content="Deal a new round" relationship="description">
+            <ToolbarButton className={styles.button} aria-label="Deal" appearance={isRoundComplete ? 'primary' : 'subtle'} icon={<ArrowClockwise20Regular />} disabled={isDealDisabled} onClick={deal}>
+              <Label>Deal</Label>
+            </ToolbarButton>
+          </Tooltip>
+        )}
+      </Toolbar>
+    </>
   );
 }

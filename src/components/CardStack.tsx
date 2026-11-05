@@ -26,7 +26,9 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
     isSelectable,
     player,
     title,
+    variant = 'seat',
   } = props;
+  const isMini = variant === 'mini';
 
   // Context props
   const { settings } = useSettingContext();
@@ -48,7 +50,6 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
       id={cardKey}
       index={index}
       isSelectable={isSelectable}
-      isTitleVisible={settings.isCardTitleVisible}
       isBackFacing={index === 0 && !settings.isDealerHandVisible && !isRoundOver && player?.isNPC}
       isDescVisible={settings.isCardDescVisible}
     />
@@ -63,7 +64,7 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
     `Hand Value: ${handValues.aceAsOne} / ${handValues.aceAsEleven}`;
 
   return hidden ? null : (
-    <section aria-label={player ? `${player.title}'s hand` : undefined} style={{ alignItems: player ? 'center' : undefined, display: 'flex', flexDirection: 'column', gap: 8, maxWidth: '100%' }}>
+    <section aria-label={player ? `${player.title}'s hand` : undefined} style={{ alignItems: player ? 'center' : undefined, display: 'flex', flexDirection: 'column', gap: 8, maxWidth: '100%', width: player && !isMini ? '100%' : undefined }}>
       {!player && <Button
         appearance="transparent"
         icon={isDeckVisible ? <ChevronUp16Regular /> : <ChevronDown16Regular />}
@@ -72,11 +73,15 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
       >
         {deckTitleString}
       </Button>}
-      {!player?.isNPC &&
+      {!player?.isNPC && !isMini &&
         settings.isHandValueVisible && (
           <Text size={400}>{handValueString}</Text>
         )}
-      {(player || isDeckVisible) && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, justifyContent: player ? 'center' : undefined }}>{cardElements}</div>}
+      {(player || isDeckVisible) && (
+        player
+          ? <div className={isMini ? 'card-row is-mini' : 'card-row'} style={{ '--card-count': Math.max(cards.length, 1) } as React.CSSProperties}>{cardElements}</div>
+          : <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>{cardElements}</div>
+      )}
     </section>
   );
 }

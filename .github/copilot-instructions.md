@@ -4,9 +4,10 @@ This repository is a browser-based blackjack game where one human plays against 
 
 ## Architecture
 
-- `src/App.tsx` owns the game and settings reducers and provides state through React context. Components read state with `useGameContext()` / `useSettingContext()` and dispatch actions; keep shared state changes in reducers.
+- `src/App.tsx` owns the game, settings, and profile reducers and provides state through React context. Components read state with the relevant context hooks and dispatch actions; keep shared state changes in reducers.
 - Game rules and state transitions belong in `src/functions/` and `src/classes/`, not in UI components. `src/components/Agent.tsx` automates the dealer's turn.
-- `src/functions/evaluateGame.ts` handles antes, round settlement, payouts, and stats. `src/functions/persistence.ts` restores and saves the deck, player store, game snapshot, and settings in `localStorage`.
+- `src/functions/evaluateGame.ts` handles antes, round settlement, payouts, and stats. `src/functions/profiles.ts` manages player profiles, profile statistics, and the seats for a new game. `src/functions/persistence.ts` restores and saves the deck, player store, game snapshot, settings, and profiles in `localStorage`.
+- There is no splash screen. Before a game, `src/components/Table.tsx` shows the selected player and dealer as chips with a Start game button. `src/components/PlayersDialog.tsx`, opened from the header, creates/selects human profiles and displays lifetime statistics. Profile data persists separately from the active game; clearing application data resets it.
 - Tests live beside the code they cover. See the scoped instructions in `.github/instructions/` for game logic, UI, and test-specific guidance.
 
 ## Development
@@ -14,7 +15,7 @@ This repository is a browser-based blackjack game where one human plays against 
 - Use strict TypeScript and the existing interfaces, types, enums, class methods, and barrel exports where available. Follow nearby code style and avoid unrelated refactors.
 - Use `debugLog` from `src/functions/debugLog.ts` for development-only diagnostics.
 - Update the README when adding a significant player-facing feature.
-- Use Node.js versions allowed by `package.json` (`.nvmrc` pins Node 22).
+- Use Node.js versions allowed by `package.json` (`.nvmrc` pins Node 24).
 
 Common commands:
 

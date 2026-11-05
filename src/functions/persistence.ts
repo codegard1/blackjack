@@ -4,7 +4,8 @@ import { createGameState } from "../context/GameContext";
 import { settingDefaults } from "../context/SettingContext";
 import { StoreName } from "../enums";
 import { IPlayerStoreState } from "../interfaces";
-import { DeckState, GameState, SettingsState } from "../types";
+import { DeckState, GameState, ProfileState, SettingsState } from "../types";
+import { defaultProfileState, normalizeProfileState } from "./profiles";
 
 /** Bump when the shape of the saved game snapshot changes. */
 const GAME_STORE_VERSION = 2;
@@ -81,11 +82,38 @@ export function loadGameState(): GameState {
   }
 }
 
+function isProfile(value: unknown): boolean {
+  return isObject(value)
+    && typeof value.id === 'string'
+    && typeof value.name === 'string'
+    && typeof value.createdAt === 'number'
+    && isObject(value.stats);
+}
+
+function isProfileState(value: unknown): value is ProfileState {
+  return isObject(value)
+    && Array.isArray(value.profiles)
+    && value.profiles.every(isProfile)
+    && typeof value.selectedId === 'string';
+}
+
+/**
+ * Build the player profiles, restoring the saved ones when they are valid
+ * and falling back to the defaults otherwise.
+ */
+export function loadProfiles(): ProfileState {
+  const saved = readJson<unknown>(StoreName.PROFILESTORE);
+  return isProfileState(saved) ? normalizeProfileState(saved) : defaultProfileState();
+}
+
+export function saveProfiles(state: ProfileState): void {
+  writeJson(StoreName.PROFILESTORE, state);
+}
+
 /**
  * Build the initial settings, merging saved values over the defaults.
- * The splash screen is shown whenever there is no game in progress.
  */
-export function loadSettings(hasPlayers: boolean): SettingsState {
+export function loadSettings(): SettingsState {
   const saved = readJson<unknown>(StoreName.SETTINGSTORE);
   const settings: SettingsState = { ...settingDefaults };
   if (isObject(saved)) {
@@ -93,7 +121,6 @@ export function loadSettings(hasPlayers: boolean): SettingsState {
       if (typeof saved[key] === 'boolean') settings[key] = saved[key] as boolean;
     }
   }
-  settings.isSplashScreenVisible = !hasPlayers;
   settings.isOptionsPanelVisible = false;
   return settings;
 }

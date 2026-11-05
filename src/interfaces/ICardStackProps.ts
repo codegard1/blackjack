@@ -7,4 +7,6 @@ export interface ICardStackProps {
   isSelectable: boolean;
   player?: IPlayer;
   title: string;
+  /** 'mini' is the compact hand shown on a collapsed seat; it has no hand value line */
+  variant?: 'seat' | 'mini';
 }

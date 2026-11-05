@@ -1,11 +1,26 @@
 import { GameStatus } from "../enums";
-import { IGameReducerAction } from "../interfaces";
+import { IGameReducerAction, IPlayer } from "../interfaces";
 import { GameState, PlayerKey } from "../types";
+import { recordActivity } from "./activity";
 
 /** Amount a player has put into the pot this round (ante plus wagers). */
 export function roundStake(state: GameState, key: PlayerKey): number {
   const player = state.playerStore.player(key);
   return (player?.lastAnte ?? 0) + (player?.totalBet ?? 0);
+}
+
+/**
+ * Log a player's result for the round. The amount is the bank change from the payout
+ * (zero for a loss, whose stake was already logged when it went in).
+ */
+function recordOutcome(state: GameState, player: IPlayer, amount: number): void {
+  if (state.gameStatus === GameStatus.Push) {
+    recordActivity(state, player.title, 'stake returned', 'push', { amount });
+  } else if (player.key === state.winner) {
+    recordActivity(state, player.title, player.isBlackjack ? 'won the pot with blackjack' : 'won the pot', 'win', { amount });
+  } else {
+    recordActivity(state, player.title, 'lost the round', 'loss');
+  }
 }
 
 /**
@@ -34,6 +49,7 @@ function settleRound(state: GameState): void {
         const bonus = Math.min(Math.floor(roundStake(state, human.key) / 2), dealer.bank);
         dealer.bank -= bonus;
         winnings[human.key] += bonus;
+        if (bonus > 0) recordActivity(state, dealer.title, 'paid the 3:2 blackjack bonus', 'loss', { amount: -bonus });
       }
       break;
     }
@@ -56,6 +72,7 @@ function settleRound(state: GameState): void {
   playerStore.all.forEach((player) => {
     const amount = winnings[player.key] ?? 0;
     if (amount > 0) playerStore.payout(player.key, amount);
+    recordOutcome(state, player, amount);
     playerStore.updateStats(player.key, {
       numberOfGamesLost: player.key === state.loser ? 1 : 0,
       numberOfGamesPlayed: 1,
@@ -87,7 +104,10 @@ export function evaluateGame(state: GameState, action: IGameReducerAction): Game
       if (state.turnCount === 0) {
         state.pot = 0;
         state.playerStore.all.forEach((player) => {
-          if (state.playerStore.ante(player.key, state.minimumBet)) state.pot += state.minimumBet;
+          if (state.playerStore.ante(player.key, state.minimumBet)) {
+            state.pot += state.minimumBet;
+            recordActivity(state, player.title, `anted $${state.minimumBet}`, 'ante', { amount: -state.minimumBet });
+          }
         });
         state.turnCount = 1;
       }

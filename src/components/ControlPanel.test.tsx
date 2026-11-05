@@ -53,7 +53,7 @@ describe('player controls', () => {
     expect(screen.getByRole('button', { name: 'Draw one card from the top of the deck' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Stay' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Wager $25' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Draw' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Draw' })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
@@ -66,8 +66,20 @@ describe('player controls', () => {
     screen.getAllByRole('button').forEach((button) => expect(button).toBeEnabled());
   });
 
+  it('keeps Hit and Stay disabled until the hand is dealt', () => {
+    const dispatch = renderControls(GameStatus.InProgress, 'chris');
+
+    expect(screen.getByRole('button', { name: 'Draw one card from the top of the deck' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Stay' })).toBeDisabled();
+    expect(screen.getByText('Before dealing, use Wager to add $25 to your stake. You can add more than once.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wager $25' }));
+    expect(dispatch).toHaveBeenCalledWith({ type: GameAction.Bet, playerKey: 'chris', betAmount: 25 });
+  });
+
   it('only offers double down on a two-card hand', () => {
     const dispatch = renderControls(GameStatus.InProgress, 'chris', ['Club_10', 'Heart_6']);
+    expect(screen.queryByText(/Before dealing/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Double Down' }));
     expect(dispatch).toHaveBeenCalledWith({ type: GameAction.DoubleDown, playerKey: 'chris' });
 

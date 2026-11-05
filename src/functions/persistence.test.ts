@@ -39,16 +39,14 @@ describe('persistence', () => {
     expect(loadGameState().playerStore.length).toBe(0);
   });
 
-  it('merges saved settings over defaults and shows the splash screen only without players', () => {
+  it('merges saved settings over defaults and always starts with the options panel closed', () => {
     saveSettings({ ...settingDefaults, isActivityLogVisible: true, isOptionsPanelVisible: true });
-    localStorage.setItem(StoreName.SETTINGSTORE, JSON.stringify({ isActivityLogVisible: true, bogus: 'x' }));
+    localStorage.setItem(StoreName.SETTINGSTORE, JSON.stringify({ isActivityLogVisible: true, bogus: 'x', isSplashScreenVisible: false }));
 
-    const withPlayers = loadSettings(true);
-    expect(withPlayers.isActivityLogVisible).toBe(true);
-    expect(withPlayers.isSplashScreenVisible).toBe(false);
-    expect(withPlayers.isOptionsPanelVisible).toBe(false);
-    expect(withPlayers).not.toHaveProperty('bogus');
-
-    expect(loadSettings(false).isSplashScreenVisible).toBe(true);
+    const loaded = loadSettings();
+    expect(loaded.isActivityLogVisible).toBe(true);
+    expect(loaded.isOptionsPanelVisible).toBe(false);
+    expect(loaded).not.toHaveProperty('bogus');
+    expect(loaded).not.toHaveProperty('isSplashScreenVisible');
   });
 });
