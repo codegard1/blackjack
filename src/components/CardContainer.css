@@ -1,12 +1,46 @@
+/*
+ * Playing card colors come from the Fluent theme's CSS variables, so cards follow
+ * the accent, the light or dark mode and high contrast. Layout scales with the card
+ * height (--playing-card-height, set by .card-row below).
+ */
+.playing-card {
+  --playing-card-face: var(--colorNeutralBackground1);
+  --playing-card-ink: var(--colorNeutralForeground1);
+  --playing-card-border: var(--colorNeutralStroke1);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid var(--playing-card-border);
+  border-radius: 8px;
+  background-color: var(--playing-card-face);
+  color: var(--playing-card-ink);
+  font-family: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.playing-card.is-red {
+  --playing-card-ink: var(--colorPaletteRedForeground1);
+}
+
+.playing-card.is-selectable {
+  cursor: pointer;
+}
+
+/* the inner frame of the classic face */
 .playing-card-frame {
   position: absolute;
   inset: 4px;
-  border: 1px solid rgba(36, 36, 36, 0.18);
+  border: 1px solid var(--colorNeutralStroke2);
   border-radius: 3px;
   pointer-events: none;
 }
 
-/* Text scales with the card height (--playing-card-height, set in .card-row below) */
 .playing-card-corner {
   position: absolute;
   z-index: 1;
@@ -30,11 +64,60 @@
   bottom: calc(var(--playing-card-height, 100px) * 0.07);
 }
 
-.playing-card-description {
+/* the middle of the face: the bold style's large pip, and the optional description */
+.playing-card-center {
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   align-self: center;
+  line-height: 1;
+}
+
+.playing-card-description {
   font-size: calc(var(--playing-card-height, 100px) * 0.12);
   white-space: nowrap;
+}
+
+/* minimal: no frame, lighter corners, more air */
+.playing-card.is-style-minimal {
+  border-radius: 10px;
+}
+
+.playing-card.is-style-minimal .playing-card-corner {
+  font-weight: 600;
+  font-size: calc(var(--playing-card-height, 100px) * 0.13);
+}
+
+/* bold: a large index and suit in the middle, small corners */
+.playing-card.is-style-bold .playing-card-corner {
+  font-size: calc(var(--playing-card-height, 100px) * 0.11);
+}
+
+.playing-card-pip-index {
+  font-size: calc(var(--playing-card-height, 100px) * 0.36);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.playing-card-pip-suit {
+  font-size: calc(var(--playing-card-height, 100px) * 0.26);
+}
+
+/* small enough to sit between the two corners on the widest name ("Queen") */
+.playing-card.is-style-bold .playing-card-description {
+  margin-top: calc(var(--playing-card-height, 100px) * 0.03);
+  font-size: calc(var(--playing-card-height, 100px) * 0.075);
+}
+
+/* the back of a face-down card; the pattern is drawn from the brand tokens */
+.playing-card.is-back {
+  background-color: var(--colorBrandBackground2);
+  background-image:
+    radial-gradient(closest-side, transparent 98%, var(--colorBrandStroke2) 99%),
+    radial-gradient(closest-side, transparent 98%, var(--colorBrandStroke2) 99%);
+  background-position: 0 0, 40px 40px;
+  background-size: 80px 80px;
 }
 
 /*
@@ -69,6 +152,12 @@
   width: calc(var(--playing-card-height) * 0.65);
 }
 
+/* on a mini card the bold pip is the whole face; corners and description would collide with it */
+.card-row.is-mini .playing-card.is-style-bold .playing-card-corner,
+.card-row.is-mini .playing-card.is-style-bold .playing-card-description {
+  display: none;
+}
+
 /* a narrow board gives the hand more height, so the cards can grow */
 @container table-board (max-width: 719px) {
   .card-row {
@@ -100,13 +189,13 @@
   }
 }
 
-/* Default card size. Cards in a player's hand are sized by .card-row below. */
+/* Default card size. Cards in a player's hand are sized by .card-row above. */
 .playing-card {
   width: 65px;
   height: 100px;
   flex-shrink: 0;
   animation: playing-card-deal 420ms cubic-bezier(0.1, 0.9, 0.2, 1) both;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow4);
   transition:
     transform 200ms cubic-bezier(0.33, 0, 0.67, 1),
     box-shadow 200ms cubic-bezier(0.33, 0, 0.67, 1),
@@ -116,12 +205,18 @@
 .playing-card:hover,
 .playing-card:focus-visible {
   transform: translateY(-4px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.14), 0 8px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow16);
+}
+
+.playing-card:focus-visible {
+  outline: 2px solid var(--colorStrokeFocus2);
+  outline-offset: 2px;
 }
 
 .playing-card.is-selected {
+  --playing-card-border: var(--colorBrandStroke1);
   transform: translateY(-8px);
-  box-shadow: 0 0 0 2px #0078d4, 0 8px 16px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 0 0 2px var(--colorBrandStroke1), var(--shadow16);
 }
 
 @media (prefers-reduced-motion: reduce) {

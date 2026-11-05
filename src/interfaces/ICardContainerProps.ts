@@ -1,5 +1,5 @@
 import { IPlayingCardSort, IPlayingCardSuit } from '../interfaces';
-import { PlayingCardKey } from '../types';
+import { CardStyle, PlayingCardKey } from '../types';
 
 export interface ICardContainerProps {
   description: string;
@@ -11,6 +11,8 @@ export interface ICardContainerProps {
   isBackFacing?: boolean;
   isSelectable?: boolean;
   isDescVisible?: boolean;
+  /** face layout; defaults to the card style setting */
+  cardStyle?: CardStyle;
   select?: () => void;
   sort: IPlayingCardSort;
   suit: IPlayingCardSuit;
