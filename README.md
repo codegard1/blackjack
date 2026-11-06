@@ -47,7 +47,7 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, an
 * Appearance settings in the Options panel: a light, dark, system or high contrast theme; five accent colors that recolor the Fluent UI theme and the table felt; three card face layouts (classic, minimal, bold); and a card back chosen from five patterns and five colors with a live preview. A Reset appearance button restores the defaults
 * Cards are styled with CSS from the Fluent UI theme tokens, so they follow the chosen theme, and animate onto the table
 * Seats collapse into name-and-bank chips until a round is dealt; the seat in control takes the right two thirds of the table (full width on phones), and its cards scale to fill their container
-* The pot floats beside the pre-game seats and stays in the rail during play, moving to the center only while a contribution toast is visible
+* The pot floats beside the pre-game seats and stays fixed in the table's top-left corner during play (bottom-left on narrow screens), including after a hand ends. Between hands it slides up out of view and the new pot slides in from the top. When money is added to it, it shimmers and bounces. Play waits for these animations to finish
 * Turn changes, hits, stands, busts, blackjacks, and results appear as brief toast notices over the table
 
 #### Wish List

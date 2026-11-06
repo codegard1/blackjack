@@ -10,6 +10,7 @@ const createAgentTree = (
   gameState: ReturnType<typeof createGameState>,
   gameDispatch: (action: IGameReducerAction) => void,
   dealerHasControl: boolean,
+  isPaused = false,
 ) => (
   <GameContext.Provider value={gameState}>
     <GameDispatchContext.Provider value={gameDispatch}>
@@ -18,6 +19,7 @@ const createAgentTree = (
         gameStatus={gameState.gameStatus}
         handValue={{ aceAsEleven: 16, aceAsOne: 16, highest: 16 }}
         playerKey="dealer"
+        isPaused={isPaused}
       />
     </GameDispatchContext.Provider>
   </GameContext.Provider>
@@ -66,6 +68,23 @@ describe('dealer autoplay', () => {
     act(() => vi.advanceTimersByTime(DEALER_ACTION_DELAY_MS));
 
     expect(gameDispatch).not.toHaveBeenCalled();
+  });
+
+  it('waits while paused, then acts after the full delay', () => {
+    const gameState = createGameState();
+    gameState.gameStatus = GameStatus.InProgress;
+    gameState.dealerHasControl = true;
+    const gameDispatch = vi.fn<(action: IGameReducerAction) => void>();
+    const { rerender } = render(createAgentTree(gameState, gameDispatch, true, true));
+
+    act(() => vi.advanceTimersByTime(DEALER_ACTION_DELAY_MS * 2));
+    expect(gameDispatch).not.toHaveBeenCalled();
+
+    rerender(createAgentTree(gameState, gameDispatch, true, false));
+    act(() => vi.advanceTimersByTime(DEALER_ACTION_DELAY_MS - 1));
+    expect(gameDispatch).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(1));
+    expect(gameDispatch).toHaveBeenCalledTimes(1);
   });
 
   it('stands when the dealer total reaches seventeen', () => {

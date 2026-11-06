@@ -20,14 +20,14 @@ export const BOT_ACTION_DELAY_MS = 1000;
 export const Agent: React.FC<IAgentProps> = (props) => {
 
   const { gameDispatch } = useGameContext();
-  const { hasControl, gameStatus, handValue, cardCount, playerKey, delayMs = DEALER_ACTION_DELAY_MS } = props;
+  const { hasControl, gameStatus, handValue, cardCount, playerKey, delayMs = DEALER_ACTION_DELAY_MS, isPaused = false } = props;
 
   // the latest decision function, read when the delay is up, so a re-render does not reschedule
   const decide = React.useRef(props.decide);
   decide.current = props.decide;
 
   React.useEffect(() => {
-    if (!hasControl || gameStatus !== GameStatus.InProgress) return;
+    if (isPaused || !hasControl || gameStatus !== GameStatus.InProgress) return;
 
     const timeoutId = window.setTimeout(() => {
       const move = decide.current ? decide.current() : handValue.highest < 17 ? 'hit' : 'stay';
@@ -41,7 +41,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
     }, delayMs);
 
     return () => window.clearTimeout(timeoutId);
-  }, [gameDispatch, hasControl, gameStatus, handValue.highest, cardCount, playerKey, delayMs]);
+  }, [gameDispatch, isPaused, hasControl, gameStatus, handValue.highest, cardCount, playerKey, delayMs]);
 
   return null;
 }

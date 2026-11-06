@@ -14,4 +14,6 @@ export interface IAgentProps {
   decide?: () => BotMove;
   /** pause before acting; defaults to DEALER_ACTION_DELAY_MS */
   delayMs?: number;
+  /** hold the next computer action, e.g. while the pot bounces */
+  isPaused?: boolean;
 }

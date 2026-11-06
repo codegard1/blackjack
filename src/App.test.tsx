@@ -5,6 +5,7 @@ import { webDarkTheme } from '@fluentui/react-components';
 import { PlayingCardDeck } from './classes/PlayingCardDeck';
 import { brandPresets, createAppTheme } from './theme';
 import App from './App';
+import { POT_BOUNCE_MS, POT_ENTER_MS, POT_LEAVE_MS } from './components/usePotMotion';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -265,7 +266,14 @@ it('opens and closes the in-app blackjack rules from the header', () => {
   expect(screen.queryByRole('dialog', { name: 'Blackjack rules' })).not.toBeInTheDocument();
 });
 
-it('floats the pot in the rail except while the contribution toast is visible', () => {
+/** the test setup reports reduced motion; pot animation tests need motion */
+const allowMotion = () => {
+  const matchMedia = window.matchMedia;
+  vi.spyOn(window, 'matchMedia').mockImplementation((query: string) => ({ ...matchMedia(query), matches: false }));
+};
+
+it('keeps the pot in its corner and bounces it when a wager is made, holding play until it finishes', () => {
+  allowMotion();
   const { container } = render(<App />);
 
   expect(container.querySelector('.table-pot-pregame-slot')).toBeInTheDocument();
@@ -274,21 +282,72 @@ it('floats the pot in the rail except while the contribution toast is visible', 
   vi.useFakeTimers();
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
 
-  expect(container.querySelector('.table-pot-center-slot')).not.toBeInTheDocument();
-  expect(container.querySelector('.table-pot-rail-slot')).toBeInTheDocument();
+  // the new game's pot slides in from the top, then bounces for the ante; the controls wait
+  // (only players ante, so one human player puts in $25)
   expect(screen.getByText('Pot: $25')).toBeInTheDocument();
+  expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-entering')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Wager $25' })).toHaveAttribute('aria-disabled', 'true');
 
-  act(() => vi.advanceTimersByTime(900));
-  expect(screen.getByText('+$25 added to the pot')).toBeInTheDocument();
-  expect(container.querySelector('.table-pot-center-slot')).toBeInTheDocument();
+  act(() => vi.advanceTimersByTime(POT_ENTER_MS));
+  expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-bouncing')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Wager $25' })).toHaveAttribute('aria-disabled', 'true');
 
-  act(() => vi.advanceTimersByTime(1400));
-  expect(screen.getByText('+$25 added to the pot')).toBeInTheDocument();
-  expect(container.querySelector('.table-pot-center-slot')).toBeInTheDocument();
+  act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
+  expect(container.querySelector('.table-pot-badge.is-bouncing')).not.toBeInTheDocument();
+  const wager = screen.getByRole('button', { name: 'Wager $25' });
+  expect(wager).not.toHaveAttribute('aria-disabled');
 
-  act(() => vi.advanceTimersByTime(900));
-  expect(container.querySelector('.table-pot-center-slot')).not.toBeInTheDocument();
-  expect(container.querySelector('.table-pot-rail-slot')).toBeInTheDocument();
+  fireEvent.click(wager);
+  expect(screen.getByText('Pot: $50')).toBeInTheDocument();
+  expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-bouncing')).toBeInTheDocument();
+  expect(container.querySelector('.table-pot-shimmer')).toBeInTheDocument();
+
+  // a click during the bounce does nothing
+  fireEvent.click(screen.getByRole('button', { name: 'Wager $25' }));
+  expect(screen.getByText('Pot: $50')).toBeInTheDocument();
+
+  // the pot never leaves its corner, even while its contribution toast is showing
+  act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
+  // the ante and the wager are both $25, so their two notices can show at once
+  expect(screen.getAllByText('+$25 added to the pot').length).toBeGreaterThan(0);
+  expect(container.querySelectorAll('.table-pot')).toHaveLength(1);
+  expect(container.querySelector('.table-pot-corner-slot')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Wager $25' })).not.toHaveAttribute('aria-disabled');
+  vi.useRealTimers();
+});
+
+it('keeps the pot after a hand ends, then slides it up and back in for the next hand', () => {
+  allowMotion();
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_11', 'Diamond_14'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
+  vi.useFakeTimers();
+  const { container } = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  act(() => vi.advanceTimersByTime(POT_ENTER_MS));
+  act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
+
+  // a natural blackjack ends the hand at once; the pot stays in its corner
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  expect(screen.getByText('Chris: won $37 with blackjack. Faxe: paid out $37.')).toBeInTheDocument();
+  expect(container.querySelector('.table-pot-corner-slot')).toHaveTextContent('Pot: $25');
+
+  // the next hand: the last pot slides up out of view, showing its amount as it goes
+  act(() => vi.advanceTimersByTime(3000));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-leaving')).toBeInTheDocument();
+  expect(container.querySelector('.table-pot-corner-slot')).toHaveTextContent('Pot: $25');
+  expect(screen.getByRole('button', { name: 'Deal' })).toHaveAttribute('aria-disabled', 'true');
+
+  // then the new hand's pot slides in from the top and bounces for the antes
+  act(() => vi.advanceTimersByTime(POT_LEAVE_MS));
+  expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-entering')).toBeInTheDocument();
+  act(() => vi.advanceTimersByTime(POT_ENTER_MS));
+  expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-bouncing')).toBeInTheDocument();
+  act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
+  expect(container.querySelector('.table-pot-badge[class*="is-"]')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Deal' })).not.toHaveAttribute('aria-disabled');
   vi.useRealTimers();
 });
 

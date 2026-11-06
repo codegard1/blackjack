@@ -12,7 +12,7 @@ import { GameState, GameSnapshot, ToastItem } from '../types';
 
 /** how long a toast stays fully visible */
 const HOLD_MS = 1100;
-/** keep the pot in the spotlight long enough for its contribution to register */
+/** keep a pot contribution on screen long enough to register */
 const POT_CONTRIBUTION_HOLD_MS = 2000;
 /** how long a toast takes to animate out */
 const EXIT_MS = 260;
