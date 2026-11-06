@@ -1,7 +1,9 @@
 import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
+import { webDarkTheme } from '@fluentui/react-components';
 import { PlayingCardDeck } from './classes/PlayingCardDeck';
+import { brandPresets, createAppTheme } from './theme';
 import App from './App';
 
 afterEach(() => {
@@ -163,6 +165,76 @@ it('hides the debug window by default and remembers the setting across reloads',
 
   render(<App />);
   expect(screen.getByRole('button', { name: 'Player Hands' })).toBeInTheDocument();
+});
+
+it('changes the theme, accent, card style and card back from the Appearance section and remembers them', () => {
+  const first = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  // FluentProvider writes the theme as CSS variables into a style sheet rule for its class
+  const themeVariable = (name: string) => {
+    const className = Array.from(document.querySelector('.fui-FluentProvider')?.classList ?? []).find((cls) => /^fui-FluentProvider\d*\w*_/.test(cls) || /^fui-FluentProvider_/.test(cls));
+    for (const sheet of Array.from(document.styleSheets)) {
+      for (const rule of Array.from(sheet.cssRules)) {
+        if (rule instanceof CSSStyleRule && className && rule.selectorText.includes(className)) {
+          return rule.style.getPropertyValue(name).trim();
+        }
+      }
+    }
+    return '';
+  };
+  const shell = () => document.querySelector('[data-theme-mode]') as HTMLElement;
+  expect(shell()).toHaveAttribute('data-theme-mode', 'light');
+  expect(themeVariable('--colorBrandBackground')).toBe(brandPresets.blue.ramp[80]);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'Dark' }));
+  expect(shell()).toHaveAttribute('data-theme-mode', 'dark');
+  expect(themeVariable('--colorNeutralBackground1')).toBe(webDarkTheme.colorNeutralBackground1);
+
+  fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Accent color' })).getByRole('radio', { name: 'Teal' }));
+  expect(themeVariable('--colorBrandBackground')).toBe(createAppTheme('dark', 'teal').colorBrandBackground);
+  expect(shell()).toHaveAttribute('data-accent', 'teal');
+
+  fireEvent.click(screen.getByRole('combobox', { name: 'Card style' }));
+  fireEvent.click(screen.getByRole('option', { name: 'Bold' }));
+  expect(screen.getByRole('combobox', { name: 'Card style' })).toHaveTextContent('Bold');
+
+  fireEvent.click(screen.getByRole('radio', { name: 'Stripes' }));
+  fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Card back color' })).getByRole('radio', { name: 'Red' }));
+  expect(screen.getByRole('img', { name: 'Card back preview: Stripes, Red' })).toHaveClass('is-pattern-stripes');
+  fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+
+  const cards = screen.getByRole('region', { name: "Chris's hand" }).querySelectorAll('.playing-card');
+  expect(cards.length).toBeGreaterThan(0);
+  cards.forEach((card) => expect(card).toHaveClass('is-style-bold'));
+  const dealerBack = screen.getByRole('region', { name: "Faxe's hand" }).querySelector('.playing-card.is-back') as HTMLElement;
+  expect(dealerBack).toHaveClass('is-pattern-stripes');
+  expect(dealerBack.style.getPropertyValue('--card-back-primary')).toBe('var(--colorPaletteRedBackground3)');
+  first.unmount();
+
+  render(<App />);
+  expect(shell()).toHaveAttribute('data-theme-mode', 'dark');
+  expect(shell()).toHaveAttribute('data-accent', 'teal');
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  expect(screen.getByRole('radio', { name: 'Dark' })).toBeChecked();
+  expect(screen.getByRole('radio', { name: 'Stripes' })).toBeChecked();
+  expect(within(screen.getByRole('radiogroup', { name: 'Accent color' })).getByRole('radio', { name: 'Teal' })).toBeChecked();
+});
+
+it('resets only the appearance settings', () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  fireEvent.click(screen.getByRole('switch', { name: 'Show Activity Log' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'High contrast' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'Solid' }));
+  expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'highContrast');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Reset appearance' }));
+  expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'light');
+  expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked();
+  expect(screen.getByRole('radio', { name: 'Rings' })).toBeChecked();
+  expect(screen.getByRole('switch', { name: 'Show Activity Log' })).toBeChecked();
 });
 
 it('shows the app name in the header and opens the About dialog', () => {

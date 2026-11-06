@@ -2,7 +2,7 @@
 import React from 'react';
 
 // FluentUI
-import { Button, FluentProvider, MessageBar, MessageBarActions, MessageBarBody, webLightTheme } from '@fluentui/react-components';
+import { Button, FluentProvider, MessageBar, MessageBarActions, MessageBarBody, makeStyles, tokens } from '@fluentui/react-components';
 import { Dismiss20Regular } from '@fluentui/react-icons';
 
 // Local Resources
@@ -11,15 +11,37 @@ import { ActivityLog, AppHeader, OptionsPanel, Table, DebugWindow } from './comp
 import { GameContext, GameDispatchContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
 import { GameAction, GameStatus } from './enums';
 import { collectStats, gameReducer, isHuman, isRoundOver, loadGameState, loadProfiles, loadSettings, profileReducer, roundResultText, saveGameState, saveProfiles, saveSettings, settingReducer } from './functions';
+import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark } from './theme';
 import { MessageBarDefinition, MessageIntent } from './types';
+
+// The page behind the table: a striped felt drawn from the brand color, so it follows
+// the accent and the light or dark mode. Fluent's tokens resolve inside the provider.
+const useStyles = makeStyles({
+  shell: {
+    minHeight: '100vh',
+    padding: `0 ${tokens.spacingHorizontalL} ${tokens.spacingVerticalL}`,
+    boxSizing: 'border-box',
+    color: tokens.colorNeutralForeground1,
+    backgroundColor: tokens.colorNeutralBackground3,
+    backgroundImage: `linear-gradient(63deg, ${tokens.colorBrandStroke2} 23%, transparent 23%), linear-gradient(63deg, transparent 74%, ${tokens.colorBrandStroke2} 78%), linear-gradient(63deg, transparent 34%, ${tokens.colorBrandStroke2} 38%, ${tokens.colorBrandStroke2} 58%, transparent 62%)`,
+    backgroundPosition: '7px 0, 0 0, 0 0',
+    backgroundSize: '16px 48px',
+  },
+});
 
 // Main Component
 const App = () => {
+  const styles = useStyles();
 
   // State from context
   const [gameState, gameDispatch] = React.useReducer(gameReducer, undefined, loadGameState);
   const [settings, toggleSetting] = React.useReducer(settingReducer, undefined, loadSettings);
   const [profiles, profileDispatch] = React.useReducer(profileReducer, undefined, loadProfiles);
+
+  // Fluent theme from the appearance settings; 'system' follows the OS preference
+  const prefersDark = usePrefersDark();
+  const themeMode = resolveThemeMode(settings.themeMode, prefersDark);
+  const theme = createAppTheme(themeMode, settings.accent);
   const players = gameState.playerStore.all;
   const human = players.find(isHuman);
   // once the round is settled, each seat's result in seating order, the dealer last
@@ -88,7 +110,10 @@ const App = () => {
   }, [gameState]);
 
   return (
-    <FluentProvider theme={webLightTheme}>
+    <FluentProvider theme={theme} style={{ colorScheme: isDarkMode(themeMode) ? 'dark' : 'light' }}>
+      {/* The shell is a child, not the provider itself: Fluent copies the provider's
+          classes onto its portal layer, which would paint the felt over every popup */}
+      <div className={styles.shell} data-theme-mode={themeMode} data-accent={settings.accent}>
       <SettingContext.Provider value={settings}>
         <SettingDispatchContext.Provider value={toggleSetting}>
           <ProfileContext.Provider value={profiles}>
@@ -127,6 +152,7 @@ const App = () => {
           </ProfileContext.Provider>
         </SettingDispatchContext.Provider>
       </SettingContext.Provider>
+      </div>
     </FluentProvider>
   );
 }

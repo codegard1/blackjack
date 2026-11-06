@@ -12,6 +12,20 @@ afterEach(() => {
 	localStorage.clear();
 });
 
+// jsdom has no matchMedia; the theme's system mode reads prefers-color-scheme through it
+if (typeof window.matchMedia !== 'function') {
+	window.matchMedia = (query: string): MediaQueryList => ({
+		matches: false,
+		media: query,
+		onchange: null,
+		addListener: () => {},
+		removeListener: () => {},
+		addEventListener: () => {},
+		removeEventListener: () => {},
+		dispatchEvent: () => false,
+	});
+}
+
 globalThis.ResizeObserver = class ResizeObserver {
 	observe(): void {}
 	unobserve(): void {}

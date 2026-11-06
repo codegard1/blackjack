@@ -49,4 +49,27 @@ describe('persistence', () => {
     expect(loaded).not.toHaveProperty('bogus');
     expect(loaded).not.toHaveProperty('isSplashScreenVisible');
   });
+
+  it('round-trips appearance settings and drops values a setting does not accept', () => {
+    saveSettings({ ...settingDefaults, themeMode: 'dark', accent: 'crimson', cardBackPattern: 'stripes' });
+    expect(loadSettings()).toMatchObject({ themeMode: 'dark', accent: 'crimson', cardBackPattern: 'stripes' });
+
+    localStorage.setItem(StoreName.SETTINGSTORE, JSON.stringify({
+      themeMode: 'sepia', accent: true, cardStyle: 'bold', isDeckVisible: 'yes',
+    }));
+    const loaded = loadSettings();
+    expect(loaded.themeMode).toBe(settingDefaults.themeMode);
+    expect(loaded.accent).toBe(settingDefaults.accent);
+    expect(loaded.cardStyle).toBe('bold');
+    expect(loaded.isDeckVisible).toBe(false);
+  });
+
+  it('fills in appearance defaults for a settings store saved before they existed', () => {
+    localStorage.setItem(StoreName.SETTINGSTORE, JSON.stringify({ isActivityLogVisible: true }));
+    const loaded = loadSettings();
+    expect(loaded.isActivityLogVisible).toBe(true);
+    expect(loaded).toMatchObject({
+      themeMode: 'light', accent: 'blue', cardStyle: 'classic', cardBackPattern: 'rings', cardBackColor: 'brand',
+    });
+  });
 });
