@@ -2,6 +2,7 @@ export * from './ActivityLog';
 export * from './AppHeader';
 export * from './AppLogo';
 export * from './Agent';
+export * from "./CardBackPreview";
 export * from "./CardContainer";
 export * from "./CardStack";
 export * from './ControlPanel';

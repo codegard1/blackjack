@@ -1,6 +1,8 @@
 // React
 import React from "react";
 
+import { tokens } from '@fluentui/react-components';
+
 import { IDeckCalloutProps } from "../interfaces";
 import { PlayerAction } from "../enums";
 
@@ -23,7 +25,7 @@ export const DeckCallout: React.FC<IDeckCalloutProps> = (props) => {
       className="deck-callout"
       onClick={props.onHideCallout}
       role="status"
-      style={{ background: 'white', borderRadius: 4, boxShadow: '0 2px 8px rgba(0,0,0,.18)', fontSize: 20, maxWidth: 300, padding: '12px 18px' }}
+      style={{ background: tokens.colorNeutralBackground1, color: tokens.colorNeutralForeground1, borderRadius: tokens.borderRadiusMedium, boxShadow: tokens.shadow8, fontSize: 20, maxWidth: 300, padding: '12px 18px' }}
     >
       {text}
     </div>

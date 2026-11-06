@@ -4,7 +4,7 @@ import { createGameState } from "../context/GameContext";
 import { settingDefaults } from "../context/SettingContext";
 import { StoreName } from "../enums";
 import { IPlayerStoreState } from "../interfaces";
-import { DeckState, GameState, ProfileState, SettingsState } from "../types";
+import { DeckState, GameState, ProfileState, SettingKey, SettingsState, settingOptions } from "../types";
 import { defaultProfileState, normalizeProfileState } from "./profiles";
 
 /** Bump when the shape of the saved game snapshot changes. */
@@ -110,19 +110,30 @@ export function saveProfiles(state: ProfileState): void {
   writeJson(StoreName.PROFILESTORE, state);
 }
 
+const isEnumeratedSetting = (key: SettingKey): key is keyof typeof settingOptions => key in settingOptions;
+
+/** Whether `value` is one the setting `key` accepts: a boolean, or one of its listed options */
+export function isValidSettingValue(key: SettingKey, value: unknown): boolean {
+  if (isEnumeratedSetting(key)) {
+    return typeof value === 'string' && (settingOptions[key] as readonly string[]).includes(value);
+  }
+  return typeof value === 'boolean';
+}
+
 /**
- * Build the initial settings, merging saved values over the defaults.
+ * Build the initial settings, merging valid saved values over the defaults.
+ * Unknown keys and values a setting does not accept are dropped.
  */
 export function loadSettings(): SettingsState {
   const saved = readJson<unknown>(StoreName.SETTINGSTORE);
-  const settings: SettingsState = { ...settingDefaults };
+  const settings: Record<string, unknown> = { ...settingDefaults };
   if (isObject(saved)) {
-    for (const key of Object.keys(settingDefaults)) {
-      if (typeof saved[key] === 'boolean') settings[key] = saved[key] as boolean;
+    for (const key of Object.keys(settingDefaults) as SettingKey[]) {
+      if (isValidSettingValue(key, saved[key])) settings[key] = saved[key];
     }
   }
   settings.isOptionsPanelVisible = false;
-  return settings;
+  return settings as SettingsState;
 }
 
 export function saveSettings(settings: SettingsState): void {
