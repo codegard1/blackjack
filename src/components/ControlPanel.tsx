@@ -19,7 +19,7 @@ import {
 } from '@fluentui/react-icons';
 
 // Local Resources
-import { useGameContext, useSettingContext } from "../context";
+import { useGameContext, usePotAnimation, useSettingContext } from "../context";
 import { GameAction, GameStatus } from "../enums";
 import { canDoubleDown } from "../functions/gameReducer";
 import { IControlPanelProps } from "../interfaces";
@@ -76,6 +76,9 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const isDealDisabled = !isRoundComplete && currentPlayerKey !== playerKey;
   const isDoubleDownDisabled = !canDoubleDown(gameState, playerKey);
   const wagerLabel = `Wager $${minimumBet}`;
+  // While the pot bounces, enabled controls wait; they stay focusable so keyboard focus is kept
+  const isWaiting = usePotAnimation();
+  const waitUnless = (isDisabled: boolean) => isWaiting && !isDisabled;
 
   const _hit = () => {
     toggleSetting({ key: 'isMessageBarVisible', value: true });
@@ -100,24 +103,24 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
       )}
       <Toolbar aria-label={`${player.title}'s actions`} className={`player-controlpanel ${styles.toolbar}`}>
         <Tooltip content="Draw one card from the top of the deck" relationship="label">
-          <ToolbarButton className={styles.button} appearance={isPlayDisabled ? 'subtle' : 'primary'} icon={<Add20Regular />} disabled={isPlayDisabled} onClick={_hit}>
+          <ToolbarButton className={styles.button} appearance={isPlayDisabled ? 'subtle' : 'primary'} icon={<Add20Regular />} disabled={isPlayDisabled} disabledFocusable={waitUnless(isPlayDisabled)} onClick={_hit}>
             <Label>Hit</Label>
           </ToolbarButton>
         </Tooltip>
         <Tooltip content="Stand on your current hand" relationship="description">
-          <ToolbarButton className={styles.button} aria-label="Stay" icon={<ArrowForward20Regular />} disabled={isPlayDisabled} onClick={() => gameDispatch({ type: GameAction.Stay, playerKey })}>
+          <ToolbarButton className={styles.button} aria-label="Stay" icon={<ArrowForward20Regular />} disabled={isPlayDisabled} disabledFocusable={waitUnless(isPlayDisabled)} onClick={() => gameDispatch({ type: GameAction.Stay, playerKey })}>
             <Label>Stay</Label>
           </ToolbarButton>
         </Tooltip>
         {!npcFlag && (
           <Tooltip content="Double your stake, take exactly one more card, then stand" relationship="description">
-            <ToolbarButton className={styles.button} aria-label="Double Down" icon={<ArrowUpload20Regular />} disabled={isDoubleDownDisabled} onClick={() => gameDispatch({ type: GameAction.DoubleDown, playerKey })}>
+            <ToolbarButton className={styles.button} aria-label="Double Down" icon={<ArrowUpload20Regular />} disabled={isDoubleDownDisabled} disabledFocusable={waitUnless(isDoubleDownDisabled)} onClick={() => gameDispatch({ type: GameAction.DoubleDown, playerKey })}>
               <Label>Double Down</Label>
             </ToolbarButton>
           </Tooltip>
         )}
         <Tooltip content={`Add $${minimumBet} to the pot`} relationship="description">
-          <ToolbarButton className={styles.button} aria-label={wagerLabel} icon={<ArrowUp20Regular />} disabled={isBtnDisabled} onClick={() => gameDispatch({ type: GameAction.Bet, playerKey, betAmount: minimumBet })}>
+          <ToolbarButton className={styles.button} aria-label={wagerLabel} icon={<ArrowUp20Regular />} disabled={isBtnDisabled} disabledFocusable={waitUnless(isBtnDisabled)} onClick={() => gameDispatch({ type: GameAction.Bet, playerKey, betAmount: minimumBet })}>
             <Label>{wagerLabel}</Label>
           </ToolbarButton>
         </Tooltip>
@@ -126,7 +129,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
 
         {!npcFlag && (
           <Tooltip content="Deal a new round" relationship="description">
-            <ToolbarButton className={styles.button} aria-label="Deal" appearance={isRoundComplete ? 'primary' : 'subtle'} icon={<ArrowClockwise20Regular />} disabled={isDealDisabled} onClick={deal}>
+            <ToolbarButton className={styles.button} aria-label="Deal" appearance={isRoundComplete ? 'primary' : 'subtle'} icon={<ArrowClockwise20Regular />} disabled={isDealDisabled} disabledFocusable={waitUnless(isDealDisabled)} onClick={deal}>
               <Label>Deal</Label>
             </ToolbarButton>
           </Tooltip>

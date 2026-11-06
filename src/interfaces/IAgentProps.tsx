@@ -7,4 +7,6 @@ export interface IAgentProps {
   gameStatus: GameStatus;
   handValue: PlayerHandValue;
   playerKey: PlayerKey;
+  /** hold the next dealer action, e.g. while the pot bounces */
+  isPaused?: boolean;
 }

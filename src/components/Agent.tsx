@@ -19,7 +19,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
   const { gameDispatch } = useGameContext();
 
   React.useEffect(() => {
-    if (!props.dealerHasControl || props.gameStatus !== GameStatus.InProgress) return;
+    if (props.isPaused || !props.dealerHasControl || props.gameStatus !== GameStatus.InProgress) return;
 
     const timeoutId = window.setTimeout(() => {
       if (props.handValue.highest < 17) {
@@ -30,7 +30,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
     }, DEALER_ACTION_DELAY_MS);
 
     return () => window.clearTimeout(timeoutId);
-  }, [gameDispatch, props.dealerHasControl, props.gameStatus, props.handValue.highest, props.playerKey]);
+  }, [gameDispatch, props.isPaused, props.dealerHasControl, props.gameStatus, props.handValue.highest, props.playerKey]);
 
   return null;
 }

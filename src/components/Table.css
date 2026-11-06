@@ -15,30 +15,49 @@
   padding: 10px;
 }
 
-/* In play: the focused seat on top, the rail of collapsed seats below */
+/* In play: the focused seat on top, the rail of collapsed seats below,
+   and the pot fixed in the bottom-left corner */
 .table-layout.is-started {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "focus"
+    "rail"
+    "pot";
   align-items: start;
   gap: 16px;
 }
 
-/* the focused seat takes the right two thirds; the rail takes the left third */
+.table-layout.is-started .table-focus { grid-area: focus; }
+.table-layout.is-started .table-rail { grid-area: rail; }
+.table-layout.is-started .table-pot-corner-slot {
+  grid-area: pot;
+  justify-self: start;
+}
+
+/* the focused seat takes the right two thirds; the pot sits in the top-left corner
+   with the rail below it in the left third */
 @container table-board (min-width: 720px) {
   .table-layout.is-started {
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-  }
-
-  .table-layout.is-started .table-focus {
-    grid-column: 2;
-    grid-row: 1;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "pot focus"
+      "rail focus";
   }
 
   .table-layout.is-started .table-rail {
-    grid-column: 1;
-    grid-row: 1;
     flex-direction: column;
     flex-wrap: nowrap;
+  }
+}
+
+/* before a game on a narrow board, the pot follows the seats to the bottom-left */
+@container table-board (max-width: 719.98px) {
+  .table-layout.is-pregame .table-pot-pregame-slot {
+    order: 1;
+    flex-basis: 100%;
+    justify-content: flex-start;
   }
 }
 
@@ -83,18 +102,53 @@
   max-width: 100%;
 }
 
-.table-pot-rail-slot {
+.table-pot-corner-slot {
   min-width: 0;
   max-width: 100%;
 }
 
-.table-pot-center-slot {
-  width: 100%;
-  min-height: 144px;
+.table-pot-badge {
+  position: relative;
+  overflow: hidden;
 }
 
 .table-pot-badge.is-floating {
   animation: table-pot-float 3600ms ease-in-out infinite;
+}
+
+/* when the pot grows: a short bounce with a band of light sweeping across.
+   Keep the duration in step with POT_BOUNCE_MS in usePotBounce.ts */
+.table-pot-badge.is-bouncing {
+  animation: table-pot-bounce 900ms cubic-bezier(0.3, 0.7, 0.4, 1) both;
+}
+
+.table-pot-shimmer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in srgb, var(--colorNeutralForegroundOnBrand) 55%, transparent) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  animation: table-pot-shimmer 900ms ease-in-out both;
+}
+
+@keyframes table-pot-bounce {
+  0% { transform: translateY(0) scale(1); }
+  18% { transform: translateY(-12px) scale(1.06); }
+  36% { transform: translateY(0) scale(0.98, 1.02); }
+  52% { transform: translateY(-5px) scale(1.02); }
+  68% { transform: translateY(0) scale(1); }
+  82% { transform: translateY(-2px); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes table-pot-shimmer {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(120%); }
 }
 
 @keyframes table-pot-float {
@@ -103,7 +157,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .table-pot-badge.is-floating {
+  .table-pot-badge.is-floating,
+  .table-pot-badge.is-bouncing,
+  .table-pot-shimmer {
     animation: none;
+  }
+
+  .table-pot-shimmer {
+    display: none;
   }
 }
