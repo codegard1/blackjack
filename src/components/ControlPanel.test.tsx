@@ -1,7 +1,7 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createGameState, GameContext, GameDispatchContext } from '../context';
+import { createGameState, GameContext, GameDispatchContext, PotAnimationContext } from '../context';
 import { GameAction, GameStatus } from '../enums';
 import { gameReducer } from '../functions/gameReducer';
 import { ControlPanel } from './ControlPanel';
@@ -11,7 +11,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const renderControls = (gameStatus: GameStatus, currentPlayerKey: string, chrisCards: string[] = []) => {
+const renderControls = (gameStatus: GameStatus, currentPlayerKey: string, chrisCards: string[] = [], isPotBouncing = false) => {
   const state = gameReducer(createGameState(), {
     type: GameAction.NewGame,
     playerKey: ['chris', 'dealer'],
@@ -24,14 +24,16 @@ const renderControls = (gameStatus: GameStatus, currentPlayerKey: string, chrisC
   render(
     <GameContext.Provider value={state}>
       <GameDispatchContext.Provider value={dispatch}>
-        <ControlPanel
-          playerKey="chris"
-          hidden={false}
-          isDeckCalloutVisible={false}
-          playerStatusFlag={false}
-          selectedFlag={false}
-          showDeckCallout={vi.fn()}
-        />
+        <PotAnimationContext.Provider value={isPotBouncing}>
+          <ControlPanel
+            playerKey="chris"
+            hidden={false}
+            isDeckCalloutVisible={false}
+            playerStatusFlag={false}
+            selectedFlag={false}
+            showDeckCallout={vi.fn()}
+          />
+        </PotAnimationContext.Provider>
       </GameDispatchContext.Provider>
     </GameContext.Provider>,
   );
@@ -39,6 +41,16 @@ const renderControls = (gameStatus: GameStatus, currentPlayerKey: string, chrisC
 };
 
 describe('player controls', () => {
+  it('waits for the pot to finish bouncing, keeping the controls focusable', () => {
+    const dispatch = renderControls(GameStatus.InProgress, 'chris', [], true);
+    const wager = screen.getByRole('button', { name: 'Wager $25' });
+
+    expect(wager).toHaveAttribute('aria-disabled', 'true');
+    expect(wager).not.toBeDisabled();
+    fireEvent.click(wager);
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
   it.each([
     [GameStatus.HumanWins, 'chris'],
     [GameStatus.HumanWins, 'dealer'],

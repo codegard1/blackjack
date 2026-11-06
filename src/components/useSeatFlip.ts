@@ -80,7 +80,7 @@ export function useSeatFlip(rootRef: React.RefObject<HTMLElement | null>): void 
     const collapsing = moves.some((move) => move.role !== 'focus');
     moves.forEach((move) => {
       const expanding = move.role === 'focus';
-      const delay = expanding && collapsing && move.key !== 'pot' ? COLLAPSE_MS : 0;
+      const delay = expanding && collapsing ? COLLAPSE_MS : 0;
       animateMove(move, delay, reduceMotion);
     });
   });

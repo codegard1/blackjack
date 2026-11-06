@@ -27,6 +27,9 @@ const boxFor = function (this: HTMLElement) {
 let animate: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
+  // the test setup reports reduced motion; these tests need motion
+  const matchMedia = window.matchMedia;
+  vi.spyOn(window, 'matchMedia').mockImplementation((query: string) => ({ ...matchMedia(query), matches: false }));
   animate = vi.fn(() => ({ onfinish: null }));
   (HTMLElement.prototype as unknown as { animate: typeof animate }).animate = animate;
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(boxFor as () => DOMRect);
