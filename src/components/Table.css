@@ -116,8 +116,17 @@
   animation: table-pot-float 3600ms ease-in-out infinite;
 }
 
-/* when the pot grows: a short bounce with a band of light sweeping across.
-   Keep the duration in step with POT_BOUNCE_MS in usePotBounce.ts */
+/* Between hands the last pot slides up out of view and the new one slides in from the top.
+   When the pot grows it bounces with a band of light sweeping across.
+   Keep the durations in step with usePotMotion.ts */
+.table-pot-badge.is-leaving {
+  animation: table-pot-leave 350ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.table-pot-badge.is-entering {
+  animation: table-pot-enter 450ms cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+}
+
 .table-pot-badge.is-bouncing {
   animation: table-pot-bounce 900ms cubic-bezier(0.3, 0.7, 0.4, 1) both;
 }
@@ -134,6 +143,16 @@
   );
   transform: translateX(-120%);
   animation: table-pot-shimmer 900ms ease-in-out both;
+}
+
+@keyframes table-pot-leave {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-120%); opacity: 0; }
+}
+
+@keyframes table-pot-enter {
+  from { transform: translateY(-120%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes table-pot-bounce {
@@ -158,6 +177,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .table-pot-badge.is-floating,
+  .table-pot-badge.is-leaving,
+  .table-pot-badge.is-entering,
   .table-pot-badge.is-bouncing,
   .table-pot-shimmer {
     animation: none;

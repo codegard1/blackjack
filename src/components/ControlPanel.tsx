@@ -76,7 +76,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const isDealDisabled = !isRoundComplete && currentPlayerKey !== playerKey;
   const isDoubleDownDisabled = !canDoubleDown(gameState, playerKey);
   const wagerLabel = `Wager $${minimumBet}`;
-  // While the pot bounces, enabled controls wait; they stay focusable so keyboard focus is kept
+  // While the pot animates, enabled controls wait; they stay focusable so keyboard focus is kept
   const isWaiting = usePotAnimation();
   const waitUnless = (isDisabled: boolean) => isWaiting && !isDisabled;
 

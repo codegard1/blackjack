@@ -8,7 +8,7 @@ import {
   Agent, CardStack, PlayerContainer, SeatChip, TableToasts,
 } from ".";
 import { useTableToasts } from "./TableToasts";
-import { usePotBounce } from "./usePotBounce";
+import { usePotMotion } from "./usePotMotion";
 import { useSeatFlip } from "./useSeatFlip";
 import "./Table.css";
 
@@ -59,7 +59,7 @@ export const Table: React.FC = () => {
   const { gameState, gameDispatch } = useGameContext();
   const { profiles } = useProfileContext();
   const styles = useStyles();
-  const { deck, gameStatus, gameStatusFlag, pot, playerStore } = gameState;
+  const { deck, gameStatus, pot, playerStore, round } = gameState;
   const players = playerStore.all;
   const human = players.find((player) => !player.isNPC);
   const dealer = players.find((player) => player.isNPC);
@@ -86,13 +86,21 @@ export const Table: React.FC = () => {
 
   const { toasts, dismiss } = useTableToasts(gameState, revealDealerTotal);
 
-  // The pot stays in its corner; when it grows it shimmers and bounces, and play waits for that
-  const { bounceKey, isBouncing: isPotBouncing } = usePotBounce(pot);
+  // The pot stays in its corner, even after a hand ends. Between hands it slides up out of
+  // view and back in; when it grows it shimmers and bounces. Play waits for all of it.
+  const potMotion = usePotMotion(pot, round, isStarted);
   const renderPotBadge = (floating = false) => (
-    <Badge key={bounceKey} size="extra-large" appearance="tint" color="brand" shape="rounded" className={mergeClasses(styles.potBadge, 'table-pot-badge', floating && 'is-floating', isPotBouncing && 'is-bouncing')}>
-      {isPotBouncing && <span className="table-pot-shimmer" aria-hidden="true" />}
+    <Badge
+      key={potMotion.key}
+      size="extra-large"
+      appearance="tint"
+      color="brand"
+      shape="rounded"
+      className={mergeClasses(styles.potBadge, 'table-pot-badge', floating && 'is-floating', potMotion.phase !== 'idle' && `is-${potMotion.phase}`)}
+    >
+      {potMotion.phase === 'bouncing' && <span className="table-pot-shimmer" aria-hidden="true" />}
       <span className={styles.potIcon} aria-hidden="true">💰</span>
-      <span>Pot: ${pot}</span>
+      <span>Pot: ${potMotion.shownPot}</span>
     </Badge>
   );
 
@@ -101,7 +109,7 @@ export const Table: React.FC = () => {
   useSeatFlip(boardRef);
 
   return (
-    <PotAnimationContext.Provider value={isPotBouncing}>
+    <PotAnimationContext.Provider value={potMotion.isBusy}>
       <main ref={boardRef} className="table-board" style={{ animation: 'table-enter 180ms ease-out', backgroundColor: tokens.colorNeutralBackground1, color: tokens.colorNeutralForeground1, borderRadius: tokens.borderRadiusLarge, boxShadow: tokens.shadow16, display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
         {gameState.isSpinnerVisible && <Spinner size="large" label="Wait, wait..." aria-live="assertive" />}
 
@@ -110,11 +118,9 @@ export const Table: React.FC = () => {
           {isStarted ? (
             <>
               <div className="table-layout is-started">
-                {!gameStatusFlag && (
-                  <div className="table-pot table-pot-corner-slot">
-                    {renderPotBadge()}
-                  </div>
-                )}
+                <div className="table-pot table-pot-corner-slot">
+                  {renderPotBadge()}
+                </div>
                 {focusPlayer && (
                   <div key={focusPlayer.key} className="table-focus" data-seat-key={focusPlayer.key} data-seat-role="focus">
                     <PlayerContainer playerKey={focusPlayer.key} />
@@ -164,7 +170,7 @@ export const Table: React.FC = () => {
               dealerHasControl={gameState.dealerHasControl}
               gameStatus={gameStatus}
               handValue={dealerHandValue ?? EMPTY_HAND_VALUE}
-              isPaused={isPotBouncing}
+              isPaused={potMotion.isBusy}
               playerKey={dealer.key}
             />
           )}
