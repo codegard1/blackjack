@@ -17,3 +17,5 @@ export * from './PlayersDialog';
 export * from './StatusDisplay';
 export * from './Table';
 export * from './TableToasts';
+export * from './CharacterPortrait';
+export * from './CharacterCard';

@@ -135,8 +135,8 @@ export const AppHeader: React.FC = () => {
                   </div>
                 </div>
                 <Text as="p" block>
-                  {description}. One player takes on a dealer who hits below 17, with pushes,
-                  3:2 blackjacks and double down.
+                  {description}. You and up to four computer players each take on a dealer
+                  who hits below 17, with pushes, 3:2 blackjacks and double down.
                 </Text>
                 <Divider />
                 <dl className={styles.aboutMeta}>

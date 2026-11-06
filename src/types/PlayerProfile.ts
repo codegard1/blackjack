@@ -1,8 +1,9 @@
 import { PlayerStats } from "./PlayerStats";
 
 /**
- * A named identity that can play as the human player. Lifetime stats accumulate across games.
- * The dealer is stored as a profile too, so its stats are kept in the same way.
+ * A named identity at the table. Lifetime stats accumulate across games.
+ * Human players create their own profiles; the dealer and the computer
+ * characters have fixed profiles, so their stats are kept in the same way.
  */
 export type PlayerProfile = {
   id: string;
@@ -11,8 +12,10 @@ export type PlayerProfile = {
   stats: PlayerStats;
 };
 
-/** All profiles and the human profile that plays the next game */
+/** All profiles, the human profile that plays the next game, and the computer players who join it */
 export type ProfileState = {
   profiles: PlayerProfile[];
   selectedId: string;
+  /** computer characters seated in the next game, at most MAX_OPPONENTS */
+  opponentIds: string[];
 };

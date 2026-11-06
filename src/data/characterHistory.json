@@ -1,0 +1,58 @@
+{
+  "description": "Simulated play history for the characters, added to their records in the app. Regenerate with `npm run simulate-history`.",
+  "seed": 1,
+  "rounds": 10000,
+  "sessions": 105,
+  "stats": {
+    "ogion": {
+      "numberOfGamesLost": 3121,
+      "numberOfGamesPlayed": 6390,
+      "numberOfGamesWon": 2762,
+      "numberOfTimesBlackjack": 317,
+      "numberOfTimesBusted": 862,
+      "totalWinnings": 89359,
+      "netResult": -5466,
+      "winLossRatio": 0.8849727651393784
+    },
+    "shevek": {
+      "numberOfGamesLost": 2542,
+      "numberOfGamesPlayed": 5214,
+      "numberOfGamesWon": 2261,
+      "numberOfTimesBlackjack": 238,
+      "numberOfTimesBusted": 845,
+      "totalWinnings": 192163,
+      "netResult": -7362,
+      "winLossRatio": 0.8894571203776553
+    },
+    "haber": {
+      "numberOfGamesLost": 2027,
+      "numberOfGamesPlayed": 3850,
+      "numberOfGamesWon": 1554,
+      "numberOfTimesBlackjack": 177,
+      "numberOfTimesBusted": 1166,
+      "totalWinnings": 192444,
+      "netResult": -34956,
+      "winLossRatio": 0.7666502220029601
+    },
+    "genly-ai": {
+      "numberOfGamesLost": 3202,
+      "numberOfGamesPlayed": 6064,
+      "numberOfGamesWon": 2395,
+      "numberOfTimesBlackjack": 279,
+      "numberOfTimesBusted": 1925,
+      "totalWinnings": 133352,
+      "netResult": -37323,
+      "winLossRatio": 0.7479700187382886
+    },
+    "dealer": {
+      "numberOfGamesLost": 4242,
+      "numberOfGamesPlayed": 10000,
+      "numberOfGamesWon": 5213,
+      "numberOfTimesBlackjack": 503,
+      "numberOfTimesBusted": 2542,
+      "totalWinnings": 536961,
+      "netResult": 85107,
+      "winLossRatio": 1.228901461574729
+    }
+  }
+}

@@ -4,6 +4,7 @@ import React from "react";
 import {
   Avatar,
   Badge,
+  Button,
   Card,
   CardHeader,
   Spinner,
@@ -12,10 +13,13 @@ import {
   mergeClasses,
   tokens,
 } from '@fluentui/react-components';
-import { Bot20Regular } from '@fluentui/react-icons';
+import { Info24Regular } from '@fluentui/react-icons';
 
 /* custom stuff */
 import { CardStack, ControlPanel, DeckCallout, StatusDisplay } from '.';
+import { getCharacter } from "../characters";
+import { CharacterDialog } from "./CharacterCard";
+import { CharacterPortrait } from "./CharacterPortrait";
 import { IPlayerContainerProps } from "../interfaces";
 import { GameStatus } from "../enums";
 import { isRoundOver, isSeatWinner, seatStatus } from "../functions/seatStatus";
@@ -66,6 +70,10 @@ const useStyles = makeStyles({
     flexWrap: 'wrap',
     columnGap: tokens.spacingHorizontalS,
     rowGap: tokens.spacingVerticalXXS,
+  },
+  tagline: {
+    fontStyle: 'italic',
+    color: tokens.colorNeutralForeground3,
   },
   body: {
     display: 'flex',
@@ -140,6 +148,8 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
   // State
   const [isDeckCalloutVisible, setDeckCalloutVisible] = React.useState<boolean>(false);
+  const [isCharacterOpen, setCharacterOpen] = React.useState(false);
+  const character = getCharacter(playerKey);
 
   // shorthand methods to show and hide the deck callout
   const _showDeckCallout = () => setDeckCalloutVisible(true);
@@ -170,8 +180,8 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
       )}
 
       <CardHeader
-        image={player.isNPC
-          ? <Avatar icon={<Bot20Regular />} color="steel" aria-hidden="true" />
+        image={character
+          ? <CharacterPortrait id={player.key} name={player.title} size="md" decorative />
           : <Avatar name={player.title} color="brand" aria-hidden="true" />}
         header={
           <div className={styles.title}>
@@ -179,8 +189,12 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
             {status && <Badge appearance={status.appearance} color={status.color}>{status.text}</Badge>}
           </div>
         }
-        action={<StatusDisplay player={player} />}
+        description={character && <Text size={300} className={styles.tagline}>&ldquo;{character.tagline}&rdquo;</Text>}
+        action={character
+          ? <Button appearance="subtle" aria-label={`About ${player.title}`} icon={<Info24Regular />} onClick={() => setCharacterOpen(true)} />
+          : <StatusDisplay player={player} />}
       />
+      <CharacterDialog character={character} stats={player.stats} open={isCharacterOpen} onOpenChange={setCharacterOpen} />
 
       <div className={styles.body}>
         <div id={id} className="player-hand">
@@ -193,7 +207,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
           />
         </div>
 
-        {player.isNPC && gameState.dealerHasControl &&
+        {player.isNPC && isActive &&
           <div className="player-agent">
             <Spinner size="large" label="Thinking" aria-live="assertive" />
           </div>

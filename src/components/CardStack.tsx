@@ -9,7 +9,7 @@ import { CardContainer } from '.';
 import { useGameContext, useSettingContext } from '../context';
 import { ICardStackProps } from '../interfaces';
 import { GameStatus } from '../enums';
-import { handValue } from '../functions';
+import { handValue, isDealer } from '../functions';
 import { PlayingCard } from '../classes';
 
 
@@ -33,7 +33,9 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
   // Context props
   const { settings } = useSettingContext();
   const { gameState } = useGameContext();
-  const isRoundOver = gameState.gameStatus === GameStatus.HumanWins || gameState.gameStatus === GameStatus.DealerWins || gameState.gameStatus === GameStatus.Push;
+  const isRoundOver = gameState.gameStatus === GameStatus.RoundOver;
+  // only the dealer's hole card is dealt face down; players' cards are face up
+  const hasHoleCard = isDealer(player);
 
   // State
   const [isDeckVisible, setVisible] = React.useState<boolean>(true);
@@ -50,7 +52,7 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
       id={cardKey}
       index={index}
       isSelectable={isSelectable}
-      isBackFacing={index === 0 && !settings.isDealerHandVisible && !isRoundOver && player?.isNPC}
+      isBackFacing={index === 0 && !settings.isDealerHandVisible && !isRoundOver && hasHoleCard}
       isDescVisible={settings.isCardDescVisible}
     />
   );
@@ -73,7 +75,7 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
       >
         {deckTitleString}
       </Button>}
-      {!player?.isNPC && !isMini &&
+      {!hasHoleCard && !isMini &&
         settings.isHandValueVisible && (
           <Text size={400}>{handValueString}</Text>
         )}

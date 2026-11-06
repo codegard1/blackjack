@@ -6,6 +6,8 @@ import { PlayingCardDeck } from './classes/PlayingCardDeck';
 import { brandPresets, createAppTheme } from './theme';
 import App from './App';
 import { POT_BOUNCE_MS, POT_ENTER_MS, POT_LEAVE_MS } from './components/usePotMotion';
+import { formatNet } from './functions/format';
+import { CHARACTER_HISTORY } from './functions/history';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -13,9 +15,9 @@ afterEach(() => {
 });
 
 it.each([
-  { humanCards: ['Spade_11', 'Diamond_14'], dealerCards: ['Club_10', 'Heart_7'], hit: false, humanStatus: '✨ Blackjack', dealerStatus: '💔 Loser', message: 'Chris: won the pot with blackjack. Dealer: lost the round.' },
-  { humanCards: ['Spade_10', 'Diamond_7'], dealerCards: ['Club_11', 'Heart_14'], hit: false, humanStatus: '💔 Loser', dealerStatus: '✨ Blackjack', message: 'Chris: lost the round. Dealer: won the pot with blackjack.' },
-  { humanCards: ['Spade_10', 'Diamond_10'], dealerCards: ['Club_10', 'Heart_7'], hit: true, humanStatus: '💔 Loser', dealerStatus: '🏆 Winner', message: 'Chris: lost the round. Dealer: won the pot.' },
+  { humanCards: ['Spade_11', 'Diamond_14'], dealerCards: ['Club_10', 'Heart_7'], hit: false, humanStatus: '✨ Blackjack', dealerStatus: '💔 Loser', message: 'Chris: won $37 with blackjack. Faxe: paid out $37.' },
+  { humanCards: ['Spade_10', 'Diamond_7'], dealerCards: ['Club_11', 'Heart_14'], hit: false, humanStatus: '💔 Loser', dealerStatus: '✨ Blackjack', message: 'Chris: lost $25. Faxe: took $25.' },
+  { humanCards: ['Spade_10', 'Diamond_10'], dealerCards: ['Club_10', 'Heart_7'], hit: true, humanStatus: '💥 Busted', dealerStatus: '🏆 Winner', message: 'Chris: busted, lost $25. Faxe: took $25.' },
 ])('expires the result after three seconds: $message', ({ humanCards, dealerCards, hit, humanStatus, dealerStatus, message }) => {
   vi.spyOn(PlayingCardDeck.prototype, 'deal')
     .mockImplementationOnce(function (this: PlayingCardDeck) {
@@ -61,7 +63,7 @@ it('allows dismissing the result message before it expires', () => {
 
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
-  const message = screen.getByText('Chris: won the pot with blackjack. Dealer: lost the round.');
+  const message = screen.getByText('Chris: won $37 with blackjack. Faxe: paid out $37.');
 
   fireEvent.click(screen.getByRole('button', { name: 'Dismiss message' }));
 
@@ -73,11 +75,12 @@ it('starts a new game with the selected player and the dealer', () => {
 
   // before the game starts, the seats for the next game float on the table
   expect(screen.getByText('Chris ($1000)')).toBeInTheDocument();
-  expect(screen.getByText('Dealer ($1000)')).toBeInTheDocument();
+  expect(screen.getByText('Faxe ($1000)')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
 
+  // every player antes; the dealer does not
   expect(screen.getByText('Chris ($975)')).toBeInTheDocument();
-  expect(screen.getByText('Dealer ($975)')).toBeInTheDocument();
+  expect(screen.getByText('Faxe ($1000)')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Wager $25' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Stay' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Draw one card from the top of the deck' })).toBeDisabled();
@@ -101,12 +104,12 @@ it('always shows card ranks and toggles activity visibility', () => {
   expect(cards()[0].querySelector('.playing-card-corner-bottom')).toHaveStyle({ transform: 'rotate(180deg)' });
   expect(cards()[0].querySelector('.playing-card-frame')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Chris (2)' })).not.toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Dealer (2)' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Faxe (2)' })).not.toBeInTheDocument();
   expect(screen.getByRole('region', { name: "Chris's hand" })).toBeVisible();
   // the dealer's seat is collapsed while Chris is in control; its hand shows in the rail and its chip brings the seat forward
-  expect(screen.getByRole('region', { name: "Dealer's hand" })).toBeVisible();
-  fireEvent.click(screen.getByRole('button', { name: /^Dealer \(\$/ }));
-  expect(screen.getByRole('region', { name: "Dealer's hand" })).toBeVisible();
+  expect(screen.getByRole('region', { name: "Faxe's hand" })).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: /^Faxe \(\$/ }));
+  expect(screen.getByRole('region', { name: "Faxe's hand" })).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: /^Chris \(\$/ }));
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
@@ -208,7 +211,7 @@ it('changes the theme, accent, card style and card back from the Appearance sect
   const cards = screen.getByRole('region', { name: "Chris's hand" }).querySelectorAll('.playing-card');
   expect(cards.length).toBeGreaterThan(0);
   cards.forEach((card) => expect(card).toHaveClass('is-style-bold'));
-  const dealerBack = screen.getByRole('region', { name: "Dealer's hand" }).querySelector('.playing-card.is-back') as HTMLElement;
+  const dealerBack = screen.getByRole('region', { name: "Faxe's hand" }).querySelector('.playing-card.is-back') as HTMLElement;
   expect(dealerBack).toHaveClass('is-pattern-stripes');
   expect(dealerBack.style.getPropertyValue('--card-back-primary')).toBe('var(--colorPaletteRedBackground3)');
   first.unmount();
@@ -281,8 +284,9 @@ it('keeps the pot in its corner and bounces it when a wager is made, holding pla
   vi.useFakeTimers();
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
 
-  // the new game's pot slides in from the top, then bounces for the antes; the controls wait
-  expect(screen.getByText('Pot: $50')).toBeInTheDocument();
+  // the new game's pot slides in from the top, then bounces for the ante; the controls wait
+  // (only players ante, so one human player puts in $25)
+  expect(screen.getByText('Pot: $25')).toBeInTheDocument();
   expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-entering')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Wager $25' })).toHaveAttribute('aria-disabled', 'true');
 
@@ -296,17 +300,18 @@ it('keeps the pot in its corner and bounces it when a wager is made, holding pla
   expect(wager).not.toHaveAttribute('aria-disabled');
 
   fireEvent.click(wager);
-  expect(screen.getByText('Pot: $75')).toBeInTheDocument();
+  expect(screen.getByText('Pot: $50')).toBeInTheDocument();
   expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-bouncing')).toBeInTheDocument();
   expect(container.querySelector('.table-pot-shimmer')).toBeInTheDocument();
 
   // a click during the bounce does nothing
   fireEvent.click(screen.getByRole('button', { name: 'Wager $25' }));
-  expect(screen.getByText('Pot: $75')).toBeInTheDocument();
+  expect(screen.getByText('Pot: $50')).toBeInTheDocument();
 
   // the pot never leaves its corner, even while its contribution toast is showing
   act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
-  expect(screen.getByText('+$25 added to the pot')).toBeInTheDocument();
+  // the ante and the wager are both $25, so their two notices can show at once
+  expect(screen.getAllByText('+$25 added to the pot').length).toBeGreaterThan(0);
   expect(container.querySelectorAll('.table-pot')).toHaveLength(1);
   expect(container.querySelector('.table-pot-corner-slot')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Wager $25' })).not.toHaveAttribute('aria-disabled');
@@ -327,14 +332,14 @@ it('keeps the pot after a hand ends, then slides it up and back in for the next 
 
   // a natural blackjack ends the hand at once; the pot stays in its corner
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
-  expect(screen.getByText('Chris: won the pot with blackjack. Dealer: lost the round.')).toBeInTheDocument();
-  expect(container.querySelector('.table-pot-corner-slot')).toHaveTextContent('Pot: $50');
+  expect(screen.getByText('Chris: won $37 with blackjack. Faxe: paid out $37.')).toBeInTheDocument();
+  expect(container.querySelector('.table-pot-corner-slot')).toHaveTextContent('Pot: $25');
 
   // the next hand: the last pot slides up out of view, showing its amount as it goes
   act(() => vi.advanceTimersByTime(3000));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
   expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-leaving')).toBeInTheDocument();
-  expect(container.querySelector('.table-pot-corner-slot')).toHaveTextContent('Pot: $50');
+  expect(container.querySelector('.table-pot-corner-slot')).toHaveTextContent('Pot: $25');
   expect(screen.getByRole('button', { name: 'Deal' })).toHaveAttribute('aria-disabled', 'true');
 
   // then the new hand's pot slides in from the top and bounces for the antes
@@ -362,10 +367,10 @@ it("announces the dealer's turn as a toast that leaves on its own", () => {
 
   // the pot contribution toast takes its turn before the dealer's turn toast
   act(() => vi.advanceTimersByTime(1800));
-  expect(screen.getByText("Dealer's turn")).toBeInTheDocument();
+  expect(screen.getByText("Faxe's turn")).toBeInTheDocument();
 
   act(() => vi.advanceTimersByTime(2000));
-  expect(screen.queryByText("Dealer's turn")).not.toBeInTheDocument();
+  expect(screen.queryByText("Faxe's turn")).not.toBeInTheDocument();
 });
 
 it("shows the collapsed players' hands as cards in the rail during the human's turn", () => {
@@ -377,7 +382,7 @@ it("shows the collapsed players' hands as cards in the rail during the human's t
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
-  const dealerHand = screen.getByRole('region', { name: "Dealer's hand" });
+  const dealerHand = screen.getByRole('region', { name: "Faxe's hand" });
   const dealerCards = within(dealerHand).getAllByRole('button');
   expect(dealerCards).toHaveLength(2);
   // the hole card stays face down unless "Show Dealer Hand" is on
@@ -426,7 +431,7 @@ it('carries a settled round into each player\'s statistics, including the next g
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
-  // Chris has blackjack: a $25 stake, the $50 pot and a 3:2 bonus of $12
+  // Chris has blackjack: 3:2 on a $25 stake wins $37
   const statsRow = (name: string) => {
     const table = screen.getByRole('table', { name: 'Player statistics' });
     const row = within(table).getAllByRole('row').find((candidate) => candidate.textContent?.startsWith(name));
@@ -434,8 +439,17 @@ it('carries a settled round into each player\'s statistics, including the next g
   };
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
-  expect(statsRow('Chris')).toEqual(['1', '1', '0', '0', '100%', '1', '0', '$62']);
-  expect(statsRow('Dealer')).toEqual(['1', '0', '1', '0', '0%', '0', '0', '$0']);
+  expect(statsRow('Chris')).toEqual(['1', '1', '0', '0', '100%', '1', '0', '+$37']);
+  // Faxe's record is the simulated history plus this lost round, which paid Chris $37
+  const history = CHARACTER_HISTORY.stats.dealer;
+  const n = (value: number) => value.toLocaleString('en-US');
+  const rounds = history.numberOfGamesPlayed + 1;
+  const lost = history.numberOfGamesLost + 1;
+  expect(statsRow('Faxe')).toEqual([
+    n(rounds), n(history.numberOfGamesWon), n(lost), n(rounds - history.numberOfGamesWon - lost),
+    `${Math.round((history.numberOfGamesWon / rounds) * 100)}%`,
+    n(history.numberOfTimesBlackjack), n(history.numberOfTimesBusted), formatNet(history.netResult - 37),
+  ]);
   fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
@@ -444,4 +458,47 @@ it('carries a settled round into each player\'s statistics, including the next g
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
   expect(statsRow('Chris')[0]).toBe('1');
+});
+
+it('seats chosen computer players, who play their turns before the dealer', () => {
+  vi.spyOn(Math, 'random').mockReturnValue(0.99);
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+    this.playerHands.ogion.cards = ['Club_10', 'Heart_3'];
+    this.playerHands.dealer.cards = ['Club_9', 'Heart_8'];
+  });
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  const dialog = screen.getByRole('dialog', { name: 'Players' });
+  fireEvent.click(within(dialog).getByRole('checkbox', { name: /Ogion/ }));
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+
+  expect(screen.getByText('Ogion ($1000)')).toBeInTheDocument();
+  expect(screen.getByText('Thirteen is plenty.')).toBeInTheDocument();
+
+  vi.useFakeTimers();
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
+
+  // Ogion has control and his seat comes forward; The Rock stands on 13
+  expect(screen.getByRole('region', { name: "Ogion's hand" }).closest('.table-focus')).not.toBeNull();
+  act(() => vi.advanceTimersByTime(1000));
+  expect(screen.getByRole('region', { name: "Faxe's hand" }).closest('.table-focus')).not.toBeNull();
+});
+
+it("opens a character's card from the Players dialog", () => {
+  render(<App />);
+
+  // the Players dialog stays closed until it is opened
+  expect(screen.queryByText('Computer players')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  fireEvent.click(screen.getByRole('button', { name: 'About Haber' }));
+
+  const card = screen.getByRole('dialog', { name: 'Haber, The Maniac' });
+  expect(within(card).getByRole('img', { name: /big man with a red-brown beard/ })).toBeInTheDocument();
+  expect(within(card).getByText('Loose-aggressive')).toBeInTheDocument();
+  expect(within(card).getByRole('meter', { name: 'Aggression' })).toHaveAttribute('aria-valuenow', '10');
+  expect(within(card).getByText(/Ursula K. Le Guin/)).toBeInTheDocument();
 });

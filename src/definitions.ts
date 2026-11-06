@@ -26,6 +26,7 @@ export const playerDefaults: IPlayer = {
     numberOfTimesBlackjack: 0,
     numberOfTimesBusted: 0,
     totalWinnings: 0,
+    netResult: 0,
     winLossRatio: 0,
   },
   status: PlayerStatus.OK,
@@ -42,6 +43,6 @@ export const STARTING_BANK = 1000;
  * with player keys rather than explicit seats.
  */
 export const defaultplayersArr: IPlayer[] = [
-  { ...playerDefaults, key: 'chris', title: 'Chris', disabled: false, bank: STARTING_BANK, isNPC: false, },
-  { ...playerDefaults, key: 'dealer', title: 'Dealer', disabled: false, bank: STARTING_BANK, isNPC: true },
+  { ...playerDefaults, key: 'chris', title: 'Chris', disabled: false, bank: STARTING_BANK, isNPC: false, role: 'human' },
+  { ...playerDefaults, key: 'dealer', title: 'Faxe', disabled: false, bank: STARTING_BANK, isNPC: true, role: 'dealer' },
 ];

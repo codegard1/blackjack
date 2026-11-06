@@ -8,6 +8,8 @@ export type IProfileAction =
   | { type: 'create'; name: string }
   /** choose the human profile that plays the next game */
   | { type: 'select'; id: string }
+  /** seat or unseat a computer character for the next game */
+  | { type: 'toggleOpponent'; id: string }
   /** replace each profile's stats with the given values, keyed by profile id */
   | { type: 'syncStats'; stats: Record<string, PlayerStats> }
   /** back to the default profiles */

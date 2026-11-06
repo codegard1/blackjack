@@ -25,18 +25,25 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, an
 * Deck logic adapted from [node-shuffle](https://github.com/codegard1/node-shuffle) (forked)
 
 #### Rules
-* One human player against a dealer that hits below 17 and stands otherwise
+* You and up to four computer players each play against a dealer that hits below 17 and stands otherwise
 * Number cards count as shown, face cards count as 10, and aces count as 1 or 11
-* Each round starts with a minimum ante from both players; the human can add minimum-bet increments before dealing or during their turn
-* A natural blackjack is 21 with two cards and settles immediately; if both players have one, the round pushes
-* After the human stays, the higher total wins; equal totals push and return each player's stake
-* A human natural blackjack wins the pot plus a bonus equal to half their stake, paid from the dealer's bank
-* Double Down is available on the human's turn with exactly two cards if their bank can match the current stake; it adds that amount, draws one card, and stands unless the human busts
+* Each round starts with a minimum ante from every player (the dealer does not ante); you can add minimum-bet increments before dealing or during your turn
+* You play first, then each computer player, then the dealer; a bust loses that hand without ending the round
+* Each hand is compared with the dealer's: the higher total wins even money from the dealer's bank, and equal totals push
+* A natural blackjack is 21 with two cards and pays 3:2. A dealer natural ends the round at once; player naturals push and every other hand loses
+* Double Down is available with exactly two cards if the bank can match the current stake; it adds that amount, draws one card, and stands unless the player busts
 * Open Blackjack rules from the book icon in the header for the in-app guide
+
+#### Characters
+* Choose up to four computer players in the Players dialog: Ogion (The Rock), Shevek (The Shark), Haber (The Maniac) and Genly Ai (The Tourist). Faxe (The House) deals
+* Each character has a pixel-art portrait, a tagline, a backstory card, and four stats (nerve, aggression, discipline, tilt) that drive how they hit, double down and bet; tilt makes them bet bigger and take more risks during a losing streak
+* Portraits are built from text pixel maps in `scripts/build-portraits.mjs`; run `npm run portraits` after editing one
+* Each character's record starts with a long play history from `src/data/characterHistory.json`, added to whatever they play at your table. `npm run simulate-history` regenerates it by playing real games between the characters in quick succession (10,000 rounds in under a second; options: `-- --rounds 20000 --seed 7 --out path`). The same seed gives the same history
+* Character names are borrowed, with admiration, from the novels of Ursula K. Le Guin; the characters themselves are new
 
 #### Project Status
 * Game state and settings are saved in the browser, so a reload resumes the current game
-* Players: create named players from the Players dialog and choose who plays the next game. Each player's lifetime statistics (rounds, wins, losses, pushes, blackjacks, busts, pots won) are kept in the browser and shown in the same dialog
+* Players: create named players from the Players dialog and choose who plays the next game. Each player's lifetime statistics (rounds, wins, losses, pushes, blackjacks, busts, and net result: the bank change across every hand, shown as +$ or −$) are kept in the browser and shown in the same dialog
 * The activity log records each deal, draw, wager, stay, and result
 * Appearance settings in the Options panel: a light, dark, system or high contrast theme; five accent colors that recolor the Fluent UI theme and the table felt; three card face layouts (classic, minimal, bold); and a card back chosen from five patterns and five colors with a live preview. A Reset appearance button restores the defaults
 * Cards are styled with CSS from the Fluent UI theme tokens, so they follow the chosen theme, and animate onto the table

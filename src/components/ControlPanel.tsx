@@ -68,7 +68,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const currentPlayerKey = playerStore.currentPlayerKey;
   const player = playerStore.players[props.playerKey];
   const npcFlag = player.isNPC;
-  const isRoundComplete = gameStatus >= GameStatus.HumanWins;
+  const isRoundComplete = gameStatus >= GameStatus.RoundOver;
   const isBtnDisabled = isRoundComplete || currentPlayerKey !== playerKey;
   // Hit and Stay need a dealt hand; a new game has no cards until the first deal
   const isRoundDealt = Object.values(gameState.deck.state.playerHands).some((hand) => hand.cards.length > 0);

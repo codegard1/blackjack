@@ -8,7 +8,7 @@ import { DeckState, GameState, ProfileState, SettingKey, SettingsState, settingO
 import { defaultProfileState, normalizeProfileState } from "./profiles";
 
 /** Bump when the shape of the saved game snapshot changes. */
-const GAME_STORE_VERSION = 2;
+const GAME_STORE_VERSION = 3;
 
 /** Scalar game fields saved alongside the deck and player stores. */
 type SavedGame = Pick<GameState,

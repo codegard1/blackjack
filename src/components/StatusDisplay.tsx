@@ -4,6 +4,7 @@ import { Info24Regular } from '@fluentui/react-icons';
 
 /* custom stuff */
 import { IStatusDisplayProps } from "../interfaces";
+import { formatNet } from "../functions/format";
 import { summarizeStats } from "../functions/profiles";
 import "./StatusDisplay.css";
 
@@ -20,7 +21,7 @@ export const StatusDisplay: React.FC<IStatusDisplayProps> = (props) => {
     ['Win rate', summary.winRate === undefined ? '—' : `${Math.round(summary.winRate * 100)}%`],
     ['Blackjacks', summary.blackjacks],
     ['Busts', summary.busts],
-    ['Pots won', `$${summary.potsWon}`],
+    ['Net', formatNet(summary.net)],
   ] as const;
 
   const labelId = `${props.player.title}-statsCalloutLabel`;

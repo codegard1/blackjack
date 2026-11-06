@@ -6,7 +6,10 @@ export type PlayerStats = {
   numberOfGamesWon: number;
   numberOfTimesBlackjack: number;
   numberOfTimesBusted: number;
+  /** total won on winning hands; no longer shown, kept so saved stats stay whole */
   totalWinnings: number;
+  /** bank change across every settled hand, stakes included; negative when down */
+  netResult: number;
   winLossRatio: number;
 }
 

@@ -5,6 +5,8 @@ import { gameDefaults } from '../context';
 import { GameAction, GameStatus } from '../enums';
 import { GameState } from '../types';
 import { gameReducer } from './gameReducer';
+import { defaultProfileState, seatsFor } from './profiles';
+import { decideSeatMove } from './round';
 import { handValue } from './getHandValue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -57,8 +59,9 @@ describe('game behavior baseline', () => {
     expect(result.deck.playerHands.dealer.cards).toEqual(['Diamond_5', 'Club_2']);
     expect(result.deck.length).toBe(0);
     expect(result.playerStore.player('chris').bank).toBe(975);
-    expect(result.playerStore.player('dealer').bank).toBe(975);
-    expect(result.pot).toBe(50);
+    // the dealer does not ante; each hand is played against the dealer's bank
+    expect(result.playerStore.player('dealer').bank).toBe(1000);
+    expect(result.pot).toBe(25);
   });
 
   it('starts a new round instead of appending cards on subsequent deals', () => {
@@ -75,7 +78,7 @@ describe('game behavior baseline', () => {
     expect(nextDeal.deck.playerHands.dealer.cards).toHaveLength(2);
     expect(nextDeal.deck.playerHands.chris.cards).not.toEqual(firstHand);
     expect(nextDeal.playerStore.player('chris').bank).toBe(950);
-    expect(nextDeal.pot).toBe(50);
+    expect(nextDeal.pot).toBe(25);
   });
 
   it('records player actions in the game activity log', () => {
@@ -101,11 +104,11 @@ describe('game behavior baseline', () => {
     const reset = gameReducer(wagered, { type: GameAction.ResetGame });
     const secondGame = gameReducer(reset, { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] });
 
-    // first game: game started, two antes, one wager; second game: game started
-    expect(secondGame.activityLog.map((entry) => entry.sessionId)).toEqual([1, 1, 1, 1, 2]);
-    expect(secondGame.activityLog.map((entry) => entry.id)).toEqual([1, 2, 3, 4, 5]);
+    // first game: game started, the human's ante, one wager; second game: game started
+    expect(secondGame.activityLog.map((entry) => entry.sessionId)).toEqual([1, 1, 1, 2]);
+    expect(secondGame.activityLog.map((entry) => entry.id)).toEqual([1, 2, 3, 4]);
     expect(secondGame.activityLog.at(-1)).toMatchObject({ event: 'game', description: 'Game started' });
-    expect(firstGame.activityLog).toHaveLength(3);
+    expect(firstGame.activityLog).toHaveLength(2);
   });
 
   it('clears activity history when explicitly clearing application data', () => {
@@ -159,6 +162,8 @@ describe('game behavior baseline', () => {
 
   it('hands control to the dealer when the human stays', () => {
     const state = startDefaultGame();
+    state.deck.playerHands.chris.cards = ['Club_10', 'Heart_7'];
+    state.deck.playerHands.dealer.cards = ['Spade_10', 'Diamond_5'];
 
     const result = gameReducer(state, { type: GameAction.Stay, playerKey: 'chris' });
 
@@ -177,12 +182,15 @@ describe('game behavior baseline', () => {
     const dealerTurn = gameReducer(state, { type: GameAction.Stay, playerKey: 'chris' });
     const result = gameReducer(dealerTurn, { type: GameAction.Stay, playerKey: 'dealer' });
 
-    expect(result.gameStatus).toBe(GameStatus.Push);
+    expect(result.gameStatus).toBe(GameStatus.RoundOver);
+    expect(result.playerStore.player('chris').result).toBe('push');
     expect(result.dealerHasControl).toBe(false);
   });
 
-  it('ends the game when the dealer busts on a draw', () => {
+  it('ends the round when the dealer busts on a draw, and every hand still in play wins', () => {
     const state = startDefaultGame();
+    state.deck.playerHands.chris.cards = ['Club_10', 'Heart_8'];
+    state.playerStore.player('chris').isStaying = true;
     state.playerStore.currentPlayerKey = 'dealer';
     state.deck.playerHands.dealer.cards = ['Spade_10', 'Diamond_9'];
     state.deck.cards = [new PlayingCard('Club_5')];
@@ -195,7 +203,8 @@ describe('game behavior baseline', () => {
     });
 
     expect(result.playerStore.player('dealer').isBusted).toBe(true);
-    expect(result.gameStatus).toBe(GameStatus.HumanWins);
+    expect(result.gameStatus).toBe(GameStatus.RoundOver);
+    expect(result.playerStore.player('chris').result).toBe('win');
     expect(result.dealerHasControl).toBe(false);
   });
 
@@ -219,7 +228,7 @@ describe('game behavior baseline', () => {
     expect(result.playerStore.player('chris').bank).toBe(950);
     expect(result.playerStore.player('chris').lastBet).toBe(25);
     expect(result.playerStore.player('chris').totalBet).toBe(25);
-    expect(result.pot).toBe(75);
+    expect(result.pot).toBe(50);
   });
 
   it('resets to a fresh game state without retaining players', () => {
@@ -249,13 +258,13 @@ describe('blackjack rules', () => {
   it('pushes when both players are dealt blackjack and returns stakes', () => {
     const dealt = dealHands(startDefaultGame(), ['Spade_14', 'Heart_13'], ['Club_14', 'Diamond_12']);
 
-    expect(dealt.gameStatus).toBe(GameStatus.Push);
+    expect(dealt.gameStatus).toBe(GameStatus.RoundOver);
+    expect(dealt.playerStore.player('chris').result).toBe('push');
 
     const result = settle(dealt);
     expect(result.playerStore.player('chris').bank).toBe(1000);
     expect(result.playerStore.player('dealer').bank).toBe(1000);
-    expect(result.winner).toBeUndefined();
-    expect(result.activityLog.filter((entry) => entry.event === 'push').map((entry) => entry.amount)).toEqual([25, 25]);
+    expect(result.activityLog.filter((entry) => entry.event === 'push').map((entry) => entry.amount)).toEqual([25, 0]);
   });
 
   it('records every bank movement, so the logged amounts add up to each bank change', () => {
@@ -264,7 +273,7 @@ describe('blackjack rules', () => {
     state = gameReducer(state, { type: GameAction.Stay, playerKey: 'dealer' });
     state = settle(state);
 
-    expect(state.activityLog.find((entry) => entry.event === 'win')).toMatchObject({ name: 'Chris', amount: 50 });
+    expect(state.activityLog.find((entry) => entry.event === 'win')).toMatchObject({ name: 'Chris', description: 'won $25', amount: 50 });
     for (const key of ['chris', 'dealer']) {
       const player = state.playerStore.player(key);
       const logged = state.activityLog
@@ -274,12 +283,13 @@ describe('blackjack rules', () => {
     }
   });
 
-  it('pays a human natural the pot plus a 3:2 bonus from the dealer', () => {
+  it('pays a natural blackjack 3:2 from the dealer', () => {
     const dealt = dealHands(startDefaultGame(), ['Spade_14', 'Heart_13'], ['Club_10', 'Diamond_7']);
-    expect(dealt.gameStatus).toBe(GameStatus.HumanWins);
+    expect(dealt.gameStatus).toBe(GameStatus.RoundOver);
+    expect(dealt.playerStore.player('chris').result).toBe('blackjack');
 
     const result = settle(dealt);
-    // Chris: 975 + pot 50 + bonus floor(25 / 2) = 1037; Dealer: 975 - 12 = 963
+    // Chris: 975 + stake 25 + floor(25 * 1.5) = 1037; Dealer: 1000 - 37 = 963
     expect(result.playerStore.player('chris').bank).toBe(1037);
     expect(result.playerStore.player('dealer').bank).toBe(963);
     expect(result.playerStore.player('chris').stats.numberOfTimesBlackjack).toBe(1);
@@ -289,7 +299,8 @@ describe('blackjack rules', () => {
 
   it('lets the dealer win with a natural', () => {
     const dealt = dealHands(startDefaultGame(), ['Spade_10', 'Heart_9'], ['Club_14', 'Diamond_11']);
-    expect(dealt.gameStatus).toBe(GameStatus.DealerWins);
+    expect(dealt.gameStatus).toBe(GameStatus.RoundOver);
+    expect(dealt.playerStore.player('chris').result).toBe('loss');
     expect(settle(dealt).playerStore.player('dealer').bank).toBe(1025);
   });
 
@@ -315,7 +326,7 @@ describe('blackjack rules', () => {
 
     expect(state.deck.playerHands.chris.cards).toEqual(['Spade_5', 'Heart_6', 'Club_9']);
     expect(state.playerStore.player('chris').bank).toBe(950);
-    expect(state.pot).toBe(75);
+    expect(state.pot).toBe(50);
     expect(state.playerStore.player('chris').isStaying).toBe(true);
     expect(state.dealerHasControl).toBe(true);
     expect(state.activityLog.some((entry) => entry.event === 'double')).toBe(true);
@@ -327,7 +338,8 @@ describe('blackjack rules', () => {
 
     state = gameReducer(state, { type: GameAction.DoubleDown, playerKey: 'chris' });
 
-    expect(state.gameStatus).toBe(GameStatus.DealerWins);
+    expect(state.gameStatus).toBe(GameStatus.RoundOver);
+    expect(state.playerStore.player('chris').result).toBe('loss');
     expect(settle(state).playerStore.player('dealer').bank).toBe(1050);
   });
 
@@ -339,6 +351,155 @@ describe('blackjack rules', () => {
     const result = gameReducer(state, { type: GameAction.DoubleDown, playerKey: 'chris' });
 
     expect(result.deck.playerHands.chris.cards).toHaveLength(3);
-    expect(result.pot).toBe(50);
+    expect(result.pot).toBe(25);
+  });
+});
+
+/** Start a game with the given computer players; Math.random is fixed so wagers are predictable */
+const startWithBots = (opponentIds: string[], random = 0.99): GameState => {
+  vi.spyOn(Math, 'random').mockReturnValue(random);
+  const started = gameReducer(createGameState(), { type: GameAction.NewGame, players: seatsFor({ ...defaultProfileState(), opponentIds }) });
+  return gameReducer(started, { type: GameAction.EvaluateGame, gameStatus: GameStatus.InProgress });
+};
+
+/** Unused cards under the stacked ones, so a new round does not reshuffle the stack away */
+const FILLER = Array.from({ length: 30 }, () => 'Club_2');
+
+/** Stack the deck so each seat, in turn order, is dealt the given hand; later draws come from `draws` in order */
+const dealSeats = (state: GameState, hands: string[][], draws: string[] = []): GameState => {
+  state.deck.cards = [...FILLER, ...[...draws].reverse(), ...hands.flat().reverse()].map((key) => new PlayingCard(key));
+  return gameReducer(state, { type: GameAction.Deal });
+};
+
+const stay = (state: GameState, playerKey: string) => gameReducer(state, { type: GameAction.Stay, playerKey });
+const hit = (state: GameState, playerKey: string) => gameReducer(state, { type: GameAction.Draw, playerKey, deckSide: 'top', numberOfCards: 1 });
+
+describe('computer players', () => {
+  it('seats the human, then the computer players, then the dealer, and only players ante', () => {
+    const state = startWithBots(['ogion', 'shevek']);
+
+    expect(state.playerStore.activePlayerKeys).toEqual(['chris', 'ogion', 'shevek', 'dealer']);
+    expect(state.playerStore.player('ogion')).toMatchObject({ role: 'bot', title: 'Ogion', isNPC: true });
+    expect(state.playerStore.player('dealer')).toMatchObject({ role: 'dealer', title: 'Faxe' });
+    expect(state.playerStore.player('dealer').bank).toBe(1000);
+    // Ogion (aggression 2) only antes; Shevek (aggression 7) adds one wager
+    expect(state.playerStore.player('ogion').bank).toBe(975);
+    expect(state.playerStore.player('shevek').bank).toBe(950);
+    expect(state.pot).toBe(100);
+  });
+
+  it('passes the turn from seat to seat, then to the dealer', () => {
+    let state = dealSeats(startWithBots(['ogion', 'shevek']), [['Club_10', 'Heart_7'], ['Club_9', 'Heart_8'], ['Spade_10', 'Heart_9'], ['Diamond_10', 'Spade_7']]);
+    expect(state.controllingPlayer).toBe('chris');
+
+    state = stay(state, 'chris');
+    expect(state.controllingPlayer).toBe('ogion');
+    state = stay(state, 'ogion');
+    expect(state.controllingPlayer).toBe('shevek');
+    state = stay(state, 'shevek');
+    expect(state.controllingPlayer).toBe('dealer');
+    expect(state.dealerHasControl).toBe(true);
+
+    state = stay(state, 'dealer');
+    expect(state.gameStatus).toBe(GameStatus.RoundOver);
+    // dealer 17: Chris 17 pushes, Ogion 17 pushes, Shevek 19 wins
+    expect(['chris', 'ogion', 'shevek'].map((key) => state.playerStore.player(key).result)).toEqual(['push', 'push', 'win']);
+  });
+
+  it('keeps the round going when a player busts', () => {
+    let state = dealSeats(startWithBots(['ogion']), [['Club_10', 'Heart_6'], ['Club_9', 'Heart_8'], ['Diamond_10', 'Spade_7']], ['Spade_9']);
+
+    state = hit(state, 'chris');
+
+    expect(state.playerStore.player('chris')).toMatchObject({ isBusted: true, result: 'loss' });
+    expect(state.gameStatus).toBe(GameStatus.InProgress);
+    expect(state.controllingPlayer).toBe('ogion');
+  });
+
+  it('ends the round without the dealer drawing when every player has busted', () => {
+    let state = dealSeats(startWithBots(['ogion']), [['Club_10', 'Heart_6'], ['Club_9', 'Heart_8'], ['Diamond_10', 'Spade_2']], ['Spade_9', 'Club_8']);
+
+    state = hit(state, 'chris');
+    state = hit(state, 'ogion');
+
+    expect(state.gameStatus).toBe(GameStatus.RoundOver);
+    expect(state.deck.playerHands.dealer.cards).toHaveLength(2);
+    expect(state.playerStore.player('dealer').result).toBe('win');
+  });
+
+  it('skips a seat dealt a natural, which wins 3:2', () => {
+    const state = dealSeats(startWithBots(['ogion']), [['Spade_14', 'Heart_13'], ['Club_9', 'Heart_8'], ['Diamond_10', 'Spade_7']]);
+
+    expect(state.playerStore.player('chris').result).toBe('blackjack');
+    expect(state.controllingPlayer).toBe('ogion');
+    expect(state.gameStatus).toBe(GameStatus.InProgress);
+  });
+
+  it('ends the round at once on a dealer natural: player naturals push, every other hand loses', () => {
+    const state = dealSeats(startWithBots(['ogion']), [['Spade_14', 'Heart_13'], ['Club_9', 'Heart_8'], ['Diamond_14', 'Spade_12']]);
+
+    expect(state.gameStatus).toBe(GameStatus.RoundOver);
+    expect(state.playerStore.player('chris').result).toBe('push');
+    expect(state.playerStore.player('ogion').result).toBe('loss');
+  });
+
+  it('settles every hand against the dealer, and the dealer takes the other side', () => {
+    let state = dealSeats(startWithBots(['ogion', 'shevek']), [['Spade_14', 'Heart_13'], ['Club_10', 'Heart_9'], ['Spade_10', 'Heart_6'], ['Diamond_10', 'Spade_8']]);
+    state = stay(state, 'ogion');
+    state = stay(state, 'shevek');
+    state = stay(state, 'dealer');
+    state = settle(state);
+
+    // Chris: natural on $25 wins $37; Ogion: 19 beats 18 on $25; Shevek: 16 loses $50 (ante and one wager)
+    expect(state.playerStore.player('chris').bank).toBe(1037);
+    expect(state.playerStore.player('ogion').bank).toBe(1025);
+    expect(state.playerStore.player('shevek').bank).toBe(950);
+    expect(state.playerStore.player('dealer').bank).toBe(1000 - 37 - 25 + 50);
+    expect(state.playerStore.player('dealer').result).toBe('loss');
+    expect(state.playerStore.player('ogion').stats.numberOfGamesWon).toBe(1);
+    expect(state.playerStore.player('shevek').lossStreak).toBe(1);
+  });
+
+  it('sits out a computer player who cannot cover the ante, and deals them no hand', () => {
+    let state = startWithBots(['ogion']);
+    state = dealSeats(state, [['Club_10', 'Heart_7'], ['Club_9', 'Heart_8'], ['Diamond_10', 'Spade_7']]);
+    state.playerStore.player('ogion').bank = 10;
+
+    state = dealSeats(state, [['Club_10', 'Heart_7'], ['Diamond_10', 'Spade_7']]);
+
+    expect(state.playerStore.player('ogion').isSittingOut).toBe(true);
+    expect(state.deck.playerHands.ogion.cards).toEqual([]);
+    state = stay(state, 'chris');
+    expect(state.controllingPlayer).toBe('dealer');
+  });
+
+  it('reshuffles a fresh deck between rounds when it runs low', () => {
+    let state = dealSeats(startWithBots(['ogion']), [['Club_10', 'Heart_7'], ['Club_9', 'Heart_8'], ['Diamond_10', 'Spade_7']]);
+    state.deck.cards = state.deck.cards.slice(0, 10);
+    state = gameReducer(state, { type: GameAction.NewRound });
+
+    expect(state.deck.length).toBe(52);
+    expect(state.activityLog.some((entry) => entry.event === 'shuffle')).toBe(true);
+  });
+
+  it('reshuffles the cards not in play when the deck runs dry mid-round', () => {
+    let state = dealSeats(startWithBots(['ogion']), [['Club_2', 'Heart_3'], ['Club_4', 'Heart_5'], ['Diamond_10', 'Spade_7']]);
+    state.deck.cards = [];
+
+    state = hit(state, 'chris');
+
+    const inHands = Object.values(state.deck.playerHands).flatMap((hand) => hand.cards);
+    expect(state.deck.playerHands.chris.cards).toHaveLength(3);
+    expect(state.deck.length + inHands.length).toBe(52);
+    expect(new Set(inHands).size).toBe(inHands.length);
+  });
+
+  it('decides computer moves from character stats and the dealer upcard', () => {
+    const state = dealSeats(startWithBots(['ogion', 'genly-ai']), [['Club_10', 'Heart_7'], ['Club_10', 'Heart_3'], ['Spade_10', 'Heart_6'], ['Diamond_10', 'Spade_6']]);
+    // with no discipline roll (random 0.99), each goes on instinct
+    vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    expect(decideSeatMove(state, 'ogion')).toBe('stay'); // The Rock stands on 13
+    expect(decideSeatMove(state, 'genly-ai')).toBe('hit'); // The Tourist hits 16
+    expect(decideSeatMove(state, 'dealer')).toBe('hit'); // the dealer hits 16
   });
 });

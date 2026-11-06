@@ -17,6 +17,7 @@ describe('StatusDisplay', () => {
         numberOfTimesBlackjack: 2,
         numberOfTimesBusted: 1,
         totalWinnings: 250,
+        netResult: -75,
       },
     };
     render(<StatusDisplay player={player} />);
@@ -32,7 +33,7 @@ describe('StatusDisplay', () => {
       'Win rate60%',
       'Blackjacks2',
       'Busts1',
-      'Pots won$250',
+      'Net−$75',
     ]);
     expect(screen.queryByText('Stats & Variables')).not.toBeInTheDocument();
     expect(within(table).queryByText(/bank:|isNPC:|lastAction:/)).not.toBeInTheDocument();

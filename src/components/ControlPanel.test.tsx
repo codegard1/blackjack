@@ -52,11 +52,9 @@ describe('player controls', () => {
   });
 
   it.each([
-    [GameStatus.HumanWins, 'chris'],
-    [GameStatus.HumanWins, 'dealer'],
-    [GameStatus.DealerWins, 'chris'],
-    [GameStatus.DealerWins, 'dealer'],
-    [GameStatus.Push, 'chris'],
+    [GameStatus.RoundOver, 'chris'],
+    [GameStatus.RoundOver, 'dealer'],
+    [GameStatus.GameOver, 'chris'],
     [GameStatus.GameOver, 'dealer'],
   ])('allows another deal after status %s with %s current', (status, currentPlayerKey) => {
     const dispatch = renderControls(status, currentPlayerKey);
