@@ -25,7 +25,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "portraits": "node scripts/build-portraits.mjs"
+    "portraits": "node scripts/build-portraits.mjs",
+    "simulate-history": "node scripts/simulate-history.mjs"
   },
   "browserslist": {
     "production": [

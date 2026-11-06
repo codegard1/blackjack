@@ -10,7 +10,7 @@ import { evaluateGame } from "./evaluateGame";
 import { debugLog } from "./debugLog";
 import { recordActivity } from "./activity";
 import {
-  advanceTurn, canDoubleDown, collectAntes, isDealer, playerSeats, reshuffleIfLow, resolveNaturals,
+  advanceTurn, canDoubleDown, collectAntes, isDealer, playerSeats, refillDeck, reshuffleIfLow, resolveNaturals,
   resolveShowdown, roundStake, seatOrder, setControl,
 } from "./round";
 
@@ -286,6 +286,8 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     // Draw card(s) from the deck
     case GameAction.Draw: {
       const _num = numberOfCards ?? 1;
+      // a long round with many seats can run the deck dry; reshuffle what is not in play
+      if (_num > 0 && state.deck.length < _num && state.gameStatus === GameStatus.InProgress) refillDeck(state);
       if (_num > 0 && state.deck.length >= _num) {
         const _drawn = deckSide === 'top' ? state.deck.draw(_num)
           : deckSide === 'random' ? state.deck.drawRandom(_num)

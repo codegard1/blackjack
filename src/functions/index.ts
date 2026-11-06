@@ -12,3 +12,4 @@ export * from './announcements';
 export * from './seatStatus';
 export * from './round';
 export * from './botStrategy';
+export * from './history';

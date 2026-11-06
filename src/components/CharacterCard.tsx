@@ -16,11 +16,15 @@ import {
 } from '@fluentui/react-components';
 
 import { Character, CharacterStatKey, NAME_CREDIT, STAT_LABELS } from '../characters';
+import { historyRounds, withHistory } from '../functions/history';
 import { summarizeStats } from '../functions/profiles';
 import { PlayerStats } from '../types';
 import { CharacterPortrait } from './CharacterPortrait';
 
 const STAT_MAX = 10;
+
+/** whole numbers with thousands separators, e.g. 6,390 */
+const count = (value: number): string => value.toLocaleString('en-US');
 
 const useStyles = makeStyles({
   surface: {
@@ -135,7 +139,9 @@ interface ICharacterCardProps {
  */
 export const CharacterCard: React.FC<ICharacterCardProps> = ({ character, stats }) => {
   const styles = useStyles();
-  const summary = stats ? summarizeStats(stats) : undefined;
+  // the record includes the character's simulated history from before this table
+  const summary = stats ? summarizeStats(withHistory(character.id, stats)) : undefined;
+  const earlierRounds = historyRounds(character.id);
 
   return (
     <article className={styles.card} aria-label={`${character.name}, ${character.nickname}`}>
@@ -171,16 +177,20 @@ export const CharacterCard: React.FC<ICharacterCardProps> = ({ character, stats 
           <Text as="h4" id={`${character.id}-record`} weight="semibold">Record</Text>
           <dl className={styles.record}>
             {([
-              ['Rounds', summary.rounds],
-              ['Won', summary.won],
-              ['Lost', summary.lost],
-              ['Pushed', summary.pushed],
-              ['Blackjacks', summary.blackjacks],
-              ['Winnings', `$${summary.winnings}`],
+              ['Rounds', count(summary.rounds)],
+              ['Won', count(summary.won)],
+              ['Lost', count(summary.lost)],
+              ['Pushed', count(summary.pushed)],
+              ['Win rate', summary.winRate === undefined ? '—' : `${Math.round(summary.winRate * 100)}%`],
+              ['Blackjacks', count(summary.blackjacks)],
+              ['Winnings', `$${count(summary.winnings)}`],
             ] as const).map(([label, value]) => (
               <div key={label}><dt style={{ display: 'inline' }}>{label}: </dt><dd style={{ display: 'inline', margin: 0 }}>{value}</dd></div>
             ))}
           </dl>
+          {earlierRounds > 0 && (
+            <Text size={200} className={styles.credit}>{`Includes ${count(earlierRounds)} rounds played before you joined the table.`}</Text>
+          )}
         </section>
       )}
 

@@ -482,6 +482,18 @@ describe('computer players', () => {
     expect(state.activityLog.some((entry) => entry.event === 'shuffle')).toBe(true);
   });
 
+  it('reshuffles the cards not in play when the deck runs dry mid-round', () => {
+    let state = dealSeats(startWithBots(['ogion']), [['Club_2', 'Heart_3'], ['Club_4', 'Heart_5'], ['Diamond_10', 'Spade_7']]);
+    state.deck.cards = [];
+
+    state = hit(state, 'chris');
+
+    const inHands = Object.values(state.deck.playerHands).flatMap((hand) => hand.cards);
+    expect(state.deck.playerHands.chris.cards).toHaveLength(3);
+    expect(state.deck.length + inHands.length).toBe(52);
+    expect(new Set(inHands).size).toBe(inHands.length);
+  });
+
   it('decides computer moves from character stats and the dealer upcard', () => {
     const state = dealSeats(startWithBots(['ogion', 'genly-ai']), [['Club_10', 'Heart_7'], ['Club_10', 'Heart_3'], ['Spade_10', 'Heart_6'], ['Diamond_10', 'Spade_6']]);
     // with no discipline roll (random 0.99), each goes on instinct

@@ -1,9 +1,12 @@
+import { PlayingCard } from "../classes/PlayingCard";
+import { PlayingCardDeck } from "../classes/PlayingCardDeck";
 import { getCharacter } from "../characters";
 import { GameStatus } from "../enums";
 import { IPlayer } from "../interfaces";
 import { GameState, PlayerKey, PlayerRole } from "../types";
 import { recordActivity } from "./activity";
 import { BotMove, Rng, botWagerCount, decideBotMove } from "./botStrategy";
+import { fisherYates } from "./fisherYates";
 
 /**
  * The turn engine shared by the reducer and settlement. Each seat plays its
@@ -229,6 +232,17 @@ export function collectAntes(state: GameState, rng: () => number = Math.random):
       recordActivity(state, player.title, `wagered $${state.minimumBet}`, 'bet', { amount: -state.minimumBet });
     }
   });
+}
+
+/**
+ * Mid-round, when the deck cannot cover a draw: shuffle every card that is not
+ * in someone's hand into a fresh deck, so play can carry on.
+ */
+export function refillDeck(state: GameState): void {
+  const inHands = new Set(Object.values(state.deck.playerHands).flatMap((hand) => hand.cards));
+  const keys = PlayingCardDeck.cardKeys().filter((key) => !inHands.has(key));
+  state.deck.cards = fisherYates(keys).map((key) => new PlayingCard(key));
+  recordActivity(state, '', 'Deck shuffled', 'shuffle');
 }
 
 /** Cards each seat may need in a round; the deck is rebuilt when fewer remain */

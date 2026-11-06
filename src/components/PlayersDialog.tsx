@@ -30,6 +30,7 @@ import {
 import { BOTS, CHARACTERS, MAX_OPPONENTS, getCharacter } from '../characters';
 import { useGameContext, useProfileContext } from '../context';
 import { GameStatus } from '../enums';
+import { withHistory } from '../functions/history';
 import { DEALER_PROFILE_ID, humanProfiles, summarizeStats, validateProfileName } from '../functions/profiles';
 import { IPlayersDialogProps } from '../interfaces/IPlayersDialogProps';
 import { CharacterDialog } from './CharacterCard';
@@ -92,7 +93,10 @@ const useStyles = makeStyles({
   },
 });
 
-const STAT_HEADINGS = ['Player', 'Rounds', 'Won', 'Lost', 'Pushed', 'Win rate', 'Blackjacks', 'Busts', 'Winnings'];
+/** whole numbers with thousands separators, e.g. 6,390 */
+const count = (value: number): string => value.toLocaleString('en-US');
+
+const STAT_HEADINGS =['Player', 'Rounds', 'Won', 'Lost', 'Pushed', 'Win rate', 'Blackjacks', 'Busts', 'Winnings'];
 
 /**
  * Choose who plays the next game and which computer players join, add player names, and see everyone's statistics
@@ -207,7 +211,8 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
                   </TableHeader>
                   <TableBody>
                     {[...humans, ...characters].map((profile) => {
-                      const summary = summarizeStats(profile.stats);
+                      // characters' records include their simulated history; humans' are their own
+                      const summary = summarizeStats(withHistory(profile.id, profile.stats));
                       return (
                         <TableRow key={profile.id}>
                           <TableCell>
@@ -215,14 +220,14 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
                             {profile.id === profiles.selectedId && <Text size={200}>{' (playing)'}</Text>}
                             {profile.id === DEALER_PROFILE_ID && <Text size={200}>{' (dealer)'}</Text>}
                           </TableCell>
-                          <TableCell className={styles.numeric}>{summary.rounds}</TableCell>
-                          <TableCell className={styles.numeric}>{summary.won}</TableCell>
-                          <TableCell className={styles.numeric}>{summary.lost}</TableCell>
-                          <TableCell className={styles.numeric}>{summary.pushed}</TableCell>
+                          <TableCell className={styles.numeric}>{count(summary.rounds)}</TableCell>
+                          <TableCell className={styles.numeric}>{count(summary.won)}</TableCell>
+                          <TableCell className={styles.numeric}>{count(summary.lost)}</TableCell>
+                          <TableCell className={styles.numeric}>{count(summary.pushed)}</TableCell>
                           <TableCell className={styles.numeric}>{summary.winRate === undefined ? '—' : `${Math.round(summary.winRate * 100)}%`}</TableCell>
-                          <TableCell className={styles.numeric}>{summary.blackjacks}</TableCell>
-                          <TableCell className={styles.numeric}>{summary.busts}</TableCell>
-                          <TableCell className={styles.numeric}>{`$${summary.winnings}`}</TableCell>
+                          <TableCell className={styles.numeric}>{count(summary.blackjacks)}</TableCell>
+                          <TableCell className={styles.numeric}>{count(summary.busts)}</TableCell>
+                          <TableCell className={styles.numeric}>{`$${count(summary.winnings)}`}</TableCell>
                         </TableRow>
                       );
                     })}
