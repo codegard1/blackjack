@@ -32,7 +32,7 @@ describe('StatusDisplay', () => {
       'Win rate60%',
       'Blackjacks2',
       'Busts1',
-      'Pots won$250',
+      'Winnings$250',
     ]);
     expect(screen.queryByText('Stats & Variables')).not.toBeInTheDocument();
     expect(within(table).queryByText(/bank:|isNPC:|lastAction:/)).not.toBeInTheDocument();

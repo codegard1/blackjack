@@ -1,85 +1,64 @@
 import { GameStatus } from "../enums";
 import { IGameReducerAction, IPlayer } from "../interfaces";
-import { GameState, PlayerKey } from "../types";
+import { GameState } from "../types";
 import { recordActivity } from "./activity";
+import { collectAntes, isDealer, roundStake } from "./round";
 
-/** Amount a player has put into the pot this round (ante plus wagers). */
-export function roundStake(state: GameState, key: PlayerKey): number {
-  const player = state.playerStore.player(key);
-  return (player?.lastAnte ?? 0) + (player?.totalBet ?? 0);
-}
+export { roundStake } from "./round";
 
-/**
- * Log a player's result for the round. The amount is the bank change from the payout
- * (zero for a loss, whose stake was already logged when it went in).
- */
-function recordOutcome(state: GameState, player: IPlayer, amount: number): void {
-  if (state.gameStatus === GameStatus.Push) {
-    recordActivity(state, player.title, 'stake returned', 'push', { amount });
-  } else if (player.key === state.winner) {
-    recordActivity(state, player.title, player.isBlackjack ? 'won the pot with blackjack' : 'won the pot', 'win', { amount });
-  } else {
-    recordActivity(state, player.title, 'lost the round', 'loss');
+/** How a settled hand reads in the activity log and the result message */
+export function describeResult(player: IPlayer): string {
+  const net = player.net ?? 0;
+  if (isDealer(player)) {
+    return net > 0 ? `took $${net}` : net < 0 ? `paid out $${-net}` : 'broke even';
+  }
+  switch (player.result) {
+    case 'blackjack': return `won $${net} with blackjack`;
+    case 'win': return `won $${net}`;
+    case 'push': return 'push, stake returned';
+    case 'loss': return player.isBusted ? `busted, lost $${-net}` : `lost $${-net}`;
+    default: return '';
   }
 }
 
+/** One line for a settled round: each seat's result in seating order, the dealer last */
+export function roundResultText(players: IPlayer[]): string {
+  const settled = players.filter((player) => player.result);
+  const ordered = [...settled.filter((player) => !isDealer(player)), ...settled.filter(isDealer)];
+  return ordered.length ? ordered.map((player) => `${player.title}: ${describeResult(player)}`).join('. ') + '.' : '';
+}
+
+function activityEvent(player: IPlayer): 'win' | 'loss' | 'push' {
+  if (player.result === 'blackjack' || player.result === 'win') return 'win';
+  return player.result === 'loss' ? 'loss' : 'push';
+}
+
 /**
- * Pay out the pot and record stats for a finished round.
- * - Win: the winner takes the pot. A human natural blackjack also collects
- *   a 3:2 bonus (half their stake) from the dealer.
- * - Push: every player gets their own stake back.
+ * Pay out a finished round, then record stats. Each hand was settled against
+ * the dealer when the round ended (see finishRound): a win pays even money,
+ * a natural blackjack pays 3:2, a push returns the stake, and the dealer
+ * keeps a losing stake. The dealer's bank takes the other side of every hand.
  * Guarded by gameStatusFlag so a round is never settled twice.
  */
 function settleRound(state: GameState): void {
   if (state.gameStatusFlag) return;
-
   const { playerStore } = state;
-  const human = playerStore.all.find((player) => !player.isNPC);
-  const dealer = playerStore.all.find((player) => player.isNPC);
-  if (!human || !dealer) return;
 
-  const winnings: Record<PlayerKey, number> = {};
+  playerStore.all.filter((player) => player.result).forEach((player) => {
+    const net = player.net ?? 0;
+    // the stake is already off the bank, so a player gets back stake plus net; the dealer just moves by net
+    const amount = isDealer(player) ? net : Math.max(0, roundStake(state, player.key) + net);
+    if (amount !== 0) playerStore.payout(player.key, amount);
+    recordActivity(state, player.title, describeResult(player), activityEvent(player), { amount });
 
-  switch (state.gameStatus) {
-    case GameStatus.HumanWins: {
-      state.winner = human.key;
-      state.loser = dealer.key;
-      winnings[human.key] = state.pot;
-      if (human.isBlackjack) {
-        const bonus = Math.min(Math.floor(roundStake(state, human.key) / 2), dealer.bank);
-        dealer.bank -= bonus;
-        winnings[human.key] += bonus;
-        if (bonus > 0) recordActivity(state, dealer.title, 'paid the 3:2 blackjack bonus', 'loss', { amount: -bonus });
-      }
-      break;
-    }
-    case GameStatus.DealerWins: {
-      state.winner = dealer.key;
-      state.loser = human.key;
-      winnings[dealer.key] = state.pot;
-      break;
-    }
-    case GameStatus.Push: {
-      state.winner = undefined;
-      state.loser = undefined;
-      playerStore.all.forEach((player) => { winnings[player.key] = roundStake(state, player.key); });
-      break;
-    }
-    default:
-      return;
-  }
-
-  playerStore.all.forEach((player) => {
-    const amount = winnings[player.key] ?? 0;
-    if (amount > 0) playerStore.payout(player.key, amount);
-    recordOutcome(state, player, amount);
+    const won = player.result === 'win' || player.result === 'blackjack';
     playerStore.updateStats(player.key, {
-      numberOfGamesLost: player.key === state.loser ? 1 : 0,
+      numberOfGamesLost: player.result === 'loss' ? 1 : 0,
       numberOfGamesPlayed: 1,
-      numberOfGamesWon: player.key === state.winner ? 1 : 0,
+      numberOfGamesWon: won ? 1 : 0,
       numberOfTimesBlackjack: player.isBlackjack ? 1 : 0,
       numberOfTimesBusted: player.isBusted ? 1 : 0,
-      totalWinnings: player.key === state.winner ? amount : 0,
+      totalWinnings: Math.max(0, net),
       winLossRatio: 0,
     });
   });
@@ -100,15 +79,10 @@ function settleRound(state: GameState): void {
 export function evaluateGame(state: GameState, action: IGameReducerAction): GameState {
   switch (state.gameStatus) {
     case GameStatus.InProgress:
-      /* First play of a new game: all players ante the minimum */
+      /* First play of a new game: every player antes the minimum */
       if (state.turnCount === 0) {
         state.pot = 0;
-        state.playerStore.all.forEach((player) => {
-          if (state.playerStore.ante(player.key, state.minimumBet)) {
-            state.pot += state.minimumBet;
-            recordActivity(state, player.title, `anted $${state.minimumBet}`, 'ante', { amount: -state.minimumBet });
-          }
-        });
+        collectAntes(state);
         state.turnCount = 1;
       }
       break;
@@ -120,9 +94,7 @@ export function evaluateGame(state: GameState, action: IGameReducerAction): Game
       }
       break;
 
-    case GameStatus.HumanWins:
-    case GameStatus.DealerWins:
-    case GameStatus.Push:
+    case GameStatus.RoundOver:
       settleRound(state);
       break;
 

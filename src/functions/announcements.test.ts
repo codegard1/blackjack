@@ -13,6 +13,7 @@ const player = (overrides: Partial<PlayerSnapshot> & Pick<PlayerSnapshot, 'key' 
   isStaying: false,
   isBlackjack: false,
   ...overrides,
+  role: overrides.role ?? (overrides.isNPC ? 'dealer' : 'human'),
 });
 
 const snapshot = (overrides: Partial<GameSnapshot> = {}, players: PlayerSnapshot[] = []): GameSnapshot => ({
@@ -32,6 +33,9 @@ const withPlayer = (base: GameSnapshot, key: string, changes: Partial<PlayerSnap
   ...base,
   players: base.players.map((p) => (p.key === key ? { ...p, ...changes } : p)),
 });
+
+const roundOver = (changes: Partial<PlayerSnapshot>, overrides: Partial<GameSnapshot> = {}): GameSnapshot =>
+  withPlayer(snapshot({ gameStatus: GameStatus.RoundOver, controllingPlayer: undefined, ...overrides }), 'chris', changes);
 
 describe('diffAnnouncements', () => {
   it('announces nothing when nothing changed', () => {
@@ -64,25 +68,25 @@ describe('diffAnnouncements', () => {
   it('announces the human turn at the start of a game', () => {
     const before = snapshot({ gameStatus: GameStatus.Init, controllingPlayer: undefined });
     const after = snapshot();
-    expect(diffAnnouncements(before, after, true)).toEqual([{ title: "Chris's turn", tone: 'brand' }]);
+    expect(diffAnnouncements(before, after, true)).toEqual([{ title: "Chris's turn", tone: 'brand', playerKey: 'chris' }]);
   });
 
   it("announces the dealer's turn once the human stands", () => {
     const before = snapshot();
     const after = snapshot({ controllingPlayer: 'dealer' });
-    expect(diffAnnouncements(before, after, true)).toEqual([{ title: "Dealer's turn", tone: 'neutral' }]);
+    expect(diffAnnouncements(before, after, true)).toEqual([{ title: "Dealer's turn", tone: 'neutral', playerKey: 'dealer' }]);
   });
 
   it('announces a dealer hit with the new total when the total may be shown', () => {
     const before = withPlayer(snapshot({ controllingPlayer: 'dealer' }), 'dealer', { cardCount: 2, total: 12 });
     const after = withPlayer(before, 'dealer', { cardCount: 3, total: 16 });
-    expect(diffAnnouncements(before, after, true)).toEqual([{ title: 'Dealer hits', subtitle: 'Total 16', tone: 'neutral' }]);
+    expect(diffAnnouncements(before, after, true)).toEqual([{ title: 'Dealer hits', subtitle: 'Total 16', tone: 'neutral', playerKey: 'dealer' }]);
   });
 
   it('hides the dealer total while the hole card is face down', () => {
     const before = withPlayer(snapshot({ controllingPlayer: 'dealer' }), 'dealer', { cardCount: 2, total: 12 });
     const after = withPlayer(before, 'dealer', { cardCount: 3, total: 16 });
-    expect(diffAnnouncements(before, after, false)).toEqual([{ title: 'Dealer hits', tone: 'neutral' }]);
+    expect(diffAnnouncements(before, after, false)).toEqual([{ title: 'Dealer hits', subtitle: undefined, tone: 'neutral', playerKey: 'dealer' }]);
   });
 
   it('does not treat the initial deal as a dealer hit', () => {
@@ -95,23 +99,19 @@ describe('diffAnnouncements', () => {
     const base = withPlayer(snapshot({ controllingPlayer: 'dealer' }), 'chris', { total: 18 });
     const before = withPlayer(base, 'dealer', { total: 17 });
     const after = withPlayer(
-      snapshot({ gameStatus: GameStatus.HumanWins, controllingPlayer: undefined }, base.players),
+      withPlayer(snapshot({ gameStatus: GameStatus.RoundOver, controllingPlayer: undefined }, base.players), 'chris', { result: 'win' }),
       'dealer',
       { total: 17, isStaying: true },
     );
     expect(diffAnnouncements(before, after, true)).toEqual([
-      { title: 'Dealer stands', subtitle: 'Total 17', tone: 'neutral' },
-      { title: 'Chris wins!', subtitle: '18 to 17', tone: 'success' },
+      { title: 'Dealer stands', subtitle: 'Total 17', tone: 'neutral', playerKey: 'dealer' },
+      { title: 'Chris wins!', subtitle: '18 to 17', tone: 'success', playerKey: 'chris' },
     ]);
   });
 
   it('announces a dealer bust instead of a hit', () => {
     const before = withPlayer(snapshot({ controllingPlayer: 'dealer' }), 'dealer', { cardCount: 2, total: 14 });
-    const after = withPlayer(
-      snapshot({ gameStatus: GameStatus.HumanWins, controllingPlayer: undefined }),
-      'dealer',
-      { cardCount: 3, total: 24, isBusted: true },
-    );
+    const after = withPlayer(roundOver({ result: 'win' }), 'dealer', { cardCount: 3, total: 24, isBusted: true });
     const titles = diffAnnouncements(before, after, true).map((a) => a.title);
     expect(titles).toEqual(['Dealer busts!', 'Chris wins!']);
     expect(diffAnnouncements(before, after, true)[1]).toMatchObject({ subtitle: 'Dealer busted' });
@@ -119,45 +119,48 @@ describe('diffAnnouncements', () => {
 
   it('announces a human bust with a dealer win', () => {
     const before = snapshot();
-    const after = withPlayer(
-      snapshot({ gameStatus: GameStatus.DealerWins, controllingPlayer: undefined }),
-      'chris',
-      { cardCount: 3, total: 23, isBusted: true },
-    );
+    const after = roundOver({ cardCount: 3, total: 23, isBusted: true, result: 'loss' });
     expect(diffAnnouncements(before, after, true)).toEqual([
-      { title: 'Chris busts!', subtitle: 'Total 23', tone: 'danger' },
-      { title: 'Dealer wins!', subtitle: 'Chris busted', tone: 'danger' },
+      { title: 'Chris busts!', subtitle: 'Total 23', tone: 'danger', playerKey: 'chris' },
+      { title: 'Dealer wins!', subtitle: 'Chris busted', tone: 'danger', playerKey: 'dealer' },
     ]);
   });
 
   it('announces a natural blackjack', () => {
     const before = snapshot({ gameStatus: GameStatus.InProgress, round: 1 });
-    const after = withPlayer(
-      snapshot({ gameStatus: GameStatus.HumanWins, controllingPlayer: undefined, round: 1 }),
-      'chris',
-      { isBlackjack: true },
-    );
+    const after = roundOver({ isBlackjack: true, result: 'blackjack' }, { round: 1 });
     expect(diffAnnouncements(before, after, true)).toEqual([
-      { title: 'Chris has blackjack!', tone: 'success' },
-      { title: 'Chris wins!', subtitle: 'Blackjack', tone: 'success' },
+      { title: 'Chris has blackjack!', tone: 'success', playerKey: 'chris' },
+      { title: 'Chris wins!', subtitle: 'Blackjack', tone: 'success', playerKey: 'chris' },
     ]);
   });
 
   it('announces a result even when the previous round had already ended', () => {
     // a natural blackjack can end round 2 in the same action that starts it
-    const before = snapshot({ gameStatus: GameStatus.DealerWins, controllingPlayer: undefined, round: 1 });
-    const after = withPlayer(
-      snapshot({ gameStatus: GameStatus.HumanWins, controllingPlayer: undefined, round: 2 }),
-      'chris',
-      { isBlackjack: true },
-    );
+    const before = snapshot({ gameStatus: GameStatus.RoundOver, controllingPlayer: undefined, round: 1 });
+    const after = roundOver({ isBlackjack: true, result: 'blackjack' }, { round: 2 });
     expect(diffAnnouncements(before, after, true).map((a) => a.title)).toContain('Chris wins!');
   });
 
   it('announces a push', () => {
     const before = snapshot();
-    const after = snapshot({ gameStatus: GameStatus.Push, controllingPlayer: undefined });
-    expect(diffAnnouncements(before, after, true)).toEqual([{ title: 'Push', subtitle: 'Stakes returned', tone: 'info' }]);
+    const after = roundOver({ result: 'push' });
+    expect(diffAnnouncements(before, after, true)).toEqual([{ title: 'Push', subtitle: 'Stake returned', tone: 'info' }]);
+  });
+
+  it('announces computer players hitting and standing, with their totals', () => {
+    const players = [
+      player({ key: 'chris', title: 'Chris', isNPC: false }),
+      player({ key: 'ogion', title: 'Ogion', isNPC: true, role: 'bot', total: 12 }),
+      player({ key: 'dealer', title: 'Faxe', isNPC: true }),
+    ];
+    const before = snapshot({ controllingPlayer: 'ogion' }, players);
+    const hits = withPlayer(before, 'ogion', { cardCount: 3, total: 15 });
+    // a computer player's cards are face up, so the total shows even while the dealer's is hidden
+    expect(diffAnnouncements(before, hits, false)).toEqual([{ title: 'Ogion hits', subtitle: 'Total 15', tone: 'neutral', playerKey: 'ogion' }]);
+
+    const stands = withPlayer({ ...hits, controllingPlayer: 'dealer' }, 'ogion', { isStaying: true });
+    expect(diffAnnouncements(hits, stands, false).map((a) => a.title)).toEqual(['Ogion stands', "Faxe's turn"]);
   });
 });
 
@@ -165,21 +168,24 @@ describe('seatStatus', () => {
   const seat = (overrides: Partial<IPlayer>): IPlayer => ({ ...playerDefaults, key: 'x', title: 'X', ...overrides });
 
   it('shows the result before anything else', () => {
-    const status = seatStatus(seat({ isNPC: false, isBusted: true, turn: true }), GameStatus.HumanWins);
+    const status = seatStatus(seat({ isNPC: false, isBusted: true, turn: true, result: 'win' }), GameStatus.RoundOver);
     expect(status?.text).toBe('🏆 Winner');
   });
 
-  it('marks the losing player after a settled hand', () => {
-    expect(seatStatus(seat({ isNPC: true }), GameStatus.HumanWins)?.text).toBe('💔 Loser');
-    expect(seatStatus(seat({ isNPC: false }), GameStatus.DealerWins)?.text).toBe('💔 Loser');
-    expect(isSeatLoser(seat({ isNPC: true }), GameStatus.HumanWins)).toBe(true);
-    expect(isSeatLoser(seat({ isNPC: false }), GameStatus.DealerWins)).toBe(true);
+  it('marks a losing hand after the round, and a busted one as busted', () => {
+    expect(seatStatus(seat({ result: 'loss' }), GameStatus.RoundOver)?.text).toBe('💔 Loser');
+    expect(seatStatus(seat({ result: 'loss', isBusted: true }), GameStatus.RoundOver)?.text).toBe('💥 Busted');
+    expect(isSeatLoser(seat({ result: 'loss' }), GameStatus.RoundOver)).toBe(true);
+    expect(isSeatLoser(seat({ result: 'push' }), GameStatus.RoundOver)).toBe(false);
   });
 
-  it('does not mark either player as a loser on a push', () => {
-    expect(isSeatLoser(seat({ isNPC: false }), GameStatus.Push)).toBe(false);
-    expect(isSeatLoser(seat({ isNPC: true }), GameStatus.Push)).toBe(false);
-    expect(seatStatus(seat({ isNPC: false }), GameStatus.Push)?.text).toBe('🤝 Push');
+  it('shows a push for a player and an even result for the dealer', () => {
+    expect(seatStatus(seat({ result: 'push' }), GameStatus.RoundOver)?.text).toBe('🤝 Push');
+    expect(seatStatus(seat({ isNPC: true, role: 'dealer', result: 'push' }), GameStatus.RoundOver)?.text).toBe('🤝 Even');
+  });
+
+  it('shows a natural blackjack as soon as it is dealt', () => {
+    expect(seatStatus(seat({ result: 'blackjack' }), GameStatus.InProgress)?.text).toBe('✨ Blackjack');
   });
 
   it('shows busted over standing', () => {
@@ -188,7 +194,11 @@ describe('seatStatus', () => {
 
   it('shows whose turn it is while the round is live', () => {
     expect(seatStatus(seat({ isNPC: false, turn: true }), GameStatus.InProgress)?.text).toBe('Your turn');
-    expect(seatStatus(seat({ isNPC: true, turn: true }), GameStatus.InProgress)?.text).toBe('Dealer playing');
+    expect(seatStatus(seat({ isNPC: true, turn: true }), GameStatus.InProgress)?.text).toBe('Playing');
+  });
+
+  it('shows a computer player sitting out', () => {
+    expect(seatStatus(seat({ isNPC: true, role: 'bot', isSittingOut: true }), GameStatus.InProgress)?.text).toBe('Sitting out');
   });
 
   it('has no status for an idle seat', () => {
@@ -197,6 +207,6 @@ describe('seatStatus', () => {
 
   it('knows which statuses end the round', () => {
     expect(isRoundOver(GameStatus.InProgress)).toBe(false);
-    expect(isRoundOver(GameStatus.Push)).toBe(true);
+    expect(isRoundOver(GameStatus.RoundOver)).toBe(true);
   });
 });

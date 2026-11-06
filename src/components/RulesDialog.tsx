@@ -13,6 +13,7 @@ import {
   tokens,
 } from '@fluentui/react-components';
 
+import { MAX_OPPONENTS, NAME_CREDIT } from '../characters';
 import { useGameContext } from '../context';
 
 const useStyles = makeStyles({
@@ -60,7 +61,7 @@ export const RulesDialog: React.FC<IRulesDialogProps> = ({ open, onOpenChange })
 
             <section className={styles.section} aria-labelledby="rules-wagers">
               <Text as="h3" id="rules-wagers" weight="semibold">Antes and wagers</Text>
-              <Text as="p">At the start of each round, both players ante the minimum bet of ${minimumBet}. Before dealing or during your turn, use Wager to add another ${minimumBet} to your stake and the pot. You can wager more than once, up to the money in your bank.</Text>
+              <Text as="p">At the start of each round, every player antes the minimum bet of ${minimumBet}; the dealer does not. Before dealing or during your turn, use Wager to add another ${minimumBet} to your stake and the pot. You can wager more than once, up to the money in your bank. Computer players wager according to their temperament, and one who cannot cover the ante sits the round out.</Text>
             </section>
 
             <section className={styles.section} aria-labelledby="rules-turn">
@@ -68,14 +69,21 @@ export const RulesDialog: React.FC<IRulesDialogProps> = ({ open, onOpenChange })
               <ul className={styles.list}>
                 <li>Hit to draw a card, or Stay to end your turn.</li>
                 <li>Double Down is available on your turn with exactly two cards when your bank can cover your current stake. It adds an equal amount, draws one card, and then stands unless you bust.</li>
-                <li>A total over 21 busts and loses the round.</li>
+                <li>A total over 21 busts and loses your stake, even if the dealer busts later.</li>
+                <li>You play first, then each computer player in turn, then the dealer.</li>
               </ul>
             </section>
 
             <section className={styles.section} aria-labelledby="rules-dealer">
               <Text as="h3" id="rules-dealer" weight="semibold">Dealer and results</Text>
-              <Text as="p">The dealer draws below 17 and stands on 17 or higher. After you stay, the higher total wins; equal totals push. A two-card 21 is a natural blackjack and settles immediately. If both players have a natural, the round pushes.</Text>
-              <Text as="p">A winner takes the pot. A human natural blackjack also receives a bonus equal to half the human's total stake, paid from the dealer's bank. On a push, each player gets their own stake back.</Text>
+              <Text as="p">The dealer draws below 17 and stands on 17 or higher. Each hand is compared with the dealer's on its own: the higher total wins and equal totals push. A two-card 21 is a natural blackjack. If the dealer has a natural, the round ends at once: a player with a natural pushes and every other hand loses.</Text>
+              <Text as="p">A winning hand is paid even money from the dealer's bank, and a natural blackjack is paid 3:2. On a push, the player gets their stake back. The dealer keeps a losing stake.</Text>
+            </section>
+
+            <section className={styles.section} aria-labelledby="rules-table">
+              <Text as="h3" id="rules-table" weight="semibold">Meet the table</Text>
+              <Text as="p">Choose up to {MAX_OPPONENTS} computer players from the Players menu. Each plays to its own temperament: nerve, aggression, discipline and tilt. Open a seat's info button to read a character's card.</Text>
+              <Text as="p" size={200}>{NAME_CREDIT}</Text>
             </section>
           </DialogContent>
           <DialogActions>

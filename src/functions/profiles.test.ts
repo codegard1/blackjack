@@ -14,6 +14,7 @@ describe('validateProfileName', () => {
     expect(validateProfileName('x'.repeat(21), profiles)).toBe('Names can be up to 20 characters.');
     expect(validateProfileName('CHRIS', profiles)).toBe('That name is already in use.');
     expect(validateProfileName('dealer', profiles)).toBe('That name is already in use.');
+    expect(validateProfileName('ogion', profiles)).toBe('That name is already in use.');
   });
 });
 
@@ -46,6 +47,17 @@ describe('profileReducer', () => {
     expect(state.profiles.find((profile) => profile.id === DEALER_PROFILE_ID)?.stats).toEqual(emptyStats());
   });
 
+  it('seats and unseats computer players, up to four, in seating order', () => {
+    let state = profileReducer(defaultProfileState(), { type: 'toggleOpponent', id: 'haber' });
+    state = profileReducer(state, { type: 'toggleOpponent', id: 'ogion' });
+    expect(state.opponentIds).toEqual(['ogion', 'haber']);
+
+    state = profileReducer(state, { type: 'toggleOpponent', id: 'haber' });
+    expect(state.opponentIds).toEqual(['ogion']);
+    expect(profileReducer(state, { type: 'toggleOpponent', id: 'chris' })).toBe(state);
+    expect(profileReducer(state, { type: 'toggleOpponent', id: DEALER_PROFILE_ID })).toBe(state);
+  });
+
   it('returns to the default profiles on reset', () => {
     const created = profileReducer(defaultProfileState(), { type: 'create', name: 'Alex' });
     expect(profileReducer(created, { type: 'reset' })).toEqual(defaultProfileState());
@@ -53,17 +65,24 @@ describe('profileReducer', () => {
 });
 
 describe('normalizeProfileState', () => {
-  it('fills in missing stats, restores the dealer and selects a human when the selection is invalid', () => {
+  it('fills in missing stats, restores the characters and selects a human when the selection is invalid', () => {
     const stored = {
-      profiles: [{ id: 'alex', name: 'Alex', createdAt: 1, stats: { numberOfGamesPlayed: 2 } }],
+      profiles: [
+        { id: 'alex', name: 'Alex', createdAt: 1, stats: { numberOfGamesPlayed: 2 } },
+        { id: DEALER_PROFILE_ID, name: 'Dealer', createdAt: 0, stats: {} },
+      ],
       selectedId: DEALER_PROFILE_ID,
+      opponentIds: ['shevek', 'nobody', 'chris'],
     } as unknown as ProfileState;
 
     const state = normalizeProfileState(stored);
 
-    expect(state.profiles.map((profile) => profile.id)).toEqual(['alex', DEALER_PROFILE_ID]);
+    expect(state.profiles.map((profile) => profile.id)).toEqual(['alex', DEALER_PROFILE_ID, 'ogion', 'shevek', 'haber', 'genly-ai']);
     expect(state.profiles[0].stats).toEqual({ ...emptyStats(), numberOfGamesPlayed: 2 });
+    // a dealer saved under the old name takes the character's name
+    expect(state.profiles[1].name).toBe('Faxe');
     expect(state.selectedId).toBe('alex');
+    expect(state.opponentIds).toEqual(['shevek']);
   });
 });
 
@@ -73,7 +92,14 @@ describe('seatsFor', () => {
     const [human, dealer] = seatsFor(state);
 
     expect(human).toMatchObject({ key: state.selectedId, title: 'Alex', isNPC: false, bank: 1000 });
-    expect(dealer).toMatchObject({ key: DEALER_PROFILE_ID, title: 'Dealer', isNPC: true, bank: 1000 });
+    expect(dealer).toMatchObject({ key: DEALER_PROFILE_ID, title: 'Faxe', isNPC: true, role: 'dealer', bank: 1000 });
+  });
+
+  it('seats the chosen computer players between the human and the dealer', () => {
+    const state = { ...defaultProfileState(), opponentIds: ['shevek', 'genly-ai'] };
+    expect(seatsFor(state).map((seat) => [seat.key, seat.role])).toEqual([
+      ['chris', 'human'], ['shevek', 'bot'], ['genly-ai', 'bot'], [DEALER_PROFILE_ID, 'dealer'],
+    ]);
   });
 
   it('carries the stats into a new game, so they accumulate across games', () => {
@@ -99,7 +125,7 @@ describe('summarizeStats', () => {
       totalWinnings: 120,
     });
 
-    expect(summary).toMatchObject({ rounds: 4, won: 2, lost: 1, pushed: 1, winRate: 0.5, blackjacks: 1, busts: 1, potsWon: 120 });
+    expect(summary).toMatchObject({ rounds: 4, won: 2, lost: 1, pushed: 1, winRate: 0.5, blackjacks: 1, busts: 1, winnings: 120 });
   });
 
   it('has no win rate before a round has been played', () => {

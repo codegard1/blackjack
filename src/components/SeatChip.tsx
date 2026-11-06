@@ -5,6 +5,8 @@ import { Badge, makeStyles, mergeClasses, tokens } from '@fluentui/react-compone
 
 // Local Resources
 import { CardStack } from '.';
+import { getCharacter } from '../characters';
+import { CharacterPortrait } from './CharacterPortrait';
 import { ISeatChipProps } from '../interfaces';
 
 const floatKeyframes = {
@@ -73,6 +75,29 @@ const useStyles = makeStyles({
     color: tokens.colorNeutralForeground3,
     fontSize: tokens.fontSizeBase200,
   },
+  // portrait beside the name, tagline, status and total
+  identity: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: tokens.spacingHorizontalS,
+    minWidth: 0,
+  },
+  text: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: tokens.spacingVerticalXXS,
+    minWidth: 0,
+  },
+  tagline: {
+    maxWidth: '200px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    color: tokens.colorNeutralForeground3,
+    fontSize: tokens.fontSizeBase200,
+    fontStyle: 'italic',
+  },
 });
 
 /**
@@ -90,12 +115,17 @@ export const SeatChip: React.FC<ISeatChipProps> = (props) => {
   );
   const style: React.CSSProperties | undefined = floating ? { animationDelay: `${(index ?? 0) * 450}ms` } : undefined;
 
+  const character = getCharacter(player.key);
   const infoContent = (
-    <>
-      <span className={styles.name}>{`${player.title} ($${player.bank || 0})`}</span>
-      {status && <Badge size="small" appearance={status.appearance} color={status.color}>{status.text}</Badge>}
-      {total !== undefined && <span className={styles.total}>{`Total ${total}`}</span>}
-    </>
+    <span className={styles.identity}>
+      <CharacterPortrait id={player.key} name={player.title} size="md" decorative />
+      <span className={styles.text}>
+        <span className={styles.name}>{`${player.title} ($${player.bank || 0})`}</span>
+        {character && <span className={styles.tagline}>{character.tagline}</span>}
+        {status && <Badge size="small" appearance={status.appearance} color={status.color}>{status.text}</Badge>}
+        {total !== undefined && <span className={styles.total}>{`Total ${total}`}</span>}
+      </span>
+    </span>
   );
 
   const info = onSelect

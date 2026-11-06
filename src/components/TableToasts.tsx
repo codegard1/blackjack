@@ -4,7 +4,9 @@ import React from 'react';
 import { makeStyles, mergeClasses, tokens } from '@fluentui/react-components';
 
 // Local Resources
+import { getCharacter } from '../characters';
 import { diffAnnouncements, snapshotGame } from '../functions/announcements';
+import { CharacterPortrait } from './CharacterPortrait';
 import { ITableToastsProps } from '../interfaces';
 import { GameState, GameSnapshot, ToastItem } from '../types';
 
@@ -112,6 +114,9 @@ const TableToast: React.FC<ITableToastProps> = ({ toast, isRetiring, onDismiss }
 
   return (
     <div className={mergeClasses(styles.toast, styles[toast.tone], isLeaving && styles.leaving)}>
+      {toast.playerKey && getCharacter(toast.playerKey) && (
+        <CharacterPortrait id={toast.playerKey} name={toast.title} size="md" decorative />
+      )}
       <span>{toast.title}</span>
       {toast.subtitle && <span className={styles.subtitle}>{toast.subtitle}</span>}
     </div>

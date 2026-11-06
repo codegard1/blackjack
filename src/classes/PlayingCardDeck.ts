@@ -156,8 +156,9 @@ export class PlayingCardDeck implements IPlayingCardDeck {
    * Distribute a certain number of cards to every playerHand
    * @param numberOfCards 
    */
-  public deal(numberOfCards: number = 2): void {
-    for (let key in this.playerHands) {
+  public deal(numberOfCards: number = 2, keys: string[] = Object.keys(this.playerHands)): void {
+    for (const key of keys) {
+      if (!this.playerHands[key]) this.newPlayerHand(key);
       this.playerHands[key].cards.push(...this.draw(numberOfCards));
       this.updateHandValue(key);
     }

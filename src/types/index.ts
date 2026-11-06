@@ -13,3 +13,4 @@ export * from './SuitName';
 export * from './Announcement';
 export * from './PlayerProfile';
 export * from './SeatStatus';
+export * from './Seat';

@@ -5,7 +5,7 @@ import { Badge, Button, Spinner, makeStyles, tokens } from '@fluentui/react-comp
 
 // Local Resources
 import {
-  Agent, CardStack, PlayerContainer, SeatChip, TableToasts,
+  Agent, BOT_ACTION_DELAY_MS, CardStack, DEALER_ACTION_DELAY_MS, PlayerContainer, SeatChip, TableToasts,
 } from ".";
 import { useTableToasts } from "./TableToasts";
 import { useSeatFlip } from "./useSeatFlip";
@@ -16,6 +16,7 @@ import { useGameContext, useProfileContext, useSettingContext } from '../context
 import { playerDefaults } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
 import { seatStatus, isRoundOver } from "../functions/seatStatus";
+import { decideSeatMove, isDealer, isHuman } from "../functions/round";
 import { seatsFor } from "../functions/profiles";
 import { IPlayer } from "../interfaces";
 import { PlayerHandValue } from "../types";
@@ -59,8 +60,7 @@ export const Table: React.FC = () => {
   const styles = useStyles();
   const { deck, gameStatus, gameStatusFlag, pot, playerStore } = gameState;
   const players = playerStore.all;
-  const human = players.find((player) => !player.isNPC);
-  const dealer = players.find((player) => player.isNPC);
+  const human = players.find(isHuman);
   const roundOver = isRoundOver(gameStatus);
   const isStarted = gameStatus !== GameStatus.Init && players.length > 0;
   const revealDealerTotal = !!settings.isDealerHandVisible || roundOver;
@@ -74,10 +74,11 @@ export const Table: React.FC = () => {
   const focusPlayer = players.find((player) => player.key === focusKey);
   const railPlayers = players.filter((player) => player !== focusPlayer);
 
-  // Dealer autoplay runs here, not in a seat, so it keeps going while its seat is collapsed
-  const dealerHandValue = dealer ? deck.state.playerHands[dealer.key]?.handValue : undefined;
+  // Computer autoplay runs here, not in a seat, so it keeps going while that seat is collapsed
+  const controller = players.find((player) => player.key === gameState.controllingPlayer);
+  const controllerHand = controller ? deck.state.playerHands[controller.key] : undefined;
 
-  // Before the game starts, the seats the next game will use: the selected player and the dealer
+  // Before the game starts, the seats the next game will use: the selected player, the chosen computer players and the dealer
   const seats = seatsFor(profiles);
   const pendingPlayers: IPlayer[] = seats.map((seat) => ({ ...playerDefaults, ...seat, stats: { ...playerDefaults.stats, ...seat.stats } }));
   const startGame = () => gameDispatch({ type: GameAction.NewGame, players: seats });
@@ -123,7 +124,7 @@ export const Table: React.FC = () => {
                 )}
                 {railPlayers.map((player) => {
                   const hand = deck.state.playerHands[player.key];
-                  const showTotal = settings.isHandValueVisible && !!hand?.cards.length && (!player.isNPC || revealDealerTotal);
+                  const showTotal = settings.isHandValueVisible && !!hand?.cards.length && (!isDealer(player) || revealDealerTotal);
                   return (
                     <div key={player.key} className="table-rail-slot" data-seat-key={player.key} data-seat-role="rail">
                       <SeatChip
@@ -158,12 +159,16 @@ export const Table: React.FC = () => {
           </div>
         )}
 
-        {gameState.dealerHasControl && dealer && (
+        {controller?.isNPC && (
           <Agent
-            dealerHasControl={gameState.dealerHasControl}
+            key={controller.key}
+            hasControl
             gameStatus={gameStatus}
-            handValue={dealerHandValue ?? EMPTY_HAND_VALUE}
-            playerKey={dealer.key}
+            handValue={controllerHand?.handValue ?? EMPTY_HAND_VALUE}
+            cardCount={controllerHand?.cards.length ?? 0}
+            playerKey={controller.key}
+            decide={() => decideSeatMove(gameState, controller.key)}
+            delayMs={isDealer(controller) ? DEALER_ACTION_DELAY_MS : BOT_ACTION_DELAY_MS}
           />
         )}
 
