@@ -26,6 +26,7 @@ export const playerDefaults: IPlayer = {
     numberOfTimesBlackjack: 0,
     numberOfTimesBusted: 0,
     totalWinnings: 0,
+    netResult: 0,
     winLossRatio: 0,
   },
   status: PlayerStatus.OK,

@@ -16,15 +16,14 @@ import {
 } from '@fluentui/react-components';
 
 import { Character, CharacterStatKey, NAME_CREDIT, STAT_LABELS } from '../characters';
+import { formatCount, formatNet } from '../functions/format';
 import { historyRounds, withHistory } from '../functions/history';
 import { summarizeStats } from '../functions/profiles';
 import { PlayerStats } from '../types';
 import { CharacterPortrait } from './CharacterPortrait';
 
 const STAT_MAX = 10;
-
-/** whole numbers with thousands separators, e.g. 6,390 */
-const count = (value: number): string => value.toLocaleString('en-US');
+const count = formatCount;
 
 const useStyles = makeStyles({
   surface: {
@@ -183,7 +182,7 @@ export const CharacterCard: React.FC<ICharacterCardProps> = ({ character, stats 
               ['Pushed', count(summary.pushed)],
               ['Win rate', summary.winRate === undefined ? '—' : `${Math.round(summary.winRate * 100)}%`],
               ['Blackjacks', count(summary.blackjacks)],
-              ['Winnings', `$${count(summary.winnings)}`],
+              ['Net', formatNet(summary.net)],
             ] as const).map(([label, value]) => (
               <div key={label}><dt style={{ display: 'inline' }}>{label}: </dt><dd style={{ display: 'inline', margin: 0 }}>{value}</dd></div>
             ))}

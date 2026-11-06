@@ -11,6 +11,7 @@
       "numberOfTimesBlackjack": 317,
       "numberOfTimesBusted": 862,
       "totalWinnings": 89359,
+      "netResult": -5466,
       "winLossRatio": 0.8849727651393784
     },
     "shevek": {
@@ -20,6 +21,7 @@
       "numberOfTimesBlackjack": 238,
       "numberOfTimesBusted": 845,
       "totalWinnings": 192163,
+      "netResult": -7362,
       "winLossRatio": 0.8894571203776553
     },
     "haber": {
@@ -29,6 +31,7 @@
       "numberOfTimesBlackjack": 177,
       "numberOfTimesBusted": 1166,
       "totalWinnings": 192444,
+      "netResult": -34956,
       "winLossRatio": 0.7666502220029601
     },
     "genly-ai": {
@@ -38,6 +41,7 @@
       "numberOfTimesBlackjack": 279,
       "numberOfTimesBusted": 1925,
       "totalWinnings": 133352,
+      "netResult": -37323,
       "winLossRatio": 0.7479700187382886
     },
     "dealer": {
@@ -47,6 +51,7 @@
       "numberOfTimesBlackjack": 503,
       "numberOfTimesBusted": 2542,
       "totalWinnings": 536961,
+      "netResult": 85107,
       "winLossRatio": 1.228901461574729
     }
   }

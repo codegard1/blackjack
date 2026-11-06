@@ -6,6 +6,7 @@ import { PlayingCardDeck } from './classes/PlayingCardDeck';
 import { brandPresets, createAppTheme } from './theme';
 import App from './App';
 import { POT_BOUNCE_MS, POT_ENTER_MS, POT_LEAVE_MS } from './components/usePotMotion';
+import { formatNet } from './functions/format';
 import { CHARACTER_HISTORY } from './functions/history';
 
 afterEach(() => {
@@ -438,8 +439,8 @@ it('carries a settled round into each player\'s statistics, including the next g
   };
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
-  expect(statsRow('Chris')).toEqual(['1', '1', '0', '0', '100%', '1', '0', '$37']);
-  // Faxe's record is the simulated history plus this lost round
+  expect(statsRow('Chris')).toEqual(['1', '1', '0', '0', '100%', '1', '0', '+$37']);
+  // Faxe's record is the simulated history plus this lost round, which paid Chris $37
   const history = CHARACTER_HISTORY.stats.dealer;
   const n = (value: number) => value.toLocaleString('en-US');
   const rounds = history.numberOfGamesPlayed + 1;
@@ -447,7 +448,7 @@ it('carries a settled round into each player\'s statistics, including the next g
   expect(statsRow('Faxe')).toEqual([
     n(rounds), n(history.numberOfGamesWon), n(lost), n(rounds - history.numberOfGamesWon - lost),
     `${Math.round((history.numberOfGamesWon / rounds) * 100)}%`,
-    n(history.numberOfTimesBlackjack), n(history.numberOfTimesBusted), `$${n(history.totalWinnings)}`,
+    n(history.numberOfTimesBlackjack), n(history.numberOfTimesBusted), formatNet(history.netResult - 37),
   ]);
   fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 

@@ -30,6 +30,7 @@ import {
 import { BOTS, CHARACTERS, MAX_OPPONENTS, getCharacter } from '../characters';
 import { useGameContext, useProfileContext } from '../context';
 import { GameStatus } from '../enums';
+import { formatCount, formatNet } from '../functions/format';
 import { withHistory } from '../functions/history';
 import { DEALER_PROFILE_ID, humanProfiles, summarizeStats, validateProfileName } from '../functions/profiles';
 import { IPlayersDialogProps } from '../interfaces/IPlayersDialogProps';
@@ -93,10 +94,9 @@ const useStyles = makeStyles({
   },
 });
 
-/** whole numbers with thousands separators, e.g. 6,390 */
-const count = (value: number): string => value.toLocaleString('en-US');
+const count = formatCount;
 
-const STAT_HEADINGS =['Player', 'Rounds', 'Won', 'Lost', 'Pushed', 'Win rate', 'Blackjacks', 'Busts', 'Winnings'];
+const STAT_HEADINGS = ['Player', 'Rounds', 'Won', 'Lost', 'Pushed', 'Win rate', 'Blackjacks', 'Busts', 'Net'];
 
 /**
  * Choose who plays the next game and which computer players join, add player names, and see everyone's statistics
@@ -227,7 +227,7 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
                           <TableCell className={styles.numeric}>{summary.winRate === undefined ? '—' : `${Math.round(summary.winRate * 100)}%`}</TableCell>
                           <TableCell className={styles.numeric}>{count(summary.blackjacks)}</TableCell>
                           <TableCell className={styles.numeric}>{count(summary.busts)}</TableCell>
-                          <TableCell className={styles.numeric}>{`$${count(summary.winnings)}`}</TableCell>
+                          <TableCell className={styles.numeric}>{formatNet(summary.net)}</TableCell>
                         </TableRow>
                       );
                     })}

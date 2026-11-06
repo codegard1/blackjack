@@ -59,6 +59,7 @@ function settleRound(state: GameState): void {
       numberOfTimesBlackjack: player.isBlackjack ? 1 : 0,
       numberOfTimesBusted: player.isBusted ? 1 : 0,
       totalWinnings: Math.max(0, net),
+      netResult: net,
       winLossRatio: 0,
     });
   });

@@ -156,8 +156,8 @@ export type StatsSummary = {
   winRate?: number;
   blackjacks: number;
   busts: number;
-  /** total won on winning hands, after stakes */
-  winnings: number;
+  /** bank change across every settled hand; negative when down */
+  net: number;
 };
 
 /** Turn the raw stats into the figures shown to the player */
@@ -173,6 +173,6 @@ export function summarizeStats(stats: PlayerStats): StatsSummary {
     winRate: rounds > 0 ? won / rounds : undefined,
     blackjacks: stats.numberOfTimesBlackjack,
     busts: stats.numberOfTimesBusted,
-    winnings: stats.totalWinnings,
+    net: stats.netResult ?? 0,
   };
 }

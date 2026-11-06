@@ -29,6 +29,12 @@ describe('simulateHistory', () => {
     expect(result.net[DEALER.id]).toBe(-BOTS.reduce((sum, bot) => sum + result.net[bot.id], 0));
   });
 
+  it("records each character's net result in their stats", () => {
+    for (const id of Object.keys(result.net)) {
+      expect(result.stats[id].netResult).toBe(result.net[id]);
+    }
+  });
+
   it('gives the same history for the same seed', () => {
     expect(simulateHistory({ rounds: 400, rng: seededRandom(42) })).toEqual(result);
     expect(simulateHistory({ rounds: 400, rng: seededRandom(43) }).stats).not.toEqual(result.stats);

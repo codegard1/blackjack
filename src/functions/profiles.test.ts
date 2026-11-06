@@ -123,9 +123,10 @@ describe('summarizeStats', () => {
       numberOfTimesBlackjack: 1,
       numberOfTimesBusted: 1,
       totalWinnings: 120,
+      netResult: -40,
     });
 
-    expect(summary).toMatchObject({ rounds: 4, won: 2, lost: 1, pushed: 1, winRate: 0.5, blackjacks: 1, busts: 1, winnings: 120 });
+    expect(summary).toMatchObject({ rounds: 4, won: 2, lost: 1, pushed: 1, winRate: 0.5, blackjacks: 1, busts: 1, net: -40 });
   });
 
   it('has no win rate before a round has been played', () => {
