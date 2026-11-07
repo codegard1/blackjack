@@ -44,12 +44,13 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, an
 #### Project Status
 * Game state and settings are saved in the browser, so a reload resumes the current game
 * Players: create named players from the Players dialog and choose who plays. Roster changes (the human player and the computer players) never affect a hand in play; between hands the table updates at once, and a change made during a hand is seated when the next hand is dealt. Each player's lifetime statistics (rounds, wins, losses, pushes, blackjacks, busts, and net result: the bank change across every hand, shown as +$ or −$) are kept in the browser and shown in the same dialog
-* The activity log records each deal, draw, wager, stay, and result
+* The activity log records each deal, draw, wager, stay, and result. It is a drawer that extends from the bottom edge of the table, opened and closed with the icon button in the table's bottom right corner; the Options panel's Open Activity Log by default switch decides whether it starts open. A new entry slides down into the log once the toast announcing it has faded out
 * Appearance settings in the Options panel: a light, dark, system or high contrast theme; five accent colors that recolor the Fluent UI theme and the table felt; three card face layouts (classic, minimal, bold); and a card back chosen from five patterns and five colors with a live preview. A Reset appearance button restores the defaults
 * Cards are styled with CSS from the Fluent UI theme tokens, so they follow the chosen theme, and animate onto the table
+* The table fills the window below the header, with the same margin above it and on its left, right and bottom edges
 * Seats collapse into name-and-bank chips until a round is dealt; the seat in control takes the right two thirds of the table (full width on phones), and its cards scale to fill their container
 * The pot floats beside the pre-game seats and stays fixed in the table's top-left corner during play (bottom-left on narrow screens), including after a hand ends. Between hands it slides up out of view and the new pot slides in from the top. When money is added to it, it shimmers and bounces. Play waits for these animations to finish
-* Turn changes, hits, stands, busts, blackjacks, and results appear as brief toast notices over the table
+* Turn changes, hits, stands, busts, blackjacks, results, and pot contributions appear as toast notices over the table. Each gets the same time on screen; new notices stack on the last one in the same spot while it fades out
 
 #### Wish List
 * Split pairs (requires multiple hands per player)

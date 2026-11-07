@@ -6,6 +6,7 @@ import { PlayingCardDeck } from './classes/PlayingCardDeck';
 import { brandPresets, createAppTheme } from './theme';
 import App from './App';
 import { POT_BOUNCE_MS, POT_ENTER_MS, POT_LEAVE_MS } from './components/usePotMotion';
+import { TOAST_EXIT_MS, TOAST_HOLD_MS } from './components/TableToasts';
 import { formatNet } from './functions/format';
 import { CHARACTER_HISTORY } from './functions/history';
 
@@ -170,7 +171,8 @@ it('starts a new game with the selected player and the dealer', () => {
   expect(screen.getByRole('button', { name: 'Start game' })).toBeInTheDocument();
 });
 
-it('always shows card ranks and toggles activity visibility', () => {
+it('always shows card ranks and opens the activity log drawer by default from the setting', () => {
+  vi.useFakeTimers();
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
@@ -198,11 +200,22 @@ it('always shows card ranks and toggles activity visibility', () => {
   expect(cards().every((card) => Array.from(card.querySelectorAll('.playing-card-corner')).every((corner) => corner.children.length === 2))).toBe(true);
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-  fireEvent.click(screen.getByRole('switch', { name: 'Show Activity Log' }));
+  // the drawer starts closed, with its button always in the table's corner
+  expect(screen.getByRole('button', { name: 'Activity log' })).toHaveAttribute('aria-expanded', 'false');
+  expect(screen.queryByRole('heading', { name: 'Activity Log' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('switch', { name: 'Open Activity Log by default' }));
   fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
 
   expect(cards().every((card) => Array.from(card.querySelectorAll('.playing-card-corner')).every((corner) => corner.children.length === 2))).toBe(true);
-  expect(screen.getByText('Activity Log')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Activity log' })).toHaveAttribute('aria-expanded', 'true');
+  expect(screen.getByRole('heading', { name: 'Activity Log' })).toBeInTheDocument();
+  // the button is in the table's corner and the drawer hangs from the table's bottom edge
+  expect(screen.getByRole('button', { name: 'Activity log' }).closest('.table-board')).not.toBeNull();
+  expect(screen.getByRole('heading', { name: 'Activity Log' }).closest('.table-shell')).not.toBeNull();
+  expect(screen.getByRole('heading', { name: 'Activity Log' }).closest('.table-board')).toBeNull();
+
+  // the rows follow the toasts announcing them; once those have faded out they are all there
+  act(() => vi.advanceTimersByTime(10 * (TOAST_HOLD_MS + TOAST_EXIT_MS)));
   expect(screen.getAllByText('was dealt two cards')).toHaveLength(2);
 });
 
@@ -307,7 +320,7 @@ it('changes the theme, accent, card style and card back from the Appearance sect
 it('resets only the appearance settings', () => {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-  fireEvent.click(screen.getByRole('switch', { name: 'Show Activity Log' }));
+  fireEvent.click(screen.getByRole('switch', { name: 'Open Activity Log by default' }));
   fireEvent.click(screen.getByRole('radio', { name: 'High contrast' }));
   fireEvent.click(screen.getByRole('radio', { name: 'Solid' }));
   expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'highContrast');
@@ -316,7 +329,7 @@ it('resets only the appearance settings', () => {
   expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'light');
   expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked();
   expect(screen.getByRole('radio', { name: 'Rings' })).toBeChecked();
-  expect(screen.getByRole('switch', { name: 'Show Activity Log' })).toBeChecked();
+  expect(screen.getByRole('switch', { name: 'Open Activity Log by default' })).toBeChecked();
 });
 
 it('shows the app name in the header and opens the About dialog', () => {
@@ -444,11 +457,15 @@ it("announces the dealer's turn as a toast that leaves on its own", () => {
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
   fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
 
-  // the pot contribution toast takes its turn before the dealer's turn toast
-  act(() => vi.advanceTimersByTime(1800));
+  // the toasts before it take their turns first, each for the same time
+  for (let waited = 0; !screen.queryByText("Faxe's turn") && waited < 10 * TOAST_HOLD_MS; waited += 100) {
+    act(() => vi.advanceTimersByTime(100));
+  }
   expect(screen.getByText("Faxe's turn")).toBeInTheDocument();
 
-  act(() => vi.advanceTimersByTime(2000));
+  act(() => vi.advanceTimersByTime(TOAST_HOLD_MS + TOAST_EXIT_MS - 100));
+  expect(screen.getByText("Faxe's turn")).toBeInTheDocument();
+  act(() => vi.advanceTimersByTime(200));
   expect(screen.queryByText("Faxe's turn")).not.toBeInTheDocument();
 });
 
@@ -563,8 +580,13 @@ it('seats chosen computer players, who play their turns before the dealer', () =
 
   // Ogion has control and his seat comes forward; The Rock stands on 13
   expect(screen.getByRole('region', { name: "Ogion's hand" }).closest('.table-focus')).not.toBeNull();
-  act(() => vi.advanceTimersByTime(1000));
-  expect(screen.getByRole('region', { name: "Faxe's hand" }).closest('.table-focus')).not.toBeNull();
+
+  // computer play waits for the toasts announcing the earlier moves, so allow for them
+  const hasFocus = (seat: string) => screen.getByRole('region', { name: `${seat}'s hand` }).closest('.table-focus') !== null;
+  for (let waited = 0; waited < 20000 && !hasFocus('Faxe'); waited += 100) {
+    act(() => vi.advanceTimersByTime(100));
+  }
+  expect(hasFocus('Faxe')).toBe(true);
 });
 
 it("opens a character's card from the Players dialog", () => {
