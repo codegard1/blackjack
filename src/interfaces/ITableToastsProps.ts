@@ -1,6 +1,6 @@
-import { ToastItem } from '../types';
+import { VisibleToast } from '../types';
 
 export interface ITableToastsProps {
-  toasts: ToastItem[];
-  onDismiss: (id: number) => void;
+  /** oldest first; the newest card is on top */
+  toasts: VisibleToast[];
 }

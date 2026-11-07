@@ -23,6 +23,7 @@ import { BookOpen24Regular, Info24Regular, People24Regular, Settings24Regular } 
 import { usePlayersDialog, useSettingContext } from '../context';
 import { AppLogo } from './AppLogo';
 import { RulesDialog } from './RulesDialog';
+import { PAGE_GUTTER } from '../theme/layout';
 import { description, repository, version } from '../../package.json';
 
 export const APP_NAME = "Chris's Blackjack";
@@ -40,7 +41,7 @@ const useStyles = makeStyles({
     backgroundColor: tokens.colorNeutralBackground1,
     borderRadius: tokens.borderRadiusXLarge,
     boxShadow: tokens.shadow8,
-    marginBottom: tokens.spacingVerticalM,
+    marginBottom: PAGE_GUTTER,
   },
   brand: {
     display: 'flex',
