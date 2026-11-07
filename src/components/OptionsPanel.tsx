@@ -33,7 +33,7 @@ import {
 import { CardBackPreview } from "./CardBackPreview";
 import { useGameContext, useProfileContext, useSettingContext } from "../context";
 import { GameAction } from "../enums";
-import { clearStores } from "../functions";
+import { clearStores, seatsFor } from "../functions";
 import { brandPresets, cardBackColorList, cardBackPatternList, cardStyleList, cardStylePresets, themeModeList } from "../theme";
 import { AccentKey, CardBackColor, CardBackPattern, CardStyle, ThemeMode, accentKeys, appearanceSettingKeys } from "../types";
 
@@ -42,7 +42,7 @@ export const OptionsPanel: React.FC = () => {
   // Context
   const { settings, toggleSetting } = useSettingContext();
   const { gameState, gameDispatch } = useGameContext();
-  const { profileDispatch } = useProfileContext();
+  const { profiles, profileDispatch } = useProfileContext();
   const playerStore = gameState.playerStore;
 
   const closeOptionsPanel = () => {
@@ -66,6 +66,8 @@ export const OptionsPanel: React.FC = () => {
   }
 
   const newDeal = () => {
+    // between hands, a roster change made during play takes effect first
+    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles) });
     gameDispatch({ type: GameAction.Deal });
     closeOptionsPanel();
   }

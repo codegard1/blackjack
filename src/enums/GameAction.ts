@@ -21,6 +21,7 @@ export enum GameAction {
   SetLoser = 'SetLoser',
   SetMinimumBet = 'SetMinimumBet',
   SetPlayerState = 'SetPlayerState',
+  SetRoster = 'SetRoster',
   SetSpinnerVisible = 'SetSpinnerVisible',
   SetWinner = 'SetWinner',
   ShowMessageBar = 'ShowMessageBar',

@@ -10,7 +10,7 @@ import { evaluateGame } from "./evaluateGame";
 import { debugLog } from "./debugLog";
 import { recordActivity } from "./activity";
 import {
-  advanceTurn, canDoubleDown, collectAntes, isDealer, playerSeats, refillDeck, reshuffleIfLow, resolveNaturals,
+  advanceTurn, applyRoster, canDoubleDown, collectAntes, isDealer, playerSeats, refillDeck, reshuffleIfLow, resolveNaturals,
   resolveShowdown, roundStake, seatOrder, setControl,
 } from "./round";
 
@@ -184,6 +184,14 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       state.round = 1;
       state.turnCount = 0;
       recordActivity(state, '', 'Game started', 'game');
+      return state;
+    }
+
+    /**
+     * Seat a new roster between hands; ignored while a hand is in play
+     */
+    case GameAction.SetRoster: {
+      if (players) applyRoster(state, players);
       return state;
     }
 

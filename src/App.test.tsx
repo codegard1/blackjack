@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { webDarkTheme } from '@fluentui/react-components';
 import { PlayingCardDeck } from './classes/PlayingCardDeck';
 import { brandPresets, createAppTheme } from './theme';
@@ -80,6 +80,57 @@ it('replaces the controls with Next hand and Change players when the hand ends',
   fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
   expect(screen.getByText('Round 2 started')).toBeInTheDocument();
   expect(screen.getByRole('toolbar')).toBeInTheDocument();
+});
+
+describe('changing the roster', () => {
+  const mockBustableHand = () => {
+    vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+      this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+      this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+    });
+    vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
+  };
+  const toggleOgion = () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Players' })).getByRole('checkbox', { name: 'Ogion, The Rock' }));
+  };
+  const closePlayers = () => fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+  it('ignores roster changes while a hand is in play, then seats them for the next hand', () => {
+    mockBustableHand();
+    const { container } = render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+
+    toggleOgion();
+    expect(within(screen.getByRole('dialog', { name: 'Players' })).getByText(/Changes apply from the next hand/)).toBeInTheDocument();
+    closePlayers();
+    expect(container.querySelector('[data-seat-key="ogion"]')).not.toBeInTheDocument();
+
+    // still ignored when the hand ends
+    fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck' }));
+    expect(screen.getByRole('button', { name: 'Next hand' })).toBeInTheDocument();
+    expect(container.querySelector('[data-seat-key="ogion"]')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
+    expect(container.querySelector('[data-seat-key="ogion"]')).toBeInTheDocument();
+    expect(screen.getByText('Round 2 started')).toBeInTheDocument();
+  });
+
+  it('updates the table at once when the roster changes between hands', () => {
+    mockBustableHand();
+    const { container } = render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Change players' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Players' })).getByRole('checkbox', { name: 'Ogion, The Rock' }));
+    expect(container.querySelector('[data-seat-key="ogion"]')).toBeInTheDocument();
+
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Players' })).getByRole('checkbox', { name: 'Ogion, The Rock' }));
+    expect(container.querySelector('[data-seat-key="ogion"]')).not.toBeInTheDocument();
+  });
 });
 
 it('allows dismissing the result message before it expires', () => {

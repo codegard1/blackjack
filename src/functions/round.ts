@@ -1,8 +1,9 @@
+import { PlayerStore } from "../classes/PlayerStore";
 import { PlayingCard } from "../classes/PlayingCard";
 import { PlayingCardDeck } from "../classes/PlayingCardDeck";
 import { getCharacter } from "../characters";
 import { GameStatus } from "../enums";
-import { IPlayer } from "../interfaces";
+import { IPlayer, IPlayerOptions } from "../interfaces";
 import { GameState, PlayerKey, PlayerRole } from "../types";
 import { recordActivity } from "./activity";
 import { BotMove, Rng, botWagerCount, decideBotMove } from "./botStrategy";
@@ -255,4 +256,46 @@ export function reshuffleIfLow(state: GameState): void {
   state.deck.reset();
   state.playerStore.all.forEach((player) => state.deck.newPlayerHand(player.key));
   recordActivity(state, '', 'Deck shuffled', 'shuffle');
+}
+
+/** True between hands: the round is over and has been settled */
+export function isBetweenHands(state: GameState): boolean {
+  return state.gameStatus >= GameStatus.RoundOver && state.gameStatusFlag;
+}
+
+/** The seat keys of a roster, in seating order; two rosters match when their signatures do */
+export const rosterSignature = (seats: { key: PlayerKey }[]): string => seats.map((seat) => seat.key).join('|');
+
+/**
+ * Change who sits at the table, but only between hands; while a hand is in play the
+ * new roster is ignored. Seats that stay keep their bank and stats, seats that leave
+ * are removed, and new seats join with a fresh bank. Seating follows the roster order.
+ */
+export function applyRoster(state: GameState, seats: IPlayerOptions[]): void {
+  if (!isBetweenHands(state) || seats.length === 0) return;
+  if (rosterSignature(seats) === rosterSignature(state.playerStore.all)) return;
+
+  const previous = state.playerStore.players;
+  const store = new PlayerStore();
+  seats.forEach((seat) => {
+    if (previous[seat.key]) store.players[seat.key] = previous[seat.key];
+    else store.newPlayer(seat);
+  });
+  store.currentPlayerKey = state.playerStore.currentPlayerKey && store.players[state.playerStore.currentPlayerKey]
+    ? state.playerStore.currentPlayerKey
+    : undefined;
+  store.lastWriteTime = state.playerStore.lastWriteTime;
+
+  const joined = seats.filter((seat) => !previous[seat.key]).map((seat) => seat.title);
+  const left = Object.values(previous).filter((player) => !store.players[player.key]).map((player) => player.title);
+
+  Object.keys(state.deck.playerHands).filter((key) => !store.players[key]).forEach((key) => delete state.deck.playerHands[key]);
+  seats.forEach((seat) => { if (!state.deck.playerHands[seat.key]) state.deck.newPlayerHand(seat.key); });
+
+  state.playerStore = store;
+  if (state.controllingPlayer && !store.players[state.controllingPlayer]) state.controllingPlayer = undefined;
+  if (state.winner && !store.players[state.winner]) state.winner = undefined;
+  if (state.loser && !store.players[state.loser]) state.loser = undefined;
+  const changes = [joined.length ? `${joined.join(', ')} joined` : '', left.length ? `${left.join(', ')} left` : ''].filter(Boolean);
+  recordActivity(state, '', `Players changed: ${changes.join('; ') || 'seating order'}`, 'round');
 }

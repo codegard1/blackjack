@@ -120,7 +120,8 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
   const humans = humanProfiles(profiles.profiles);
   // the computer characters in seating order, then the dealer
   const characters = CHARACTERS.flatMap((character) => profiles.profiles.filter((profile) => profile.id === character.id));
-  const isGameInProgress = gameState.gameStatus !== GameStatus.Init;
+  // changes made while a hand is being played wait until it ends
+  const isHandInPlay = gameState.gameStatus === GameStatus.InProgress || gameState.gameStatus === GameStatus.NextTurn;
 
   const createPlayer = (event: React.FormEvent) => {
     event.preventDefault();
@@ -152,7 +153,7 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
                   <Radio key={profile.id} value={profile.id} label={profile.name} />
                 ))}
               </RadioGroup>
-              {isGameInProgress && <Text size={200}>The selected player plays the next game.</Text>}
+              {isHandInPlay && <Text size={200}>The selected player plays from the next hand.</Text>}
             </section>
 
             <form className={styles.form} onSubmit={createPlayer} noValidate>
@@ -176,7 +177,7 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
             <section aria-labelledby="players-opponents-heading">
               <Text as="h3" id="players-opponents-heading" weight="semibold" block>Computer players</Text>
               <Text as="p" size={200} block>
-                {`Choose up to ${MAX_OPPONENTS} to sit at the table with you.${isGameInProgress ? ' Changes apply to the next game.' : ''}`}
+                {`Choose up to ${MAX_OPPONENTS} to sit at the table with you.${isHandInPlay ? ' Changes apply from the next hand.' : ''}`}
               </Text>
               <ul className={styles.roster}>
                 {BOTS.map((bot) => {

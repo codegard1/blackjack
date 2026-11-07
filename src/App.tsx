@@ -10,7 +10,7 @@ import './App.css';
 import { ActivityLog, AppHeader, OptionsPanel, PlayersDialog, Table, DebugWindow } from './components';
 import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
 import { GameAction, GameStatus } from './enums';
-import { collectStats, gameReducer, isHuman, isRoundOver, loadGameState, loadProfiles, loadSettings, profileReducer, roundResultText, saveGameState, saveProfiles, saveSettings, settingReducer } from './functions';
+import { collectStats, gameReducer, isBetweenHands, isHuman, isRoundOver, loadGameState, loadProfiles, loadSettings, profileReducer, roundResultText, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer } from './functions';
 import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark } from './theme';
 import { MessageBarDefinition, MessageIntent } from './types';
 
@@ -111,6 +111,17 @@ const App = () => {
       profileDispatch({ type: 'syncStats', stats: collectStats(gameState.playerStore.all) });
     }
   }, [gameState]);
+
+  // A roster change between hands seats the new players at once. During a hand it is
+  // ignored here, and the Next hand button applies it when the hand is over.
+  const rosterKey = rosterSignature(seatsFor(profiles));
+  const lastRosterKey = React.useRef(rosterKey);
+  const betweenHands = isBetweenHands(gameState);
+  React.useEffect(() => {
+    if (lastRosterKey.current === rosterKey) return;
+    lastRosterKey.current = rosterKey;
+    if (betweenHands) gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles) });
+  }, [rosterKey, betweenHands, profiles]);
 
   return (
     <FluentProvider theme={theme} style={{ colorScheme: isDarkMode(themeMode) ? 'dark' : 'light' }}>

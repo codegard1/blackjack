@@ -20,9 +20,10 @@ import {
 } from '@fluentui/react-icons';
 
 // Local Resources
-import { useGameContext, usePlayersDialog, usePotAnimation, useSettingContext } from "../context";
+import { useGameContext, usePlayersDialog, usePotAnimation, useProfileContext, useSettingContext } from "../context";
 import { GameAction, GameStatus } from "../enums";
 import { canDoubleDown } from "../functions/gameReducer";
+import { seatsFor } from "../functions/profiles";
 import { IControlPanelProps } from "../interfaces";
 
 const useStyles = makeStyles({
@@ -69,6 +70,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const { gameState, gameDispatch } = useGameContext();
   const { toggleSetting } = useSettingContext();
   const openPlayers = usePlayersDialog();
+  const { profiles } = useProfileContext();
   const { gameStatus, minimumBet } = gameState;
   const playerStore = gameState.playerStore.state;
 
@@ -102,11 +104,17 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
     });
   };
 
+  // The hand is over, so a roster change made during play takes effect before the next deal
+  const nextHand = () => {
+    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles) });
+    deal();
+  };
+
   // Once the hand is over the human gets two choices instead of the action toolbar
   if (!hidden && !npcFlag && isRoundComplete) {
     return (
       <div className={styles.endActions}>
-        <Button appearance="primary" size="large" disabledFocusable={isWaiting} onClick={deal}>Next hand</Button>
+        <Button appearance="primary" size="large" disabledFocusable={isWaiting} onClick={nextHand}>Next hand</Button>
         <Button appearance="secondary" size="large" onClick={openPlayers}>Change players</Button>
       </div>
     );
