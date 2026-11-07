@@ -48,10 +48,38 @@ it.each([
   act(() => vi.advanceTimersByTime(1));
   expect(screen.queryByText(message)).not.toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
 
   expect(screen.queryByText(message)).not.toBeInTheDocument();
   expect(screen.getByText('Round 2 started')).toBeInTheDocument();
+});
+
+it('replaces the controls with Next hand and Change players when the hand ends', () => {
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
+  vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  expect(screen.getByRole('toolbar')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Next hand' })).not.toBeInTheDocument();
+
+  // busting ends the hand: the toolbar gives way to the end-of-hand buttons
+  fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck' }));
+  expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Deal' })).not.toBeInTheDocument();
+
+  // Change players opens the same dialog as the header button
+  fireEvent.click(screen.getByRole('button', { name: 'Change players' }));
+  expect(screen.getByRole('dialog', { name: 'Players' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+  fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
+  expect(screen.getByText('Round 2 started')).toBeInTheDocument();
+  expect(screen.getByRole('toolbar')).toBeInTheDocument();
 });
 
 it('allows dismissing the result message before it expires', () => {
@@ -337,10 +365,10 @@ it('keeps the pot after a hand ends, then slides it up and back in for the next 
 
   // the next hand: the last pot slides up out of view, showing its amount as it goes
   act(() => vi.advanceTimersByTime(3000));
-  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
   expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-leaving')).toBeInTheDocument();
   expect(container.querySelector('.table-pot-corner-slot')).toHaveTextContent('Pot: $25');
-  expect(screen.getByRole('button', { name: 'Deal' })).toHaveAttribute('aria-disabled', 'true');
+  expect(screen.getByRole('button', { name: 'Next hand' })).toHaveAttribute('aria-disabled', 'true');
 
   // then the new hand's pot slides in from the top and bounces for the antes
   act(() => vi.advanceTimersByTime(POT_LEAVE_MS));
@@ -349,7 +377,7 @@ it('keeps the pot after a hand ends, then slides it up and back in for the next 
   expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-bouncing')).toBeInTheDocument();
   act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
   expect(container.querySelector('.table-pot-badge[class*="is-"]')).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Deal' })).not.toHaveAttribute('aria-disabled');
+  expect(screen.getByRole('button', { name: 'Next hand' })).not.toHaveAttribute('aria-disabled');
   vi.useRealTimers();
 });
 

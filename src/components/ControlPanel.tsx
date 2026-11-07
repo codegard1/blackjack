@@ -2,6 +2,7 @@
 import React from "react";
 
 import {
+  Button,
   Toolbar,
   ToolbarButton,
   ToolbarDivider,
@@ -19,7 +20,7 @@ import {
 } from '@fluentui/react-icons';
 
 // Local Resources
-import { useGameContext, usePotAnimation, useSettingContext } from "../context";
+import { useGameContext, usePlayersDialog, usePotAnimation, useSettingContext } from "../context";
 import { GameAction, GameStatus } from "../enums";
 import { canDoubleDown } from "../functions/gameReducer";
 import { IControlPanelProps } from "../interfaces";
@@ -33,6 +34,12 @@ const useStyles = makeStyles({
     padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalS}`,
     backgroundColor: tokens.colorNeutralBackground3,
     borderRadius: tokens.borderRadiusXLarge,
+  },
+  endActions: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: tokens.spacingHorizontalM,
   },
   button: {
     transitionProperty: 'transform, background-color, color',
@@ -61,6 +68,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   // State from context
   const { gameState, gameDispatch } = useGameContext();
   const { toggleSetting } = useSettingContext();
+  const openPlayers = usePlayersDialog();
   const { gameStatus, minimumBet } = gameState;
   const playerStore = gameState.playerStore.state;
 
@@ -93,6 +101,16 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
       messageBarDefinition: { text: 'New Round', type: 'info', isMultiLine: false },
     });
   };
+
+  // Once the hand is over the human gets two choices instead of the action toolbar
+  if (!hidden && !npcFlag && isRoundComplete) {
+    return (
+      <div className={styles.endActions}>
+        <Button appearance="primary" size="large" disabledFocusable={isWaiting} onClick={deal}>Next hand</Button>
+        <Button appearance="secondary" size="large" onClick={openPlayers}>Change players</Button>
+      </div>
+    );
+  }
 
   return hidden ? null : (
     <>
