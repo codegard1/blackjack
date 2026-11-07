@@ -1,5 +1,8 @@
 /* the board with the activity log drawer attached beneath it */
 .table-shell {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   min-width: 0;
 }
 
@@ -8,6 +11,8 @@
 .table-board {
   position: relative;
   container: table-board / inline-size;
+  /* fills the height the drawer leaves, and never shrinks below its content */
+  flex: 1 1 auto;
   /* the bottom corners follow the drawer opening and closing; keep in step with ACTIVITY_DRAWER_MS */
   transition: border-radius 360ms cubic-bezier(0.22, 1, 0.36, 1);
 }

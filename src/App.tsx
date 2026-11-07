@@ -11,15 +11,19 @@ import { AppHeader, OptionsPanel, PlayersDialog, Table, DebugWindow } from './co
 import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
 import { GameAction, GameStatus } from './enums';
 import { collectStats, gameReducer, isBetweenHands, isHuman, isRoundOver, loadGameState, loadProfiles, loadSettings, profileReducer, roundResultText, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer } from './functions';
-import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark } from './theme';
+import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark, PAGE_GUTTER } from './theme';
 import { MessageBarDefinition, MessageIntent } from './types';
 
 // The page behind the table: a striped felt drawn from the brand color, so it follows
 // the accent and the light or dark mode. Fluent's tokens resolve inside the provider.
+// It is a column at least as tall as the window, so the table can fill what the header
+// leaves; the table sits PAGE_GUTTER from the header and from the other three edges.
 const useStyles = makeStyles({
   shell: {
-    minHeight: '100vh',
-    padding: `0 ${tokens.spacingHorizontalL} ${tokens.spacingVerticalL}`,
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: ['100vh', '100dvh'],
+    padding: `0 ${PAGE_GUTTER} ${PAGE_GUTTER}`,
     boxSizing: 'border-box',
     color: tokens.colorNeutralForeground1,
     backgroundColor: tokens.colorNeutralBackground3,
