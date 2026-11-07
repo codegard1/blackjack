@@ -7,10 +7,10 @@ import { Dismiss20Regular } from '@fluentui/react-icons';
 
 // Local Resources
 import './App.css';
-import { ActivityLog, AppHeader, OptionsPanel, Table, DebugWindow } from './components';
-import { GameContext, GameDispatchContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
+import { ActivityLog, AppHeader, OptionsPanel, PlayersDialog, Table, DebugWindow } from './components';
+import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
 import { GameAction, GameStatus } from './enums';
-import { collectStats, gameReducer, isHuman, isRoundOver, loadGameState, loadProfiles, loadSettings, profileReducer, roundResultText, saveGameState, saveProfiles, saveSettings, settingReducer } from './functions';
+import { collectStats, gameReducer, isBetweenHands, isHuman, isRoundOver, loadGameState, loadProfiles, loadSettings, profileReducer, roundResultText, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer } from './functions';
 import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark } from './theme';
 import { MessageBarDefinition, MessageIntent } from './types';
 
@@ -37,6 +37,9 @@ const App = () => {
   const [gameState, gameDispatch] = React.useReducer(gameReducer, undefined, loadGameState);
   const [settings, toggleSetting] = React.useReducer(settingReducer, undefined, loadSettings);
   const [profiles, profileDispatch] = React.useReducer(profileReducer, undefined, loadProfiles);
+  // The Players dialog opens from the header and from the end-of-hand controls
+  const [isPlayersOpen, setPlayersOpen] = React.useState(false);
+  const openPlayers = React.useCallback(() => setPlayersOpen(true), []);
 
   // Fluent theme from the appearance settings; 'system' follows the OS preference
   const prefersDark = usePrefersDark();
@@ -109,6 +112,17 @@ const App = () => {
     }
   }, [gameState]);
 
+  // A roster change between hands seats the new players at once. During a hand it is
+  // ignored here, and the Next hand button applies it when the hand is over.
+  const rosterKey = rosterSignature(seatsFor(profiles));
+  const lastRosterKey = React.useRef(rosterKey);
+  const betweenHands = isBetweenHands(gameState);
+  React.useEffect(() => {
+    if (lastRosterKey.current === rosterKey) return;
+    lastRosterKey.current = rosterKey;
+    if (betweenHands) gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles) });
+  }, [rosterKey, betweenHands, profiles]);
+
   return (
     <FluentProvider theme={theme} style={{ colorScheme: isDarkMode(themeMode) ? 'dark' : 'light' }}>
       {/* The shell is a child, not the provider itself: Fluent copies the provider's
@@ -121,6 +135,7 @@ const App = () => {
               <GameContext.Provider value={gameState}>
                 <GameDispatchContext.Provider value={gameDispatch}>
 
+                  <PlayersDialogContext.Provider value={openPlayers}>
                   <AppHeader />
 
                   {activeMessage && visibleMessageKey === activeMessage.key && (
@@ -145,6 +160,8 @@ const App = () => {
                     <ActivityLog />
                     <DebugWindow />
                   </div>
+                  <PlayersDialog open={isPlayersOpen} onOpenChange={setPlayersOpen} />
+                  </PlayersDialogContext.Provider>
 
                 </GameDispatchContext.Provider>
               </GameContext.Provider>

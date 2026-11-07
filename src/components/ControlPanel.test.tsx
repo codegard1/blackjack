@@ -56,16 +56,16 @@ describe('player controls', () => {
     [GameStatus.RoundOver, 'dealer'],
     [GameStatus.GameOver, 'chris'],
     [GameStatus.GameOver, 'dealer'],
-  ])('allows another deal after status %s with %s current', (status, currentPlayerKey) => {
+  ])('offers the next hand after status %s with %s current', (status, currentPlayerKey) => {
     const dispatch = renderControls(status, currentPlayerKey);
 
-    expect(screen.getByRole('button', { name: 'Deal' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Draw one card from the top of the deck' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Stay' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Wager $25' })).toBeDisabled();
-    expect(screen.queryByRole('button', { name: 'Draw' })).not.toBeInTheDocument();
+    // the toolbar gives way to the end-of-hand choices
+    expect(screen.getByRole('button', { name: 'Next hand' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Change players' })).toBeEnabled();
+    expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Stay' })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
 
     expect(dispatch).toHaveBeenCalledWith({ type: GameAction.Deal });
   });

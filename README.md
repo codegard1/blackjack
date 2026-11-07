@@ -43,7 +43,7 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, an
 
 #### Project Status
 * Game state and settings are saved in the browser, so a reload resumes the current game
-* Players: create named players from the Players dialog and choose who plays the next game. Each player's lifetime statistics (rounds, wins, losses, pushes, blackjacks, busts, and net result: the bank change across every hand, shown as +$ or −$) are kept in the browser and shown in the same dialog
+* Players: create named players from the Players dialog and choose who plays. Roster changes (the human player and the computer players) never affect a hand in play; between hands the table updates at once, and a change made during a hand is seated when the next hand is dealt. Each player's lifetime statistics (rounds, wins, losses, pushes, blackjacks, busts, and net result: the bank change across every hand, shown as +$ or −$) are kept in the browser and shown in the same dialog
 * The activity log records each deal, draw, wager, stay, and result
 * Appearance settings in the Options panel: a light, dark, system or high contrast theme; five accent colors that recolor the Fluent UI theme and the table felt; three card face layouts (classic, minimal, bold); and a card back chosen from five patterns and five colors with a live preview. A Reset appearance button restores the defaults
 * Cards are styled with CSS from the Fluent UI theme tokens, so they follow the chosen theme, and animate onto the table

@@ -72,7 +72,7 @@ export const Table: React.FC = () => {
   React.useEffect(() => setPinnedKey(undefined), [gameState.controllingPlayer, gameStatus]);
 
   // The seat in control, unless the user has picked another; after a round, the human
-  const focusKey = pinnedKey ?? gameState.controllingPlayer ?? human?.key;
+  const focusKey = (players.some((player) => player.key === pinnedKey) ? pinnedKey : undefined) ?? gameState.controllingPlayer ?? human?.key;
   const focusPlayer = players.find((player) => player.key === focusKey);
   const railPlayers = players.filter((player) => player !== focusPlayer);
 

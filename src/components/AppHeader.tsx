@@ -20,9 +20,8 @@ import {
 import { BookOpen24Regular, Info24Regular, People24Regular, Settings24Regular } from '@fluentui/react-icons';
 
 // Local Resources
-import { useSettingContext } from '../context';
+import { usePlayersDialog, useSettingContext } from '../context';
 import { AppLogo } from './AppLogo';
-import { PlayersDialog } from './PlayersDialog';
 import { RulesDialog } from './RulesDialog';
 import { description, repository, version } from '../../package.json';
 
@@ -95,7 +94,7 @@ export const AppHeader: React.FC = () => {
   const styles = useStyles();
   const { settings, toggleSetting } = useSettingContext();
 
-  const [isPlayersOpen, setPlayersOpen] = React.useState(false);
+  const openPlayers = usePlayersDialog();
   const [isRulesOpen, setRulesOpen] = React.useState(false);
 
   const toggleOptionsPanel = () =>
@@ -114,9 +113,8 @@ export const AppHeader: React.FC = () => {
         </Tooltip>
         <RulesDialog open={isRulesOpen} onOpenChange={setRulesOpen} />
         <Tooltip content="Players" relationship="label">
-          <Button appearance="subtle" aria-label="Players" icon={<People24Regular />} onClick={() => setPlayersOpen(true)} />
+          <Button appearance="subtle" aria-label="Players" icon={<People24Regular />} onClick={openPlayers} />
         </Tooltip>
-        <PlayersDialog open={isPlayersOpen} onOpenChange={setPlayersOpen} />
         <Dialog>
           <DialogTrigger disableButtonEnhancement>
             <Tooltip content="About" relationship="label">

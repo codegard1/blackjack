@@ -502,4 +502,74 @@ describe('computer players', () => {
     expect(decideSeatMove(state, 'genly-ai')).toBe('hit'); // The Tourist hits 16
     expect(decideSeatMove(state, 'dealer')).toBe('hit'); // the dealer hits 16
   });
+  describe('changing the roster', () => {
+    // chris has blackjack, ogion 17, the dealer 17: the round is over and settled
+    const overWithOgion = () => {
+      const dealt = dealSeats(startWithBots(['ogion']), [['Spade_14', 'Heart_13'], ['Club_10', 'Heart_7'], ['Club_10', 'Diamond_7']]);
+      return stay(stay(dealt, 'ogion'), 'dealer');
+    };
+    const settledWithOgion = () => settle(overWithOgion());
+    const roster = (opponentIds: string[], selectedId = 'chris') => seatsFor({ ...defaultProfileState(), opponentIds, selectedId });
+
+    it('ignores a new roster while a hand is in play', () => {
+      const inPlay = dealSeats(startWithBots(['ogion']), [['Club_10', 'Heart_6'], ['Club_10', 'Heart_7'], ['Club_10', 'Diamond_7']]);
+      expect(inPlay.gameStatus).toBe(GameStatus.InProgress);
+
+      const state = gameReducer(inPlay, { type: GameAction.SetRoster, players: roster(['shevek']) });
+
+      expect(state.playerStore.activePlayerKeys).toEqual(['chris', 'ogion', 'dealer']);
+      expect(Object.keys(state.deck.playerHands).sort()).toEqual(['chris', 'dealer', 'ogion']);
+    });
+
+    it('waits until the round is settled', () => {
+      const unsettled = overWithOgion();
+      expect(unsettled.gameStatus).toBe(GameStatus.RoundOver);
+      expect(unsettled.gameStatusFlag).toBe(false);
+
+      const state = gameReducer(unsettled, { type: GameAction.SetRoster, players: roster([]) });
+
+      expect(state.playerStore.activePlayerKeys).toEqual(['chris', 'ogion', 'dealer']);
+    });
+
+    it('seats the new roster between hands, keeping the bank and stats of those who stay', () => {
+      const settled = settledWithOgion();
+      const chris = { ...settled.playerStore.player('chris') };
+
+      const state = gameReducer(settled, { type: GameAction.SetRoster, players: roster(['shevek', 'haber']) });
+
+      expect(state.playerStore.activePlayerKeys).toEqual(['chris', 'shevek', 'haber', 'dealer']);
+      expect(state.playerStore.player('chris').bank).toBe(chris.bank);
+      expect(state.playerStore.player('chris').stats).toEqual(chris.stats);
+      expect(state.playerStore.player('shevek')).toMatchObject({ role: 'bot', bank: 1000 });
+      expect(Object.keys(state.deck.playerHands).sort()).toEqual(['chris', 'dealer', 'haber', 'shevek']);
+      expect(state.activityLog[state.activityLog.length - 1].description).toBe('Players changed: Shevek, Haber joined; Ogion left');
+      // the finished round is still settled
+      expect(state.gameStatus).toBe(GameStatus.RoundOver);
+      expect(state.gameStatusFlag).toBe(true);
+    });
+
+    it('swaps the human player and deals the next hand to the new roster', () => {
+      const profiles = { ...defaultProfileState(), opponentIds: ['ogion'] };
+      profiles.profiles = [...profiles.profiles, { id: 'player-9', name: 'Sam', createdAt: 1, stats: { ...profiles.profiles[0].stats } }];
+      const settled = settledWithOgion();
+
+      let state = gameReducer(settled, { type: GameAction.SetRoster, players: seatsFor({ ...profiles, selectedId: 'player-9' }) });
+      expect(state.playerStore.activePlayerKeys).toEqual(['player-9', 'ogion', 'dealer']);
+      expect(state.playerStore.player('player-9')).toMatchObject({ role: 'human', title: 'Sam', bank: 1000 });
+
+      state = dealSeats(state, [['Club_10', 'Heart_6'], ['Club_10', 'Heart_7'], ['Club_10', 'Diamond_7']]);
+      expect(state.round).toBe(2);
+      expect(state.controllingPlayer).toBe('player-9');
+      expect(state.deck.playerHands['player-9'].cards).toHaveLength(2);
+    });
+
+    it('does nothing when the roster has not changed', () => {
+      const settled = settledWithOgion();
+      const logLength = settled.activityLog.length;
+
+      const state = gameReducer(settled, { type: GameAction.SetRoster, players: roster(['ogion']) });
+
+      expect(state.activityLog).toHaveLength(logLength);
+    });
+  });
 });
