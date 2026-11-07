@@ -1,9 +1,9 @@
 import React from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
-import { createGameState, GameContext, SettingContext, settingDefaults } from '../context';
-import { ActivityLogEntry } from '../types';
-import { ActivityLog, formatChange, groupByHand } from './ActivityLog';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { SettingContext, settingDefaults } from '../context';
+import { ActivityLogEntry, SettingsState } from '../types';
+import { ACTIVITY_DRAWER_MS, ACTIVITY_ROW_ENTER_MS, ActivityLog, ActivityLogToggle, formatChange, groupByHand, useActivityDrawer } from './ActivityLog';
 
 const entries: ActivityLogEntry[] = [
   { id: 1, sessionId: 1, round: 1, event: 'game', timestamp: 1000, name: '', description: 'Game started' },
@@ -13,13 +13,32 @@ const entries: ActivityLogEntry[] = [
   { id: 5, sessionId: 1, round: 2, event: 'loss', timestamp: 5000, name: 'Dealer', description: 'lost the round' },
 ];
 
-const renderLog = (activityLog = entries, visible = true) => render(
-  <SettingContext.Provider value={{ ...settingDefaults, isActivityLogVisible: visible }}>
-    <GameContext.Provider value={{ ...createGameState(), activityLog }}>
-      <ActivityLog />
-    </GameContext.Provider>
-  </SettingContext.Provider>,
+// The drawer with its toggle button, as the Table lays them out. The setting decides whether
+// it starts open; it is on here so the contents are in the accessibility tree.
+const Drawer: React.FC<{ entries: ActivityLogEntry[] }> = ({ entries: activityLog }) => {
+  const drawer = useActivityDrawer();
+  return (
+    <>
+      <ActivityLogToggle isOpen={drawer.isOpen} onToggle={drawer.toggle} />
+      <ActivityLog entries={activityLog} isOpen={drawer.isOpen} />
+    </>
+  );
+};
+
+const logElement = (activityLog: ActivityLogEntry[], settings: Partial<SettingsState>) => (
+  <SettingContext.Provider value={{ ...settingDefaults, isActivityLogVisible: true, ...settings }}>
+    <Drawer entries={activityLog} />
+  </SettingContext.Provider>
 );
+
+const renderLog = (activityLog = entries, settings: Partial<SettingsState> = {}) => render(logElement(activityLog, settings));
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+  // jsdom has no scrollIntoView; drop the stand-in a test may have set
+  Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+});
 
 const rowsOf = (name: string) => within(screen.getByRole('table', { name })).getAllByRole('row').slice(1);
 const cellText = (row: HTMLElement, column: number) => within(row).getAllByRole('cell')[column].textContent;
@@ -87,12 +106,111 @@ describe('activity log', () => {
     expect(entries.map((entry) => entry.id)).toEqual([1, 2, 3, 4, 5]);
   });
 
-  it('shows an empty state and respects the visibility setting', () => {
-    const { unmount } = renderLog([]);
+  it('shows an empty state', () => {
+    renderLog([]);
     expect(screen.getByText('No activity yet')).toBeInTheDocument();
-    unmount();
-    renderLog(entries, false);
+  });
+
+  it('is a drawer that starts open or closed as the setting says', () => {
+    const { unmount } = renderLog(entries, { isActivityLogVisible: false });
+    const toggle = screen.getByRole('button', { name: 'Activity log' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    // closed, the drawer is out of the accessibility tree and cannot be tabbed into
     expect(screen.queryByRole('heading', { name: 'Activity Log' })).not.toBeInTheDocument();
+    expect(document.getElementById('ActivityLogRoot')).toHaveAttribute('inert');
+    expect(document.querySelector('.activity-drawer')).not.toHaveClass('is-open');
+    unmount();
+
+    renderLog(entries, { isActivityLogVisible: true });
+    expect(screen.getByRole('button', { name: 'Activity log' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('heading', { name: 'Activity Log' })).toBeInTheDocument();
+    expect(document.querySelector('.activity-drawer')).toHaveClass('is-open');
+    expect(document.getElementById('ActivityLogRoot')).not.toHaveAttribute('inert');
+  });
+
+  it('opens and closes from the icon button', () => {
+    renderLog(entries, { isActivityLogVisible: false });
+    const toggle = screen.getByRole('button', { name: 'Activity log' });
+    expect(toggle).toHaveAttribute('aria-controls', 'ActivityLogRoot');
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('heading', { name: 'Activity Log' })).toBeInTheDocument();
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('heading', { name: 'Activity Log' })).not.toBeInTheDocument();
+  });
+
+  it('follows the setting when it changes, and the button after that', () => {
+    const { rerender } = renderLog(entries, { isActivityLogVisible: false });
+    const toggle = screen.getByRole('button', { name: 'Activity log' });
+
+    rerender(logElement(entries, { isActivityLogVisible: true }));
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    // closing it by hand does not change the setting, and a re-render keeps it closed
+    fireEvent.click(toggle);
+    rerender(logElement(entries, { isActivityLogVisible: true }));
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    rerender(logElement(entries, { isActivityLogVisible: false }));
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('scrolls itself into view once it has opened from the button, but not when it starts open', () => {
+    vi.useFakeTimers();
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    const { unmount } = renderLog(entries, { isActivityLogVisible: true });
+    act(() => vi.advanceTimersByTime(2 * ACTIVITY_DRAWER_MS));
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    unmount();
+
+    renderLog(entries, { isActivityLogVisible: false });
+    fireEvent.click(screen.getByRole('button', { name: 'Activity log' }));
+    // it waits for the drawer to finish opening, so it scrolls to the full height
+    act(() => vi.advanceTimersByTime(ACTIVITY_DRAWER_MS - 1));
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(1));
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+    // closing it does not scroll
+    fireEvent.click(screen.getByRole('button', { name: 'Activity log' }));
+    act(() => vi.advanceTimersByTime(2 * ACTIVITY_DRAWER_MS));
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+  });
+
+  it('slides in only the rows that arrive after it is shown, then lets the mark go', () => {
+    vi.useFakeTimers();
+    const { rerender } = renderLog();
+    const rows = () => within(screen.getByRole('table', { name: 'Hand 2 activity' })).getAllByRole('row').slice(1);
+    expect(rows()).toHaveLength(2);
+    expect(rows().some((row) => row.classList.contains('activity-row-new'))).toBe(false);
+
+    const arrived: ActivityLogEntry = { id: 6, sessionId: 1, round: 2, event: 'draw', timestamp: 6000, name: 'Chris', description: 'drew 1 card from the top of the deck' };
+    rerender(logElement([...entries, arrived], {}));
+    expect(rows()).toHaveLength(3);
+    // newest first: the arrival is the top row, and the rows already there stay still
+    expect(rows().map((row) => row.classList.contains('activity-row-new'))).toEqual([true, false, false]);
+
+    act(() => vi.advanceTimersByTime(ACTIVITY_ROW_ENTER_MS));
+    expect(rows().some((row) => row.classList.contains('activity-row-new'))).toBe(false);
+
+    // sorting afterwards does not slide anything in again
+    fireEvent.click(within(screen.getByRole('table', { name: 'Hand 2 activity' })).getByRole('columnheader', { name: 'Player' }));
+    expect(rows().some((row) => row.classList.contains('activity-row-new'))).toBe(false);
+  });
+
+  it('treats a cleared log as a fresh start', () => {
+    const { rerender } = renderLog();
+    rerender(logElement([], {}));
+    expect(screen.getByText('No activity yet')).toBeInTheDocument();
+    expect(document.querySelector('.activity-row-new')).not.toBeInTheDocument();
+
+    // the first entry after the clear is new, even though its id is lower than before
+    rerender(logElement([entries[0]], {}));
+    expect(document.querySelectorAll('.activity-row-new')).toHaveLength(1);
   });
 
   it('falls back to session groups for entries saved before hands were tracked', () => {

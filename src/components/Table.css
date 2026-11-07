@@ -1,8 +1,15 @@
+/* the board with the activity log drawer attached beneath it */
+.table-shell {
+  min-width: 0;
+}
+
 /* The board is a size container so the layout can respond to the board's width,
    not the window's. Below 720px the focused seat takes the full width. */
 .table-board {
   position: relative;
   container: table-board / inline-size;
+  /* the bottom corners follow the drawer opening and closing; keep in step with ACTIVITY_DRAWER_MS */
+  transition: border-radius 360ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Pre-game: floating chips, left-aligned */
@@ -176,6 +183,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .table-board {
+    transition: none;
+  }
+
   .table-pot-badge.is-floating,
   .table-pot-badge.is-leaving,
   .table-pot-badge.is-entering,

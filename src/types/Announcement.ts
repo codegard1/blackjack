@@ -19,6 +19,9 @@ export type Announcement = {
 /** An announcement that has been queued for display */
 export type ToastItem = Announcement & { id: number };
 
+/** A toast on the stack; a leaving one is fading out beneath the card that replaced it */
+export type VisibleToast = ToastItem & { isLeaving: boolean };
+
 /** The parts of a player that announcements are derived from */
 export type PlayerSnapshot = {
   key: PlayerKey;

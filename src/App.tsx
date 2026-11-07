@@ -7,7 +7,7 @@ import { Dismiss20Regular } from '@fluentui/react-icons';
 
 // Local Resources
 import './App.css';
-import { ActivityLog, AppHeader, OptionsPanel, PlayersDialog, Table, DebugWindow } from './components';
+import { AppHeader, OptionsPanel, PlayersDialog, Table, DebugWindow } from './components';
 import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
 import { GameAction, GameStatus } from './enums';
 import { collectStats, gameReducer, isBetweenHands, isHuman, isRoundOver, loadGameState, loadProfiles, loadSettings, profileReducer, roundResultText, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer } from './functions';
@@ -157,7 +157,6 @@ const App = () => {
                   <OptionsPanel />
                   <div className="app-content">
                     <Table />
-                    <ActivityLog />
                     <DebugWindow />
                   </div>
                   <PlayersDialog open={isPlayersOpen} onOpenChange={setPlayersOpen} />

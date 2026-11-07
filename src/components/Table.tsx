@@ -5,8 +5,9 @@ import { Badge, Button, Spinner, makeStyles, mergeClasses, tokens } from '@fluen
 
 // Local Resources
 import {
-  Agent, BOT_ACTION_DELAY_MS, CardStack, DEALER_ACTION_DELAY_MS, PlayerContainer, SeatChip, TableToasts,
+  ActivityLog, ActivityLogToggle, Agent, BOT_ACTION_DELAY_MS, CardStack, DEALER_ACTION_DELAY_MS, PlayerContainer, SeatChip, TableToasts,
 } from ".";
+import { useActivityDrawer } from "./ActivityLog";
 import { useTableToasts } from "./TableToasts";
 import { usePotMotion } from "./usePotMotion";
 import { useSeatFlip } from "./useSeatFlip";
@@ -51,7 +52,8 @@ const useStyles = makeStyles({
  * on the left, with a button to start. Once it starts, the seat in control expands into
  * the right two thirds, and the other seats collapse into chips on the left. Clicking a
  * chip brings that seat forward. The pot stays in the top-left corner, or the bottom-left
- * corner on a narrow board.
+ * corner on a narrow board. The activity log is a drawer that extends from the board's
+ * bottom edge, opened from a button in the board's bottom right corner.
  */
 export const Table: React.FC = () => {
 
@@ -85,7 +87,10 @@ export const Table: React.FC = () => {
   const pendingPlayers: IPlayer[] = seats.map((seat) => ({ ...playerDefaults, ...seat, stats: { ...playerDefaults.stats, ...seat.stats } }));
   const startGame = () => gameDispatch({ type: GameAction.NewGame, players: seats });
 
-  const { toasts, dismiss } = useTableToasts(gameState, revealDealerTotal);
+  // Toasts announce each change; its activity log entries follow once its toasts have faded out.
+  // Computer play waits while a toast is queued, so the moves keep pace with the notices.
+  const { toasts, activityLog, isBacklogged } = useTableToasts(gameState, revealDealerTotal);
+  const activityDrawer = useActivityDrawer();
 
   // The pot stays in its corner, even after a hand ends. Between hands it slides up out of
   // view and back in; when it grows it shimmers and bounces. Play waits for all of it.
@@ -111,102 +116,108 @@ export const Table: React.FC = () => {
 
   return (
     <PotAnimationContext.Provider value={potMotion.isBusy}>
-      <main ref={boardRef} className="table-board" style={{ animation: 'table-enter 180ms ease-out', backgroundColor: tokens.colorNeutralBackground1, color: tokens.colorNeutralForeground1, borderRadius: tokens.borderRadiusLarge, boxShadow: tokens.shadow16, display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
-        {gameState.isSpinnerVisible && <Spinner size="large" label="Wait, wait..." aria-live="assertive" />}
+      <div className="table-shell">
+        {/* the board's bottom corners square off while the drawer is attached to them */}
+        <main ref={boardRef} className="table-board" style={{ animation: 'table-enter 180ms ease-out', backgroundColor: tokens.colorNeutralBackground1, color: tokens.colorNeutralForeground1, borderRadius: activityDrawer.isOpen ? `${tokens.borderRadiusLarge} ${tokens.borderRadiusLarge} 0 0` : tokens.borderRadiusLarge, boxShadow: tokens.shadow16, display: 'flex', flexDirection: 'column', gap: 10, padding: '10px 10px 56px' }}>
+          {gameState.isSpinnerVisible && <Spinner size="large" label="Wait, wait..." aria-live="assertive" />}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
 
-          {isStarted ? (
-            <>
-              <div className="table-layout is-started">
-                <div className="table-pot table-pot-corner-slot">
-                  {renderPotBadge()}
-                </div>
-                {focusPlayer && (
-                  <div key={focusPlayer.key} className="table-focus" data-seat-key={focusPlayer.key} data-seat-role="focus">
-                    <PlayerContainer playerKey={focusPlayer.key} />
+            {isStarted ? (
+              <>
+                <div className="table-layout is-started">
+                  <div className="table-pot table-pot-corner-slot">
+                    {renderPotBadge()}
                   </div>
-                )}
+                  {focusPlayer && (
+                    <div key={focusPlayer.key} className="table-focus" data-seat-key={focusPlayer.key} data-seat-role="focus">
+                      <PlayerContainer playerKey={focusPlayer.key} />
+                    </div>
+                  )}
 
-                <div className="table-rail">
-                  {railPlayers.map((player) => {
-                    const hand = deck.state.playerHands[player.key];
-                    // only the dealer's total waits on the hole card; players' cards are face up
-                    const showTotal = settings.isHandValueVisible && !!hand?.cards.length && (!isDealer(player) || revealDealerTotal);
-                    return (
-                      <div key={player.key} className="table-rail-slot" data-seat-key={player.key} data-seat-role="rail">
-                        <SeatChip
-                          player={player}
-                          status={seatStatus(player, gameStatus)}
-                          total={showTotal ? hand.handValue.highest : undefined}
-                          cards={hand?.cards}
-                          onSelect={() => setPinnedKey(player.key)}
-                        />
-                      </div>
-                    );
-                  })}
+                  <div className="table-rail">
+                    {railPlayers.map((player) => {
+                      const hand = deck.state.playerHands[player.key];
+                      // only the dealer's total waits on the hole card; players' cards are face up
+                      const showTotal = settings.isHandValueVisible && !!hand?.cards.length && (!isDealer(player) || revealDealerTotal);
+                      return (
+                        <div key={player.key} className="table-rail-slot" data-seat-key={player.key} data-seat-role="rail">
+                          <SeatChip
+                            player={player}
+                            status={seatStatus(player, gameStatus)}
+                            total={showTotal ? hand.handValue.highest : undefined}
+                            cards={hand?.cards}
+                            onSelect={() => setPinnedKey(player.key)}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            </>
-          ) : (
-            <div className="table-layout is-pregame">
-              <div className="table-pot table-pot-pregame-slot">
-                {renderPotBadge(true)}
-              </div>
-              {pendingPlayers.map((player, index) => (
-                <div key={player.key} className="table-pregame-slot" data-seat-key={player.key} data-seat-role="pregame">
-                  <SeatChip player={player} floating index={index} />
+              </>
+            ) : (
+              <div className="table-layout is-pregame">
+                <div className="table-pot table-pot-pregame-slot">
+                  {renderPotBadge(true)}
                 </div>
-              ))}
-            </div>
-          )}
+                {pendingPlayers.map((player, index) => (
+                  <div key={player.key} className="table-pregame-slot" data-seat-key={player.key} data-seat-role="pregame">
+                    <SeatChip player={player} floating index={index} />
+                  </div>
+                ))}
+              </div>
+            )}
 
-          {!isStarted && (
-            <div className="table-start">
-              <Button appearance="primary" size="large" onClick={startGame}>Start game</Button>
-            </div>
-          )}
+            {!isStarted && (
+              <div className="table-start">
+                <Button appearance="primary" size="large" onClick={startGame}>Start game</Button>
+              </div>
+            )}
 
-          {controller?.isNPC && (
-            <Agent
-              key={controller.key}
-              hasControl
-              gameStatus={gameStatus}
-              handValue={controllerHand?.handValue ?? EMPTY_HAND_VALUE}
-              cardCount={controllerHand?.cards.length ?? 0}
-              isPaused={potMotion.isBusy}
-              playerKey={controller.key}
-              decide={() => decideSeatMove(gameState, controller.key)}
-              delayMs={isDealer(controller) ? DEALER_ACTION_DELAY_MS : BOT_ACTION_DELAY_MS}
-            />
-          )}
+            {controller?.isNPC && (
+              <Agent
+                key={controller.key}
+                hasControl
+                gameStatus={gameStatus}
+                handValue={controllerHand?.handValue ?? EMPTY_HAND_VALUE}
+                cardCount={controllerHand?.cards.length ?? 0}
+                isPaused={potMotion.isBusy || isBacklogged}
+                playerKey={controller.key}
+                decide={() => decideSeatMove(gameState, controller.key)}
+                delayMs={isDealer(controller) ? DEALER_ACTION_DELAY_MS : BOT_ACTION_DELAY_MS}
+              />
+            )}
 
-          <TableToasts toasts={toasts} onDismiss={dismiss} />
+            <TableToasts toasts={toasts} />
 
-          {gameState.deck.length > 0 &&
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
-                <CardStack
-                  cards={gameState.deck.cardKeys}
-                  title="Deck"
-                  hidden={!settings.isDeckVisible}
-                  isSelectable={false}
-                />
-                <CardStack
-                  cards={gameState.deck.drawnKeys}
-                  title="Drawn Cards"
-                  hidden={!settings.isDrawnVisible}
-                  isSelectable={false}
-                />
-                <CardStack
-                  cards={gameState.deck.selectedKeys}
-                  title="Selected Cards"
-                  hidden={!settings.isSelectedVisible}
-                  isSelectable={false}
-                />
-            </div>
-          }
-        </div>
-      </main>
+            {gameState.deck.length > 0 &&
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
+                  <CardStack
+                    cards={gameState.deck.cardKeys}
+                    title="Deck"
+                    hidden={!settings.isDeckVisible}
+                    isSelectable={false}
+                  />
+                  <CardStack
+                    cards={gameState.deck.drawnKeys}
+                    title="Drawn Cards"
+                    hidden={!settings.isDrawnVisible}
+                    isSelectable={false}
+                  />
+                  <CardStack
+                    cards={gameState.deck.selectedKeys}
+                    title="Selected Cards"
+                    hidden={!settings.isSelectedVisible}
+                    isSelectable={false}
+                  />
+              </div>
+            }
+          </div>
+
+          <ActivityLogToggle isOpen={activityDrawer.isOpen} onToggle={activityDrawer.toggle} />
+        </main>
+        <ActivityLog entries={activityLog} isOpen={activityDrawer.isOpen} />
+      </div>
     </PotAnimationContext.Provider>
   );
 }

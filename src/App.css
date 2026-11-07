@@ -71,19 +71,52 @@ body {
   min-width: 0;
 }
 
+/* The activity log is a drawer that extends from the bottom edge of the Table. The grid
+   animates its row between 0fr and 1fr, so the drawer grows to the height of its entries.
+   Keep the duration in step with ACTIVITY_DRAWER_MS. */
+.activity-drawer {
+  display: grid;
+  grid-template-rows: 0fr;
+  background-color: var(--colorNeutralBackground1);
+  border-radius: 0 0 var(--borderRadiusLarge) var(--borderRadiusLarge);
+  box-shadow: var(--shadow16);
+  /* the shadow falls to the sides and below, never over the Table above */
+  clip-path: inset(0 -32px -32px);
+  visibility: hidden;
+  /* hidden only once it has closed */
+  transition: grid-template-rows 360ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 360ms;
+}
+
+.activity-drawer.is-open {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.activity-drawer-clip {
+  min-height: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
 .activity-log {
   min-width: 0;
-  max-height: calc(100vh - 180px);
-  padding: 16px;
+  /* a fixed ceiling; the entries scroll beneath the heading when they run past it */
+  max-height: 320px;
+  padding: 12px 16px 0;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border-top: 1px solid var(--colorNeutralStroke2);
 }
 
-@supports (height: 100dvh) {
-  .activity-log {
-    max-height: calc(100dvh - 180px);
-  }
+/* bottom right corner of the Table */
+.activity-log-toggle {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 6;
 }
 
 .activity-log h2,
@@ -97,7 +130,8 @@ body {
   flex-direction: column;
   gap: 24px;
   min-height: 0;
-  margin-top: 16px;
+  margin-top: 12px;
+  padding-bottom: 16px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -182,4 +216,37 @@ body {
 .activity-event-icon {
   display: inline-flex;
   color: var(--colorBrandForeground1);
+}
+
+/* A new row slides down into its place from above. It starts as the toast it belongs to
+   finishes fading out. Keep the duration in step with ACTIVITY_ROW_ENTER_MS.
+   The header sits above the rows, so a row at the top of its hand emerges from beneath it. */
+.activity-table thead {
+  position: relative;
+  z-index: 1;
+  background-color: var(--colorNeutralBackground1);
+}
+
+.activity-table tbody tr.activity-row-new {
+  animation: activity-row-enter 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes activity-row-enter {
+  from { opacity: 0; transform: translateY(-100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes activity-row-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activity-drawer {
+    transition: none;
+  }
+
+  .activity-table tbody tr.activity-row-new {
+    animation: activity-row-fade 520ms ease-out both;
+  }
 }
