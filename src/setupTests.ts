@@ -37,6 +37,11 @@ globalThis.ResizeObserver = class ResizeObserver {
 vi.mock('react-syntax-highlighter', () => ({
 	__esModule: true,
 	default: () => null,
+	PrismLight: Object.assign(() => null, { registerLanguage: () => undefined }),
+}));
+
+vi.mock('react-syntax-highlighter/dist/esm/languages/prism/json', () => ({
+	default: {},
 }));
 
 vi.mock('react-syntax-highlighter/dist/esm/styles/prism', () => ({

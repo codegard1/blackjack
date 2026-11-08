@@ -1,7 +1,9 @@
 import React from "react";
 import { Button } from '@fluentui/react-components';
 import { useGameContext, useSettingContext } from "../context";
-import { JsonViewer } from './';
+
+// The syntax highlighter is only needed when the debug window is open, so it loads on demand
+const JsonViewer = React.lazy(() => import('./JsonViewer'));
 
 export const DebugWindow: React.FC = () => {
 
@@ -18,38 +20,39 @@ export const DebugWindow: React.FC = () => {
 
   return !settings.isDebugWindowVisible ? null : (
     <aside className="debug-window">
-      <Button appearance="transparent" onClick={() => setDeckStateVisible(!isDeckStateVisible)}>Deck</Button>
-      {isDeckStateVisible && <JsonViewer data={gameState.deck.cardKeys} />}
+      <React.Suspense fallback={null}>
+        <Button appearance="transparent" onClick={() => setDeckStateVisible(!isDeckStateVisible)}>Deck</Button>
+        {isDeckStateVisible && <JsonViewer data={gameState.deck.cardKeys} />}
 
-      <Button appearance="transparent" onClick={() => setSelectedStateVisible(!isSelectedStateVisible)}>Selected</Button>
-      {isSelectedStateVisible && <JsonViewer data={gameState.deck.selectedKeys} />}
+        <Button appearance="transparent" onClick={() => setSelectedStateVisible(!isSelectedStateVisible)}>Selected</Button>
+        {isSelectedStateVisible && <JsonViewer data={gameState.deck.selectedKeys} />}
 
-      <Button appearance="transparent" onClick={() => setPlayerHandStateVisible(!isPlayerHandStateVisible)}>Player Hands</Button>
-      {isPlayerHandStateVisible && <JsonViewer data={gameState.deck.playerHands} />}
+        <Button appearance="transparent" onClick={() => setPlayerHandStateVisible(!isPlayerHandStateVisible)}>Player Hands</Button>
+        {isPlayerHandStateVisible && <JsonViewer data={gameState.deck.playerHands} />}
 
-      <Button appearance="transparent" onClick={() => setGameStateVisible(!isGameStateVisible)}>Game</Button>
-      {isGameStateVisible && <JsonViewer data={{
-        activePlayerKeys: gameState.playerStore.activePlayerKeys,
-        controllingPlayer: gameState.controllingPlayer,
-        currentPlayerKey: gameState.playerStore.currentPlayerKey,
-        dealerHasControl: gameState.dealerHasControl,
-        gameStatus: gameState.gameStatus,
-        gameStatusFlag: gameState.gameStatusFlag,
-        isSpinnerVisible: gameState.isSpinnerVisible,
-        lastWriteTime: gameState.lastWriteTime,
-        loser: gameState.loser,
-        messageBarDefinition: gameState.messageBarDefinition,
-        minimumBet: gameState.minimumBet,
-        players: gameState.playerStore.all,
-        pot: gameState.pot,
-        round: gameState.round,
-        turnCount: gameState.turnCount,
-        winner: gameState.winner,
-      }} />}
+        <Button appearance="transparent" onClick={() => setGameStateVisible(!isGameStateVisible)}>Game</Button>
+        {isGameStateVisible && <JsonViewer data={{
+          activePlayerKeys: gameState.playerStore.activePlayerKeys,
+          controllingPlayer: gameState.controllingPlayer,
+          currentPlayerKey: gameState.playerStore.currentPlayerKey,
+          dealerHasControl: gameState.dealerHasControl,
+          gameStatus: gameState.gameStatus,
+          gameStatusFlag: gameState.gameStatusFlag,
+          isSpinnerVisible: gameState.isSpinnerVisible,
+          lastWriteTime: gameState.lastWriteTime,
+          loser: gameState.loser,
+          messageBarDefinition: gameState.messageBarDefinition,
+          minimumBet: gameState.minimumBet,
+          players: gameState.playerStore.all,
+          pot: gameState.pot,
+          round: gameState.round,
+          turnCount: gameState.turnCount,
+          winner: gameState.winner,
+        }} />}
 
-      <Button appearance="transparent" onClick={() => setPlayerStoreVisible(!isPlayerStoreVisible)}>Players</Button>
-      {isPlayerStoreVisible && <JsonViewer data={gameState.playerStore.state} />}
-
+        <Button appearance="transparent" onClick={() => setPlayerStoreVisible(!isPlayerStoreVisible)}>Players</Button>
+        {isPlayerStoreVisible && <JsonViewer data={gameState.playerStore.state} />}
+      </React.Suspense>
     </aside>
   );
 
