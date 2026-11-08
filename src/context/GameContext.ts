@@ -18,11 +18,6 @@ export const createGameState = (): GameState => ({
   round: 0,
   turnCount: 0,
   lastWriteTime: new Date().toISOString(),
-  messageBarDefinition: {
-    type: 'info',
-    text: "",
-    isMultiLine: false
-  },
   controllingPlayer: undefined,
   playerStore: new PlayerStore(),
 });

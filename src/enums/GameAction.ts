@@ -24,7 +24,6 @@ export enum GameAction {
   SetRoster = 'SetRoster',
   SetSpinnerVisible = 'SetSpinnerVisible',
   SetWinner = 'SetWinner',
-  ShowMessageBar = 'ShowMessageBar',
   Shuffle = 'Shuffle',
   Stay = 'Stay',
   Unselect = 'Unselect',
