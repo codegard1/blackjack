@@ -23,7 +23,6 @@ export type CardBackColor = typeof cardBackColors[number];
  */
 export type SettingsState = {
   isActivityLogVisible: boolean;
-  isDebugWindowVisible: boolean;
   isCardDescVisible: boolean;
   isDealerHandVisible: boolean;
   isDeckVisible: boolean;

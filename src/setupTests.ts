@@ -4,7 +4,6 @@
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
-import { vi } from 'vitest';
 import { afterEach } from 'vitest';
 
 // Function tests under netlify/ run in the node environment, where there is no window
@@ -36,12 +35,3 @@ globalThis.ResizeObserver = class ResizeObserver {
 	unobserve(): void {}
 	disconnect(): void {}
 };
-
-vi.mock('react-syntax-highlighter', () => ({
-	__esModule: true,
-	default: () => null,
-}));
-
-vi.mock('react-syntax-highlighter/dist/esm/styles/prism', () => ({
-	vscDarkPlus: {},
-}));
