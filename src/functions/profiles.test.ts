@@ -27,6 +27,17 @@ describe('profileReducer', () => {
     expect(state.selectedId).toBe(alex?.id);
   });
 
+  it('replaces the store with a repaired copy from the server', () => {
+    const remote = { profiles: [{ id: 'alex', name: 'Alex', createdAt: 1, stats: { numberOfGamesWon: 2 } as PlayerStats }], selectedId: 'alex', opponentIds: ['ogion', 'bogus'] };
+    const state = profileReducer(defaultProfileState(), { type: 'replace', state: remote });
+
+    expect(state.selectedId).toBe('alex');
+    expect(state.profiles.find((profile) => profile.id === 'alex')?.stats).toEqual({ ...emptyStats(), numberOfGamesWon: 2 });
+    expect(state.profiles.some((profile) => profile.id === DEALER_PROFILE_ID)).toBe(true);
+    expect(state.opponentIds).toEqual(['ogion']);
+    expect(normalizeProfileState(state)).toEqual(state);
+  });
+
   it('ignores a name that is not valid', () => {
     const before = defaultProfileState();
     expect(profileReducer(before, { type: 'create', name: 'Chris' })).toBe(before);

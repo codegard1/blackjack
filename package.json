@@ -12,6 +12,7 @@
     "@fluentui/react-components": "9.75.1",
     "@fluentui/react-icons": "2.0.345",
     "lodash": "4.18.1",
+    "mongodb": "7.8.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-syntax-highlighter": "^16.1.0",
@@ -24,7 +25,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" \"netlify/**/*.ts\"",
     "portraits": "node scripts/build-portraits.mjs",
     "simulate-history": "node scripts/simulate-history.mjs"
   },
@@ -41,6 +42,8 @@
     ]
   },
   "devDependencies": {
+    "@netlify/functions": "6.1.1",
+    "@netlify/vite-plugin": "3.0.1",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
@@ -54,6 +57,7 @@
     "@typescript-eslint/parser": "8.72.1",
     "@vitejs/plugin-legacy": "8.2.3",
     "@vitejs/plugin-react": "6.2.1",
+    "ajv": "8.20.0",
     "eslint": "8.57.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jsx-a11y": "^6.5.1",

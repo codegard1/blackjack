@@ -1,0 +1,22 @@
+# Netlify build and deploy settings. Secrets never live here: environment variables
+# declared in this file are not available to functions, so MONGODB_URI and
+# MONGODB_DB are set in the Netlify UI (Site configuration > Environment variables).
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  # The dependency tree needs the same flag the README gives for a local install
+  NPM_FLAGS = "--legacy-peer-deps"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Serve the single page app for every path. Functions declare their own paths
+# (for example /api/profiles/:ownerId) and are matched before this rewrite.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
