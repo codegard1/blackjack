@@ -129,7 +129,6 @@ export const OptionsPanel: React.FC = () => {
           <Switch checked={settings.isDealerHandVisible} label="Show Dealer Hand" onChange={(_, data) => toggleSetting({ key: 'isDealerHandVisible', value: data.checked })} />
           <Switch checked={settings.isHandValueVisible} label="Show Hand Value" onChange={(_, data) => toggleSetting({ key: 'isHandValueVisible', value: data.checked })} />
           <Switch checked={settings.isActivityLogVisible} label="Open Activity Log by default" onChange={(_, data) => toggleSetting({ key: 'isActivityLogVisible', value: data.checked })} />
-          <Switch checked={settings.isDebugWindowVisible} label="Show Debug Window" onChange={(_, data) => toggleSetting({ key: 'isDebugWindowVisible', value: data.checked })} />
         </div>
 
         <Divider />

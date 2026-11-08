@@ -4,7 +4,6 @@
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
-import { vi } from 'vitest';
 import { afterEach } from 'vitest';
 
 afterEach(() => {
@@ -33,17 +32,3 @@ globalThis.ResizeObserver = class ResizeObserver {
 	unobserve(): void {}
 	disconnect(): void {}
 };
-
-vi.mock('react-syntax-highlighter', () => ({
-	__esModule: true,
-	default: () => null,
-	PrismLight: Object.assign(() => null, { registerLanguage: () => undefined }),
-}));
-
-vi.mock('react-syntax-highlighter/dist/esm/languages/prism/json', () => ({
-	default: {},
-}));
-
-vi.mock('react-syntax-highlighter/dist/esm/styles/prism', () => ({
-	vscDarkPlus: {},
-}));
