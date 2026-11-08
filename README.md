@@ -12,8 +12,9 @@ https://mango-cliff-08390e60f.azurestaticapps.net/
 2. `cd` into the repo directory
 3. Use Node.js 26 (the version in `.nvmrc`); 24.15+ also works
 4. Run `npm install`
-5. Run `npm start`
-6. Navigate to `http://localhost:3000`
+5. Optionally copy `.env.example` to `.env` and fill in the MongoDB values (see Cloud sync below); without them the game runs from browser storage alone
+6. Run `npm start`
+7. Navigate to `http://localhost:3000`
 
 Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, `npm run lint` for ESLint, and `npm run build` to create the static site in `dist/`. GitHub Actions runs all four on every pull request and push to `master`.
 
@@ -22,6 +23,7 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, `n
 * TypeScript
 * [Vite](https://vite.dev/) and [Vitest](https://vitest.dev/)
 * [Fluent UI](https://react.fluentui.dev/) v9
+* [Netlify Functions](https://docs.netlify.com/build/functions/overview/) and [MongoDB Atlas](https://www.mongodb.com/atlas) for cloud sync of player profiles
 * Deck logic adapted from [node-shuffle](https://github.com/codegard1/node-shuffle) (forked)
 
 #### Rules
@@ -51,6 +53,14 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, `n
 * Seats collapse into name-and-bank chips until a round is dealt; the seat in control takes the right two thirds of the table (full width on phones), and its cards scale to fill their container
 * The pot floats beside the pre-game seats and stays fixed in the table's top-left corner during play (bottom-left on narrow screens), including after a hand ends. Between hands it slides up out of view and the new pot slides in from the top. When money is added to it, it shimmers and bounces. Play waits for these animations to finish
 * Turn changes, hits, stands, busts, blackjacks, results, and pot contributions appear as toast notices over the table. Each gets the same time on screen; new notices stack on the last one in the same spot while it fades out
+
+#### Cloud sync
+* Player profiles and their lifetime statistics are also saved to a MongoDB Atlas database through Netlify Functions, so they outlive the browser's storage. The browser copy stays as a cache: the game works unchanged offline or when the database is unreachable, and the next change is sent once the connection is back
+* There are no accounts yet. Each browser creates a random owner id once and keeps it in local storage; the server stores that browser's profiles under it. The id carries a kind prefix (`browser:`) so a signed-in identity can use the same records later
+* The functions live in `netlify/functions`: `/api/profiles/:ownerId` reads (GET) and replaces (PUT) one owner's profiles, and `/api/health` reports whether the database answers. Both are rate limited by IP address. The shared client in `netlify/lib/mongo.ts` is created once per function instance and reused, as MongoDB recommends for serverless functions
+* Credentials are never in the repository. The functions read `MONGODB_URI` (the Atlas connection string, marked as a secret) and `MONGODB_DB` from environment variables set in the Netlify UI under Site configuration, Environment variables. For local development copy `.env.example` to `.env` (ignored by git) and fill in the values; `npm start` loads them, and `@netlify/vite-plugin` runs the functions inside the Vite dev server at `http://localhost:3000/api/...`
+* Atlas setup: a database user with the `readWrite` role on the `blackjack` database only, and a Network Access entry for `0.0.0.0/0`, because Netlify functions have no fixed outbound addresses. The first write creates the `profiles` collection
+* `netlify/package.json` exists only for the tooling: it gives the dev emulator a package file it can parse, because it rejects this project's four-part version number
 
 #### Wish List
 * Split pairs (requires multiple hands per player)

@@ -114,6 +114,9 @@ export function profileReducer(state: ProfileState, action: IProfileAction): Pro
         )),
       };
 
+    case 'replace':
+      return normalizeProfileState(action.state);
+
     case 'reset':
       return defaultProfileState();
 
