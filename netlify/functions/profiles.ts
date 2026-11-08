@@ -4,6 +4,24 @@ import { isOwnerId, MAX_BODY_BYTES, parseProfilesBody, ProfileDocument } from '.
 
 const json = (body: unknown, status = 200): Response => Response.json(body, { status });
 
+/** A rejected request, noted in the function log without echoing the body */
+const reject = (status: number, error: string, req: Request): Response => {
+  console.warn(`profiles: ${req.method} rejected with ${status}: ${error}`);
+  return json({ error }, status);
+};
+
+/**
+ * The owner id from the route. The client percent-encodes it and the platform hands
+ * the parameter over still encoded, so decode it before checking its shape.
+ */
+function ownerIdFrom(context: Context): string | undefined {
+  try {
+    return decodeURIComponent(context.params.ownerId ?? '');
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Read or replace the profiles for one owner.
  *
@@ -14,8 +32,8 @@ const json = (body: unknown, status = 200): Response => Response.json(body, { st
  * which copy is newer.
  */
 export default async (req: Request, context: Context): Promise<Response> => {
-  const ownerId = context.params.ownerId;
-  if (!isOwnerId(ownerId)) return json({ error: 'Invalid owner id.' }, 400);
+  const ownerId = ownerIdFrom(context);
+  if (!isOwnerId(ownerId)) return reject(400, 'Invalid owner id.', req);
 
   try {
     const collection = getDb().collection<ProfileDocument>(PROFILES_COLLECTION);
@@ -27,9 +45,9 @@ export default async (req: Request, context: Context): Promise<Response> => {
         : json({ error: 'Not found.' }, 404);
     }
 
-    if (Number(req.headers.get('content-length') ?? 0) > MAX_BODY_BYTES) return json({ error: 'Body too large.' }, 413);
+    if (Number(req.headers.get('content-length') ?? 0) > MAX_BODY_BYTES) return reject(413, 'Body too large.', req);
     const parsed = parseProfilesBody(await req.text());
-    if ('error' in parsed) return json({ error: parsed.error }, parsed.error === 'Body too large.' ? 413 : 400);
+    if ('error' in parsed) return reject(parsed.error === 'Body too large.' ? 413 : 400, parsed.error, req);
 
     const updatedAt = Date.now();
     await collection.updateOne(

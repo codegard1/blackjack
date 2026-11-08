@@ -25,7 +25,7 @@ const call = (method: string, ownerId = OWNER, body?: unknown) => handler(
 
 afterEach(() => {
   vi.clearAllMocks();
-  vi.spyOn(console, 'error').mockRestore();
+  vi.restoreAllMocks();
 });
 
 describe('profiles function', () => {
@@ -35,10 +35,20 @@ describe('profiles function', () => {
     expect(config.rateLimit).toMatchObject({ aggregateBy: ['ip'], windowLimit: 60 });
   });
 
-  it('rejects an owner id of the wrong shape before touching the database', async () => {
+  it('rejects an owner id of the wrong shape before touching the database, and logs it', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const response = await call('GET', 'nope');
     expect(response.status).toBe(400);
     expect(getDb).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith('profiles: GET rejected with 400: Invalid owner id.');
+    expect((await call('GET', 'browser:%E0%A4%A')).status).toBe(400);
+  });
+
+  it('accepts the owner id as the browser sends it, with the colon percent-encoded', async () => {
+    findOne.mockResolvedValueOnce(null);
+    const response = await call('GET', encodeURIComponent(OWNER));
+    expect(response.status).toBe(404);
+    expect(findOne).toHaveBeenCalledWith({ _id: OWNER });
   });
 
   it('returns the stored profiles, or 404 when there are none', async () => {
@@ -67,6 +77,7 @@ describe('profiles function', () => {
   });
 
   it('rejects a bad body without writing', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     expect((await call('PUT', OWNER, { profiles: { selectedId: 'x' } })).status).toBe(400);
     const big = await handler(
       new Request(`http://localhost/api/profiles/${OWNER}`, { method: 'PUT', headers: { 'content-length': String(1024 * 1024) }, body: '{}' }),
