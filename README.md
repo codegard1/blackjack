@@ -10,12 +10,12 @@ https://mango-cliff-08390e60f.azurestaticapps.net/
 ### How to Play
 1. Clone the repo 
 2. `cd` into the repo directory
-3. Use Node.js 24.15+ (version in `.nvmrc`) or 26+
-4. Run `npm install --legacy-peer-deps`
+3. Use Node.js 26 (the version in `.nvmrc`); 24.15+ also works
+4. Run `npm install`
 5. Run `npm start`
 6. Navigate to `http://localhost:3000`
 
-Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, and `npm run build` to create the static site in `dist/`.
+Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, `npm run lint` for ESLint, and `npm run build` to create the static site in `dist/`. GitHub Actions runs all four on every pull request and push to `master`.
 
 #### Technologies Used
 * [React](https://react.dev/) 19

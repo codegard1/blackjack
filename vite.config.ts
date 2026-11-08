@@ -13,6 +13,21 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    // The Fluent UI vendor chunk is about 560 kB minified (150 kB gzipped) and is cached
+    // separately from the app, so warn only when a chunk grows well past that
+    chunkSizeWarningLimit: 650,
+    rolldownOptions: {
+      output: {
+        // Keep the libraries out of the app chunk: they change less often than the game,
+        // so browsers can keep them cached across deploys
+        codeSplitting: {
+          groups: [
+            { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/, priority: 2 },
+            { name: 'fluent', test: /node_modules[\\/](@fluentui|@griffel|tabster|keyborg|@floating-ui|@swc)[\\/]/, priority: 1 },
+          ],
+        },
+      },
+    },
   },
   test: {
     environment: 'jsdom',
