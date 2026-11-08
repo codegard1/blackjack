@@ -40,7 +40,7 @@
     ]
   },
   "devDependencies": {
-    "@netlify/functions": "6.1.1",
+    "@netlify/functions": "6.0.3",
     "@netlify/vite-plugin": "3.0.1",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "7.0.1",
