@@ -29,5 +29,3 @@ out
 *.js.swp
 # Local Netlify folder
 .netlify
-
-.env
