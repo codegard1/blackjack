@@ -26,6 +26,7 @@ const eventIcons = {
   ante: { icon: <Money20Regular />, label: 'Ante' },
   bet: { icon: <ArrowUp20Regular />, label: 'Wager' },
   double: { icon: <ArrowUp20Regular />, label: 'Double down' },
+  split: { icon: <ArrowSwap20Regular />, label: 'Split' },
   stay: { icon: <ArrowForward20Regular />, label: 'Stay' },
   win: { icon: <Trophy20Regular />, label: 'Round won' },
   loss: { icon: <ArrowDown20Regular />, label: 'Round lost' },

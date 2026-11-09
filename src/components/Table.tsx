@@ -80,7 +80,7 @@ export const Table: React.FC = () => {
 
   // Computer autoplay runs here, not in a seat, so it keeps going while that seat is collapsed
   const controller = players.find((player) => player.key === gameState.controllingPlayer);
-  const controllerHand = controller ? deck.state.playerHands[controller.key] : undefined;
+  const controllerHand = controller ? deck.hand(controller.key, gameState.activeHandIndex) : undefined;
 
   // Before the game starts, the seats the next game will use: the selected player, the chosen computer players and the dealer
   const seats = seatsFor(profiles);
@@ -181,9 +181,10 @@ export const Table: React.FC = () => {
                 gameStatus={gameStatus}
                 handValue={controllerHand?.handValue ?? EMPTY_HAND_VALUE}
                 cardCount={controllerHand?.cards.length ?? 0}
+                handIndex={gameState.activeHandIndex}
                 isPaused={potMotion.isBusy || isBacklogged}
                 playerKey={controller.key}
-                decide={() => decideSeatMove(gameState, controller.key)}
+                decide={() => decideSeatMove(gameState, controller.key, Math.random, gameState.activeHandIndex)}
                 delayMs={isDealer(controller) ? DEALER_ACTION_DELAY_MS : BOT_ACTION_DELAY_MS}
               />
             )}

@@ -34,6 +34,7 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, `n
 * Each hand is compared with the dealer's: the higher total wins even money from the dealer's bank, and equal totals push
 * A natural blackjack is 21 with two cards and pays 3:2. A dealer natural ends the round at once; player naturals push and every other hand loses
 * Double Down is available with exactly two cards if the bank can match the current stake; it adds that amount, draws one card, and stands unless the player busts
+* Split is available on an exact same-rank pair if the bank can match the current stake; tens, jacks, queens and kings are different ranks. One split is allowed: each hand gets one card, plays in turn and settles separately. Split aces get one card each and stand, 21 on a split hand is not a natural, and Double Down is not allowed after a split
 * Open Blackjack rules from the book icon in the header for the in-app guide
 
 #### Characters
@@ -45,7 +46,7 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, `n
 
 #### Project Status
 * Game state and settings are saved in the browser, so a reload resumes the current game
-* Players: create named players from the Players dialog and choose who plays. Roster changes (the human player and the computer players) never affect a hand in play; between hands the table updates at once, and a change made during a hand is seated when the next hand is dealt. Each player's lifetime statistics (rounds, wins, losses, pushes, blackjacks, busts, and net result: the bank change across every hand, shown as +$ or −$) are kept in the browser and shown in the same dialog
+* Players: create named players from the Players dialog and choose who plays. Roster changes (the human player and the computer players) never affect a hand in play; between hands the table updates at once, and a change made during a hand is seated when the next hand is dealt. Each player's lifetime statistics (hands, wins, losses, pushes, blackjacks, busts, and net result: the bank change across every hand, shown as +$ or −$) are kept in the browser and shown in the same dialog
 * The activity log records each deal, draw, wager, stay, and result. It is a drawer that extends from the bottom edge of the table, opened and closed with the icon button in the table's bottom right corner; the Options panel's Open Activity Log by default switch decides whether it starts open. A new entry slides down into the log once the toast announcing it has faded out
 * Appearance settings in the Options panel: a light, dark, system or high contrast theme; five accent colors that recolor the Fluent UI theme and the table felt; three card face layouts (classic, minimal, bold); and a card back chosen from five patterns and five colors with a live preview. A Reset appearance button restores the defaults
 * Cards are styled with CSS from the Fluent UI theme tokens, so they follow the chosen theme, and animate onto the table
@@ -63,6 +64,5 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, `n
 * `netlify/package.json` exists only for the tooling: it gives the dev emulator a package file it can parse, because it rejects this project's four-part version number
 
 #### Wish List
-* Split pairs (requires multiple hands per player)
 * Show recommended moves to teach the human player good strategy
 * Use CSS transitions to flip cards

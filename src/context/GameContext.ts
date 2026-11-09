@@ -5,6 +5,7 @@ import { IGameReducerAction } from '../interfaces';
 import { GameState } from '../types';
 
 export const createGameState = (): GameState => ({
+  activeHandIndex: 0,
   activityLog: [],
   gameStatus: GameStatus.Init,
   deck: new PlayingCardDeck(),

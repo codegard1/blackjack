@@ -155,7 +155,7 @@ export type StatsSummary = {
   won: number;
   lost: number;
   pushed: number;
-  /** undefined until a round has been played */
+  /** undefined until a hand has been played */
   winRate?: number;
   blackjacks: number;
   busts: number;

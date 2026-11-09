@@ -60,6 +60,7 @@ it('replaces the controls with Next hand and Change players when the hand ends',
     this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
     this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
   });
+
   vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
   render(<App />);
 
@@ -80,6 +81,30 @@ it('replaces the controls with Next hand and Change players when the hand ends',
 
   fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
   expect(screen.getByRole('toolbar')).toBeInTheDocument();
+});
+
+it('shows both split hands and marks the hand in control', () => {
+  vi.spyOn(Math, 'random').mockReturnValue(0.99);
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Club_8', 'Heart_8'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
+  vi.spyOn(PlayingCardDeck.prototype, 'draw')
+    .mockReturnValueOnce(['Spade_2'])
+    .mockReturnValueOnce(['Diamond_3']);
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Split' }));
+
+  expect(screen.getByText('Hand 1 · Active')).toBeInTheDocument();
+  expect(screen.getByText('Hand 2')).toBeInTheDocument();
+
+  vi.useFakeTimers();
+  act(() => vi.advanceTimersByTime(30_000));
+  fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
+  expect(screen.getByText('Hand 2 · Active')).toBeInTheDocument();
 });
 
 describe('changing the roster', () => {
@@ -163,6 +188,9 @@ it('always shows card ranks and opens the activity log drawer by default from th
 
   const cards = () => Array.from(screen.getByRole('region', { name: "Chris's hand" }).querySelectorAll('button[aria-pressed]'));
   expect(cards()).toHaveLength(2);
+  const activeHand = cards()[0].closest('.player-hand')?.firstElementChild?.firstElementChild as HTMLElement;
+  expect(getComputedStyle(activeHand).flexGrow).toBe('1');
+  expect(getComputedStyle(activeHand).width).not.toBe('0px');
   expect(cards().every((card) => (card.textContent?.trim().length ?? 0) > 1)).toBe(true);
   expect(cards()[0].querySelectorAll('.playing-card-corner')).toHaveLength(2);
   expect(cards()[0].querySelector('.playing-card-corner-bottom')).toHaveStyle({ transform: 'rotate(180deg)' });

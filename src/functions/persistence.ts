@@ -8,11 +8,11 @@ import { DeckState, GameState, ProfileState, SettingKey, SettingsState, settingO
 import { defaultProfileState, normalizeProfileState } from "./profiles";
 
 /** Bump when the shape of the saved game snapshot changes. */
-const GAME_STORE_VERSION = 3;
+const GAME_STORE_VERSION = 4;
 
 /** Scalar game fields saved alongside the deck and player stores. */
 type SavedGame = Pick<GameState,
-  'activityLog' | 'controllingPlayer' | 'dealerHasControl' | 'gameStatus' | 'gameStatusFlag' |
+  'activityLog' | 'activeHandIndex' | 'controllingPlayer' | 'dealerHasControl' | 'gameStatus' | 'gameStatusFlag' |
   'loser' | 'minimumBet' | 'pot' | 'round' | 'turnCount' | 'winner'
 > & { version: number };
 
@@ -52,6 +52,7 @@ function isSavedGame(value: unknown): value is SavedGame {
   return isObject(value)
     && value.version === GAME_STORE_VERSION
     && typeof value.gameStatus === 'number'
+    && typeof value.activeHandIndex === 'number'
     && typeof value.pot === 'number'
     && typeof value.round === 'number'
     && Array.isArray(value.activityLog);
@@ -144,6 +145,7 @@ export function saveGameState(state: GameState): void {
   const snapshot: SavedGame = {
     version: GAME_STORE_VERSION,
     activityLog: state.activityLog,
+    activeHandIndex: state.activeHandIndex,
     controllingPlayer: state.controllingPlayer,
     dealerHasControl: state.dealerHasControl,
     gameStatus: state.gameStatus,

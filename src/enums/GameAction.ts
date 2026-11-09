@@ -15,6 +15,7 @@ export enum GameAction {
   Reset = 'Reset',
   ResetGame = 'ResetGame',
   Select = 'Select',
+  Split = 'Split',
   SetControllingPlayer = 'SetControllingPlayer',
   SetDeckState = 'SetDeckState',
   SetGameStatus = 'SetGameStatus',

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GameAction, GameStatus, StoreName } from '../enums';
+import { PlayingCard } from '../classes/PlayingCard';
 import { gameReducer } from './gameReducer';
 import { loadGameState, loadSettings, saveGameState, saveSettings } from './persistence';
 import { createGameState, settingDefaults } from '../context';
@@ -27,6 +28,27 @@ describe('persistence', () => {
     expect(restored.deck.playerHands.chris.cards).toEqual(dealt.deck.playerHands.chris.cards);
     expect(restored.deck.length).toBe(dealt.deck.length);
     expect(restored.activityLog).toEqual(dealt.activityLog);
+  });
+
+  it('restores the active hand and both card stacks mid-split', () => {
+    let state = gameReducer(startedGame(), { type: GameAction.EvaluateGame, gameStatus: GameStatus.InProgress });
+    state.deck.cards = ['Spade_9', 'Spade_10', 'Diamond_7', 'Club_10', 'Heart_8', 'Club_8']
+      .map((key) => new PlayingCard(key));
+    state = gameReducer(state, { type: GameAction.Deal });
+    state = gameReducer(state, { type: GameAction.Split, playerKey: 'chris' });
+    state = gameReducer(state, { type: GameAction.Stay, playerKey: 'chris' });
+    expect(state.activeHandIndex).toBe(1);
+
+    saveGameState(state);
+    const restored = loadGameState();
+
+    expect(restored.activeHandIndex).toBe(1);
+    expect(restored.controllingPlayer).toBe('chris');
+    expect(restored.deck.getHands('chris').map((hand) => hand.cards)).toEqual([
+      ['Club_8', 'Spade_10'],
+      ['Heart_8', 'Spade_9'],
+    ]);
+    expect(gameReducer(restored, { type: GameAction.Stay, playerKey: 'chris' }).controllingPlayer).toBe('dealer');
   });
 
   it('falls back to a fresh game when saved data is malformed', () => {

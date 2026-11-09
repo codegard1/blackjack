@@ -15,6 +15,7 @@ import {
   Add20Regular,
   ArrowClockwise20Regular,
   ArrowForward20Regular,
+  ArrowSwap20Regular,
   ArrowUp20Regular,
   ArrowUpload20Regular,
 } from '@fluentui/react-icons';
@@ -22,7 +23,7 @@ import {
 // Local Resources
 import { useGameContext, usePlayersDialog, usePotAnimation, useProfileContext } from "../context";
 import { GameAction, GameStatus } from "../enums";
-import { canDoubleDown } from "../functions/gameReducer";
+import { canDoubleDown, canSplit } from "../functions/gameReducer";
 import { seatsFor } from "../functions/profiles";
 import { IControlPanelProps } from "../interfaces";
 
@@ -83,7 +84,8 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const isRoundDealt = Object.values(gameState.deck.state.playerHands).some((hand) => hand.cards.length > 0);
   const isPlayDisabled = isBtnDisabled || !isRoundDealt;
   const isDealDisabled = !isRoundComplete && currentPlayerKey !== playerKey;
-  const isDoubleDownDisabled = !canDoubleDown(gameState, playerKey);
+  const isDoubleDownDisabled = !canDoubleDown(gameState, playerKey, gameState.activeHandIndex);
+  const isSplitDisabled = !canSplit(gameState, playerKey, gameState.activeHandIndex);
   const wagerLabel = `Wager $${minimumBet}`;
   // While the pot animates, enabled controls wait; they stay focusable so keyboard focus is kept
   const isWaiting = usePotAnimation();
@@ -135,6 +137,13 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
           <Tooltip content="Double your stake, take exactly one more card, then stand" relationship="description">
             <ToolbarButton className={styles.button} aria-label="Double Down" icon={<ArrowUpload20Regular />} disabled={isDoubleDownDisabled} disabledFocusable={waitUnless(isDoubleDownDisabled)} onClick={() => gameDispatch({ type: GameAction.DoubleDown, playerKey })}>
               <Label>Double Down</Label>
+            </ToolbarButton>
+          </Tooltip>
+        )}
+        {!npcFlag && (
+          <Tooltip content="Split a pair into two hands with an equal wager" relationship="description">
+            <ToolbarButton className={styles.button} aria-label="Split" icon={<ArrowSwap20Regular />} disabled={isSplitDisabled} disabledFocusable={waitUnless(isSplitDisabled)} onClick={() => gameDispatch({ type: GameAction.Split, playerKey, handIndex: gameState.activeHandIndex })}>
+              <Label>Split</Label>
             </ToolbarButton>
           </Tooltip>
         )}
