@@ -188,6 +188,9 @@ it('always shows card ranks and opens the activity log drawer by default from th
 
   const cards = () => Array.from(screen.getByRole('region', { name: "Chris's hand" }).querySelectorAll('button[aria-pressed]'));
   expect(cards()).toHaveLength(2);
+  const activeHand = cards()[0].closest('.player-hand')?.firstElementChild?.firstElementChild as HTMLElement;
+  expect(getComputedStyle(activeHand).flexGrow).toBe('1');
+  expect(getComputedStyle(activeHand).width).not.toBe('0px');
   expect(cards().every((card) => (card.textContent?.trim().length ?? 0) > 1)).toBe(true);
   expect(cards()[0].querySelectorAll('.playing-card-corner')).toHaveLength(2);
   expect(cards()[0].querySelector('.playing-card-corner-bottom')).toHaveStyle({ transform: 'rotate(180deg)' });

@@ -90,10 +90,12 @@ const useStyles = makeStyles({
   },
   hand: {
     display: 'flex',
+    flex: '1 1 0',
     flexDirection: 'column',
     alignItems: 'center',
     gap: tokens.spacingVerticalXS,
     minWidth: 0,
+    width: '100%',
     padding: tokens.spacingVerticalXS,
     borderRadius: tokens.borderRadiusLarge,
   },
