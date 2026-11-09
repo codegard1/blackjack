@@ -4,6 +4,7 @@ import { PlayerKey } from "./";
 
 export type GameState = {
   activityLog: ActivityLogEntry[];
+  activeHandIndex: number;
   controllingPlayer?: PlayerKey;
   dealerHasControl: boolean;
   deck: PlayingCardDeck;

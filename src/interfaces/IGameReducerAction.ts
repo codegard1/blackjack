@@ -11,6 +11,7 @@ export interface IGameReducerAction {
   deckSide?: 'top' | 'bottom' | 'random';
   deckState?: DeckState;
   gameStatus?: GameStatus;
+  handIndex?: number;
   minimumBet?: number;
   numberOfCards?: number;
   playerKey?: PlayerKey | PlayerKey[];

@@ -105,20 +105,30 @@ export class PlayingCardDeck implements IPlayingCardDeck {
    * @param key PlayerKey
    * @returns Array of PlayingCard
    */
-  public getHand(key: PlayerKey): PlayerHand {
+  public getHands(key: PlayerKey): PlayerHand[] {
+    const hand = this.playerHands[key];
+    return hand ? [hand, ...(hand.splitHands ?? [])] : [];
+  }
+
+  public hand(key: PlayerKey, handIndex = 0): PlayerHand | undefined {
+    return this.getHands(key)[handIndex];
+  }
+
+  public getHand(key: PlayerKey, handIndex = 0): PlayerHand {
+    const hand = this.hand(key, handIndex);
     return {
-      cards: this.playerHands[key].cards,
-      handValue: this.getHandValue(key),
+      cards: hand?.cards ?? [],
+      handValue: this.getHandValue(key, handIndex),
     };
   }
 
-  public getHandValue(key: PlayerKey) {
-    return handValue(this.playerHands[key].cards);
+  public getHandValue(key: PlayerKey, handIndex = 0) {
+    return handValue(this.hand(key, handIndex)?.cards ?? []);
   }
 
-  public updateHandValue(key: PlayerKey): void {
-    const hand = this.playerHands[key];
-    if (hand) hand.handValue = this.getHandValue(key);
+  public updateHandValue(key: PlayerKey, handIndex = 0): void {
+    const hand = this.hand(key, handIndex);
+    if (hand) hand.handValue = this.getHandValue(key, handIndex);
   }
 
   /**
