@@ -9,6 +9,7 @@ import { ActivityLogEntry, GameState } from "../types";
 import { evaluateGame } from "./evaluateGame";
 import { debugLog } from "./debugLog";
 import { recordActivity } from "./activity";
+import { restoreGameState } from "./persistence";
 import {
   advanceTurn, applyRoster, canDoubleDown, collectAntes, isDealer, playerSeats, refillDeck, reshuffleIfLow, resolveNaturals,
   resolveShowdown, roundStake, seatOrder, setControl,
@@ -205,6 +206,14 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     /**
      * Reset game state to default
      */
+    /**
+     * Resume a saved game, such as the copy kept on the server. An invalid
+     * snapshot leaves the game as it is.
+     */
+    case GameAction.RestoreGame: {
+      return restoreGameState(action.snapshot) ?? state;
+    }
+
     case GameAction.ResetGame: {
       return { ...createGameState(), activityLog: action.clearActivityLog ? [] : state.activityLog };
     }

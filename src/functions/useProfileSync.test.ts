@@ -28,7 +28,7 @@ afterEach(() => {
 
 describe('useProfileSync', () => {
   it('replaces the local profiles when the server copy is newer', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: 10 });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 10, game: 0 } });
     const remote = profileReducer(defaultProfileState(), { type: 'create', name: 'Remote' });
     const fetch = vi.fn().mockResolvedValue(jsonResponse({ profiles: remote, updatedAt: 20 }));
 
@@ -36,12 +36,26 @@ describe('useProfileSync', () => {
     await flush();
 
     expect(result.current.profiles.profiles.some((profile) => profile.name === 'Remote')).toBe(true);
-    expect(loadSyncState().syncedAt).toBe(20);
+    expect(loadSyncState().syncedAt.profiles).toBe(20);
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
+  it('ignores a server copy of the wrong shape and sends the local one', async () => {
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ profiles: { selectedId: 'x' }, updatedAt: 20 }))
+      .mockResolvedValueOnce(jsonResponse({ updatedAt: 21 }));
+
+    const { result } = renderSync(defaultProfileState(), fetch);
+    await flush();
+
+    expect(result.current.profiles).toEqual(defaultProfileState());
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch.mock.calls[1][1]).toMatchObject({ method: 'PUT' });
+  });
+
   it('pushes the local profiles when the server has nothing newer', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: 0 });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
     const fetch = vi.fn()
       .mockResolvedValueOnce(jsonResponse({ error: 'Not found.' }, 404))
       .mockResolvedValueOnce(jsonResponse({ updatedAt: 5 }));
@@ -52,11 +66,11 @@ describe('useProfileSync', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(fetch.mock.calls[1][1]).toMatchObject({ method: 'PUT' });
     expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({ profiles: result.current.profiles });
-    expect(loadSyncState().syncedAt).toBe(5);
+    expect(loadSyncState().syncedAt.profiles).toBe(5);
   });
 
   it('sends a later change once it settles, and not an unchanged state', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: 0 });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
     const fetch = vi.fn()
       .mockResolvedValueOnce(jsonResponse({ error: 'Not found.' }, 404))
       .mockResolvedValue(jsonResponse({ updatedAt: 6 }));
@@ -82,7 +96,7 @@ describe('useProfileSync', () => {
   });
 
   it('keeps working offline and pushes pending changes when the page is hidden', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: 0 });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
     const fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
     const { result } = renderSync(defaultProfileState(), fetch);
     await flush();

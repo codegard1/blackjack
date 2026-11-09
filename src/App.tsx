@@ -10,7 +10,7 @@ import './App.css';
 import { AppHeader, OptionsPanel, PlayersDialog, Table } from './components';
 import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
 import { GameAction, GameStatus } from './enums';
-import { collectStats, gameReducer, isBetweenHands, isHuman, isRoundOver, loadGameState, loadProfiles, loadSettings, profileReducer, roundResultText, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, useProfileSync } from './functions';
+import { collectStats, gameReducer, isBetweenHands, isHuman, isRoundOver, loadGameState, loadProfiles, loadSettings, profileReducer, roundResultText, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, useGameSync, useProfileSync } from './functions';
 import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark, PAGE_GUTTER } from './theme';
 import { MessageBarDefinition, MessageIntent } from './types';
 
@@ -92,8 +92,9 @@ const App = () => {
   React.useEffect(() => saveSettings(settings), [settings]);
   React.useEffect(() => saveGameState(gameState), [gameState]);
   React.useEffect(() => saveProfiles(profiles), [profiles]);
-  // and keep the profiles in step with the server, when there is one
+  // and keep the profiles and the game in step with the server, when there is one
   useProfileSync(profiles, profileDispatch);
+  useGameSync(gameState, gameDispatch);
 
   // Evaluate game whenever the status changes, or a new round reaches the same
   // status (a natural can end a round in the same action that starts it).

@@ -1,5 +1,6 @@
 export * from './DeckState';
 export * from './GameState';
+export * from './SavedGame';
 export * from './MessageBarDefinition';
 export * from './PlayerCollection';
 export * from './PlayerHand';

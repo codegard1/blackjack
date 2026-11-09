@@ -10,7 +10,7 @@ export type ProfileDocument = {
   createdAt: number;
 };
 
-/** The largest request body a PUT accepts; a profile set is a few kilobytes */
+/** The largest request body a profiles PUT accepts; a profile set is a few kilobytes */
 export const MAX_BODY_BYTES = 64 * 1024;
 const MAX_PROFILES = 100;
 const MAX_OPPONENTS = 10;
@@ -26,24 +26,41 @@ export function isOwnerId(value: unknown): value is string {
   return typeof value === 'string' && OWNER_ID.test(value);
 }
 
-const isObject = (value: unknown): value is Record<string, unknown> =>
+export const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const isText = (value: unknown, max: number): value is string =>
+export const isText = (value: unknown, max: number): value is string =>
   typeof value === 'string' && value.length > 0 && value.length <= max;
+
+export const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+export const isStringArray = (value: unknown, max: number): value is string[] =>
+  Array.isArray(value) && value.length <= max && value.every((item) => typeof item === 'string');
+
+/** Parse a request body that must be a JSON object, or say why it is not */
+export function parseJsonBody(text: string): { body: Record<string, unknown> } | { error: string } {
+  let body: unknown;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    return { error: 'Body is not valid JSON.' };
+  }
+  return isObject(body) ? { body } : { error: 'Body must be a JSON object.' };
+}
 
 function isStats(value: unknown): value is PlayerStats {
   if (!isObject(value)) return false;
   const entries = Object.entries(value);
   return entries.length <= MAX_STAT_KEYS
-    && entries.every(([key, stat]) => /^[A-Za-z]{1,40}$/.test(key) && typeof stat === 'number' && Number.isFinite(stat));
+    && entries.every(([key, stat]) => /^[A-Za-z]{1,40}$/.test(key) && isFiniteNumber(stat));
 }
 
 function isProfile(value: unknown): value is PlayerProfile {
   return isObject(value)
     && isText(value.id, 64)
     && isText(value.name, 40)
-    && typeof value.createdAt === 'number' && Number.isFinite(value.createdAt)
+    && isFiniteNumber(value.createdAt)
     && isStats(value.stats);
 }
 
@@ -53,9 +70,7 @@ export function isProfileState(value: unknown): value is ProfileState {
     && value.profiles.length <= MAX_PROFILES
     && value.profiles.every(isProfile)
     && typeof value.selectedId === 'string'
-    && Array.isArray(value.opponentIds)
-    && value.opponentIds.length <= MAX_OPPONENTS
-    && value.opponentIds.every((id) => typeof id === 'string');
+    && isStringArray(value.opponentIds, MAX_OPPONENTS);
 }
 
 /** Keep only the fields the document stores, so unknown keys never reach the database */
@@ -68,17 +83,13 @@ function pickProfileState(state: ProfileState): ProfileState {
 }
 
 /**
- * Parse the body of a PUT: JSON of the form `{ profiles: ProfileState }`.
+ * Parse the body of a profiles PUT: JSON of the form `{ profiles: ProfileState }`.
  * Returns the cleaned profiles, or the reason the body was rejected.
  */
-export function parseProfilesBody(text: string): { profiles: ProfileState } | { error: string } {
+export function parseProfilesBody(text: string): { data: ProfileState } | { error: string } {
   if (text.length > MAX_BODY_BYTES) return { error: 'Body too large.' };
-  let body: unknown;
-  try {
-    body = JSON.parse(text);
-  } catch {
-    return { error: 'Body is not valid JSON.' };
-  }
-  if (!isObject(body) || !isProfileState(body.profiles)) return { error: 'Body must be { profiles: ProfileState }.' };
-  return { profiles: pickProfileState(body.profiles) };
+  const parsed = parseJsonBody(text);
+  if ('error' in parsed) return parsed;
+  if (!isProfileState(parsed.body.profiles)) return { error: 'Body must be { profiles: ProfileState }.' };
+  return { data: pickProfileState(parsed.body.profiles) };
 }

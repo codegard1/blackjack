@@ -4,17 +4,14 @@ import { createGameState } from "../context/GameContext";
 import { settingDefaults } from "../context/SettingContext";
 import { StoreName } from "../enums";
 import { IPlayerStoreState } from "../interfaces";
-import { DeckState, GameState, ProfileState, SettingKey, SettingsState, settingOptions } from "../types";
+import { DeckState, GameState, ProfileState, SavedGame, SavedGameSnapshot, SettingKey, SettingsState, settingOptions } from "../types";
 import { defaultProfileState, normalizeProfileState } from "./profiles";
 
 /** Bump when the shape of the saved game snapshot changes. */
-const GAME_STORE_VERSION = 3;
+export const GAME_STORE_VERSION = 3;
 
-/** Scalar game fields saved alongside the deck and player stores. */
-type SavedGame = Pick<GameState,
-  'activityLog' | 'controllingPlayer' | 'dealerHasControl' | 'gameStatus' | 'gameStatusFlag' |
-  'loser' | 'minimumBet' | 'pot' | 'round' | 'turnCount' | 'winner'
-> & { version: number };
+/** How many of the newest activity log entries a snapshot sent to the server keeps */
+export const MAX_SYNCED_ACTIVITY = 500;
 
 function readJson<T>(key: StoreName): T | undefined {
   try {
@@ -58,28 +55,65 @@ function isSavedGame(value: unknown): value is SavedGame {
 }
 
 /**
- * Build the initial game state, restoring a saved game when a complete,
- * valid snapshot exists. Falls back to a fresh game otherwise.
+ * The saved form of a game. With `maxActivity` only that many of the newest activity
+ * log entries are kept, which bounds what is sent to the server.
  */
-export function loadGameState(): GameState {
-  const fresh = createGameState();
-  const deck = readJson<unknown>(StoreName.DECKSTORE);
-  const players = readJson<unknown>(StoreName.PLAYERSTORE);
-  const game = readJson<unknown>(StoreName.GAMESTORE);
+export function gameSnapshot(state: GameState, { maxActivity }: { maxActivity?: number } = {}): SavedGameSnapshot {
+  const activityLog = maxActivity !== undefined && state.activityLog.length > maxActivity
+    ? state.activityLog.slice(-maxActivity)
+    : state.activityLog;
+  return {
+    deck: state.deck.state,
+    players: state.playerStore.state,
+    game: {
+      version: GAME_STORE_VERSION,
+      activityLog,
+      controllingPlayer: state.controllingPlayer,
+      dealerHasControl: state.dealerHasControl,
+      gameStatus: state.gameStatus,
+      gameStatusFlag: state.gameStatusFlag,
+      loser: state.loser,
+      minimumBet: state.minimumBet,
+      pot: state.pot,
+      round: state.round,
+      turnCount: state.turnCount,
+      winner: state.winner,
+    },
+  };
+}
 
-  if (!isDeckState(deck) || !isPlayerState(players) || !isSavedGame(game)) return fresh;
+/**
+ * Rebuild a game from a snapshot, or return undefined when it is not a complete,
+ * valid one. Transient fields (spinner, message bar) start fresh.
+ */
+export function restoreGameState(snapshot: unknown): GameState | undefined {
+  if (!isObject(snapshot)) return undefined;
+  const { deck, players, game } = snapshot;
+  if (!isDeckState(deck) || !isPlayerState(players) || !isSavedGame(game)) return undefined;
 
   try {
     const { version, ...saved } = game;
     return {
-      ...fresh,
+      ...createGameState(),
       ...saved,
       deck: new PlayingCardDeck(deck),
       playerStore: new PlayerStore(players),
     };
   } catch {
-    return fresh;
+    return undefined;
   }
+}
+
+/**
+ * Build the initial game state, restoring a saved game when a complete,
+ * valid snapshot exists. Falls back to a fresh game otherwise.
+ */
+export function loadGameState(): GameState {
+  return restoreGameState({
+    deck: readJson<unknown>(StoreName.DECKSTORE),
+    players: readJson<unknown>(StoreName.PLAYERSTORE),
+    game: readJson<unknown>(StoreName.GAMESTORE),
+  }) ?? createGameState();
 }
 
 function isProfile(value: unknown): boolean {
@@ -141,21 +175,8 @@ export function saveSettings(settings: SettingsState): void {
 }
 
 export function saveGameState(state: GameState): void {
-  const snapshot: SavedGame = {
-    version: GAME_STORE_VERSION,
-    activityLog: state.activityLog,
-    controllingPlayer: state.controllingPlayer,
-    dealerHasControl: state.dealerHasControl,
-    gameStatus: state.gameStatus,
-    gameStatusFlag: state.gameStatusFlag,
-    loser: state.loser,
-    minimumBet: state.minimumBet,
-    pot: state.pot,
-    round: state.round,
-    turnCount: state.turnCount,
-    winner: state.winner,
-  };
-  writeJson(StoreName.DECKSTORE, state.deck.state);
-  writeJson(StoreName.PLAYERSTORE, state.playerStore.state);
-  writeJson(StoreName.GAMESTORE, snapshot);
+  const { deck, players, game } = gameSnapshot(state);
+  writeJson(StoreName.DECKSTORE, deck);
+  writeJson(StoreName.PLAYERSTORE, players);
+  writeJson(StoreName.GAMESTORE, game);
 }

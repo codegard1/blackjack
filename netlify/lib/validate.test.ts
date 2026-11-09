@@ -28,13 +28,14 @@ describe('isOwnerId', () => {
 describe('parseProfilesBody', () => {
   it('returns the profiles with unknown keys removed', () => {
     const body = JSON.stringify({ profiles: { ...profiles, extra: true, profiles: [{ ...profiles.profiles[0], secret: 'x' }] } });
-    expect(parseProfilesBody(body)).toEqual({ profiles });
+    expect(parseProfilesBody(body)).toEqual({ data: profiles });
   });
 
   it('rejects bodies that are too large, not JSON, or the wrong shape', () => {
     expect(parseProfilesBody('x'.repeat(MAX_BODY_BYTES + 1))).toEqual({ error: 'Body too large.' });
     expect(parseProfilesBody('{not json')).toEqual({ error: 'Body is not valid JSON.' });
-    expect(parseProfilesBody('[]')).toEqual({ error: 'Body must be { profiles: ProfileState }.' });
+    expect(parseProfilesBody('[]')).toEqual({ error: 'Body must be a JSON object.' });
+    expect(parseProfilesBody('{}')).toEqual({ error: 'Body must be { profiles: ProfileState }.' });
     expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, selectedId: 7 } }))).toHaveProperty('error');
     expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, profiles: [{ id: 'a', name: '', createdAt: 0, stats }] } }))).toHaveProperty('error');
     expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, profiles: [{ ...profiles.profiles[0], stats: { wins: 'many' } }] } }))).toHaveProperty('error');
