@@ -10,6 +10,7 @@ export interface IAgentProps {
   /** cards in the hand; a new card can leave the highest total unchanged */
   cardCount?: number;
   playerKey: PlayerKey;
+  handIndex?: number;
   /** chooses the move when the delay is up; defaults to the dealer's rule (hit below 17) */
   decide?: () => BotMove;
   /** pause before acting; defaults to DEALER_ACTION_DELAY_MS */

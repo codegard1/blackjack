@@ -6,7 +6,7 @@ import { collectAntes, isDealer, roundStake } from "./round";
 
 export { roundStake } from "./round";
 
-/** How a settled hand reads in the activity log and the result message */
+/** How a settled hand reads in the activity log */
 export function describeResult(player: IPlayer): string {
   const net = player.net ?? 0;
   if (isDealer(player)) {
@@ -19,13 +19,6 @@ export function describeResult(player: IPlayer): string {
     case 'loss': return player.isBusted ? `busted, lost $${-net}` : `lost $${-net}`;
     default: return '';
   }
-}
-
-/** One line for a settled round: each seat's result in seating order, the dealer last */
-export function roundResultText(players: IPlayer[]): string {
-  const settled = players.filter((player) => player.result);
-  const ordered = [...settled.filter((player) => !isDealer(player)), ...settled.filter(isDealer)];
-  return ordered.length ? ordered.map((player) => `${player.title}: ${describeResult(player)}`).join('. ') + '.' : '';
 }
 
 function activityEvent(player: IPlayer): 'win' | 'loss' | 'push' {
@@ -44,25 +37,55 @@ function settleRound(state: GameState): void {
   if (state.gameStatusFlag) return;
   const { playerStore } = state;
 
-  playerStore.all.filter((player) => player.result).forEach((player) => {
-    const net = player.net ?? 0;
-    // the stake is already off the bank, so a player gets back stake plus net; the dealer just moves by net
-    const amount = isDealer(player) ? net : Math.max(0, roundStake(state, player.key) + net);
-    if (amount !== 0) playerStore.payout(player.key, amount);
-    recordActivity(state, player.title, describeResult(player), activityEvent(player), { amount });
+  playerStore.all.filter((player) => !isDealer(player)).forEach((player) => {
+    state.deck.getHands(player.key).forEach((hand, index) => {
+      if (!hand.result) return;
+      const stake = hand.stake ?? roundStake(state, player.key);
+      const net = hand.net ?? (hand.result === 'blackjack' ? Math.floor(stake * 1.5)
+        : hand.result === 'win' ? stake : hand.result === 'loss' ? -stake : 0);
+      hand.net = net;
+      const amount = Math.max(0, stake + net);
+      if (amount !== 0) playerStore.payout(player.key, amount);
+      const handPlayer = {
+        ...player,
+        result: hand.result,
+        isBusted: hand.isBusted,
+        isBlackjack: hand.isBlackjack,
+        net,
+      };
+      const label = state.deck.getHands(player.key).length > 1 ? `${player.title} (hand ${index + 1})` : player.title;
+      recordActivity(state, label, describeResult(handPlayer), activityEvent(handPlayer), { amount });
 
-    const won = player.result === 'win' || player.result === 'blackjack';
-    playerStore.updateStats(player.key, {
-      numberOfGamesLost: player.result === 'loss' ? 1 : 0,
+      const won = hand.result === 'win' || hand.result === 'blackjack';
+      playerStore.updateStats(player.key, {
+        numberOfGamesLost: hand.result === 'loss' ? 1 : 0,
+        numberOfGamesPlayed: 1,
+        numberOfGamesWon: won ? 1 : 0,
+        numberOfTimesBlackjack: hand.isBlackjack ? 1 : 0,
+        numberOfTimesBusted: hand.isBusted ? 1 : 0,
+        totalWinnings: Math.max(0, net),
+        netResult: net,
+        winLossRatio: 0,
+      });
+    });
+  });
+
+  const dealer = playerStore.all.find(isDealer);
+  if (dealer?.result) {
+    const net = dealer.net ?? 0;
+    if (net !== 0) playerStore.payout(dealer.key, net);
+    recordActivity(state, dealer.title, describeResult(dealer), activityEvent(dealer), { amount: net });
+    playerStore.updateStats(dealer.key, {
+      numberOfGamesLost: dealer.result === 'loss' ? 1 : 0,
       numberOfGamesPlayed: 1,
-      numberOfGamesWon: won ? 1 : 0,
-      numberOfTimesBlackjack: player.isBlackjack ? 1 : 0,
-      numberOfTimesBusted: player.isBusted ? 1 : 0,
+      numberOfGamesWon: dealer.result === 'win' ? 1 : 0,
+      numberOfTimesBlackjack: dealer.isBlackjack ? 1 : 0,
+      numberOfTimesBusted: dealer.isBusted ? 1 : 0,
       totalWinnings: Math.max(0, net),
       netResult: net,
       winLossRatio: 0,
     });
-  });
+  }
 
   state.gameStatusFlag = true;
 }

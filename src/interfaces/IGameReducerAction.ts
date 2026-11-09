@@ -1,7 +1,7 @@
 import { IPlayerStoreState } from ".";
 import { IPlayerOptions } from "./IPlayerOpts";
 import { GameAction, GameStatus } from "../enums";
-import { DeckState, MessageBarDefinition, PlayerKey, PlayingCardKey } from "../types";
+import { DeckState, PlayerKey, PlayingCardKey } from "../types";
 
 export interface IGameReducerAction {
   cardKey?: PlayingCardKey;
@@ -11,7 +11,7 @@ export interface IGameReducerAction {
   deckSide?: 'top' | 'bottom' | 'random';
   deckState?: DeckState;
   gameStatus?: GameStatus;
-  messageBarDefinition?: MessageBarDefinition;
+  handIndex?: number;
   minimumBet?: number;
   numberOfCards?: number;
   playerKey?: PlayerKey | PlayerKey[];

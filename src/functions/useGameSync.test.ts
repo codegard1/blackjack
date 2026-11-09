@@ -94,7 +94,8 @@ describe('useGameSync', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(SYNC_DEBOUNCE_MS); });
     expect(fetch).toHaveBeenCalledTimes(3);
     const sent = JSON.parse(fetch.mock.calls[2][1].body).game;
-    expect(sent.game.gameStatus).toBe(GameStatus.InProgress);
+    expect(sent).toEqual(JSON.parse(JSON.stringify(toRemoteGame(result.current.state))));
+    expect(sent.game.gameStatus).not.toBe(GameStatus.Init);
     expect(sent.deck.playerHands.chris.cards).toHaveLength(2);
   });
 });

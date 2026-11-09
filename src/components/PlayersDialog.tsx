@@ -96,7 +96,7 @@ const useStyles = makeStyles({
 
 const count = formatCount;
 
-const STAT_HEADINGS = ['Player', 'Rounds', 'Won', 'Lost', 'Pushed', 'Win rate', 'Blackjacks', 'Busts', 'Net'];
+const STAT_HEADINGS = ['Player', 'Hands', 'Won', 'Lost', 'Pushed', 'Win rate', 'Blackjacks', 'Busts', 'Net'];
 
 /**
  * Choose who plays the next game and which computer players join, add player names, and see everyone's statistics

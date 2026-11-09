@@ -12,7 +12,7 @@ export function snapshotGame(state: GameState): GameSnapshot {
     round: state.round,
     pot: state.pot,
     totalPotContributions: state.activityLog.reduce((total, entry) => (
-      entry.event === 'ante' || entry.event === 'bet' || entry.event === 'double'
+      entry.event === 'ante' || entry.event === 'bet' || entry.event === 'double' || entry.event === 'split'
         ? total + Math.max(0, -(entry.amount ?? 0))
         : total
     ), 0),

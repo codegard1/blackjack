@@ -8,7 +8,7 @@ import { DeckState, GameState, ProfileState, SavedGame, SavedGameSnapshot, Setti
 import { defaultProfileState, normalizeProfileState } from "./profiles";
 
 /** Bump when the shape of the saved game snapshot changes. */
-export const GAME_STORE_VERSION = 3;
+export const GAME_STORE_VERSION = 4;
 
 /** How many of the newest activity log entries a snapshot sent to the server keeps */
 export const MAX_SYNCED_ACTIVITY = 500;
@@ -49,6 +49,7 @@ function isSavedGame(value: unknown): value is SavedGame {
   return isObject(value)
     && value.version === GAME_STORE_VERSION
     && typeof value.gameStatus === 'number'
+    && typeof value.activeHandIndex === 'number'
     && typeof value.pot === 'number'
     && typeof value.round === 'number'
     && Array.isArray(value.activityLog);
@@ -68,6 +69,7 @@ export function gameSnapshot(state: GameState, { maxActivity }: { maxActivity?: 
     game: {
       version: GAME_STORE_VERSION,
       activityLog,
+      activeHandIndex: state.activeHandIndex,
       controllingPlayer: state.controllingPlayer,
       dealerHasControl: state.dealerHasControl,
       gameStatus: state.gameStatus,

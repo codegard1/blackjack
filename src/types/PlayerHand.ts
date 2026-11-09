@@ -1,4 +1,4 @@
-import { PlayerKey, PlayingCardKey } from '.';
+import { PlayerKey, PlayingCardKey, RoundResult } from '.';
 
 /**
  * Cards belonging to a specific player
@@ -6,6 +6,15 @@ import { PlayerKey, PlayingCardKey } from '.';
 export type PlayerHand = {
   cards: PlayingCardKey[];
   handValue: PlayerHandValue;
+  splitHands?: PlayerHand[];
+  stake?: number;
+  net?: number;
+  result?: RoundResult;
+  isBusted?: boolean;
+  isStaying?: boolean;
+  isBlackjack?: boolean;
+  isSplit?: boolean;
+  isSplitAces?: boolean;
 };
 
 /**

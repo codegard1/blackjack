@@ -20,7 +20,7 @@ export const BOT_ACTION_DELAY_MS = 1000;
 export const Agent: React.FC<IAgentProps> = (props) => {
 
   const { gameDispatch } = useGameContext();
-  const { hasControl, gameStatus, handValue, cardCount, playerKey, delayMs = DEALER_ACTION_DELAY_MS, isPaused = false } = props;
+  const { hasControl, gameStatus, handValue, cardCount, playerKey, handIndex = 0, delayMs = DEALER_ACTION_DELAY_MS, isPaused = false } = props;
 
   // the latest decision function, read when the delay is up, so a re-render does not reschedule
   const decide = React.useRef(props.decide);
@@ -34,14 +34,16 @@ export const Agent: React.FC<IAgentProps> = (props) => {
       if (move === 'hit') {
         gameDispatch({ type: GameAction.Draw, playerKey, deckSide: 'top', numberOfCards: 1 });
       } else if (move === 'double') {
-        gameDispatch({ type: GameAction.DoubleDown, playerKey });
+        gameDispatch({ type: GameAction.DoubleDown, playerKey, ...(handIndex ? { handIndex } : {}) });
+      } else if (move === 'split') {
+        gameDispatch({ type: GameAction.Split, playerKey, ...(handIndex ? { handIndex } : {}) });
       } else {
-        gameDispatch({ type: GameAction.Stay, playerKey });
+        gameDispatch({ type: GameAction.Stay, playerKey, ...(handIndex ? { handIndex } : {}) });
       }
     }, delayMs);
 
     return () => window.clearTimeout(timeoutId);
-  }, [gameDispatch, isPaused, hasControl, gameStatus, handValue.highest, cardCount, playerKey, delayMs]);
+  }, [gameDispatch, isPaused, hasControl, gameStatus, handValue.highest, cardCount, playerKey, handIndex, delayMs]);
 
   return null;
 }

@@ -16,10 +16,10 @@ afterEach(() => {
 });
 
 it.each([
-  { humanCards: ['Spade_11', 'Diamond_14'], dealerCards: ['Club_10', 'Heart_7'], hit: false, humanStatus: '✨ Blackjack', dealerStatus: '💔 Loser', message: 'Chris: won $37 with blackjack. Faxe: paid out $37.' },
-  { humanCards: ['Spade_10', 'Diamond_7'], dealerCards: ['Club_11', 'Heart_14'], hit: false, humanStatus: '💔 Loser', dealerStatus: '✨ Blackjack', message: 'Chris: lost $25. Faxe: took $25.' },
-  { humanCards: ['Spade_10', 'Diamond_10'], dealerCards: ['Club_10', 'Heart_7'], hit: true, humanStatus: '💥 Busted', dealerStatus: '🏆 Winner', message: 'Chris: busted, lost $25. Faxe: took $25.' },
-])('expires the result after three seconds: $message', ({ humanCards, dealerCards, hit, humanStatus, dealerStatus, message }) => {
+  { humanCards: ['Spade_11', 'Diamond_14'], dealerCards: ['Club_10', 'Heart_7'], hit: false, humanStatus: '✨ Blackjack', dealerStatus: '💔 Loser', humanLog: 'won $37 with blackjack', dealerLog: 'paid out $37' },
+  { humanCards: ['Spade_10', 'Diamond_7'], dealerCards: ['Club_11', 'Heart_14'], hit: false, humanStatus: '💔 Loser', dealerStatus: '✨ Blackjack', humanLog: 'lost $25', dealerLog: 'took $25' },
+  { humanCards: ['Spade_10', 'Diamond_10'], dealerCards: ['Club_10', 'Heart_7'], hit: true, humanStatus: '💥 Busted', dealerStatus: '🏆 Winner', humanLog: 'busted, lost $25', dealerLog: 'took $25' },
+])('shows the result on the seats and in the activity log: $humanLog', ({ humanCards, dealerCards, hit, humanStatus, dealerStatus, humanLog, dealerLog }) => {
   vi.spyOn(PlayingCardDeck.prototype, 'deal')
     .mockImplementationOnce(function (this: PlayingCardDeck) {
       this.playerHands.chris.cards = humanCards;
@@ -39,20 +39,20 @@ it.each([
     fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck' }));
   }
 
-  expect(screen.getByText(message)).toBeInTheDocument();
-  expect(screen.queryByText('New Round')).not.toBeInTheDocument();
   expect(screen.getByText(humanStatus)).toBeInTheDocument();
   expect(screen.getByText(dealerStatus)).toBeInTheDocument();
+  // there is no message bar above the table
+  expect(screen.queryByRole('button', { name: 'Dismiss message' })).not.toBeInTheDocument();
 
-  act(() => vi.advanceTimersByTime(2999));
-  expect(screen.getByText(message)).toBeInTheDocument();
-  act(() => vi.advanceTimersByTime(1));
-  expect(screen.queryByText(message)).not.toBeInTheDocument();
+  // the log shows each entry once the table toasts for it have played
+  const log = () => within(document.getElementById('ActivityLogRoot') as HTMLElement);
+  act(() => vi.advanceTimersByTime(30_000));
+  expect(log().getByText(humanLog)).toBeInTheDocument();
+  expect(log().getByText(dealerLog)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
-
-  expect(screen.queryByText(message)).not.toBeInTheDocument();
-  expect(screen.getByText('Round 2 started')).toBeInTheDocument();
+  act(() => vi.advanceTimersByTime(30_000));
+  expect(log().getByText('Round 2 started')).toBeInTheDocument();
 });
 
 it('replaces the controls with Next hand and Change players when the hand ends', () => {
@@ -60,6 +60,7 @@ it('replaces the controls with Next hand and Change players when the hand ends',
     this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
     this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
   });
+
   vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
   render(<App />);
 
@@ -79,8 +80,31 @@ it('replaces the controls with Next hand and Change players when the hand ends',
   fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
   fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
-  expect(screen.getByText('Round 2 started')).toBeInTheDocument();
   expect(screen.getByRole('toolbar')).toBeInTheDocument();
+});
+
+it('shows both split hands and marks the hand in control', () => {
+  vi.spyOn(Math, 'random').mockReturnValue(0.99);
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Club_8', 'Heart_8'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
+  vi.spyOn(PlayingCardDeck.prototype, 'draw')
+    .mockReturnValueOnce(['Spade_2'])
+    .mockReturnValueOnce(['Diamond_3']);
+  render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Split' }));
+
+  expect(screen.getByText('Hand 1 · Active')).toBeInTheDocument();
+  expect(screen.getByText('Hand 2')).toBeInTheDocument();
+
+  vi.useFakeTimers();
+  act(() => vi.advanceTimersByTime(30_000));
+  fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
+  expect(screen.getByText('Hand 2 · Active')).toBeInTheDocument();
 });
 
 describe('changing the roster', () => {
@@ -115,7 +139,7 @@ describe('changing the roster', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
     expect(container.querySelector('[data-seat-key="ogion"]')).toBeInTheDocument();
-    expect(screen.getByText('Round 2 started')).toBeInTheDocument();
+    expect(screen.getByRole('toolbar')).toBeInTheDocument();
   });
 
   it('updates the table at once when the roster changes between hands', () => {
@@ -132,22 +156,6 @@ describe('changing the roster', () => {
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Players' })).getByRole('checkbox', { name: 'Ogion, The Rock' }));
     expect(container.querySelector('[data-seat-key="ogion"]')).not.toBeInTheDocument();
   });
-});
-
-it('allows dismissing the result message before it expires', () => {
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_11', 'Diamond_14'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
-  render(<App />);
-
-  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
-  const message = screen.getByText('Chris: won $37 with blackjack. Faxe: paid out $37.');
-
-  fireEvent.click(screen.getByRole('button', { name: 'Dismiss message' }));
-
-  expect(message).not.toBeInTheDocument();
 });
 
 it('starts a new game with the selected player and the dealer', () => {
@@ -180,6 +188,9 @@ it('always shows card ranks and opens the activity log drawer by default from th
 
   const cards = () => Array.from(screen.getByRole('region', { name: "Chris's hand" }).querySelectorAll('button[aria-pressed]'));
   expect(cards()).toHaveLength(2);
+  const activeHand = cards()[0].closest('.player-hand')?.firstElementChild?.firstElementChild as HTMLElement;
+  expect(getComputedStyle(activeHand).flexGrow).toBe('1');
+  expect(getComputedStyle(activeHand).width).not.toBe('0px');
   expect(cards().every((card) => (card.textContent?.trim().length ?? 0) > 1)).toBe(true);
   expect(cards()[0].querySelectorAll('.playing-card-corner')).toHaveLength(2);
   expect(cards()[0].querySelector('.playing-card-corner-bottom')).toHaveStyle({ transform: 'rotate(180deg)' });
@@ -408,7 +419,7 @@ it('keeps the pot after a hand ends, then slides it up and back in for the next 
 
   // a natural blackjack ends the hand at once; the pot stays in its corner
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
-  expect(screen.getByText('Chris: won $37 with blackjack. Faxe: paid out $37.')).toBeInTheDocument();
+  expect(screen.getByText('✨ Blackjack')).toBeInTheDocument();
   expect(container.querySelector('.table-pot-corner-slot')).toHaveTextContent('Pot: $25');
 
   // the next hand: the last pot slides up out of view, showing its amount as it goes

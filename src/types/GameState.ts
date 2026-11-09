@@ -1,9 +1,10 @@
 import { PlayerStore, PlayingCardDeck } from "../classes";
 import { GameStatus } from "../enums";
-import { MessageBarDefinition, PlayerKey } from "./";
+import { PlayerKey } from "./";
 
 export type GameState = {
   activityLog: ActivityLogEntry[];
+  activeHandIndex: number;
   controllingPlayer?: PlayerKey;
   dealerHasControl: boolean;
   deck: PlayingCardDeck;
@@ -12,7 +13,6 @@ export type GameState = {
   isSpinnerVisible: boolean;
   lastWriteTime: string;
   loser?: PlayerKey;
-  messageBarDefinition: MessageBarDefinition;
   minimumBet: number;
   playerStore: PlayerStore;
   pot: number;
@@ -26,7 +26,7 @@ export type ActivityLogEntry = {
   sessionId?: number;
   /** the hand this entry belongs to; absent in logs saved before hands were tracked */
   round?: number;
-  event?: 'game' | 'round' | 'deal' | 'draw' | 'ante' | 'bet' | 'double' | 'stay' | 'win' | 'loss' | 'push' | 'shuffle';
+  event?: 'game' | 'round' | 'deal' | 'draw' | 'ante' | 'bet' | 'double' | 'split' | 'stay' | 'win' | 'loss' | 'push' | 'shuffle';
   timestamp: number;
   name: string;
   description: string;

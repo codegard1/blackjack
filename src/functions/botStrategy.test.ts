@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BOTS, CHARACTERS, DEALER, getCharacter } from '../characters';
-import { basicStrategy, botWagerCount, decideBotMove, effectiveStats, standingTotal } from './botStrategy';
+import { basicSplitStrategy, basicStrategy, botWagerCount, decideBotMove, effectiveStats, standingTotal } from './botStrategy';
 
 const stats = (id: string) => getCharacter(id)!.stats!;
 /** a fixed roll: 0 always passes the discipline check, 0.99 never does */
@@ -11,6 +11,37 @@ describe('basicStrategy', () => {
     expect(basicStrategy(['Club_10', 'Heart_7'], 'Spade_10', true)).toBe('stay');
     expect(basicStrategy(['Club_10', 'Heart_3'], 'Spade_6', true)).toBe('stay');
     expect(basicStrategy(['Club_10', 'Heart_6'], 'Spade_10', true)).toBe('hit');
+  });
+
+  describe('pair strategy', () => {
+    it('splits matching aces and eights, but not different ten-value ranks', () => {
+      expect(basicSplitStrategy(['Club_14', 'Heart_14'], 'Spade_10')).toBe(true);
+      expect(basicSplitStrategy(['Club_8', 'Heart_8'], 'Spade_10')).toBe(true);
+      expect(basicSplitStrategy(['Club_10', 'Heart_13'], 'Spade_6')).toBe(false);
+    });
+
+    it('uses the dealer up-card for conditional pairs', () => {
+      expect(basicSplitStrategy(['Club_9', 'Heart_9'], 'Spade_6')).toBe(true);
+      expect(basicSplitStrategy(['Club_9', 'Heart_9'], 'Spade_7')).toBe(false);
+      expect(basicSplitStrategy(['Club_4', 'Heart_4'], 'Spade_5')).toBe(true);
+    });
+
+    it('lets discipline and aggression modulate computer splits', () => {
+      expect(decideBotMove({
+        cards: ['Club_8', 'Heart_8'], dealerUpCard: 'Spade_6', stats: stats('shevek'),
+        canDouble: false, canSplit: true, rng: roll(0),
+      })).toBe('split');
+      expect(decideBotMove({
+        cards: ['Club_8', 'Heart_8'], dealerUpCard: 'Spade_6',
+        stats: { ...stats('ogion'), discipline: 0, aggression: 10 },
+        canDouble: false, canSplit: true, rng: roll(0.99),
+      })).toBe('split');
+      expect(decideBotMove({
+        cards: ['Club_8', 'Heart_8'], dealerUpCard: 'Spade_6',
+        stats: { ...stats('ogion'), discipline: 0, aggression: 8 },
+        canDouble: false, canSplit: true, rng: roll(0.99),
+      })).not.toBe('split');
+    });
   });
 
   it('doubles on 11 when allowed, and hits otherwise', () => {

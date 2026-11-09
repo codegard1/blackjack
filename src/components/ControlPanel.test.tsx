@@ -73,7 +73,19 @@ describe('player controls', () => {
   it('enables gameplay on the human turn', () => {
     renderControls(GameStatus.InProgress, 'chris', ['Club_10', 'Heart_6']);
 
-    screen.getAllByRole('button').forEach((button) => expect(button).toBeEnabled());
+    ['Draw one card from the top of the deck', 'Stay', 'Double Down', 'Wager $25', 'Deal'].forEach((name) => {
+      expect(screen.getByRole('button', { name })).toBeEnabled();
+    });
+    expect(screen.getByRole('button', { name: 'Split' })).toBeDisabled();
+  });
+
+  it('offers Split for a same-rank pair and dispatches the active hand index', () => {
+    const dispatch = renderControls(GameStatus.InProgress, 'chris', ['Club_8', 'Heart_8']);
+    const split = screen.getByRole('button', { name: 'Split' });
+
+    expect(split).toBeEnabled();
+    fireEvent.click(split);
+    expect(dispatch).toHaveBeenCalledWith({ type: GameAction.Split, playerKey: 'chris', handIndex: 0 });
   });
 
   it('keeps Hit and Stay disabled until the hand is dealt', () => {

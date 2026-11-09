@@ -5,6 +5,7 @@ import { IGameReducerAction } from '../interfaces';
 import { GameState } from '../types';
 
 export const createGameState = (): GameState => ({
+  activeHandIndex: 0,
   activityLog: [],
   gameStatus: GameStatus.Init,
   deck: new PlayingCardDeck(),
@@ -18,11 +19,6 @@ export const createGameState = (): GameState => ({
   round: 0,
   turnCount: 0,
   lastWriteTime: new Date().toISOString(),
-  messageBarDefinition: {
-    type: 'info',
-    text: "",
-    isMultiLine: false
-  },
   controllingPlayer: undefined,
   playerStore: new PlayerStore(),
 });

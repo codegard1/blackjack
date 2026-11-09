@@ -1,5 +1,5 @@
 import type { IPlayerStoreState } from '../../src/interfaces';
-import type { ActivityLogEntry, DeckState, SavedGame, SavedGameSnapshot } from '../../src/types';
+import type { ActivityLogEntry, DeckState, PlayerHand, SavedGame, SavedGameSnapshot } from '../../src/types';
 import { isFiniteNumber, isObject, isStringArray, isText, parseJsonBody } from './validate';
 
 /**
@@ -13,8 +13,25 @@ const MAX_ACTIVITY = 1000;
 
 const isCardKeys = (value: unknown): value is string[] => isStringArray(value, MAX_CARDS);
 
+const MAX_SPLIT_HANDS = 4;
+
 function isHandValue(value: unknown): boolean {
   return isObject(value) && isFiniteNumber(value.aceAsEleven) && isFiniteNumber(value.aceAsOne) && isFiniteNumber(value.highest);
+}
+
+/** A hand: its cards and value, plus the optional stake, result and flags of a split hand */
+function isHand(value: unknown, depth = 0): value is PlayerHand {
+  return isObject(value)
+    && isCardKeys(value.cards)
+    && isHandValue(value.handValue)
+    && (value.splitHands === undefined || (
+      depth === 0 && Array.isArray(value.splitHands) && value.splitHands.length <= MAX_SPLIT_HANDS
+      && value.splitHands.every((hand) => isHand(hand, depth + 1))
+    ))
+    && (value.stake === undefined || isFiniteNumber(value.stake))
+    && (value.net === undefined || isFiniteNumber(value.net))
+    && (value.result === undefined || typeof value.result === 'string')
+    && ['isBusted', 'isStaying', 'isBlackjack', 'isSplit', 'isSplitAces'].every((flag) => value[flag] === undefined || typeof value[flag] === 'boolean');
 }
 
 function isDeckState(value: unknown): value is DeckState {
@@ -24,7 +41,7 @@ function isDeckState(value: unknown): value is DeckState {
     && isCardKeys(value.selectedKeys)
     && isObject(value.playerHands)
     && Object.values(value.playerHands).length <= MAX_SEATS
-    && Object.values(value.playerHands).every((hand) => isObject(hand) && isCardKeys(hand.cards) && isHandValue(hand.handValue));
+    && Object.values(value.playerHands).every((hand) => isHand(hand));
 }
 
 function isPlayersState(value: unknown): value is IPlayerStoreState {
@@ -49,6 +66,7 @@ const isOptionalKey = (value: unknown): boolean => value === undefined || typeof
 function isSavedGame(value: unknown): value is SavedGame {
   return isObject(value)
     && isFiniteNumber(value.version)
+    && isFiniteNumber(value.activeHandIndex)
     && Array.isArray(value.activityLog)
     && value.activityLog.length <= MAX_ACTIVITY
     && value.activityLog.every(isActivityEntry)
@@ -69,6 +87,13 @@ export function isGameSnapshot(value: unknown): value is SavedGameSnapshot {
 }
 
 /** Keep only the fields the document stores, so unknown keys never reach the database */
+const copyHand = (hand: PlayerHand): PlayerHand => ({
+  ...hand,
+  cards: [...hand.cards],
+  handValue: { ...hand.handValue },
+  ...(hand.splitHands === undefined ? {} : { splitHands: hand.splitHands.map(copyHand) }),
+});
+
 function pickGameSnapshot({ deck, players, game }: SavedGameSnapshot): SavedGameSnapshot {
   const optional = <T>(value: T | undefined, key: string): Record<string, T> => (value === undefined ? {} : { [key]: value });
   return {
@@ -76,7 +101,7 @@ function pickGameSnapshot({ deck, players, game }: SavedGameSnapshot): SavedGame
       cardKeys: [...deck.cardKeys],
       drawnKeys: [...deck.drawnKeys],
       selectedKeys: [...deck.selectedKeys],
-      playerHands: Object.fromEntries(Object.entries(deck.playerHands).map(([key, hand]) => [key, { cards: [...hand.cards], handValue: { ...hand.handValue } }])),
+      playerHands: Object.fromEntries(Object.entries(deck.playerHands).map(([key, hand]) => [key, copyHand(hand)])),
     },
     players: {
       players: Object.fromEntries(Object.entries(players.players).map(([key, player]) => [key, { ...player }])),
@@ -86,6 +111,7 @@ function pickGameSnapshot({ deck, players, game }: SavedGameSnapshot): SavedGame
     },
     game: {
       version: game.version,
+      activeHandIndex: game.activeHandIndex,
       activityLog: game.activityLog.map((entry) => ({ ...entry })),
       dealerHasControl: game.dealerHasControl,
       gameStatus: game.gameStatus,
