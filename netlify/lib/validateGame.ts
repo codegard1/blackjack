@@ -1,19 +1,30 @@
-import type { IPlayerStoreState } from '../../src/interfaces';
+import type { IPlayer, IPlayerStoreState } from '../../src/interfaces';
 import type { ActivityLogEntry, DeckState, PlayerHand, SavedGame, SavedGameSnapshot } from '../../src/types';
-import { isFiniteNumber, isObject, isStringArray, isText, parseJsonBody } from './validate';
+import { isFiniteNumber, isObject, isStats, parseJsonBody } from './validate';
 
 /**
- * The largest request body a game PUT accepts. A snapshot is a few kilobytes plus
- * the activity log, which the client trims before sending.
+ * The largest request body a game PUT accepts. A long game with the activity log
+ * the client sends (its newest 200 entries) is about 27 KB.
  */
-export const GAME_MAX_BODY_BYTES = 256 * 1024;
+export const GAME_MAX_BODY_BYTES = 64 * 1024;
 const MAX_CARDS = 1000;
 const MAX_SEATS = 10;
-const MAX_ACTIVITY = 1000;
-
-const isCardKeys = (value: unknown): value is string[] => isStringArray(value, MAX_CARDS);
-
+const MAX_ACTIVITY = 250;
 const MAX_SPLIT_HANDS = 4;
+
+/** A card key such as Spade_7 or Heart_Five_5 */
+const CARD_KEY = /^[A-Za-z]{1,12}_[A-Za-z0-9]{1,12}(?:_\d{1,3})?$/;
+const ROUND_RESULTS = ['blackjack', 'win', 'push', 'loss'];
+const PLAYER_ROLES = ['human', 'bot', 'dealer'];
+const ACTIVITY_EVENTS = ['game', 'round', 'deal', 'draw', 'ante', 'bet', 'double', 'split', 'stay', 'win', 'loss', 'push', 'shuffle'];
+
+const isCardKeys = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.length <= MAX_CARDS && value.every((key) => typeof key === 'string' && CARD_KEY.test(key));
+const optional = (value: unknown, check: (value: unknown) => boolean): boolean => value === undefined || check(value);
+const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean';
+const isOneOf = (options: string[]) => (value: unknown): boolean => typeof value === 'string' && options.includes(value);
+const isShortText = (max: number) => (value: unknown): value is string => typeof value === 'string' && value.length <= max;
+const isSmallInteger = (max: number) => (value: unknown): boolean => Number.isInteger(value) && (value as number) >= 0 && (value as number) <= max;
 
 function isHandValue(value: unknown): boolean {
   return isObject(value) && isFiniteNumber(value.aceAsEleven) && isFiniteNumber(value.aceAsOne) && isFiniteNumber(value.highest);
@@ -28,10 +39,10 @@ function isHand(value: unknown, depth = 0): value is PlayerHand {
       depth === 0 && Array.isArray(value.splitHands) && value.splitHands.length <= MAX_SPLIT_HANDS
       && value.splitHands.every((hand) => isHand(hand, depth + 1))
     ))
-    && (value.stake === undefined || isFiniteNumber(value.stake))
-    && (value.net === undefined || isFiniteNumber(value.net))
-    && (value.result === undefined || typeof value.result === 'string')
-    && ['isBusted', 'isStaying', 'isBlackjack', 'isSplit', 'isSplitAces'].every((flag) => value[flag] === undefined || typeof value[flag] === 'boolean');
+    && optional(value.stake, isFiniteNumber)
+    && optional(value.net, isFiniteNumber)
+    && optional(value.result, isOneOf(ROUND_RESULTS))
+    && ['isBusted', 'isStaying', 'isBlackjack', 'isSplit', 'isSplitAces'].every((flag) => optional(value[flag], isBoolean));
 }
 
 function isDeckState(value: unknown): value is DeckState {
@@ -44,24 +55,43 @@ function isDeckState(value: unknown): value is DeckState {
     && Object.values(value.playerHands).every((hand) => isHand(hand));
 }
 
+/** A seat at the table: the fields of IPlayer, each checked by type */
+function isPlayer(value: unknown, key: string): value is IPlayer {
+  return isObject(value)
+    && value.key === key
+    && isShortText(40)(value.title) && value.title !== ''
+    && isBoolean(value.isNPC)
+    && isFiniteNumber(value.id)
+    && isFiniteNumber(value.bank)
+    && isStats(value.stats)
+    && optional(value.role, isOneOf(PLAYER_ROLES))
+    && optional(value.result, isOneOf(ROUND_RESULTS))
+    && optional(value.lastAction, isSmallInteger(16))
+    && optional(value.status, isSmallInteger(16))
+    && ['lastAnte', 'lastBet', 'lossStreak', 'net', 'totalBet'].every((field) => optional(value[field], isFiniteNumber))
+    && ['disabled', 'isFinished', 'isSelected', 'isBusted', 'isBlackjack', 'isStaying', 'isSittingOut', 'turn'].every((flag) => optional(value[flag], isBoolean));
+}
+
 function isPlayersState(value: unknown): value is IPlayerStoreState {
-  if (!isObject(value) || !isObject(value.players) || typeof value.lastWriteTime !== 'string') return false;
+  if (!isObject(value) || !isObject(value.players) || !isShortText(40)(value.lastWriteTime)) return false;
   const seats = Object.entries(value.players);
   return seats.length <= MAX_SEATS
-    && seats.every(([key, player]) => isObject(player) && player.key === key && isText(player.title, 40) && isFiniteNumber(player.bank))
-    && (value.activePlayerKeys === undefined || isStringArray(value.activePlayerKeys, MAX_SEATS))
-    && (value.currentPlayerKey === undefined || typeof value.currentPlayerKey === 'string');
+    && seats.every(([key, player]) => isPlayer(player, key))
+    && optional(value.activePlayerKeys, (keys) => Array.isArray(keys) && keys.length <= MAX_SEATS && keys.every(isShortText(64)))
+    && optional(value.currentPlayerKey, isShortText(64));
 }
 
 function isActivityEntry(value: unknown): value is ActivityLogEntry {
   return isObject(value)
     && isFiniteNumber(value.id)
     && isFiniteNumber(value.timestamp)
-    && typeof value.name === 'string'
-    && typeof value.description === 'string';
+    && isShortText(40)(value.name)
+    && isShortText(200)(value.description)
+    && optional(value.sessionId, isFiniteNumber)
+    && optional(value.round, isFiniteNumber)
+    && optional(value.event, isOneOf(ACTIVITY_EVENTS))
+    && optional(value.amount, isFiniteNumber);
 }
-
-const isOptionalKey = (value: unknown): boolean => value === undefined || typeof value === 'string';
 
 function isSavedGame(value: unknown): value is SavedGame {
   return isObject(value)
@@ -70,11 +100,11 @@ function isSavedGame(value: unknown): value is SavedGame {
     && Array.isArray(value.activityLog)
     && value.activityLog.length <= MAX_ACTIVITY
     && value.activityLog.every(isActivityEntry)
-    && isOptionalKey(value.controllingPlayer)
-    && isOptionalKey(value.loser)
-    && isOptionalKey(value.winner)
-    && typeof value.dealerHasControl === 'boolean'
-    && typeof value.gameStatusFlag === 'boolean'
+    && optional(value.controllingPlayer, isShortText(64))
+    && optional(value.loser, isShortText(64))
+    && optional(value.winner, isShortText(64))
+    && isBoolean(value.dealerHasControl)
+    && isBoolean(value.gameStatusFlag)
     && isFiniteNumber(value.gameStatus)
     && isFiniteNumber(value.minimumBet)
     && isFiniteNumber(value.pot)
@@ -86,16 +116,33 @@ export function isGameSnapshot(value: unknown): value is SavedGameSnapshot {
   return isObject(value) && isDeckState(value.deck) && isPlayersState(value.players) && isSavedGame(value.game);
 }
 
-/** Keep only the fields the document stores, so unknown keys never reach the database */
+/** A copy holding only the named fields that are present */
+function pick<T extends object>(source: T, fields: (keyof T)[]): T {
+  const copy: Partial<T> = {};
+  for (const field of fields) if (source[field] !== undefined) copy[field] = source[field];
+  return copy as T;
+}
+
+const HAND_FIELDS: (keyof PlayerHand)[] = ['cards', 'handValue', 'stake', 'net', 'result', 'isBusted', 'isStaying', 'isBlackjack', 'isSplit', 'isSplitAces'];
+const PLAYER_FIELDS: (keyof IPlayer)[] = [
+  'key', 'title', 'isNPC', 'id', 'bank', 'disabled', 'role', 'stats', 'isFinished', 'isSelected', 'isBusted', 'isBlackjack',
+  'isStaying', 'isSittingOut', 'lastAction', 'lastAnte', 'lastBet', 'lossStreak', 'net', 'result', 'status', 'totalBet', 'turn',
+];
+const ENTRY_FIELDS: (keyof ActivityLogEntry)[] = ['id', 'sessionId', 'round', 'event', 'timestamp', 'name', 'description', 'amount'];
+const GAME_FIELDS: (keyof SavedGame)[] = [
+  'version', 'activityLog', 'activeHandIndex', 'controllingPlayer', 'dealerHasControl', 'gameStatus', 'gameStatusFlag',
+  'loser', 'minimumBet', 'pot', 'round', 'turnCount', 'winner',
+];
+
 const copyHand = (hand: PlayerHand): PlayerHand => ({
-  ...hand,
+  ...pick(hand, HAND_FIELDS),
   cards: [...hand.cards],
-  handValue: { ...hand.handValue },
+  handValue: { aceAsEleven: hand.handValue.aceAsEleven, aceAsOne: hand.handValue.aceAsOne, highest: hand.handValue.highest },
   ...(hand.splitHands === undefined ? {} : { splitHands: hand.splitHands.map(copyHand) }),
 });
 
+/** Keep only the fields the game defines, so unknown keys never reach the database */
 function pickGameSnapshot({ deck, players, game }: SavedGameSnapshot): SavedGameSnapshot {
-  const optional = <T>(value: T | undefined, key: string): Record<string, T> => (value === undefined ? {} : { [key]: value });
   return {
     deck: {
       cardKeys: [...deck.cardKeys],
@@ -104,25 +151,12 @@ function pickGameSnapshot({ deck, players, game }: SavedGameSnapshot): SavedGame
       playerHands: Object.fromEntries(Object.entries(deck.playerHands).map(([key, hand]) => [key, copyHand(hand)])),
     },
     players: {
-      players: Object.fromEntries(Object.entries(players.players).map(([key, player]) => [key, { ...player }])),
-      lastWriteTime: players.lastWriteTime,
-      ...optional(players.activePlayerKeys, 'activePlayerKeys'),
-      ...optional(players.currentPlayerKey, 'currentPlayerKey'),
+      ...pick(players, ['activePlayerKeys', 'currentPlayerKey', 'lastWriteTime']),
+      players: Object.fromEntries(Object.entries(players.players).map(([key, player]) => [key, { ...pick(player, PLAYER_FIELDS), stats: { ...player.stats } }])),
     },
     game: {
-      version: game.version,
-      activeHandIndex: game.activeHandIndex,
-      activityLog: game.activityLog.map((entry) => ({ ...entry })),
-      dealerHasControl: game.dealerHasControl,
-      gameStatus: game.gameStatus,
-      gameStatusFlag: game.gameStatusFlag,
-      minimumBet: game.minimumBet,
-      pot: game.pot,
-      round: game.round,
-      turnCount: game.turnCount,
-      ...optional(game.controllingPlayer, 'controllingPlayer'),
-      ...optional(game.loser, 'loser'),
-      ...optional(game.winner, 'winner'),
+      ...pick(game, GAME_FIELDS),
+      activityLog: game.activityLog.map((entry) => pick(entry, ENTRY_FIELDS)),
     },
   };
 }

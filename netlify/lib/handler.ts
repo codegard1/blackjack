@@ -1,5 +1,7 @@
 import type { Context } from '@netlify/functions';
+import type { Collection } from 'mongodb';
 import { ConfigError, getDb } from './mongo';
+import { verifyOwnerId } from './owner';
 import { isOwnerId } from './validate';
 
 /** Parse a PUT body into the data to store, or say why it was refused */
@@ -17,8 +19,17 @@ export type StateHandlerOptions<T> = {
   parse: BodyParser<T>;
 };
 
-/** One owner's document: the owner id, the data under `field`, and when it was written */
-type StateDocument = { _id: string; updatedAt: number; createdAt: number } & Record<string, unknown>;
+/** Documents not written for this long are removed by the database */
+export const STALE_AFTER_DAYS = 90;
+
+/** The name of the index that expires stale documents */
+export const STALE_INDEX = 'expire-stale';
+
+/**
+ * One owner's document: the owner id, the data under `field`, the write time as a
+ * number for clients and as a date for the expiry index.
+ */
+type StateDocument = { _id: string; updatedAt: number; touchedAt: Date; createdAt: number } & Record<string, unknown>;
 
 const json = (body: unknown, status = 200): Response => Response.json(body, { status });
 
@@ -34,15 +45,43 @@ function ownerIdFrom(context: Context): string | undefined {
   }
 }
 
+const indexed = new Map<string, Promise<void>>();
+
+/**
+ * Make sure the collection expires documents that have not been written for
+ * STALE_AFTER_DAYS. Once per collection per function instance; creating an index
+ * that exists is a no-op on the server.
+ */
+function ensureStaleIndex(documents: Collection<StateDocument>): Promise<void> {
+  const key = `${documents.dbName}.${documents.collectionName}`;
+  let pending = indexed.get(key);
+  if (!pending) {
+    pending = documents
+      .createIndex({ touchedAt: 1 }, { name: STALE_INDEX, expireAfterSeconds: STALE_AFTER_DAYS * 24 * 60 * 60 })
+      .then(() => undefined)
+      .catch((error: unknown) => {
+        indexed.delete(key);
+        console.error(`${documents.collectionName}: could not ensure the ${STALE_INDEX} index`, error);
+      });
+    indexed.set(key, pending);
+  }
+  return pending;
+}
+
+/** Forget which collections were indexed; for tests */
+export function resetIndexes(): void {
+  indexed.clear();
+}
+
 /**
  * A function that reads or replaces one owner's copy of some state.
  *
  * GET  -> 200 { [field]: data, updatedAt } or 404
  * PUT  <- { [field]: data }  -> 200 { updatedAt }
  *
- * The document is upserted whole; the server stamps updatedAt so clients can tell
- * which copy is newer. Rejected requests are noted in the function log without
- * echoing the body.
+ * Only owner ids the server issued (see owner.ts) are served. The document is
+ * upserted whole; the server stamps updatedAt so clients can tell which copy is
+ * newer. Rejected requests are noted in the function log without echoing the body.
  */
 export function createStateHandler<T>({ name, collection, field, maxBodyBytes, parse }: StateHandlerOptions<T>) {
   const reject = (status: number, error: string, req: Request): Response => {
@@ -55,6 +94,8 @@ export function createStateHandler<T>({ name, collection, field, maxBodyBytes, p
     if (!isOwnerId(ownerId)) return reject(400, 'Invalid owner id.', req);
 
     try {
+      if (!verifyOwnerId(ownerId)) return reject(403, 'Unknown owner id.', req);
+
       const documents = getDb().collection<StateDocument>(collection);
 
       if (req.method === 'GET') {
@@ -70,10 +111,11 @@ export function createStateHandler<T>({ name, collection, field, maxBodyBytes, p
       const parsed = parse(text);
       if ('error' in parsed) return reject(400, parsed.error, req);
 
+      await ensureStaleIndex(documents);
       const updatedAt = Date.now();
       await documents.updateOne(
         { _id: ownerId },
-        { $set: { [field]: parsed.data, updatedAt }, $setOnInsert: { createdAt: updatedAt } },
+        { $set: { [field]: parsed.data, updatedAt, touchedAt: new Date(updatedAt) }, $setOnInsert: { createdAt: updatedAt } },
         { upsert: true },
       );
       return json({ updatedAt });

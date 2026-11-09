@@ -11,7 +11,7 @@ import { defaultProfileState, normalizeProfileState } from "./profiles";
 export const GAME_STORE_VERSION = 4;
 
 /** How many of the newest activity log entries a snapshot sent to the server keeps */
-export const MAX_SYNCED_ACTIVITY = 500;
+export const MAX_SYNCED_ACTIVITY = 200;
 
 function readJson<T>(key: StoreName): T | undefined {
   try {

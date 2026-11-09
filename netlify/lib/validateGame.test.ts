@@ -28,11 +28,30 @@ describe('isGameSnapshot', () => {
 });
 
 describe('parseGameBody', () => {
-  it('returns the snapshot with unknown keys removed and the rest intact', () => {
+  it('returns the snapshot with unknown keys removed at every level and the rest intact', () => {
     const snapshot = JSON.parse(JSON.stringify(gameSnapshot(dealt())));
-    const padded = { ...snapshot, extra: 1, game: { ...snapshot.game, extra: 2 }, deck: { ...snapshot.deck, extra: 3 } };
+    const padded = {
+      ...snapshot,
+      extra: 1,
+      game: { ...snapshot.game, extra: 2, activityLog: snapshot.game.activityLog.map((entry: object) => ({ ...entry, $where: 'x' })) },
+      deck: { ...snapshot.deck, extra: 3, playerHands: { ...snapshot.deck.playerHands, chris: { ...snapshot.deck.playerHands.chris, 'a.b': true } } },
+      players: { ...snapshot.players, extra: 4, players: { ...snapshot.players.players, chris: { ...snapshot.players.players.chris, $set: {} } } },
+    };
     const parsed = parseGameBody(body(padded));
     expect(parsed).toEqual({ data: snapshot });
+    expect(JSON.stringify(parsed)).not.toMatch(/extra|\$where|a\.b|\$set/);
+  });
+
+  it('rejects over-long text, unknown card keys, and values outside their enumerations', () => {
+    const snapshot = JSON.parse(JSON.stringify(gameSnapshot(dealt())));
+    const entry = snapshot.game.activityLog[0];
+    expect(isGameSnapshot({ ...snapshot, game: { ...snapshot.game, activityLog: [{ ...entry, description: 'x'.repeat(201) }] } })).toBe(false);
+    expect(isGameSnapshot({ ...snapshot, game: { ...snapshot.game, activityLog: [{ ...entry, event: 'hack' }] } })).toBe(false);
+    expect(isGameSnapshot({ ...snapshot, deck: { ...snapshot.deck, cardKeys: ['<script>'] } })).toBe(false);
+    expect(isGameSnapshot({ ...snapshot, deck: { ...snapshot.deck, drawnKeys: ['Spade_7_'.repeat(8)] } })).toBe(false);
+    expect(isGameSnapshot({ ...snapshot, players: { ...snapshot.players, players: { ...snapshot.players.players, chris: { ...snapshot.players.players.chris, role: 'admin' } } } })).toBe(false);
+    expect(isGameSnapshot({ ...snapshot, players: { ...snapshot.players, players: { ...snapshot.players.players, chris: { ...snapshot.players.players.chris, title: 'x'.repeat(41) } } } })).toBe(false);
+    expect(isGameSnapshot({ ...snapshot, players: { ...snapshot.players, players: { ...snapshot.players.players, chris: { ...snapshot.players.players.chris, stats: { hacked: 'yes' } } } } })).toBe(false);
   });
 
   it('rejects bodies that are too large, not JSON, or the wrong shape', () => {

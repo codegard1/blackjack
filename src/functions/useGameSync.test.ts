@@ -11,7 +11,8 @@ import { loadSyncState, saveSyncState } from './remote';
 import { SYNC_DEBOUNCE_MS } from './useRemoteSync';
 import { toRemoteGame, useGameSync } from './useGameSync';
 
-const OWNER = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c';
+/** an id of the shape the server issues; the client only checks the shape */
+const OWNER = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c.c2lnbmVkLWJ5LXRoZS1zZXJ2ZXItZm9yLXRlc3RzLTAx';
 const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 const flush = () => act(async () => { await Promise.resolve(); await Promise.resolve(); });
 const startedGame = () => gameReducer(createGameState(), { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] });

@@ -1,22 +1,26 @@
 // @vitest-environment node
 import type { Context } from '@netlify/functions';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createGameState } from '../../src/context';
 import { GameAction } from '../../src/enums';
 import { gameReducer } from '../../src/functions/gameReducer';
 import { gameSnapshot } from '../../src/functions/persistence';
+import { resetIndexes } from '../lib/handler';
+import { mintOwnerId } from '../lib/owner';
 import handler, { config } from '../functions/game';
 
 const findOne = vi.fn();
 const updateOne = vi.fn();
-const collection = vi.fn(() => ({ findOne, updateOne }));
+const createIndex = vi.fn();
+const collection = vi.fn((name: string) => ({ findOne, updateOne, createIndex, dbName: 'blackjack', collectionName: name }));
 
 vi.mock('../lib/mongo', async (importOriginal) => ({
   ...await importOriginal<typeof import('../lib/mongo')>(),
   getDb: () => ({ collection }),
 }));
 
-const OWNER = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c';
+const SECRET = 'correct-horse-battery-staple-2026';
+const OWNER = mintOwnerId('browser', SECRET);
 const snapshot = () => JSON.parse(JSON.stringify(gameSnapshot(gameReducer(createGameState(), { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] }))));
 
 const call = (method: string, body?: unknown) => handler(
@@ -24,9 +28,16 @@ const call = (method: string, body?: unknown) => handler(
   { params: { ownerId: encodeURIComponent(OWNER) } } as unknown as Context,
 );
 
+beforeEach(() => {
+  vi.stubEnv('OWNER_ID_SECRET', SECRET);
+  createIndex.mockResolvedValue('expire-stale');
+});
+
 afterEach(() => {
   vi.clearAllMocks();
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+  resetIndexes();
 });
 
 describe('game function', () => {
@@ -53,9 +64,20 @@ describe('game function', () => {
     expect(response.status).toBe(200);
     expect(updateOne).toHaveBeenCalledWith(
       { _id: OWNER },
-      { $set: { game, updatedAt: 1700000000123 }, $setOnInsert: { createdAt: 1700000000123 } },
+      { $set: { game, updatedAt: 1700000000123, touchedAt: new Date(1700000000123) }, $setOnInsert: { createdAt: 1700000000123 } },
       { upsert: true },
     );
+  });
+
+  it('refuses an owner id the server did not issue', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const unsigned = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c';
+    const response = await handler(
+      new Request(`http://localhost/api/game/${unsigned}`, { method: 'PUT', body: JSON.stringify({ game: snapshot() }) }),
+      { params: { ownerId: unsigned } } as unknown as Context,
+    );
+    expect(response.status).toBe(403);
+    expect(updateOne).not.toHaveBeenCalled();
   });
 
   it('rejects a snapshot of the wrong shape and logs why', async () => {

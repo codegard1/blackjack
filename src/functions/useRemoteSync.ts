@@ -1,6 +1,6 @@
 import React from 'react';
 import { debugLog } from './debugLog';
-import { fetchRemote, loadSyncState, markSynced, pushRemote, SyncKind } from './remote';
+import { ensureOwnerId, fetchRemote, loadSyncState, markSynced, pushRemote, SyncKind } from './remote';
 
 /** How long changes are allowed to settle before they are sent */
 export const SYNC_DEBOUNCE_MS = 1500;
@@ -26,7 +26,8 @@ const identity = (value: unknown): unknown => value;
  * replaces the local one when it is newer than what this browser last synced;
  * otherwise the local copy is sent. After that every change is sent once it settles,
  * and a final push is attempted when the page is hidden. Failures are silent: the
- * browser copy is the fallback and nothing in the game waits on the network.
+ * browser copy is the fallback and nothing in the game waits on the network. Until
+ * the server has issued this browser an owner id nothing is sent.
  */
 export function useRemoteSync<T>({
   kind,
@@ -49,7 +50,11 @@ export function useRemoteSync<T>({
     const remoteForm = callbacks.current.toRemote(latest.current);
     const serialized = JSON.stringify(remoteForm);
     if (serialized === synced.current) return;
-    const { ownerId } = loadSyncState();
+    const ownerId = await ensureOwnerId();
+    if (ownerId === undefined) {
+      debugLog(`${kind} sync: no owner id yet; will retry on the next change`);
+      return;
+    }
     const updatedAt = await pushRemote(kind, ownerId, remoteForm, keepalive);
     if (updatedAt === undefined) {
       debugLog(`${kind} sync: push failed; will retry on the next change`);
@@ -64,7 +69,9 @@ export function useRemoteSync<T>({
     if (!enabled) return;
     let cancelled = false;
     (async () => {
-      const { ownerId, syncedAt } = loadSyncState();
+      const ownerId = await ensureOwnerId();
+      if (cancelled || ownerId === undefined) return;
+      const { syncedAt } = loadSyncState();
       const remote = await fetchRemote(kind, ownerId);
       if (cancelled) return;
       const next = remote && remote.updatedAt > syncedAt[kind] ? callbacks.current.preview(remote.data) : undefined;

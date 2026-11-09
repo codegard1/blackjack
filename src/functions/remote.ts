@@ -9,58 +9,89 @@ export const SYNC_API: Record<SyncKind, string> = {
   game: '/api/game',
 };
 
+/** Where a browser asks for its owner id */
+export const OWNER_API = '/api/owner';
+
 /** What the server holds for one owner and kind */
 export type RemoteState<T = unknown> = { data: T; updatedAt: number };
 
 /**
- * This browser's sync bookkeeping. The owner id names this browser to the server;
- * each syncedAt is the server's updatedAt from the last successful read or write of
- * that kind, so a later remote write can be recognized as newer than what this
- * browser has seen.
+ * This browser's sync bookkeeping. The owner id names this browser to the server; it
+ * is issued and signed by the server, and absent until that has happened. Each
+ * syncedAt is the server's updatedAt from the last successful read or write of that
+ * kind, so a later remote write can be recognized as newer than what this browser
+ * has seen.
  */
-export type SyncState = { ownerId: string; syncedAt: Record<SyncKind, number> };
+export type SyncState = { ownerId?: string; syncedAt: Record<SyncKind, number> };
 
 const OWNER_KIND = 'browser';
 
-const noSync = (): Record<SyncKind, number> => ({ profiles: 0, game: 0 });
+/** An id the server issued: kind, identifier, a dot and the signature */
+const SIGNED_OWNER_ID = /^[a-z]{2,16}:[A-Za-z0-9-]{8,64}\.[A-Za-z0-9_-]{20,128}$/;
 
-function randomId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
-  return Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-}
+const noSync = (): Record<SyncKind, number> => ({ profiles: 0, game: 0 });
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-/** Read a saved sync state, accepting the first release's single profiles timestamp */
+/**
+ * Read a saved sync state. An id from before ids were signed is dropped along with
+ * its sync times: the server no longer serves it, so this browser starts over with
+ * a new id and sends its local copy under that.
+ */
 function toSyncState(value: unknown): SyncState | undefined {
-  if (!isObject(value) || typeof value.ownerId !== 'string' || !value.ownerId.startsWith(`${OWNER_KIND}:`)) return undefined;
-  if (typeof value.syncedAt === 'number') return { ownerId: value.ownerId, syncedAt: { ...noSync(), profiles: value.syncedAt } };
-  if (!isObject(value.syncedAt)) return undefined;
+  if (!isObject(value)) return undefined;
+  if (typeof value.ownerId !== 'string' || !SIGNED_OWNER_ID.test(value.ownerId)) return { syncedAt: noSync() };
   const syncedAt = noSync();
-  for (const kind of Object.keys(syncedAt) as SyncKind[]) {
-    const at = value.syncedAt[kind];
-    if (typeof at === 'number') syncedAt[kind] = at;
+  if (isObject(value.syncedAt)) {
+    for (const kind of Object.keys(syncedAt) as SyncKind[]) {
+      const at = value.syncedAt[kind];
+      if (typeof at === 'number') syncedAt[kind] = at;
+    }
   }
   return { ownerId: value.ownerId, syncedAt };
 }
 
-/**
- * The saved sync state, creating and saving a fresh owner id when there is none.
- * The id is random and lives only in this browser; it is the key the server stores
- * this browser's state under until a signed-in identity replaces it.
- */
+/** The saved sync state; without an owner id until the server has issued one */
 export function loadSyncState(): SyncState {
   try {
     const raw = localStorage.getItem(StoreName.SYNCSTORE);
     const saved = toSyncState(raw === null ? undefined : JSON.parse(raw));
     if (saved) return saved;
   } catch {
-    // unreadable or unavailable storage: start over below
+    // unreadable or unavailable storage
   }
-  const fresh = { ownerId: `${OWNER_KIND}:${randomId()}`, syncedAt: noSync() };
-  saveSyncState(fresh);
-  return fresh;
+  return { syncedAt: noSync() };
+}
+
+let minting: Promise<string | undefined> | undefined;
+
+/**
+ * This browser's owner id, asking the server for one the first time. Concurrent
+ * callers share the one request. Resolves to undefined when the server cannot be
+ * reached; the next call asks again.
+ */
+export function ensureOwnerId(): Promise<string | undefined> {
+  const { ownerId } = loadSyncState();
+  if (ownerId) return Promise.resolve(ownerId);
+  if (!minting) {
+    minting = (async () => {
+      try {
+        const response = await fetch(OWNER_API, { method: 'POST', headers: { Accept: 'application/json' } });
+        if (!response.ok) return undefined;
+        const body: unknown = await response.json();
+        const issued = isObject(body) ? body.ownerId : undefined;
+        if (typeof issued !== 'string' || !SIGNED_OWNER_ID.test(issued) || !issued.startsWith(`${OWNER_KIND}:`)) return undefined;
+        saveSyncState({ ownerId: issued, syncedAt: noSync() });
+        return issued;
+      } catch {
+        return undefined;
+      } finally {
+        minting = undefined;
+      }
+    })();
+  }
+  return minting;
 }
 
 export function saveSyncState(state: SyncState): void {

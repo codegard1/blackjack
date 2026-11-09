@@ -1,27 +1,26 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { StoreName } from '../enums';
 import { defaultProfileState } from './profiles';
-import { fetchRemote, loadSyncState, markSynced, pushRemote, saveSyncState, SYNC_API } from './remote';
+import { ensureOwnerId, fetchRemote, loadSyncState, markSynced, OWNER_API, pushRemote, saveSyncState, SYNC_API } from './remote';
 
-const OWNER = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c';
+const OWNER = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c.c2lnbmVkLWJ5LXRoZS1zZXJ2ZXItZm9yLXRlc3RzLTAx';
+const UNSIGNED = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c';
 const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('loadSyncState', () => {
-  it('creates a browser owner id once and keeps it', () => {
-    const first = loadSyncState();
-    expect(first.ownerId).toMatch(/^browser:[0-9a-f-]{32,36}$/);
-    expect(first.syncedAt).toEqual({ profiles: 0, game: 0 });
-    expect(loadSyncState()).toEqual(first);
-    expect(JSON.parse(localStorage.getItem(StoreName.SYNCSTORE) ?? '')).toEqual(first);
+  it('has no owner id until the server has issued one', () => {
+    expect(loadSyncState()).toEqual({ syncedAt: { profiles: 0, game: 0 } });
+    localStorage.setItem(StoreName.SYNCSTORE, '{not json');
+    expect(loadSyncState().ownerId).toBeUndefined();
   });
 
-  it('starts over when the saved state is unreadable', () => {
-    localStorage.setItem(StoreName.SYNCSTORE, '{not json');
-    expect(loadSyncState().ownerId).toMatch(/^browser:/);
-    localStorage.setItem(StoreName.SYNCSTORE, JSON.stringify({ ownerId: 'github:1', syncedAt: 5 }));
-    expect(loadSyncState().ownerId).toMatch(/^browser:/);
+  it('drops an id from before ids were signed, and its sync times with it', () => {
+    localStorage.setItem(StoreName.SYNCSTORE, JSON.stringify({ ownerId: UNSIGNED, syncedAt: { profiles: 42, game: 7 } }));
+    expect(loadSyncState()).toEqual({ syncedAt: { profiles: 0, game: 0 } });
+    localStorage.setItem(StoreName.SYNCSTORE, JSON.stringify({ ownerId: UNSIGNED, syncedAt: 42 }));
+    expect(loadSyncState()).toEqual({ syncedAt: { profiles: 0, game: 0 } });
   });
 
   it('round-trips the sync times and records one kind at a time', () => {
@@ -31,9 +30,36 @@ describe('loadSyncState', () => {
     expect(loadSyncState().syncedAt).toEqual({ profiles: 42, game: 9 });
   });
 
-  it('reads the first release, which kept a single profiles time', () => {
-    localStorage.setItem(StoreName.SYNCSTORE, JSON.stringify({ ownerId: OWNER, syncedAt: 42 }));
-    expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 42, game: 0 } });
+});
+
+describe('ensureOwnerId', () => {
+  it('returns the stored id without asking the server', async () => {
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 1, game: 2 } });
+    const fetch = vi.fn();
+    vi.stubGlobal('fetch', fetch);
+    expect(await ensureOwnerId()).toBe(OWNER);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('asks the server once, even for concurrent callers, and keeps what it issues', async () => {
+    const fetch = vi.fn().mockResolvedValue(jsonResponse({ ownerId: OWNER }, 201));
+    vi.stubGlobal('fetch', fetch);
+    const [a, b] = await Promise.all([ensureOwnerId(), ensureOwnerId()]);
+    expect(a).toBe(OWNER);
+    expect(b).toBe(OWNER);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch.mock.calls[0]).toEqual([OWNER_API, expect.objectContaining({ method: 'POST' })]);
+    expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
+  });
+
+  it('resolves to undefined, and keeps nothing, when the server refuses or sends an unsigned id', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'Server is not configured.' }, 500)));
+    expect(await ensureOwnerId()).toBeUndefined();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ ownerId: UNSIGNED }, 201)));
+    expect(await ensureOwnerId()).toBeUndefined();
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    expect(await ensureOwnerId()).toBeUndefined();
+    expect(loadSyncState().ownerId).toBeUndefined();
   });
 });
 

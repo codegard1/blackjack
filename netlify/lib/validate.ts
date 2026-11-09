@@ -10,15 +10,16 @@ export type ProfileDocument = {
   createdAt: number;
 };
 
-/** The largest request body a profiles PUT accepts; a profile set is a few kilobytes */
-export const MAX_BODY_BYTES = 64 * 1024;
-const MAX_PROFILES = 100;
+/** The largest request body a profiles PUT accepts; twenty-five profiles are about 7 KB */
+export const MAX_BODY_BYTES = 16 * 1024;
+const MAX_PROFILES = 50;
 const MAX_OPPONENTS = 10;
 const MAX_STAT_KEYS = 20;
 
 /**
- * Owner ids are a kind, a colon, and an identifier. Today the kind is `browser`;
- * a signed-in identity such as `github:<id>` fits the same shape.
+ * Owner ids are a kind, a colon, an identifier, a dot and a signature (see owner.ts).
+ * Today the kind is `browser`; a signed-in identity such as `github:<id>` fits the
+ * same shape. This is the cheap shape check; the signature is verified separately.
  */
 const OWNER_ID = /^[a-z]{2,16}:[A-Za-z0-9._-]{8,128}$/;
 
@@ -49,7 +50,7 @@ export function parseJsonBody(text: string): { body: Record<string, unknown> } |
   return isObject(body) ? { body } : { error: 'Body must be a JSON object.' };
 }
 
-function isStats(value: unknown): value is PlayerStats {
+export function isStats(value: unknown): value is PlayerStats {
   if (!isObject(value)) return false;
   const entries = Object.entries(value);
   return entries.length <= MAX_STAT_KEYS
