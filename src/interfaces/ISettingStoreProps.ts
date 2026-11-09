@@ -7,7 +7,6 @@ export interface ISettingStoreState {
   isDeckVisible: boolean;
   isDrawnVisible: boolean;
   isHandValueVisible: boolean;
-  isMessageBarVisible: boolean;
   isOptionsPanelVisible: boolean;
   isSelectedVisible: boolean;
 }
@@ -19,7 +18,6 @@ export interface ISettingStoreProps extends ISettingStoreState {
   setDeckVisible: React.Dispatch<React.SetStateAction<boolean>>;
   setDrawnVisible: React.Dispatch<React.SetStateAction<boolean>>;
   setHandValueVisible: React.Dispatch<React.SetStateAction<boolean>>;
-  setMessageBarVisible: React.Dispatch<React.SetStateAction<boolean>>;
   setOptionsPanelVisible: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }

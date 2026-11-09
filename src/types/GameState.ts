@@ -1,6 +1,6 @@
 import { PlayerStore, PlayingCardDeck } from "../classes";
 import { GameStatus } from "../enums";
-import { MessageBarDefinition, PlayerKey } from "./";
+import { PlayerKey } from "./";
 
 export type GameState = {
   activityLog: ActivityLogEntry[];
@@ -12,7 +12,6 @@ export type GameState = {
   isSpinnerVisible: boolean;
   lastWriteTime: string;
   loser?: PlayerKey;
-  messageBarDefinition: MessageBarDefinition;
   minimumBet: number;
   playerStore: PlayerStore;
   pot: number;

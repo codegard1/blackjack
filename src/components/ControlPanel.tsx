@@ -20,7 +20,7 @@ import {
 } from '@fluentui/react-icons';
 
 // Local Resources
-import { useGameContext, usePlayersDialog, usePotAnimation, useProfileContext, useSettingContext } from "../context";
+import { useGameContext, usePlayersDialog, usePotAnimation, useProfileContext } from "../context";
 import { GameAction, GameStatus } from "../enums";
 import { canDoubleDown } from "../functions/gameReducer";
 import { seatsFor } from "../functions/profiles";
@@ -68,7 +68,6 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
 
   // State from context
   const { gameState, gameDispatch } = useGameContext();
-  const { toggleSetting } = useSettingContext();
   const openPlayers = usePlayersDialog();
   const { profiles } = useProfileContext();
   const { gameStatus, minimumBet } = gameState;
@@ -91,17 +90,11 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const waitUnless = (isDisabled: boolean) => isWaiting && !isDisabled;
 
   const _hit = () => {
-    toggleSetting({ key: 'isMessageBarVisible', value: true });
     gameDispatch({ type: GameAction.Draw, playerKey, numberOfCards: 1, deckSide: 'top' });
   }
 
   const deal = () => {
     gameDispatch({ type: GameAction.Deal });
-    toggleSetting({ key: 'isMessageBarVisible', value: true });
-    gameDispatch({
-      type: GameAction.ShowMessageBar,
-      messageBarDefinition: { text: 'New Round', type: 'info', isMultiLine: false },
-    });
   };
 
   // The hand is over, so a roster change made during play takes effect before the next deal

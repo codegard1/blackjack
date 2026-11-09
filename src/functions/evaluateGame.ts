@@ -6,7 +6,7 @@ import { collectAntes, isDealer, roundStake } from "./round";
 
 export { roundStake } from "./round";
 
-/** How a settled hand reads in the activity log and the result message */
+/** How a settled hand reads in the activity log */
 export function describeResult(player: IPlayer): string {
   const net = player.net ?? 0;
   if (isDealer(player)) {
@@ -19,13 +19,6 @@ export function describeResult(player: IPlayer): string {
     case 'loss': return player.isBusted ? `busted, lost $${-net}` : `lost $${-net}`;
     default: return '';
   }
-}
-
-/** One line for a settled round: each seat's result in seating order, the dealer last */
-export function roundResultText(players: IPlayer[]): string {
-  const settled = players.filter((player) => player.result);
-  const ordered = [...settled.filter((player) => !isDealer(player)), ...settled.filter(isDealer)];
-  return ordered.length ? ordered.map((player) => `${player.title}: ${describeResult(player)}`).join('. ') + '.' : '';
 }
 
 function activityEvent(player: IPlayer): 'win' | 'loss' | 'push' {

@@ -30,7 +30,6 @@ export type SettingsState = {
   isHandValueVisible: boolean;
   isOptionsPanelVisible: boolean;
   isSelectedVisible: boolean;
-  isMessageBarVisible: boolean;
   themeMode: ThemeMode;
   accent: AccentKey;
   cardStyle: CardStyle;

@@ -2,17 +2,15 @@
 import React from 'react';
 
 // FluentUI
-import { Button, FluentProvider, MessageBar, MessageBarActions, MessageBarBody, makeStyles, tokens } from '@fluentui/react-components';
-import { Dismiss20Regular } from '@fluentui/react-icons';
+import { FluentProvider, makeStyles, tokens } from '@fluentui/react-components';
 
 // Local Resources
 import './App.css';
 import { AppHeader, OptionsPanel, PlayersDialog, Table } from './components';
 import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
 import { GameAction, GameStatus } from './enums';
-import { collectStats, gameReducer, isBetweenHands, isHuman, isRoundOver, loadGameState, loadProfiles, loadSettings, profileReducer, roundResultText, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, useProfileSync } from './functions';
+import { collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, useProfileSync } from './functions';
 import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark, PAGE_GUTTER } from './theme';
-import { MessageBarDefinition, MessageIntent } from './types';
 
 // The page behind the table: a striped felt drawn from the brand color, so it follows
 // the accent and the light or dark mode. Fluent's tokens resolve inside the provider.
@@ -49,44 +47,6 @@ const App = () => {
   const prefersDark = usePrefersDark();
   const themeMode = resolveThemeMode(settings.themeMode, prefersDark);
   const theme = createAppTheme(themeMode, settings.accent);
-  const players = gameState.playerStore.all;
-  const human = players.find(isHuman);
-  // once the round is settled, each seat's result in seating order, the dealer last
-  const isSettled = gameState.gameStatusFlag && isRoundOver(gameState.gameStatus);
-  const resultText = isSettled ? roundResultText(players)
-    : gameState.gameStatus === GameStatus.GameOver ? 'Game over.' : '';
-  const resultKey = `result:${gameState.round}:${gameState.gameStatus}`;
-  const resultIntent: MessageIntent = human?.result === 'win' || human?.result === 'blackjack'
-    ? 'success'
-    : human?.result === 'push' ? 'info' : 'warning';
-  const roundStartedEntry = gameState.activityLog.find((entry) =>
-    entry.round === gameState.round && entry.event === 'round',
-  );
-  const messageDefinition = settings.isMessageBarVisible && gameState.messageBarDefinition.text
-    ? gameState.messageBarDefinition
-    : undefined;
-  const activeMessage = resultText
-    ? { key: resultKey, text: resultText, type: resultIntent }
-    : messageDefinition
-      ? {
-        key: messageDefinition,
-        text: messageDefinition.text === 'New Round' ? roundStartedEntry?.description ?? messageDefinition.text : messageDefinition.text,
-        type: messageDefinition.type,
-      }
-      : undefined;
-  const [visibleMessageKey, setVisibleMessageKey] = React.useState<string | MessageBarDefinition>();
-  const activeMessageKey = activeMessage?.key;
-
-  React.useEffect(() => {
-    if (!activeMessageKey) {
-      setVisibleMessageKey(undefined);
-      return;
-    }
-
-    setVisibleMessageKey(activeMessageKey);
-    const timeoutId = window.setTimeout(() => setVisibleMessageKey(undefined), 3000);
-    return () => window.clearTimeout(timeoutId);
-  }, [activeMessageKey]);
 
   // Persist game, settings and player profiles so a reload resumes where the player left off
   React.useEffect(() => saveSettings(settings), [settings]);
@@ -143,22 +103,6 @@ const App = () => {
 
                   <PlayersDialogContext.Provider value={openPlayers}>
                   <AppHeader />
-
-                  {activeMessage && visibleMessageKey === activeMessage.key && (
-                    <MessageBar intent={activeMessage.type}>
-                      <MessageBarBody>{activeMessage.text}</MessageBarBody>
-                      <MessageBarActions
-                        containerAction={
-                          <Button
-                            appearance="transparent"
-                            aria-label="Dismiss message"
-                            icon={<Dismiss20Regular />}
-                            onClick={() => setVisibleMessageKey(undefined)}
-                          />
-                        }
-                      />
-                    </MessageBar>
-                  )}
 
                   <OptionsPanel />
                   <div className="app-content">

@@ -1,7 +1,7 @@
 import { PlayerStore } from "../classes/PlayerStore";
 import { PlayingCard } from "../classes/PlayingCard";
 import { PlayingCardDeck } from "../classes/PlayingCardDeck";
-import { createGameState, gameDefaults } from "../context";
+import { createGameState } from "../context";
 import { defaultplayersArr } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
 import { IGameReducerAction, IPlayerOptions } from "../interfaces";
@@ -58,7 +58,6 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     deckSide,
     deckState,
     gameStatus,
-    messageBarDefinition,
     minimumBet,
     numberOfCards,
     playerKey,
@@ -97,15 +96,6 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     // Toggle visibility of the spinner
     case GameAction.SetSpinnerVisible: {
       state.isSpinnerVisible = !state.isSpinnerVisible;
-      return state;
-    }
-
-    case GameAction.ShowMessageBar: {
-      if (undefined === messageBarDefinition) {
-        state.messageBarDefinition = gameDefaults.messageBarDefinition;
-      } else {
-        state.messageBarDefinition = messageBarDefinition;
-      }
       return state;
     }
 

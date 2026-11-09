@@ -14,7 +14,6 @@ const createGameState = (): GameState => ({
   ...gameDefaults,
   deck: new PlayingCardDeck(),
   playerStore: new PlayerStore(),
-  messageBarDefinition: { ...gameDefaults.messageBarDefinition },
 });
 
 const startDefaultGame = (): GameState => {
