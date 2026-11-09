@@ -128,4 +128,28 @@ describe('dealer autoplay', () => {
     act(() => vi.advanceTimersByTime(1));
     expect(gameDispatch).toHaveBeenCalledWith({ type: GameAction.DoubleDown, playerKey: 'shevek' });
   });
+
+  it('dispatches a split for the active hand selected by its strategy', () => {
+    const gameState = createGameState();
+    gameState.gameStatus = GameStatus.InProgress;
+    const gameDispatch = vi.fn<(action: IGameReducerAction) => void>();
+    render(
+      <GameContext.Provider value={gameState}>
+        <GameDispatchContext.Provider value={gameDispatch}>
+          <Agent
+            hasControl
+            gameStatus={gameState.gameStatus}
+            handValue={{ aceAsEleven: 16, aceAsOne: 16, highest: 16 }}
+            playerKey="shevek"
+            handIndex={1}
+            decide={() => 'split'}
+            delayMs={BOT_ACTION_DELAY_MS}
+          />
+        </GameDispatchContext.Provider>
+      </GameContext.Provider>,
+    );
+
+    act(() => vi.advanceTimersByTime(BOT_ACTION_DELAY_MS));
+    expect(gameDispatch).toHaveBeenCalledWith({ type: GameAction.Split, playerKey: 'shevek', handIndex: 1 });
+  });
 });

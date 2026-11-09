@@ -26,7 +26,7 @@ export type ActivityLogEntry = {
   sessionId?: number;
   /** the hand this entry belongs to; absent in logs saved before hands were tracked */
   round?: number;
-  event?: 'game' | 'round' | 'deal' | 'draw' | 'ante' | 'bet' | 'double' | 'stay' | 'win' | 'loss' | 'push' | 'shuffle';
+  event?: 'game' | 'round' | 'deal' | 'draw' | 'ante' | 'bet' | 'double' | 'split' | 'stay' | 'win' | 'loss' | 'push' | 'shuffle';
   timestamp: number;
   name: string;
   description: string;

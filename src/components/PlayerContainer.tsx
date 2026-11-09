@@ -81,6 +81,26 @@ const useStyles = makeStyles({
     alignItems: 'center',
     gap: tokens.spacingVerticalM,
   },
+  hands: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: tokens.spacingHorizontalM,
+    width: '100%',
+  },
+  hand: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: tokens.spacingVerticalXS,
+    minWidth: 0,
+    padding: tokens.spacingVerticalXS,
+    borderRadius: tokens.borderRadiusLarge,
+  },
+  activeHand: {
+    outline: `${tokens.strokeWidthThick} solid ${tokens.colorBrandStroke1}`,
+    backgroundColor: tokens.colorBrandBackground2,
+  },
   sparkles: {
     position: 'absolute',
     inset: 0,
@@ -133,12 +153,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
     player.isFinished ||
     player.isStaying ||
     !player.turn);
-  const deckState = gameState.deck.state;
-  const playerHand = deckState.playerHands[playerKey] ?? {
-    cards: [],
-    handValue: { aceAsEleven: 0, aceAsOne: 0, highest: 0 },
-  };
-  const { cards, handValue } = playerHand;
+  const hands = gameState.deck.getHands(playerKey);
 
   const { gameStatus } = gameState;
   const isWinner = isSeatWinner(player, gameStatus);
@@ -198,13 +213,32 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
       <div className={styles.body}>
         <div id={id} className="player-hand">
-          <CardStack
-            cards={cards}
-            hidden={cards.length === 0}
-            isSelectable
-            player={player}
-            title={player.title}
-          />
+          <div className={styles.hands}>
+            {hands.map((hand, index) => {
+              const isActiveHand = gameState.controllingPlayer === playerKey
+                && gameState.activeHandIndex === index
+                && !isRoundOver(gameStatus);
+              return (
+                <div
+                  key={index}
+                  className={mergeClasses(styles.hand, hands.length > 1 && isActiveHand && styles.activeHand)}
+                  aria-label={hands.length > 1 ? `${player.title}'s hand ${index + 1}${isActiveHand ? ', active' : ''}` : undefined}
+                  role={hands.length > 1 ? 'group' : undefined}
+                  aria-current={isActiveHand ? 'true' : undefined}
+                >
+                  {hands.length > 1 && <Text size={200} weight={isActiveHand ? 'semibold' : 'regular'}>{`Hand ${index + 1}${isActiveHand ? ' · Active' : ''}`}</Text>}
+                  <CardStack
+                    cards={hand.cards}
+                    hidden={hand.cards.length === 0}
+                    isSelectable
+                    player={player}
+                    title={player.title}
+                  />
+                  {hand.result && <Text size={200}>{hand.isBusted ? 'Busted' : hand.result === 'blackjack' ? 'Blackjack' : hand.result}</Text>}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {player.isNPC && isActive &&

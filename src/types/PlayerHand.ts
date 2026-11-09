@@ -8,6 +8,7 @@ export type PlayerHand = {
   handValue: PlayerHandValue;
   splitHands?: PlayerHand[];
   stake?: number;
+  net?: number;
   result?: RoundResult;
   isBusted?: boolean;
   isStaying?: boolean;

@@ -6,7 +6,7 @@ import { GameAction, GameStatus } from '../enums';
 import { GameState } from '../types';
 import { gameReducer } from './gameReducer';
 import { defaultProfileState, seatsFor } from './profiles';
-import { decideSeatMove } from './round';
+import { canDoubleDown, canSplit, decideSeatMove } from './round';
 import { handValue } from './getHandValue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -372,6 +372,90 @@ const dealSeats = (state: GameState, hands: string[][], draws: string[] = []): G
 
 const stay = (state: GameState, playerKey: string) => gameReducer(state, { type: GameAction.Stay, playerKey });
 const hit = (state: GameState, playerKey: string) => gameReducer(state, { type: GameAction.Draw, playerKey, deckSide: 'top', numberOfCards: 1 });
+
+describe('split hands', () => {
+  it('splits an exact-rank pair for an equal stake and plays each hand in turn', () => {
+    let state = dealSeats(startDefaultGame(), [['Club_8', 'Heart_8'], ['Club_10', 'Diamond_8']], ['Spade_10', 'Spade_9']);
+
+    expect(canSplit(state, 'chris')).toBe(true);
+    state = gameReducer(state, { type: GameAction.Split, playerKey: 'chris' });
+
+    expect(state.deck.getHands('chris').map((hand) => hand.cards)).toEqual([
+      ['Club_8', 'Spade_10'],
+      ['Heart_8', 'Spade_9'],
+    ]);
+    expect(state.deck.getHands('chris').map((hand) => hand.stake)).toEqual([25, 25]);
+    expect(state.playerStore.player('chris').bank).toBe(950);
+    expect(state.pot).toBe(50);
+    expect(state.controllingPlayer).toBe('chris');
+    expect(state.activeHandIndex).toBe(0);
+    expect(canDoubleDown(state, 'chris')).toBe(false);
+
+    state = stay(state, 'chris');
+    expect(state.controllingPlayer).toBe('chris');
+    expect(state.activeHandIndex).toBe(1);
+    expect(canSplit(state, 'chris')).toBe(false);
+  });
+
+  it('keeps a second hand in play when the first hand busts', () => {
+    let state = dealSeats(startDefaultGame(), [['Club_8', 'Heart_8'], ['Club_10', 'Diamond_8']], ['Spade_10', 'Spade_9', 'Diamond_5']);
+    state = gameReducer(state, { type: GameAction.Split, playerKey: 'chris' });
+
+    state = hit(state, 'chris');
+
+    expect(state.deck.getHand('chris', 0).handValue.highest).toBe(23);
+    expect(state.deck.hand('chris', 0)?.result).toBe('loss');
+    expect(state.playerStore.player('chris').isBusted).toBe(false);
+    expect(state.playerStore.player('chris').result).toBeUndefined();
+    expect(state.controllingPlayer).toBe('chris');
+    expect(state.activeHandIndex).toBe(1);
+  });
+
+  it('stands split aces after one card each and does not award a natural for 21', () => {
+    let state = dealSeats(startDefaultGame(), [['Club_14', 'Heart_14'], ['Club_10', 'Diamond_7']], ['Spade_10', 'Spade_8']);
+    state = gameReducer(state, { type: GameAction.Split, playerKey: 'chris' });
+
+    expect(state.deck.getHands('chris').map((hand) => hand.cards)).toEqual([
+      ['Club_14', 'Spade_10'],
+      ['Heart_14', 'Spade_8'],
+    ]);
+    expect(state.deck.getHands('chris').every((hand) => hand.isSplitAces && hand.isStaying)).toBe(true);
+    expect(state.deck.hand('chris', 0)?.isBlackjack).not.toBe(true);
+    expect(state.controllingPlayer).toBe('dealer');
+    expect(canSplit(state, 'chris')).toBe(false);
+
+    state = stay(state, 'dealer');
+    state = settle(state);
+    expect(state.deck.getHand('chris', 0).handValue.highest).toBe(21);
+    expect(state.deck.getHands('chris').map((hand) => hand.result)).toEqual(['win', 'win']);
+    expect(state.playerStore.player('chris').stats.numberOfTimesBlackjack).toBe(0);
+    expect(state.playerStore.player('chris').stats.numberOfGamesPlayed).toBe(2);
+  });
+
+  it('settles mixed outcomes and counts each hand in the statistics', () => {
+    let state = dealSeats(startDefaultGame(), [['Club_8', 'Heart_8'], ['Club_10', 'Diamond_8']], ['Spade_10', 'Spade_9', 'Diamond_2']);
+    state = gameReducer(state, { type: GameAction.Split, playerKey: 'chris' });
+    state = hit(state, 'chris');
+    state = stay(state, 'chris');
+    state = stay(state, 'chris');
+    state = stay(state, 'dealer');
+    state = settle(state);
+
+    expect(state.deck.getHands('chris').map((hand) => hand.result)).toEqual(['win', 'loss']);
+    expect(state.playerStore.player('chris').bank).toBe(1000);
+    expect(state.playerStore.player('chris').stats).toMatchObject({
+      numberOfGamesPlayed: 2,
+      numberOfGamesWon: 1,
+      numberOfGamesLost: 1,
+    });
+    expect(state.playerStore.player('dealer').bank).toBe(1000);
+  });
+
+  it('does not treat different ten-value ranks as a pair', () => {
+    const state = dealSeats(startDefaultGame(), [['Club_10', 'Heart_13'], ['Club_10', 'Diamond_8']]);
+    expect(canSplit(state, 'chris')).toBe(false);
+  });
+});
 
 describe('computer players', () => {
   it('seats the human, then the computer players, then the dealer, and only players ante', () => {

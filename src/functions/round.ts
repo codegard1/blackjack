@@ -46,7 +46,7 @@ export function seatOrder(state: GameState): PlayerKey[] {
 
 /** True when the seat was dealt into the current round */
 export function hasHand(state: GameState, player: IPlayer): boolean {
-  return !player.isSittingOut && (state.deck.playerHands[player.key]?.cards.length ?? 0) > 0;
+  return !player.isSittingOut && state.deck.getHands(player.key).some((hand) => hand.cards.length > 0);
 }
 
 /** Amount a player has put on the table this round (ante plus wagers). */
@@ -60,16 +60,30 @@ export function roundStake(state: GameState, key: PlayerKey): number {
  * round, they are not the dealer, they hold exactly two cards, and they can
  * cover their stake.
  */
-export function canDoubleDown(state: GameState, playerKey: PlayerKey): boolean {
+export function canDoubleDown(state: GameState, playerKey: PlayerKey, handIndex = state.activeHandIndex): boolean {
   const player = state.playerStore.player(playerKey);
   const stake = roundStake(state, playerKey);
+  const hand = state.deck.hand(playerKey, handIndex);
   return !!player
     && !isDealer(player)
     && state.gameStatus === GameStatus.InProgress
     && state.playerStore.currentPlayerKey === playerKey
-    && state.deck.playerHands[playerKey]?.cards.length === 2
+    && hand?.cards.length === 2
+    && !hand.isSplit
     && stake > 0
     && player.bank >= stake;
+}
+
+/** A split is allowed once, on a same-rank pair, when the player can match the stake. */
+export function canSplit(state: GameState, playerKey: PlayerKey, handIndex = state.activeHandIndex): boolean {
+  const player = state.playerStore.player(playerKey);
+  const hand = state.deck.hand(playerKey, handIndex);
+  if (!player || isDealer(player) || state.gameStatus !== GameStatus.InProgress
+    || state.playerStore.currentPlayerKey !== playerKey || handIndex !== state.activeHandIndex
+    || !hand || hand.isSplit || hand.cards.length !== 2) return false;
+  const rank = (card: string) => card.slice(card.lastIndexOf('_') + 1);
+  const stake = roundStake(state, playerKey);
+  return rank(hand.cards[0]) === rank(hand.cards[1]) && stake > 0 && player.bank >= stake;
 }
 
 /**
@@ -77,16 +91,19 @@ export function canDoubleDown(state: GameState, playerKey: PlayerKey): boolean {
  * stands otherwise; a computer character plays to its stats, against the
  * dealer's face-up card.
  */
-export function decideSeatMove(state: GameState, key: PlayerKey, rng: Rng = Math.random): BotMove {
+export function decideSeatMove(state: GameState, key: PlayerKey, rng: Rng = Math.random, handIndex = state.activeHandIndex): BotMove {
   const player = state.playerStore.player(key);
-  const cards = state.deck.playerHands[key]?.cards ?? [];
+  const cards = state.deck.hand(key, handIndex)?.cards ?? [];
   const stats = isBot(player) ? getCharacter(key)?.stats : undefined;
-  if (!stats) return state.deck.getHandValue(key).highest < 17 ? 'hit' : 'stay';
+  if (!stats) return state.deck.getHandValue(key, handIndex).highest < 17 ? 'hit' : 'stay';
 
   const dealer = getDealer(state);
   // the dealer's first card is the hole card; the second is face up
   const dealerUpCard = dealer ? state.deck.playerHands[dealer.key]?.cards[1] : undefined;
-  return decideBotMove({ cards, dealerUpCard, stats, lossStreak: player.lossStreak, canDouble: canDoubleDown(state, key), rng });
+  return decideBotMove({
+    cards, dealerUpCard, stats, lossStreak: player.lossStreak,
+    canDouble: canDoubleDown(state, key, handIndex), canSplit: canSplit(state, key, handIndex), rng,
+  });
 }
 
 /** Hand control to a seat */
@@ -100,8 +117,9 @@ export function setControl(state: GameState, key: PlayerKey): void {
 }
 
 /** A seat that still has to play its hand */
-function isAwaitingTurn(state: GameState, player: IPlayer): boolean {
-  return hasHand(state, player) && !player.result && !player.isStaying && !player.isBusted;
+function playableHandIndex(state: GameState, player: IPlayer, fromIndex = 0): number {
+  return state.deck.getHands(player.key).findIndex((hand, index) => index >= fromIndex
+    && hand.cards.length > 0 && !hand.result && !hand.isStaying && !hand.isBusted);
 }
 
 /**
@@ -110,18 +128,32 @@ function isAwaitingTurn(state: GameState, player: IPlayer): boolean {
  * plays if any hand is still waiting on the dealer's total; otherwise the
  * round ends without the dealer drawing.
  */
-export function advanceTurn(state: GameState, fromKey?: PlayerKey): void {
+export function advanceTurn(state: GameState, fromKey?: PlayerKey, fromHandIndex = state.activeHandIndex): void {
   const seats = playerSeats(state);
+  if (fromKey !== undefined) {
+    const sameSeat = state.playerStore.player(fromKey);
+    const nextHandIndex = sameSeat ? playableHandIndex(state, sameSeat, fromHandIndex + 1) : -1;
+    if (sameSeat && nextHandIndex >= 0) {
+      state.activeHandIndex = nextHandIndex;
+      setControl(state, fromKey);
+      return;
+    }
+  }
+
   const start = fromKey === undefined ? 0 : seats.findIndex((player) => player.key === fromKey) + 1;
-  const next = seats.slice(start).find((player) => isAwaitingTurn(state, player));
-  if (next) {
-    setControl(state, next.key);
-    return;
+  for (const next of seats.slice(start)) {
+    const handIndex = playableHandIndex(state, next);
+    if (handIndex >= 0) {
+      state.activeHandIndex = handIndex;
+      setControl(state, next.key);
+      return;
+    }
   }
 
   const dealer = getDealer(state);
-  const waitingOnDealer = seats.some((player) => hasHand(state, player) && !player.result);
+  const waitingOnDealer = seats.some((player) => state.deck.getHands(player.key).some((hand) => hand.cards.length && !hand.result));
   if (dealer && waitingOnDealer) {
+    state.activeHandIndex = playableHandIndex(state, dealer);
     setControl(state, dealer.key);
   } else {
     resolveShowdown(state);
@@ -135,23 +167,29 @@ export function advanceTurn(state: GameState, fromKey?: PlayerKey): void {
  */
 export function resolveNaturals(state: GameState): void {
   state.playerStore.all.forEach((player) => {
-    const hand = state.deck.playerHands[player.key];
-    player.isBlackjack = hasHand(state, player) && hand.cards.length === 2 && state.deck.getHandValue(player.key).highest === 21;
+    const hand = state.deck.hand(player.key);
+    player.isBlackjack = hasHand(state, player) && hand?.cards.length === 2 && state.deck.getHandValue(player.key).highest === 21;
+    if (hand) {
+      hand.stake = isDealer(player) ? 0 : roundStake(state, player.key);
+      hand.isBlackjack = !!player.isBlackjack;
+      hand.result = hand.isBlackjack ? 'blackjack' : undefined;
+      if (hand.isBlackjack) player.result = 'blackjack';
+    }
   });
 
   const seats = playerSeats(state).filter((player) => hasHand(state, player));
   const dealer = getDealer(state);
 
   if (dealer?.isBlackjack) {
-    seats.forEach((player) => { player.result = player.isBlackjack ? 'push' : 'loss'; });
+    seats.forEach((player) => {
+      state.deck.getHands(player.key).forEach((hand) => {
+        hand.result = hand.isBlackjack ? 'push' : 'loss';
+      });
+    });
     finishRound(state);
     return;
   }
 
-  seats.filter((player) => player.isBlackjack).forEach((player) => {
-    player.result = 'blackjack';
-    state.playerStore.finish(player.key);
-  });
   advanceTurn(state);
 }
 
@@ -164,9 +202,12 @@ export function resolveShowdown(state: GameState): void {
   const dealerTotal = dealer ? state.deck.getHandValue(dealer.key).highest : 0;
   const dealerBusted = !dealer || dealerTotal > 21;
 
-  playerSeats(state).filter((player) => hasHand(state, player) && !player.result).forEach((player) => {
-    const total = state.deck.getHandValue(player.key).highest;
-    player.result = dealerBusted || total > dealerTotal ? 'win' : total === dealerTotal ? 'push' : 'loss';
+  playerSeats(state).filter((player) => hasHand(state, player)).forEach((player) => {
+    state.deck.getHands(player.key).forEach((hand, handIndex) => {
+      if (!hand.cards.length || hand.result) return;
+      const total = state.deck.getHandValue(player.key, handIndex).highest;
+      hand.result = dealerBusted || total > dealerTotal ? 'win' : total === dealerTotal ? 'push' : 'loss';
+    });
   });
   finishRound(state);
 }
@@ -189,11 +230,20 @@ export function finishRound(state: GameState): void {
   const dealer = getDealer(state);
   let dealerNet = 0;
 
-  playerSeats(state).filter((player) => player.result).forEach((player) => {
-    player.net = netFor(player.result, roundStake(state, player.key));
+  playerSeats(state).forEach((player) => {
+    const hands = state.deck.getHands(player.key).filter((hand) => hand.result);
+    if (hands.length === 0) return;
+    player.net = hands.reduce((total, hand) => total + netFor(hand.result, hand.stake ?? roundStake(state, player.key)), 0);
+    const results = hands.map((hand) => hand.result);
+    player.result = results.every((result) => result === results[0])
+      ? results[0]
+      : player.net > 0 ? 'win' : player.net < 0 ? 'loss' : 'push';
+    player.isBusted = hands.every((hand) => hand.isBusted);
+    player.isStaying = true;
+    player.isBlackjack = hands.some((hand) => hand.isBlackjack);
     dealerNet -= player.net;
-    if (player.result === 'loss') player.lossStreak = (player.lossStreak ?? 0) + 1;
-    else if (player.result !== 'push') player.lossStreak = 0;
+    if (player.net < 0) player.lossStreak = (player.lossStreak ?? 0) + 1;
+    else if (player.net > 0) player.lossStreak = 0;
   });
 
   if (dealer) {
@@ -241,6 +291,9 @@ export function collectAntes(state: GameState, rng: () => number = Math.random):
  */
 export function refillDeck(state: GameState): void {
   const inHands = new Set(Object.values(state.deck.playerHands).flatMap((hand) => hand.cards));
+  state.playerStore.all.forEach((player) => {
+    state.deck.getHands(player.key).forEach((hand) => hand.cards.forEach((card) => inHands.add(card)));
+  });
   const keys = PlayingCardDeck.cardKeys().filter((key) => !inHands.has(key));
   state.deck.cards = fisherYates(keys).map((key) => new PlayingCard(key));
   recordActivity(state, '', 'Deck shuffled', 'shuffle');

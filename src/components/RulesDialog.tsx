@@ -68,10 +68,12 @@ export const RulesDialog: React.FC<IRulesDialogProps> = ({ open, onOpenChange })
               <Text as="h3" id="rules-turn" weight="semibold">Your turn</Text>
               <ul className={styles.list}>
                 <li>Hit to draw a card, or Stay to end your turn.</li>
-                <li>Double Down is available on your turn with exactly two cards when your bank can cover your current stake. It adds an equal amount, draws one card, and then stands unless you bust.</li>
+                <li>Double Down is available on your turn with exactly two cards on an unsplit hand when your bank can cover your current stake. It adds an equal amount, draws one card, and then stands unless you bust.</li>
+                <li>Split is available on a same-rank pair when your bank can cover another equal stake. You play each hand in turn. You may split only once; split aces get one card each and stand, and 21 on a split hand is not a natural. Double Down is not available after splitting.</li>
                 <li>A total over 21 busts and loses your stake, even if the dealer busts later.</li>
                 <li>You play first, then each computer player in turn, then the dealer.</li>
               </ul>
+              <Text as="p">Pairs must have the same rank: tens, jacks, queens and kings do not count as a pair with one another.</Text>
             </section>
 
             <section className={styles.section} aria-labelledby="rules-dealer">
