@@ -64,6 +64,8 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
   const handValueString = (handValues.aceAsEleven === handValues.aceAsOne) ?
     `Hand Value: ${handValues.highest}` :
     `Hand Value: ${handValues.aceAsOne} / ${handValues.aceAsEleven}`;
+  const canRevealTotal = !hasHoleCard || settings.isDealerHandVisible || isRoundOver;
+  const showHandValue = settings.isHandValueVisible && !hasHoleCard;
 
   return hidden ? null : (
     <section aria-label={player ? `${player.title}'s hand` : undefined} style={{ alignItems: player ? 'center' : undefined, display: 'flex', flexDirection: 'column', gap: 8, maxWidth: '100%', width: player && !isMini ? '100%' : undefined }}>
@@ -75,10 +77,11 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
       >
         {deckTitleString}
       </Button>}
-      {!hasHoleCard && !isMini &&
-        settings.isHandValueVisible && (
-          <Text size={400}>{handValueString}</Text>
-        )}
+      {!isMini && canRevealTotal && (
+        showHandValue
+          ? <Text size={400}>{handValueString}</Text>
+          : <span className="visually-hidden">{handValueString}</span>
+      )}
       {(player || isDeckVisible) && (
         player
           ? <div className={isMini ? 'card-row is-mini' : 'card-row'} style={{ '--card-count': Math.max(cards.length, 1) } as React.CSSProperties}>{cardElements}</div>

@@ -50,7 +50,7 @@ export const CardContainer: React.FC<ICardContainerProps> = (props) => {
   return (
     <button
       type="button"
-      aria-label={`${description} of ${props.suit.plural}`}
+      aria-label={props.isBackFacing ? 'Face-down card' : `${description} of ${props.suit.plural}`}
       aria-pressed={props.isSelectable ? isSelected : undefined}
       onClick={props.isSelectable ? _toggleSelect : undefined}
       className={className}

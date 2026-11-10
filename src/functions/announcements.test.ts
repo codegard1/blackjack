@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { GameStatus } from '../enums';
+import { createGameState } from '../context';
+import { GameAction, GameStatus } from '../enums';
+import { gameReducer } from './gameReducer';
 import { GameSnapshot, PlayerSnapshot } from '../types';
-import { diffAnnouncements } from './announcements';
+import { diffAnnouncements, snapshotGame } from './announcements';
 import { isRoundOver, isSeatLoser, seatStatus } from './seatStatus';
 import { playerDefaults } from '../definitions';
 import { IPlayer } from '../interfaces';
@@ -93,6 +95,76 @@ describe('diffAnnouncements', () => {
     const before = withPlayer(snapshot(), 'dealer', { cardCount: 0, total: 0 });
     const after = withPlayer(before, 'dealer', { cardCount: 2, total: 17 });
     expect(diffAnnouncements(before, after, true).find((a) => a.title === 'Dealer hits')).toBeUndefined();
+  });
+
+  it('announces each seat\'s dealt cards without revealing the dealer hole card', () => {
+    const before = withPlayer(withPlayer(snapshot(), 'chris', { cardCount: 0, total: 0, cards: [] }), 'dealer', { cardCount: 0, total: 0, cards: [] });
+    const after = withPlayer(
+      withPlayer(before, 'chris', { cardCount: 2, total: 16, cards: ['Queen of Hearts', 'Six of Clubs'] }),
+      'dealer',
+      { cardCount: 2, total: 18, cards: ['Ace of Spades', 'Eight of Diamonds'] },
+    );
+
+    expect(diffAnnouncements(before, after, false)).toEqual([
+      { title: 'Chris was dealt', subtitle: 'Queen of Hearts and Six of Clubs. Total 16', tone: 'neutral', playerKey: 'chris' },
+      { title: 'Dealer was dealt', subtitle: 'One face-down card and Eight of Diamonds', tone: 'neutral', playerKey: 'dealer' },
+    ]);
+  });
+
+  it('announces the new deal when the next hand replaces cards without changing hand size', () => {
+    const before = snapshot({ round: 1 }, [
+      player({ key: 'chris', title: 'Chris', isNPC: false, cards: ['Nine of Clubs', 'Six of Hearts'] }),
+      player({ key: 'dealer', title: 'Dealer', isNPC: true, role: 'dealer', cards: ['Ace of Spades', 'Eight of Diamonds'] }),
+    ]);
+    const after = snapshot({ round: 2 }, [
+      player({ key: 'chris', title: 'Chris', isNPC: false, cards: ['King of Clubs', 'Five of Hearts'] }),
+      player({ key: 'dealer', title: 'Dealer', isNPC: true, role: 'dealer', cards: ['Queen of Spades', 'Seven of Diamonds'] }),
+    ]);
+
+    expect(diffAnnouncements(before, after, false).filter((item) => item.title.endsWith('was dealt'))).toEqual([
+      { title: 'Chris was dealt', subtitle: 'King of Clubs and Five of Hearts. Total 15', tone: 'neutral', playerKey: 'chris' },
+      { title: 'Dealer was dealt', subtitle: 'One face-down card and Seven of Diamonds', tone: 'neutral', playerKey: 'dealer' },
+    ]);
+  });
+
+  it('announces the drawn card and resulting total on a human turn', () => {
+    const before = withPlayer(snapshot(), 'chris', { cardCount: 2, total: 15, cards: ['Nine of Clubs', 'Six of Hearts'] });
+    const after = withPlayer(before, 'chris', { cardCount: 3, total: 20, cards: ['Nine of Clubs', 'Six of Hearts', 'Five of Spades'] });
+
+    expect(diffAnnouncements(before, after, false)).toContainEqual({
+      title: 'Chris hits',
+      subtitle: 'Five of Spades. Total 20',
+      tone: 'brand',
+      playerKey: 'chris',
+    });
+  });
+
+  it('tracks draws and totals on the active split hand', () => {
+    const state = gameReducer(createGameState(), { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] });
+    state.controllingPlayer = 'chris';
+    state.activeHandIndex = 1;
+    state.deck.playerHands.chris.cards = ['Club_10'];
+    state.deck.playerHands.chris.splitHands = [{
+      cards: ['Heart_5'],
+      handValue: { aceAsEleven: 5, aceAsOne: 5, highest: 5 },
+    }];
+    const before = snapshotGame(state);
+
+    state.deck.hand('chris', 1)?.cards.push('Spade_10');
+    state.deck.updateHandValue('chris', 1);
+    const after = snapshotGame(state);
+
+    expect(after.players.find((player) => player.key === 'chris')).toMatchObject({
+      cardCount: 2,
+      cards: ['Five of Hearts', 'Ten of Spades'],
+      total: 15,
+    });
+    expect(diffAnnouncements(before, after, false)).toContainEqual({
+      title: 'Chris hits',
+      subtitle: 'Ten of Spades. Total 15',
+      tone: 'brand',
+      playerKey: 'chris',
+    });
   });
 
   it('announces a dealer stand, then the result', () => {

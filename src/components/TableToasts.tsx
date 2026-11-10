@@ -76,10 +76,10 @@ const useStyles = makeStyles({
     '@media (prefers-reduced-motion: reduce)': { animationName: fadeOutKeyframes },
   },
   brand: { backgroundColor: tokens.colorBrandBackground },
-  neutral: { backgroundColor: tokens.colorNeutralBackgroundInverted, color: tokens.colorNeutralForegroundInverted },
+  neutral: { backgroundColor: tokens.colorNeutralBackground3, color: tokens.colorNeutralForeground1 },
   danger: { backgroundColor: tokens.colorPaletteRedBackground3 },
   success: { backgroundColor: tokens.colorPaletteGreenBackground3 },
-  info: { backgroundColor: tokens.colorPaletteBlueBorderActive },
+  info: { backgroundColor: tokens.colorPaletteBlueBackground2, color: tokens.colorPaletteBlueForeground2 },
   subtitle: {
     fontSize: 'clamp(14px, 2.2vw, 18px)',
     fontWeight: tokens.fontWeightRegular,
