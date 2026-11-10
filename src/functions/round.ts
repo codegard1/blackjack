@@ -4,7 +4,7 @@ import { PlayingCardDeck } from "../classes/PlayingCardDeck";
 import { getCharacter } from "../characters";
 import { GameStatus } from "../enums";
 import { IPlayer, IPlayerOptions } from "../interfaces";
-import { GameState, PlayerKey, PlayerRole } from "../types";
+import { GameState, PlayerKey, PlayerRole, TableRules, defaultTableRules } from "../types";
 import { recordActivity } from "./activity";
 import { BotMove, Rng, botWagerCount, decideBotMove } from "./botStrategy";
 import { fisherYates } from "./fisherYates";
@@ -81,21 +81,26 @@ export function canSplit(state: GameState, playerKey: PlayerKey, handIndex = sta
   if (!player || isDealer(player) || state.gameStatus !== GameStatus.InProgress
     || state.playerStore.currentPlayerKey !== playerKey || handIndex !== state.activeHandIndex
     || !hand || hand.isSplit || hand.cards.length !== 2) return false;
-  const rank = (card: string) => card.slice(card.lastIndexOf('_') + 1);
+  const rank = (card: string) => card.split('_')[1];
   const stake = roundStake(state, playerKey);
   return rank(hand.cards[0]) === rank(hand.cards[1]) && stake > 0 && player.bank >= stake;
 }
 
 /**
- * The move for the computer seat in control. The dealer hits below 17 and
- * stands otherwise; a computer character plays to its stats, against the
+ * The move for the computer seat in control. The dealer follows the active
+ * table rules; a computer character plays to its stats, against the
  * dealer's face-up card.
  */
 export function decideSeatMove(state: GameState, key: PlayerKey, rng: Rng = Math.random, handIndex = state.activeHandIndex): BotMove {
   const player = state.playerStore.player(key);
   const cards = state.deck.hand(key, handIndex)?.cards ?? [];
   const stats = isBot(player) ? getCharacter(key)?.stats : undefined;
-  if (!stats) return state.deck.getHandValue(key, handIndex).highest < 17 ? 'hit' : 'stay';
+  if (!stats) {
+    const value = state.deck.getHandValue(key, handIndex);
+    const hitSoft17 = isDealer(player) && state.tableRules.dealerSoft17 === 'hit'
+      && value.highest === 17 && value.aceAsOne !== value.highest;
+    return value.highest < 17 || hitSoft17 ? 'hit' : 'stay';
+  }
 
   const dealer = getDealer(state);
   // the dealer's first card is the hole card; the second is face up
@@ -163,7 +168,7 @@ export function advanceTurn(state: GameState, fromKey?: PlayerKey, fromHandIndex
 /**
  * After the deal, flag natural blackjacks. A dealer natural ends the round at
  * once: player naturals push and every other hand loses. Otherwise a player
- * natural wins 3:2 and that seat skips its turn.
+ * natural wins the table's blackjack payout and that seat skips its turn.
  */
 export function resolveNaturals(state: GameState): void {
   state.playerStore.all.forEach((player) => {
@@ -213,9 +218,9 @@ export function resolveShowdown(state: GameState): void {
 }
 
 /** Bank change for a hand with the given result and stake, stake included */
-export function netFor(result: IPlayer['result'], stake: number): number {
+export function netFor(result: IPlayer['result'], stake: number, payout: TableRules['blackjackPayout'] = defaultTableRules.blackjackPayout): number {
   switch (result) {
-    case 'blackjack': return Math.floor(stake * 1.5);
+    case 'blackjack': return Math.floor(stake * (payout === '6:5' ? 1.2 : 1.5));
     case 'win': return stake;
     case 'loss': return -stake;
     default: return 0;
@@ -233,7 +238,7 @@ export function finishRound(state: GameState): void {
   playerSeats(state).forEach((player) => {
     const hands = state.deck.getHands(player.key).filter((hand) => hand.result);
     if (hands.length === 0) return;
-    player.net = hands.reduce((total, hand) => total + netFor(hand.result, hand.stake ?? roundStake(state, player.key)), 0);
+    player.net = hands.reduce((total, hand) => total + netFor(hand.result, hand.stake ?? roundStake(state, player.key), state.tableRules.blackjackPayout), 0);
     const results = hands.map((hand) => hand.result);
     player.result = results.every((result) => result === results[0])
       ? results[0]
@@ -294,7 +299,7 @@ export function refillDeck(state: GameState): void {
   state.playerStore.all.forEach((player) => {
     state.deck.getHands(player.key).forEach((hand) => hand.cards.forEach((card) => inHands.add(card)));
   });
-  const keys = PlayingCardDeck.cardKeys().filter((key) => !inHands.has(key));
+  const keys = PlayingCardDeck.cardKeys(Number(state.tableRules.numberOfDecks)).filter((key) => !inHands.has(key));
   state.deck.cards = fisherYates(keys).map((key) => new PlayingCard(key));
   recordActivity(state, '', 'Deck shuffled', 'shuffle');
 }
@@ -305,7 +310,7 @@ const CARDS_PER_SEAT = 6;
 /** Rebuild and shuffle the deck between rounds when it is running low */
 export function reshuffleIfLow(state: GameState): void {
   const seats = state.playerStore.all.length;
-  if (state.deck.length >= seats * CARDS_PER_SEAT) return;
+  if (state.deck.length >= seats * CARDS_PER_SEAT * Number(state.tableRules.numberOfDecks)) return;
   state.deck.reset();
   state.playerStore.all.forEach((player) => state.deck.newPlayerHand(player.key));
   recordActivity(state, '', 'Deck shuffled', 'shuffle');

@@ -21,7 +21,7 @@ import { seatStatus, isRoundOver } from "../functions/seatStatus";
 import { decideSeatMove, isDealer, isHuman } from "../functions/round";
 import { seatsFor } from "../functions/profiles";
 import { IPlayer } from "../interfaces";
-import { PlayerHandValue } from "../types";
+import { PlayerHandValue, tableRulesFrom } from "../types";
 
 const EMPTY_HAND_VALUE: PlayerHandValue = { aceAsEleven: 0, aceAsOne: 0, highest: 0 };
 
@@ -85,7 +85,7 @@ export const Table: React.FC = () => {
   // Before the game starts, the seats the next game will use: the selected player, the chosen computer players and the dealer
   const seats = seatsFor(profiles);
   const pendingPlayers: IPlayer[] = seats.map((seat) => ({ ...playerDefaults, ...seat, stats: { ...playerDefaults.stats, ...seat.stats } }));
-  const startGame = () => gameDispatch({ type: GameAction.NewGame, players: seats });
+  const startGame = () => gameDispatch({ type: GameAction.NewGame, players: seats, tableRules: tableRulesFrom(settings) });
 
   // Toasts announce each change; its activity log entries follow once its toasts have faded out.
   // Computer play waits while a toast is queued, so the moves keep pace with the notices.

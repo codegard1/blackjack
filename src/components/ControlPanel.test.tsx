@@ -67,7 +67,10 @@ describe('player controls', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
 
-    expect(dispatch).toHaveBeenCalledWith({ type: GameAction.Deal });
+    expect(dispatch).toHaveBeenCalledWith({
+      type: GameAction.Deal,
+      tableRules: { numberOfDecks: '1', dealerSoft17: 'stand', blackjackPayout: '3:2' },
+    });
   });
 
   it('enables gameplay on the human turn', () => {

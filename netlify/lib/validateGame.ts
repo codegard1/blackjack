@@ -1,5 +1,6 @@
 import type { IPlayer, IPlayerStoreState } from '../../src/interfaces';
 import type { ActivityLogEntry, DeckState, PlayerHand, SavedGame, SavedGameSnapshot } from '../../src/types';
+import { isTableRules, tableRulesFrom } from '../../src/types/TableRules';
 import { isFiniteNumber, isObject, isStats, parseJsonBody } from './validate';
 
 /**
@@ -96,6 +97,7 @@ function isActivityEntry(value: unknown): value is ActivityLogEntry {
 function isSavedGame(value: unknown): value is SavedGame {
   return isObject(value)
     && isFiniteNumber(value.version)
+    && ((value.version < 5 && value.tableRules === undefined) || isTableRules(value.tableRules))
     && isFiniteNumber(value.activeHandIndex)
     && Array.isArray(value.activityLog)
     && value.activityLog.length <= MAX_ACTIVITY
@@ -156,6 +158,7 @@ function pickGameSnapshot({ deck, players, game }: SavedGameSnapshot): SavedGame
     },
     game: {
       ...pick(game, GAME_FIELDS),
+      ...(game.tableRules === undefined ? {} : { tableRules: tableRulesFrom(game.tableRules) }),
       activityLog: game.activityLog.map((entry) => pick(entry, ENTRY_FIELDS)),
     },
   };

@@ -27,12 +27,14 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, `n
 * Deck logic adapted from [node-shuffle](https://github.com/codegard1/node-shuffle) (forked)
 
 #### Rules
-* You and up to four computer players each play against a dealer that hits below 17 and stands otherwise
+* You and up to four computer players each play against a dealer that hits below 17 and stands otherwise by default; Options can make the dealer hit soft 17 instead
+* Table rules in Options select 1, 2, 6 or 8 decks (default 1), dealer behavior on soft 17 (default stand), and blackjack payout (default 3:2, or 6:5). Changes are saved immediately but apply only when the next hand starts, including through Next hand or the Options panel's Deal. The in-app guide shows the active hand's rules
+* Shoes reshuffle between hands when fewer than six cards per seat per deck remain; changing the deck count starts a fresh shoe. An exhausted shoe refills without cards currently held in any hand
 * Number cards count as shown, face cards count as 10, and aces count as 1 or 11
 * Each round starts with a minimum ante from every player (the dealer does not ante); you can add minimum-bet increments before dealing or during your turn
 * You play first, then each computer player, then the dealer; a bust loses that hand without ending the round
 * Each hand is compared with the dealer's: the higher total wins even money from the dealer's bank, and equal totals push
-* A natural blackjack is 21 with two cards and pays 3:2. A dealer natural ends the round at once; player naturals push and every other hand loses
+* A natural blackjack is 21 with two cards and pays the selected rate, rounded down to whole dollars. A dealer natural ends the round at once; player naturals push and every other hand loses
 * Double Down is available with exactly two cards if the bank can match the current stake; it adds that amount, draws one card, and stands unless the player busts
 * Split is available on an exact same-rank pair if the bank can match the current stake; tens, jacks, queens and kings are different ranks. One split is allowed: each hand gets one card, plays in turn and settles separately. Split aces get one card each and stand, 21 on a split hand is not a natural, and Double Down is not allowed after a split
 * Open Blackjack rules from the book icon in the header for the in-app guide
@@ -41,7 +43,7 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, `n
 * Choose up to four computer players in the Players dialog: Ogion (The Rock), Shevek (The Shark), Haber (The Maniac) and Genly Ai (The Tourist). Faxe (The House) deals
 * Each character has a pixel-art portrait, a tagline, a backstory card, and four stats (nerve, aggression, discipline, tilt) that drive how they hit, double down and bet; tilt makes them bet bigger and take more risks during a losing streak
 * Portraits are built from text pixel maps in `scripts/build-portraits.mjs`; run `npm run portraits` after editing one
-* Each character's record starts with a long play history from `src/data/characterHistory.json`, added to whatever they play at your table. `npm run simulate-history` regenerates it by playing real games between the characters in quick succession (10,000 rounds in under a second; options: `-- --rounds 20000 --seed 7 --out path`). The same seed gives the same history
+* Each character's record starts with a long play history from `src/data/characterHistory.json`, added to whatever they play at your table. `npm run simulate-history` regenerates it by playing real games between the characters in quick succession (10,000 rounds in under a second; options: `-- --rounds 20000 --seed 7 --out path`). The same seed gives the same history; simulations always use the default table rules, regardless of saved settings
 * Character names are borrowed, with admiration, from the novels of Ursula K. Le Guin; the characters themselves are new
 
 #### Project Status

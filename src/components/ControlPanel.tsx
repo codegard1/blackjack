@@ -21,11 +21,12 @@ import {
 } from '@fluentui/react-icons';
 
 // Local Resources
-import { useGameContext, usePlayersDialog, usePotAnimation, useProfileContext } from "../context";
+import { useGameContext, usePlayersDialog, usePotAnimation, useProfileContext, useSettingContext } from "../context";
 import { GameAction, GameStatus } from "../enums";
 import { canDoubleDown, canSplit } from "../functions/gameReducer";
 import { seatsFor } from "../functions/profiles";
 import { IControlPanelProps } from "../interfaces";
+import { tableRulesFrom } from "../types";
 
 const useStyles = makeStyles({
   toolbar: {
@@ -71,6 +72,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const { gameState, gameDispatch } = useGameContext();
   const openPlayers = usePlayersDialog();
   const { profiles } = useProfileContext();
+  const { settings } = useSettingContext();
   const { gameStatus, minimumBet } = gameState;
   const playerStore = gameState.playerStore.state;
 
@@ -98,7 +100,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   }
 
   const deal = () => {
-    gameDispatch({ type: GameAction.Deal });
+    gameDispatch({ type: GameAction.Deal, tableRules: tableRulesFrom(settings) });
   };
 
   // The hand is over, so a roster change made during play takes effect before the next deal

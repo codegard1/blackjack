@@ -46,7 +46,7 @@ interface IRulesDialogProps {
 export const RulesDialog: React.FC<IRulesDialogProps> = ({ open, onOpenChange }) => {
   const styles = useStyles();
   const { gameState } = useGameContext();
-  const minimumBet = gameState.minimumBet;
+  const { minimumBet, tableRules } = gameState;
 
   return (
     <Dialog open={open} onOpenChange={(_, data) => onOpenChange(data.open)}>
@@ -83,12 +83,13 @@ export const RulesDialog: React.FC<IRulesDialogProps> = ({ open, onOpenChange })
 
             <section className={styles.section} aria-labelledby="rules-dealer">
               <Text as="h3" id="rules-dealer" weight="semibold">Dealer and results</Text>
-              <Text as="p">The dealer draws below 17 and stands on 17 or higher. Each hand is compared with the dealer's on its own: the higher total wins and equal totals push. A two-card 21 is a natural blackjack. If the dealer has a natural, the round ends at once: a player with a natural pushes and every other hand loses.</Text>
-              <Text as="p">A winning hand is paid even money from the dealer's bank, and a natural blackjack is paid 3:2. On a push, the player gets their stake back. The dealer keeps a losing stake.</Text>
+              <Text as="p">The dealer draws below 17{tableRules.dealerSoft17 === 'hit' ? ' and on soft 17, and stands on hard 17 or higher' : ' and stands on 17 or higher'}. Each hand is compared with the dealer's on its own: the higher total wins and equal totals push. A two-card 21 is a natural blackjack. If the dealer has a natural, the round ends at once: a player with a natural pushes and every other hand loses.</Text>
+              <Text as="p">A winning hand is paid even money from the dealer's bank, and a natural blackjack is paid {tableRules.blackjackPayout}. On a push, the player gets their stake back. The dealer keeps a losing stake.</Text>
             </section>
 
             <section className={styles.section} aria-labelledby="rules-table">
               <Text as="h3" id="rules-table" weight="semibold">Meet the table</Text>
+              <Text as="p">The active shoe uses {tableRules.numberOfDecks} {tableRules.numberOfDecks === '1' ? 'deck' : 'decks'}. Choose table rules in Options; changes take effect at the next hand.</Text>
               <Text as="p">Choose up to {MAX_OPPONENTS} computer players from the Players menu. Each plays to its own temperament: nerve, aggression, discipline and tilt. Open a seat's info button to read a character's card.</Text>
               <Text as="p" size={200}>{NAME_CREDIT}</Text>
             </section>

@@ -35,7 +35,7 @@ import { useGameContext, useProfileContext, useSettingContext } from "../context
 import { GameAction } from "../enums";
 import { clearStores, seatsFor } from "../functions";
 import { brandPresets, cardBackColorList, cardBackPatternList, cardStyleList, cardStylePresets, themeModeList } from "../theme";
-import { AccentKey, CardBackColor, CardBackPattern, CardStyle, ThemeMode, accentKeys, appearanceSettingKeys } from "../types";
+import { AccentKey, CardBackColor, CardBackPattern, CardStyle, TableRules, ThemeMode, accentKeys, appearanceSettingKeys, blackjackPayouts, deckCounts, tableRulesFrom } from "../types";
 
 export const OptionsPanel: React.FC = () => {
 
@@ -67,7 +67,7 @@ export const OptionsPanel: React.FC = () => {
   const newDeal = () => {
     // between hands, a roster change made during play takes effect first
     gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles) });
-    gameDispatch({ type: GameAction.Deal });
+    gameDispatch({ type: GameAction.Deal, tableRules: tableRulesFrom(settings) });
     closeOptionsPanel();
   }
 
@@ -129,6 +129,41 @@ export const OptionsPanel: React.FC = () => {
           <Switch checked={settings.isHandValueVisible} label="Show Hand Value" onChange={(_, data) => toggleSetting({ key: 'isHandValueVisible', value: data.checked })} />
           <Switch checked={settings.isActivityLogVisible} label="Open Activity Log by default" onChange={(_, data) => toggleSetting({ key: 'isActivityLogVisible', value: data.checked })} />
         </div>
+
+        <Divider />
+
+        <section className="options-panel-appearance" aria-labelledby="options-rules-heading">
+          <Text as="h3" id="options-rules-heading" weight="semibold" size={400}>Table rules</Text>
+          <Text as="p" size={200}>Changes apply at the next hand, not during the current hand.</Text>
+          <Field label="Number of decks">
+            <RadioGroup
+              layout="horizontal"
+              value={settings.numberOfDecks}
+              onChange={(_, data) => toggleSetting({ key: 'numberOfDecks', value: data.value as TableRules['numberOfDecks'] })}
+            >
+              {deckCounts.map((count) => <Radio key={count} value={count} label={count} />)}
+            </RadioGroup>
+          </Field>
+          <Field label="Dealer on soft 17">
+            <RadioGroup
+              layout="horizontal"
+              value={settings.dealerSoft17}
+              onChange={(_, data) => toggleSetting({ key: 'dealerSoft17', value: data.value as TableRules['dealerSoft17'] })}
+            >
+              <Radio value="stand" label="Stand" />
+              <Radio value="hit" label="Hit" />
+            </RadioGroup>
+          </Field>
+          <Field label="Blackjack pays">
+            <RadioGroup
+              layout="horizontal"
+              value={settings.blackjackPayout}
+              onChange={(_, data) => toggleSetting({ key: 'blackjackPayout', value: data.value as TableRules['blackjackPayout'] })}
+            >
+              {blackjackPayouts.map((payout) => <Radio key={payout} value={payout} label={payout} />)}
+            </RadioGroup>
+          </Field>
+        </section>
 
         <Divider />
 

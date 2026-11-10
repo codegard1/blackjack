@@ -1,11 +1,12 @@
 import { Dispatch, createContext, useContext } from 'react';
 import { ISettingReducerAction } from '../interfaces';
-import { SettingsState } from '../types';
+import { SettingsState, defaultTableRules } from '../types';
 
 /**
  * Default values for SettingsState
  */
 export const settingDefaults: SettingsState = {
+  ...defaultTableRules,
   isActivityLogVisible: false,
   isCardDescVisible: false,
   isDealerHandVisible: false,

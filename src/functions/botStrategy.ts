@@ -60,8 +60,8 @@ export function basicStrategy(cards: PlayingCardKey[], dealerUpCard: PlayingCard
 
 /** Whether textbook pair strategy splits this exact-rank pair against the dealer up-card. */
 export function basicSplitStrategy(cards: PlayingCardKey[], dealerUpCard: PlayingCardKey | undefined): boolean {
-  if (cards.length !== 2 || cards[0].slice(cards[0].lastIndexOf('_') + 1) !== cards[1].slice(cards[1].lastIndexOf('_') + 1)) return false;
-  const rank = Number(cards[0].slice(cards[0].lastIndexOf('_') + 1));
+  if (cards.length !== 2 || cards[0].split('_')[1] !== cards[1].split('_')[1]) return false;
+  const rank = Number(cards[0].split('_')[1]);
   const up = dealerUpCard ? cardValue(dealerUpCard) : 10;
   if (rank === 14 || rank === 8) return true;
   if (rank === 9) return [2, 3, 4, 5, 6, 8, 9].includes(up);
@@ -103,8 +103,8 @@ export function decideBotMove(options: {
     return move;
   }
 
-  const rank = cards[0]?.slice(cards[0].lastIndexOf('_') + 1);
-  const pairIsStrong = cards.length === 2 && rank === cards[1]?.slice(cards[1].lastIndexOf('_') + 1) && (rank === '14' || rank === '8');
+  const rank = cards[0]?.split('_')[1];
+  const pairIsStrong = cards.length === 2 && rank === cards[1]?.split('_')[1] && (rank === '14' || rank === '8');
   if (canSplit && pairIsStrong && stats.aggression >= 9) return 'split';
   if (canDouble && stats.aggression >= 6 && total >= 9 && total <= 11) return 'double';
   return total < standingTotal(stats.nerve) ? 'hit' : 'stay';

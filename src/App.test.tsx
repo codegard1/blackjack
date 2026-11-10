@@ -9,6 +9,7 @@ import { POT_BOUNCE_MS, POT_ENTER_MS, POT_LEAVE_MS } from './components/usePotMo
 import { TOAST_EXIT_MS, TOAST_HOLD_MS } from './components/TableToasts';
 import { formatNet } from './functions/format';
 import { CHARACTER_HISTORY } from './functions/history';
+import { StoreName } from './enums';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -319,6 +320,71 @@ it('changes the theme, accent, card style and card back from the Appearance sect
   expect(screen.getByRole('radio', { name: 'Dark' })).toBeChecked();
   expect(screen.getByRole('radio', { name: 'Stripes' })).toBeChecked();
   expect(within(screen.getByRole('radiogroup', { name: 'Accent color' })).getByRole('radio', { name: 'Teal' })).toBeChecked();
+});
+
+it.each(['Next hand', 'Options Deal'])('defers table rules through a reload until %s', (dealFrom) => {
+  vi.spyOn(PlayingCardDeck.prototype, 'deal')
+    .mockImplementationOnce(function (this: PlayingCardDeck) {
+      this.playerHands.chris.cards = ['Spade_10', 'Diamond_9'];
+      this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+    })
+    .mockImplementation(function (this: PlayingCardDeck) {
+      this.playerHands.chris.cards = ['Spade_10', 'Diamond_14_2'];
+      this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+    });
+  vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
+  const first = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Number of decks' })).getByRole('radio', { name: '2' }));
+  fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Dealer on soft 17' })).getByRole('radio', { name: 'Hit' }));
+  fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Blackjack pays' })).getByRole('radio', { name: '6:5' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Reset appearance' }));
+  expect(screen.getByRole('radio', { name: '6:5' })).toBeChecked();
+  first.unmount();
+
+  render(<App />);
+  const checkRules = (decks: number, payout: string, dealerRule: string) => {
+    fireEvent.click(screen.getByRole('button', { name: 'Blackjack rules' }));
+    const dialog = screen.getByRole('dialog', { name: 'Blackjack rules' });
+    expect(dialog).toHaveTextContent(`active shoe uses ${decks} ${decks === 1 ? 'deck' : 'decks'}`);
+    expect(dialog).toHaveTextContent(`natural blackjack is paid ${payout}`);
+    expect(dialog).toHaveTextContent(dealerRule);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+  };
+  checkRules(1, '3:2', 'stands on 17 or higher');
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  expect(screen.getByRole('radio', { name: '2' })).toBeChecked();
+  expect(screen.getByRole('radio', { name: '6:5' })).toBeChecked();
+  fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck' }));
+  checkRules(1, '3:2', 'stands on 17 or higher');
+
+  if (dealFrom === 'Options Deal') {
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start a new round with the selected players' }));
+  } else {
+    fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
+  }
+  checkRules(2, '6:5', 'draws below 17 and on soft 17');
+  const game = JSON.parse(localStorage.getItem(StoreName.GAMESTORE) ?? '{}');
+  expect(game.tableRules).toEqual({ numberOfDecks: '2', dealerSoft17: 'hit', blackjackPayout: '6:5' });
+  const players = JSON.parse(localStorage.getItem(StoreName.PLAYERSTORE) ?? '{}');
+  expect(players.players.chris.bank).toBe(1005);
+});
+
+it('uses table rules selected before starting a game', () => {
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  fireEvent.click(screen.getByRole('radio', { name: '8' }));
+  fireEvent.click(screen.getByRole('radio', { name: '6:5' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Blackjack rules' }));
+  const dialog = screen.getByRole('dialog', { name: 'Blackjack rules' });
+  expect(dialog).toHaveTextContent('active shoe uses 8 decks');
+  expect(dialog).toHaveTextContent('natural blackjack is paid 6:5');
 });
 
 it('resets only the appearance settings', () => {

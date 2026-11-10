@@ -3,7 +3,7 @@ import { PlayingCard } from '../classes/PlayingCard';
 import { PlayingCardDeck } from '../classes/PlayingCardDeck';
 import { gameDefaults } from '../context';
 import { GameAction, GameStatus } from '../enums';
-import { GameState } from '../types';
+import { GameState, TableRules, defaultTableRules } from '../types';
 import { gameReducer } from './gameReducer';
 import { gameSnapshot } from './persistence';
 import { defaultProfileState, seatsFor } from './profiles';
@@ -33,6 +33,116 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+});
+
+describe('configurable table rules', () => {
+  const startWithRules = (rules: Partial<TableRules> = {}) => {
+    const state = gameReducer(createGameState(), {
+      type: GameAction.NewGame, playerKey: ['chris', 'dealer'],
+      tableRules: { ...defaultTableRules, ...rules },
+    });
+    return gameReducer(state, { type: GameAction.EvaluateGame });
+  };
+
+  it.each(['2', '6', '8'] as const)('builds a %s-deck shoe and scales the reshuffle threshold', (numberOfDecks) => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.999999);
+    let state = startWithRules({ numberOfDecks });
+    const size = Number(numberOfDecks) * 52;
+    expect(state.deck.length).toBe(size);
+    expect(new Set(state.deck.cardKeys).size).toBe(size);
+    expect(state.deck.cardKeys).toEqual(PlayingCardDeck.cardKeys(Number(numberOfDecks)));
+
+    const threshold = 2 * 6 * Number(numberOfDecks);
+    state.deck.cards = state.deck.cards.slice(0, threshold);
+    state = gameReducer(state, { type: GameAction.NewRound });
+    expect(state.deck.length).toBe(threshold);
+    state.deck.cards.pop();
+    state = gameReducer(state, { type: GameAction.NewRound });
+    expect(state.deck.length).toBe(size);
+  });
+
+  it.each([
+    { dealerSoft17: 'stand', net: 25, cards: 2 },
+    { dealerSoft17: 'hit', net: 0, cards: 3 },
+  ] as const)('settles a fixed soft-17 hand with dealer set to $dealerSoft17', ({ dealerSoft17, net, cards }) => {
+    let state = startWithRules({ dealerSoft17 });
+    state.deck.cards = ['Club_2', 'Heart_6', 'Diamond_14', 'Spade_9', 'Club_10'].map((key) => new PlayingCard(key));
+    state = gameReducer(state, { type: GameAction.Deal });
+    state = gameReducer(state, { type: GameAction.Stay, playerKey: 'chris' });
+    expect(decideSeatMove(state, 'dealer')).toBe(dealerSoft17 === 'hit' ? 'hit' : 'stay');
+    if (dealerSoft17 === 'hit') state = gameReducer(state, { type: GameAction.Draw, playerKey: 'dealer', numberOfCards: 1 });
+    state = gameReducer(state, { type: GameAction.Stay, playerKey: 'dealer' });
+    state = gameReducer(state, { type: GameAction.EvaluateGame });
+    expect(state.deck.hand('dealer')?.cards).toHaveLength(cards);
+    expect(state.playerStore.player('chris').bank).toBe(1000 + net);
+    expect(state.playerStore.player('dealer').bank).toBe(1000 - net);
+    expect(state.gameStatusFlag).toBe(true);
+  });
+
+  it.each([
+    ['Club_10', 'Heart_7'],
+    ['Club_14', 'Heart_6', 'Spade_10'],
+    ['Club_14', 'Heart_7'],
+  ])('does not hit a hard 17 or a soft 18 under hit-soft-17 rules (%j)', (...cards) => {
+    const state = startWithRules({ dealerSoft17: 'hit' });
+    state.deck.playerHands.dealer.cards = cards;
+    expect(decideSeatMove(state, 'dealer')).toBe('stay');
+  });
+
+  it('pays a fixed natural 6:5 on both sides of the bank and settles only once', () => {
+    let state = startWithRules({ blackjackPayout: '6:5' });
+    state.deck.cards = ['Club_7', 'Heart_10', 'Diamond_14', 'Spade_10'].map((key) => new PlayingCard(key));
+    state = gameReducer(state, { type: GameAction.Deal });
+    expect(state.gameStatus).toBe(GameStatus.RoundOver);
+    expect(state.playerStore.player('chris').net).toBe(30);
+    expect(state.playerStore.player('dealer').net).toBe(-30);
+    state = gameReducer(state, { type: GameAction.EvaluateGame });
+    state = gameReducer(state, { type: GameAction.EvaluateGame });
+    expect(state.playerStore.player('chris').bank).toBe(1030);
+    expect(state.playerStore.player('dealer').bank).toBe(970);
+    expect(state.playerStore.player('chris').stats.totalWinnings).toBe(30);
+  });
+
+  it('keeps the active rules until the next hand, then rebuilds a changed shoe', () => {
+    let state = startWithRules();
+    state.deck.cards = ['Club_7', 'Heart_10', 'Diamond_9', 'Spade_10'].map((key) => new PlayingCard(key));
+    state = gameReducer(state, { type: GameAction.Deal });
+    const tableRules: TableRules = { numberOfDecks: '2', dealerSoft17: 'hit', blackjackPayout: '6:5' };
+    state = gameReducer(state, { type: GameAction.Stay, playerKey: 'chris', tableRules });
+    expect(state.tableRules).toEqual(defaultTableRules);
+    state = gameReducer(state, { type: GameAction.Stay, playerKey: 'dealer' });
+    state = gameReducer(state, { type: GameAction.EvaluateGame });
+    expect(state.playerStore.player('chris').bank).toBe(1025);
+    state = gameReducer(state, { type: GameAction.Deal, tableRules });
+    expect(state.tableRules).toEqual(tableRules);
+    expect(state.round).toBe(2);
+    expect(state.deck.length).toBe(100);
+    expect(state.deck.getHands('chris')[0].cards).toHaveLength(2);
+  });
+
+  it('splits matching ranks across decks and recognizes split aces', () => {
+    let state = startWithRules({ numberOfDecks: '2' });
+    state.deck.cards = ['Spade_10_2', 'Spade_10', 'Club_7', 'Heart_10', 'Diamond_14_2', 'Diamond_14']
+      .map((key) => new PlayingCard(key));
+    state = gameReducer(state, { type: GameAction.Deal });
+    expect(canSplit(state, 'chris')).toBe(true);
+    state = gameReducer(state, { type: GameAction.Split, playerKey: 'chris' });
+    expect(state.deck.getHands('chris').map((hand) => hand.cards)).toEqual([
+      ['Diamond_14', 'Spade_10'], ['Diamond_14_2', 'Spade_10_2'],
+    ]);
+    expect(state.deck.getHands('chris').every((hand) => hand.isSplitAces && hand.isStaying && !hand.isBlackjack)).toBe(true);
+  });
+
+  it('refills a multi-deck shoe without reusing copies in any split hand', () => {
+    let state = startWithRules({ numberOfDecks: '2' });
+    state.deck.cards = ['Club_7', 'Heart_10', 'Diamond_8_2', 'Diamond_8'].map((key) => new PlayingCard(key));
+    state = gameReducer(state, { type: GameAction.Deal });
+    state = gameReducer(state, { type: GameAction.Split, playerKey: 'chris' });
+    const held = state.playerStore.all.flatMap((player) => state.deck.getHands(player.key).flatMap((hand) => hand.cards));
+    expect(new Set([...held, ...state.deck.cardKeys]).size).toBe(104);
+    expect(state.deck.length).toBe(98);
+    expect(state.deck.cardKeys.every((key) => !held.includes(key))).toBe(true);
+  });
 });
 
 describe('game behavior baseline', () => {

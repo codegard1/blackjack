@@ -1,3 +1,5 @@
+import { TableRules, blackjackPayouts, dealerSoft17Options, deckCounts } from './TableRules';
+
 /** How the Fluent UI theme is chosen */
 export const themeModes = ['light', 'dark', 'system', 'highContrast'] as const;
 export type ThemeMode = typeof themeModes[number];
@@ -21,7 +23,7 @@ export type CardBackColor = typeof cardBackColors[number];
 /**
  * Object containing all app settings
  */
-export type SettingsState = {
+export type SettingsState = TableRules & {
   isActivityLogVisible: boolean;
   isCardDescVisible: boolean;
   isDealerHandVisible: boolean;
@@ -46,7 +48,10 @@ export const settingOptions = {
   cardStyle: cardStyles,
   cardBackPattern: cardBackPatterns,
   cardBackColor: cardBackColors,
+  numberOfDecks: deckCounts,
+  dealerSoft17: dealerSoft17Options,
+  blackjackPayout: blackjackPayouts,
 } as const satisfies Partial<Record<SettingKey, readonly string[]>>;
 
 /** The settings that shape the theme, cards and card backs */
-export const appearanceSettingKeys = Object.keys(settingOptions) as (keyof typeof settingOptions)[];
+export const appearanceSettingKeys = ['themeMode', 'accent', 'cardStyle', 'cardBackPattern', 'cardBackColor'] as const;
