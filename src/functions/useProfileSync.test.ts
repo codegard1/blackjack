@@ -70,6 +70,26 @@ describe('useProfileSync', () => {
     expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 5, game: 0 } });
   });
 
+  it('replaces an owner id the server rejects and sends the local profiles under the new one', async () => {
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 9, game: 9 } });
+    const replacement = `${OWNER.slice(0, -4)}ZZZZ`;
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ error: 'Unknown owner id.' }, 403))
+      .mockResolvedValueOnce(jsonResponse({ ownerId: replacement }, 201))
+      .mockResolvedValueOnce(jsonResponse({ updatedAt: 30 }));
+    const local = profileReducer(defaultProfileState(), { type: 'create', name: 'Kept' });
+
+    const { result } = renderSync(local, fetch);
+    await flush();
+    await flush();
+
+    expect(result.current.profiles).toEqual(local);
+    expect(fetch.mock.calls[1][0]).toBe('/api/owner');
+    expect(fetch.mock.calls[2][0]).toBe(`/api/profiles/${encodeURIComponent(replacement)}`);
+    expect(fetch.mock.calls[2][1]).toMatchObject({ method: 'PUT' });
+    expect(loadSyncState()).toEqual({ ownerId: replacement, syncedAt: { profiles: 30, game: 0 } });
+  });
+
   it('sends nothing while the server will not issue an owner id', async () => {
     const fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
     const { result } = renderSync(defaultProfileState(), fetch);

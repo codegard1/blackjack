@@ -11,7 +11,8 @@ import handler, { config } from '../functions/profiles';
 const findOne = vi.fn();
 const updateOne = vi.fn();
 const createIndex = vi.fn();
-const getDb = vi.fn(() => ({ collection: () => ({ findOne, updateOne, createIndex, dbName: 'blackjack', collectionName: 'profiles' }) }));
+const updateMany = vi.fn();
+const getDb = vi.fn(() => ({ collection: () => ({ findOne, updateOne, updateMany, createIndex, dbName: 'blackjack', collectionName: 'profiles' }) }));
 
 vi.mock('../lib/mongo', async (importOriginal) => ({
   ...await importOriginal<typeof import('../lib/mongo')>(),
@@ -31,6 +32,7 @@ const call = (method: string, ownerId = OWNER, body?: unknown) => handler(
 beforeEach(() => {
   vi.stubEnv('OWNER_ID_SECRET', SECRET);
   createIndex.mockResolvedValue(STALE_INDEX);
+  updateMany.mockResolvedValue({ acknowledged: true });
 });
 
 afterEach(() => {
@@ -95,9 +97,12 @@ describe('profiles function', () => {
       { upsert: true },
     );
     expect(createIndex).toHaveBeenCalledWith({ touchedAt: 1 }, { name: STALE_INDEX, expireAfterSeconds: STALE_AFTER_DAYS * 24 * 60 * 60 });
+    // documents from before the index carry only the numeric time; give them a date so they expire too
+    expect(updateMany).toHaveBeenCalledWith({ touchedAt: { $exists: false } }, [{ $set: { touchedAt: { $toDate: '$updatedAt' } } }]);
 
     await call('PUT', OWNER, { profiles });
     expect(createIndex).toHaveBeenCalledTimes(1);
+    expect(updateMany).toHaveBeenCalledTimes(1);
   });
 
   it('still writes when the index cannot be ensured, and tries again next time', async () => {

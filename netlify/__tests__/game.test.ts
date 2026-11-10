@@ -12,7 +12,8 @@ import handler, { config } from '../functions/game';
 const findOne = vi.fn();
 const updateOne = vi.fn();
 const createIndex = vi.fn();
-const collection = vi.fn((name: string) => ({ findOne, updateOne, createIndex, dbName: 'blackjack', collectionName: name }));
+const updateMany = vi.fn().mockResolvedValue({ acknowledged: true });
+const collection = vi.fn((name: string) => ({ findOne, updateOne, updateMany, createIndex, dbName: 'blackjack', collectionName: name }));
 
 vi.mock('../lib/mongo', async (importOriginal) => ({
   ...await importOriginal<typeof import('../lib/mongo')>(),

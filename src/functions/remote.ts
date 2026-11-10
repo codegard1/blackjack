@@ -108,6 +108,17 @@ export function markSynced(kind: SyncKind, updatedAt: number): void {
   saveSyncState({ ...state, syncedAt: { ...state.syncedAt, [kind]: updatedAt } });
 }
 
+/**
+ * Forget an owner id the server has refused, such as one signed before the signing
+ * secret changed, so the next sync asks for a new one and sends the local copies
+ * under it. Only that id is dropped: a concurrent caller may already hold a new one.
+ */
+export function forgetOwnerId(rejected: string): void {
+  if (loadSyncState().ownerId === rejected) saveSyncState({ syncedAt: noSync() });
+}
+
+const REJECTED_OWNER = 403;
+
 const endpoint = (kind: SyncKind, ownerId: string) => `${SYNC_API[kind]}/${encodeURIComponent(ownerId)}`;
 
 /**
@@ -117,6 +128,7 @@ const endpoint = (kind: SyncKind, ownerId: string) => `${SYNC_API[kind]}/${encod
 export async function fetchRemote(kind: SyncKind, ownerId: string): Promise<RemoteState | undefined> {
   try {
     const response = await fetch(endpoint(kind, ownerId), { headers: { Accept: 'application/json' } });
+    if (response.status === REJECTED_OWNER) forgetOwnerId(ownerId);
     if (!response.ok) return undefined;
     const body: unknown = await response.json();
     if (!isObject(body)) return undefined;
@@ -143,6 +155,7 @@ export async function pushRemote(kind: SyncKind, ownerId: string, data: unknown,
       body: JSON.stringify({ [kind]: data }),
       keepalive,
     });
+    if (response.status === REJECTED_OWNER) forgetOwnerId(ownerId);
     if (!response.ok) return undefined;
     const body: unknown = await response.json();
     const updatedAt = isObject(body) ? body.updatedAt : undefined;

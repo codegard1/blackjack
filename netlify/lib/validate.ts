@@ -12,6 +12,7 @@ export type ProfileDocument = {
 
 /** The largest request body a profiles PUT accepts; twenty-five profiles are about 7 KB */
 export const MAX_BODY_BYTES = 16 * 1024;
+/** Matches MAX_PROFILES in src/functions/profiles.ts, where creation stops */
 const MAX_PROFILES = 50;
 const MAX_OPPONENTS = 10;
 const MAX_STAT_KEYS = 20;

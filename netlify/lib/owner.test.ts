@@ -19,7 +19,8 @@ describe('owner ids', () => {
     const id = mintOwnerId('browser', SECRET);
     const [payload, signature] = id.split('.');
     expect(verifyOwnerId(`${payload}x.${signature}`, SECRET)).toBe(false);
-    expect(verifyOwnerId(`${payload}.${signature.slice(0, -1)}A`, SECRET)).toBe(false);
+    const flipped = signature.endsWith('A') ? 'B' : 'A';
+    expect(verifyOwnerId(`${payload}.${signature.slice(0, -1)}${flipped}`, SECRET)).toBe(false);
     expect(verifyOwnerId(`${payload}.${signature}`, 'another-secret-entirely-here')).toBe(false);
     expect(verifyOwnerId('browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c', SECRET)).toBe(false);
     expect(verifyOwnerId('browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c.', SECRET)).toBe(false);

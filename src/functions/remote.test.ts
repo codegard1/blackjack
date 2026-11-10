@@ -105,3 +105,31 @@ describe('pushRemote', () => {
     expect(await pushRemote('game', OWNER, {})).toBeUndefined();
   });
 });
+
+describe('forgetting a rejected owner id', () => {
+  it('drops the stored id and its sync times when the server answers 403, so a new one is issued', async () => {
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5 } });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'Unknown owner id.' }, 403)));
+    expect(await fetchRemote('profiles', OWNER)).toBeUndefined();
+    expect(loadSyncState()).toEqual({ syncedAt: { profiles: 0, game: 0 } });
+
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5 } });
+    expect(await pushRemote('game', OWNER, {})).toBeUndefined();
+    expect(loadSyncState().ownerId).toBeUndefined();
+  });
+
+  it('leaves a newer id alone when the rejection was for an older one', async () => {
+    const replacement = `${OWNER.slice(0, -4)}ZZZZ`;
+    saveSyncState({ ownerId: replacement, syncedAt: { profiles: 0, game: 0 } });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'Unknown owner id.' }, 403)));
+    await fetchRemote('profiles', OWNER);
+    expect(loadSyncState().ownerId).toBe(replacement);
+  });
+
+  it('keeps the id on other failures', async () => {
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5 } });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'Database unavailable.' }, 503)));
+    await fetchRemote('profiles', OWNER);
+    expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5 } });
+  });
+});

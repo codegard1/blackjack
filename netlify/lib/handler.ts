@@ -49,8 +49,9 @@ const indexed = new Map<string, Promise<void>>();
 
 /**
  * Make sure the collection expires documents that have not been written for
- * STALE_AFTER_DAYS. Once per collection per function instance; creating an index
- * that exists is a no-op on the server.
+ * STALE_AFTER_DAYS, and that documents written before the index existed (which
+ * carry only the numeric updatedAt) get a touchedAt so they expire too. Once per
+ * collection per function instance; both steps are no-ops once done.
  */
 function ensureStaleIndex(documents: Collection<StateDocument>): Promise<void> {
   const key = `${documents.dbName}.${documents.collectionName}`;
@@ -58,6 +59,7 @@ function ensureStaleIndex(documents: Collection<StateDocument>): Promise<void> {
   if (!pending) {
     pending = documents
       .createIndex({ touchedAt: 1 }, { name: STALE_INDEX, expireAfterSeconds: STALE_AFTER_DAYS * 24 * 60 * 60 })
+      .then(() => documents.updateMany({ touchedAt: { $exists: false } }, [{ $set: { touchedAt: { $toDate: '$updatedAt' } } }]))
       .then(() => undefined)
       .catch((error: unknown) => {
         indexed.delete(key);
