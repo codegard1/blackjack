@@ -15,7 +15,7 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       react(),
       legacy({ targets: ['>0.2%', 'not dead', 'not op_mini all'] }),
-      ...(isDevServer ? [netlify()] : []),
+      ...(isDevServer ? [netlify({ edgeFunctions: { enabled: false } })] : []),
     ],
     server: {
       host: '0.0.0.0',
