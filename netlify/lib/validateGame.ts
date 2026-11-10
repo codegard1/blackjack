@@ -97,7 +97,7 @@ function isActivityEntry(value: unknown): value is ActivityLogEntry {
 function isSavedGame(value: unknown): value is SavedGame {
   return isObject(value)
     && isFiniteNumber(value.version)
-    && (value.version < 5 || isTableRules(value.tableRules))
+    && ((value.version < 5 && value.tableRules === undefined) || isTableRules(value.tableRules))
     && isFiniteNumber(value.activeHandIndex)
     && Array.isArray(value.activityLog)
     && value.activityLog.length <= MAX_ACTIVITY

@@ -18,7 +18,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
   public playerHands: PlayerHandList = {};
 
   /**
-   * Static method to generate 52 unique card keys
+   * Generate unique card keys for each deck in a shoe
    * @returns 
    */
   static cardKeys(numberOfDecks = 1): PlayingCardKey[] {
@@ -41,7 +41,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
       }
     }
 
-    // Return a copy of the array
+    // Keep legacy keys for the first deck; a copy suffix identifies later decks.
     return Array.from({ length: numberOfDecks }, (_, index) =>
       index === 0 ? keys.slice() : keys.map((key) => `${key}_${index + 1}`)).flat();
   }

@@ -28,6 +28,23 @@ describe('isGameSnapshot', () => {
 });
 
 describe('parseGameBody', () => {
+  it('round-trips an eight-deck shoe and validates and cleans its active rules', () => {
+    const state = gameReducer(createGameState(), {
+      type: GameAction.NewGame, playerKey: ['chris', 'dealer'],
+      tableRules: { numberOfDecks: '8', dealerSoft17: 'hit', blackjackPayout: '6:5' },
+    });
+    const snapshot = gameSnapshot(state);
+    const padded = { ...snapshot, game: { ...snapshot.game, tableRules: { ...snapshot.game.tableRules, extra: true } } };
+    expect(parseGameBody(body(padded))).toEqual({ data: snapshot });
+    expect(isGameSnapshot({ ...snapshot, game: { ...snapshot.game, tableRules: undefined } })).toBe(false);
+    expect(isGameSnapshot({
+      ...snapshot, game: { ...snapshot.game, tableRules: { ...snapshot.game.tableRules, numberOfDecks: '100' } },
+    })).toBe(false);
+    const { tableRules, ...legacyGame } = snapshot.game;
+    expect(isGameSnapshot({ ...snapshot, game: { ...legacyGame, version: 4 } })).toBe(true);
+    expect(parseGameBody(body({ ...snapshot, game: { ...legacyGame, version: 4, tableRules: null } }))).toHaveProperty('error');
+  });
+
   it('returns the snapshot with unknown keys removed at every level and the rest intact', () => {
     const snapshot = JSON.parse(JSON.stringify(gameSnapshot(dealt())));
     const padded = {

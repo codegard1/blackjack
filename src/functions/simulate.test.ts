@@ -3,6 +3,8 @@ import { BOTS, DEALER } from '../characters';
 import { CHARACTER_HISTORY, historyRounds, withHistory } from './history';
 import { emptyStats } from './profiles';
 import { seededRandom, simulateHistory } from './simulate';
+import { settingDefaults } from '../context/SettingContext';
+import { saveSettings } from './persistence';
 
 describe('simulateHistory', () => {
   const result = simulateHistory({ rounds: 400, rng: seededRandom(42) });
@@ -38,6 +40,11 @@ describe('simulateHistory', () => {
   it('gives the same history for the same seed', () => {
     expect(simulateHistory({ rounds: 400, rng: seededRandom(42) })).toEqual(result);
     expect(simulateHistory({ rounds: 400, rng: seededRandom(43) }).stats).not.toEqual(result.stats);
+  });
+
+  it('ignores saved table rules so seeded histories keep using defaults', () => {
+    saveSettings({ ...settingDefaults, numberOfDecks: '8', dealerSoft17: 'hit', blackjackPayout: '6:5' });
+    expect(simulateHistory({ rounds: 400, rng: seededRandom(42) })).toEqual(result);
   });
 
   it('puts Math.random back when it is done', () => {
