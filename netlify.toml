@@ -2,6 +2,10 @@
 # declared in this file are not available to functions, so MONGODB_URI and
 # MONGODB_DB are set in the Netlify UI (Site configuration > Environment variables).
 
+[dev]
+  targetPort = 3000
+  port = 8888
+
 [build]
   command = "npm run build"
   publish = "dist"
