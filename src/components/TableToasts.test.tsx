@@ -1,11 +1,11 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlayingCard } from '../classes';
 import { createGameState } from '../context';
 import { GameAction } from '../enums';
 import { gameReducer } from '../functions';
 import { GameState } from '../types';
-import { TOAST_EXIT_MS, TOAST_HOLD_MS, useTableToasts } from './TableToasts';
+import { TableToasts, TOAST_EXIT_MS, TOAST_HOLD_MS, useTableToasts } from './TableToasts';
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -31,8 +31,8 @@ const startedGame = (): GameState => {
 };
 
 const wager = (state: GameState): GameState => gameReducer(state, { type: GameAction.Bet, playerKey: 'chris', betAmount: 25 });
-const draw = (state: GameState): GameState => gameReducer(state, { type: GameAction.Draw, playerKey: 'chris', deckSide: 'top', numberOfCards: 1 });
 const stay = (state: GameState): GameState => gameReducer(state, { type: GameAction.Stay, playerKey: 'chris' });
+const shuffle = (state: GameState): GameState => gameReducer(state, { type: GameAction.Shuffle });
 
 const setup = (initial: GameState) => renderHook(
   ({ state }) => useTableToasts(state, false),
@@ -44,6 +44,23 @@ const titles = (toasts: { title: string }[]) => toasts.map((toast) => toast.titl
 const descriptions = (entries: { description: string }[]) => entries.map((entry) => entry.description);
 
 describe('toast timing', () => {
+  it('announces visible table toasts through a polite status region', () => {
+    render(
+      <TableToasts toasts={[{
+        id: 1,
+        title: 'Chris hits',
+        subtitle: 'Queen of Hearts. Total 20',
+        tone: 'brand',
+        isLeaving: false,
+      }]} />,
+    );
+
+    const status = screen.getByRole('status');
+    expect(status).toHaveAttribute('aria-live', 'polite');
+    expect(status).toHaveTextContent('Chris hits');
+    expect(status).toHaveTextContent('Queen of Hearts. Total 20');
+  });
+
   it('shows a toast, fades it out, and removes it', () => {
     const { result, rerender } = setup(startedGame());
     expect(result.current.toasts).toEqual([]);
@@ -160,10 +177,10 @@ describe('activity log pacing', () => {
   it('shows entries that have no toast at once when nothing is on screen', () => {
     const first = startedGame();
     const { result, rerender } = setup(first);
-    rerender({ state: draw(first) });
+    rerender({ state: shuffle(first) });
 
     expect(result.current.toasts).toEqual([]);
-    expect(descriptions(result.current.activityLog).at(-1)).toMatch(/^drew 1 card/);
+    expect(descriptions(result.current.activityLog).at(-1)).toBe('Deck shuffled');
   });
 
   it('shows a change\'s entries the moment its toast has finished fading out', () => {
@@ -210,15 +227,15 @@ describe('activity log pacing', () => {
     const { result, rerender } = setup(first);
     const wagered = wager(first);
     rerender({ state: wagered });
-    rerender({ state: draw(wagered) });
+    rerender({ state: shuffle(wagered) });
 
-    // the draw has no toast of its own, and must not overtake the wager before it
+    // the shuffle has no toast of its own, and must not overtake the wager before it
     advance(TOAST_HOLD_MS + TOAST_EXIT_MS - 1);
     expect(descriptions(result.current.activityLog)).not.toContain('wagered $25');
-    expect(descriptions(result.current.activityLog).some((description) => description.startsWith('drew'))).toBe(false);
+    expect(descriptions(result.current.activityLog)).not.toContain('Deck shuffled');
 
     advance(1);
-    expect(descriptions(result.current.activityLog).slice(-2)).toEqual(['wagered $25', expect.stringMatching(/^drew 1 card/)]);
+    expect(descriptions(result.current.activityLog).slice(-2)).toEqual(['wagered $25', 'Deck shuffled']);
   });
 
   it('shows the entry of a stay once the dealer\'s turn toast has gone', () => {

@@ -135,11 +135,28 @@ const prefersReducedMotion = () => window.matchMedia?.('(prefers-reduced-motion:
 export const ActivityLog = React.memo(function ActivityLog({ entries, isOpen }: IActivityLogProps) {
 
   const [sort, setSort] = React.useState<SortState>(DEFAULT_SORT);
+  const [announcement, setAnnouncement] = React.useState('');
+  const announcedThrough = React.useRef(entries[entries.length - 1]?.id ?? 0);
   const hands = groupByHand(entries);
+  const latestId = entries[entries.length - 1]?.id ?? 0;
+
+  React.useEffect(() => {
+    if (latestId < announcedThrough.current) {
+      announcedThrough.current = latestId;
+      setAnnouncement('');
+      return;
+    }
+    const newEntries = entries.filter((entry) => entry.id > announcedThrough.current);
+    announcedThrough.current = latestId;
+    if (newEntries.length > 0) {
+      setAnnouncement(newEntries.map((entry) => `${entry.name || 'Game'}: ${entry.description}`).join('. '));
+    } else if (latestId === 0) {
+      setAnnouncement('');
+    }
+  }, [entries, latestId]);
 
   // Rows that arrive while the log is mounted slide in; the ones already there do not.
   // The mark is dropped once the slide is over, so sorting does not replay it.
-  const latestId = entries[entries.length - 1]?.id ?? 0;
   const [seen, setSeen] = React.useState({ latestId, fresh: new Set<number>() });
   if (seen.latestId !== latestId) {
     setSeen({ latestId, fresh: newEntryIds(entries, seen.latestId) });
@@ -181,69 +198,72 @@ export const ActivityLog = React.memo(function ActivityLog({ entries, isOpen }: 
   };
 
   return (
-    <div ref={drawerRef} className={isOpen ? 'activity-drawer is-open' : 'activity-drawer'}>
-      <div className="activity-drawer-clip">
-        <section
-          id="ActivityLogRoot"
-          className="activity-log"
-          aria-labelledby="activity-log-heading"
-          aria-hidden={!isOpen}
-          inert={!isOpen}
-        >
-          <Text as="h2" id="activity-log-heading" size={500} weight="semibold">Activity Log</Text>
-          <div className="activity-log-content">
-            {hands.length === 0
-              ? <Text size={300}>No activity yet</Text>
-              : hands.map((hand) => (
-                <section key={hand.key} className="activity-hand" aria-labelledby={`activity-${hand.key}`}>
-                  <header className="activity-session-header">
-                    <Text as="h3" id={`activity-${hand.key}`} weight="semibold">{hand.label}</Text>
-                    <time dateTime={new Date(hand.newest).toISOString()}>
-                      {new Date(hand.newest).toLocaleString('en-US')}
-                    </time>
-                  </header>
-                  <div className="activity-table-scroll">
-                    <Table aria-label={`${hand.label} activity`} className="activity-table" size="small" sortable>
-                      <TableHeader>
-                        <TableRow>
-                          {columns.map(({ key, label }) => (
-                            <TableHeaderCell key={key} sortDirection={sort.column === key ? sort.direction : undefined} onClick={() => sortBy(key)}>
-                              {label}
-                            </TableHeaderCell>
-                          ))}
-                          <TableHeaderCell className="activity-change-header">Change</TableHeaderCell>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {hand.entries.slice().sort(compareEntries).map((item) => {
-                          const event = item.event ? eventIcons[item.event] : { icon: <Info20Regular />, label: 'Activity' };
-                          const tone = changeTone(item);
-                          const rowClass = [tone && `activity-row-${tone}`, seen.fresh.has(item.id) && 'activity-row-new'].filter(Boolean).join(' ');
-                          return (
-                            <TableRow key={item.id} className={rowClass || undefined}>
-                              <TableCell>
-                                <time dateTime={new Date(item.timestamp).toISOString()}>{new Date(item.timestamp).toLocaleTimeString('en-US')}</time>
-                              </TableCell>
-                              <TableCell><Text weight="semibold">{item.name || 'Game'}</Text></TableCell>
-                              <TableCell>
-                                <TableCellLayout media={<Tooltip content={event.label} relationship="label"><span className="activity-event-icon" tabIndex={0}>{event.icon}</span></Tooltip>}>
-                                  {item.description}
-                                </TableCellLayout>
-                              </TableCell>
-                              <TableCell>
-                                <span className={tone ? `activity-change activity-change-${tone}` : 'activity-change'}>{formatChange(item.amount)}</span>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </section>
-              ))}
-          </div>
-        </section>
+    <>
+      <div className="visually-hidden" role="status" aria-live="polite" aria-atomic="true">{announcement}</div>
+      <div ref={drawerRef} className={isOpen ? 'activity-drawer is-open' : 'activity-drawer'}>
+        <div className="activity-drawer-clip">
+          <section
+            id="ActivityLogRoot"
+            className="activity-log"
+            aria-labelledby="activity-log-heading"
+            aria-hidden={!isOpen}
+            inert={!isOpen}
+          >
+            <Text as="h2" id="activity-log-heading" size={500} weight="semibold">Activity Log</Text>
+            <div className="activity-log-content">
+              {hands.length === 0
+                ? <Text size={300}>No activity yet</Text>
+                : hands.map((hand) => (
+                  <section key={hand.key} className="activity-hand" aria-labelledby={`activity-${hand.key}`}>
+                    <header className="activity-session-header">
+                      <Text as="h3" id={`activity-${hand.key}`} weight="semibold">{hand.label}</Text>
+                      <time dateTime={new Date(hand.newest).toISOString()}>
+                        {new Date(hand.newest).toLocaleString('en-US')}
+                      </time>
+                    </header>
+                    <div className="activity-table-scroll">
+                      <Table aria-label={`${hand.label} activity`} className="activity-table" size="small" sortable>
+                        <TableHeader>
+                          <TableRow>
+                            {columns.map(({ key, label }) => (
+                              <TableHeaderCell key={key} sortDirection={sort.column === key ? sort.direction : undefined} onClick={() => sortBy(key)}>
+                                {label}
+                              </TableHeaderCell>
+                            ))}
+                            <TableHeaderCell className="activity-change-header">Change</TableHeaderCell>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {hand.entries.slice().sort(compareEntries).map((item) => {
+                            const event = item.event ? eventIcons[item.event] : { icon: <Info20Regular />, label: 'Activity' };
+                            const tone = changeTone(item);
+                            const rowClass = [tone && `activity-row-${tone}`, seen.fresh.has(item.id) && 'activity-row-new'].filter(Boolean).join(' ');
+                            return (
+                              <TableRow key={item.id} className={rowClass || undefined}>
+                                <TableCell>
+                                  <time dateTime={new Date(item.timestamp).toISOString()}>{new Date(item.timestamp).toLocaleTimeString('en-US')}</time>
+                                </TableCell>
+                                <TableCell><Text weight="semibold">{item.name || 'Game'}</Text></TableCell>
+                                <TableCell>
+                                  <TableCellLayout media={<Tooltip content={event.label} relationship="label"><span className="activity-event-icon" tabIndex={0}>{event.icon}</span></Tooltip>}>
+                                    {item.description}
+                                  </TableCellLayout>
+                                </TableCell>
+                                <TableCell>
+                                  <span className={tone ? `activity-change activity-change-${tone}` : 'activity-change'}>{formatChange(item.amount)}</span>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </section>
+                ))}
+            </div>
+          </section>
+        </div>
       </div>
-    </div>
+    </>
   );
 });

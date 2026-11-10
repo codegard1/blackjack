@@ -202,6 +202,27 @@ describe('activity log', () => {
     expect(rows().some((row) => row.classList.contains('activity-row-new'))).toBe(false);
   });
 
+  it('announces new log entries without replaying the existing history', () => {
+    const { rerender } = renderLog();
+    const liveRegion = screen.getByRole('status');
+    expect(liveRegion).toBeEmptyDOMElement();
+
+    const arrived: ActivityLogEntry = { id: 6, sessionId: 1, round: 2, event: 'draw', timestamp: 6000, name: 'Chris', description: 'drew the Queen of Hearts' };
+    rerender(logElement([...entries, arrived], {}));
+
+    expect(liveRegion).toHaveTextContent('Chris: drew the Queen of Hearts');
+  });
+
+  it('does not replay cleared history when entry ids start over', () => {
+    const { rerender } = renderLog();
+    const liveRegion = screen.getByRole('status');
+    rerender(logElement([], {}));
+    rerender(logElement([{ id: 1, sessionId: 1, round: 1, event: 'game', timestamp: 7000, name: '', description: 'Game started again' }], {}));
+
+    expect(liveRegion).toHaveTextContent('Game: Game started again');
+    expect(liveRegion).not.toHaveTextContent('wagered $25');
+  });
+
   it('treats a cleared log as a fresh start', () => {
     const { rerender } = renderLog();
     rerender(logElement([], {}));

@@ -1,4 +1,5 @@
 import { GameStatus } from "../enums";
+import { PlayingCard } from "../classes";
 import { Announcement, GameSnapshot, GameState, PlayerSnapshot } from "../types";
 import { roleOf } from "./round";
 import { isRoundOver } from "./seatStatus";
@@ -18,14 +19,16 @@ export function snapshotGame(state: GameState): GameSnapshot {
     ), 0),
     controllingPlayer: state.controllingPlayer,
     players: state.playerStore.all.map((player): PlayerSnapshot => {
-      const hand = state.deck.playerHands[player.key];
+      const handIndex = state.controllingPlayer === player.key ? state.activeHandIndex : 0;
+      const hand = state.deck.hand(player.key, handIndex);
       return {
         key: player.key,
         title: player.title,
         isNPC: player.isNPC,
         role: roleOf(player) ?? 'human',
         cardCount: hand?.cards.length ?? 0,
-        total: hand ? state.deck.getHandValue(player.key).highest : 0,
+        cards: (hand?.cards ?? []).map((card) => new PlayingCard(card).toString()),
+        total: hand ? state.deck.getHandValue(player.key, handIndex).highest : 0,
         isBusted: !!player.isBusted,
         isStaying: !!player.isStaying,
         isBlackjack: !!player.isBlackjack,
@@ -84,6 +87,7 @@ export function diffAnnouncements(prev: GameSnapshot, next: GameSnapshot, reveal
   const potContribution = next.totalPotContributions >= prev.totalPotContributions
     ? next.totalPotContributions - prev.totalPotContributions
     : next.totalPotContributions;
+  const newRound = next.round !== prev.round;
 
   if (potContribution > 0) {
     announcements.push({
@@ -98,19 +102,48 @@ export function diffAnnouncements(prev: GameSnapshot, next: GameSnapshot, reveal
     const was = before.get(player.key);
     if (!was) continue;
 
+    if ((was.cardCount === 0 || newRound) && player.cardCount > 0) {
+      const holeCardHidden = player.role === 'dealer' && !revealDealerTotal;
+      const dealtCards = holeCardHidden ? player.cards?.slice(1) : player.cards;
+      const cardSummary = dealtCards?.length
+        ? `${holeCardHidden ? 'One face-down card and ' : ''}${dealtCards.join(' and ')}`
+        : holeCardHidden ? `one face-down card and one face-up card` : `${player.cardCount} cards`;
+      const total = totalLine(player, revealDealerTotal);
+      announcements.push({
+        title: `${player.title} was dealt`,
+        subtitle: [cardSummary, total].filter(Boolean).join('. '),
+        tone: 'neutral',
+        playerKey: player.key,
+      });
+    }
+
     if (player.isBlackjack && !was.isBlackjack) {
       announcements.push({ title: `${player.title} has blackjack!`, tone: 'success', playerKey: player.key });
     }
 
     if (player.isBusted && !was.isBusted) {
-      announcements.push({ title: `${player.title} busts!`, subtitle: totalLine(player, revealDealerTotal), tone: 'danger', playerKey: player.key });
+      const newCards = player.cards?.slice(was.cardCount);
+      const details = [newCards?.length ? `Drew ${newCards.join(' and ')}` : undefined, totalLine(player, revealDealerTotal)].filter(Boolean);
+      announcements.push({ title: `${player.title} busts!`, subtitle: details.join('. ') || undefined, tone: 'danger', playerKey: player.key });
     }
 
     if (player.isNPC && !player.isBusted) {
       if (player.isStaying && !was.isStaying) {
         announcements.push({ title: `${player.title} stands`, subtitle: totalLine(player, revealDealerTotal), tone: 'neutral', playerKey: player.key });
       } else if (player.cardCount > was.cardCount && was.cardCount > 0 && prev.controllingPlayer === player.key) {
-        announcements.push({ title: `${player.title} hits`, subtitle: totalLine(player, revealDealerTotal), tone: 'neutral', playerKey: player.key });
+        const newCards = player.cards?.slice(was.cardCount);
+        const details = [newCards?.length ? `Drew ${newCards.join(' and ')}` : undefined, totalLine(player, revealDealerTotal)].filter(Boolean);
+        announcements.push({ title: `${player.title} hits`, subtitle: details.join('. ') || undefined, tone: 'neutral', playerKey: player.key });
+      }
+    } else if (!player.isBusted && player.cardCount > was.cardCount && was.cardCount > 0 && prev.controllingPlayer === player.key) {
+      const newCards = player.cards?.slice(was.cardCount);
+      if (newCards?.length) {
+        announcements.push({
+          title: `${player.title} hits`,
+          subtitle: [newCards.join(' and '), totalLine(player, revealDealerTotal)].filter(Boolean).join('. '),
+          tone: 'brand',
+          playerKey: player.key,
+        });
       }
     }
   }

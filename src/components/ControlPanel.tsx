@@ -83,13 +83,15 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   // Hit and Stay need a dealt hand; a new game has no cards until the first deal
   const isRoundDealt = Object.values(gameState.deck.state.playerHands).some((hand) => hand.cards.length > 0);
   const isPlayDisabled = isBtnDisabled || !isRoundDealt;
-  const isDealDisabled = !isRoundComplete && currentPlayerKey !== playerKey;
+  const isDealDisabled = !isRoundComplete && (currentPlayerKey !== playerKey || isRoundDealt);
   const isDoubleDownDisabled = !canDoubleDown(gameState, playerKey, gameState.activeHandIndex);
   const isSplitDisabled = !canSplit(gameState, playerKey, gameState.activeHandIndex);
   const wagerLabel = `Wager $${minimumBet}`;
   // While the pot animates, enabled controls wait; they stay focusable so keyboard focus is kept
   const isWaiting = usePotAnimation();
   const waitUnless = (isDisabled: boolean) => isWaiting && !isDisabled;
+  const hitButton = React.useRef<HTMLButtonElement>(null);
+  const nextHandButton = React.useRef<HTMLButtonElement>(null);
 
   const _hit = () => {
     gameDispatch({ type: GameAction.Draw, playerKey, numberOfCards: 1, deckSide: 'top' });
@@ -105,11 +107,59 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
     deal();
   };
 
+  React.useEffect(() => {
+    if (hidden || npcFlag) return;
+    if (isRoundComplete) {
+      nextHandButton.current?.focus();
+    } else if (isRoundDealt && currentPlayerKey === playerKey) {
+      hitButton.current?.focus();
+    }
+  }, [hidden, npcFlag, isRoundComplete, isRoundDealt, currentPlayerKey, playerKey]);
+
+  React.useEffect(() => {
+    if (hidden || npcFlag) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.altKey || event.ctrlKey || event.metaKey || event.repeat) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && (
+        target.isContentEditable
+        || target.matches('input, textarea, select, [role="textbox"]')
+        || (event.key === 'Enter' && target.closest('button, [role="button"]'))
+      )) return;
+
+      const key = event.key.toLowerCase();
+      const action = key === 'h' && !isPlayDisabled ? _hit
+        : key === 's' && !isPlayDisabled ? () => gameDispatch({ type: GameAction.Stay, playerKey })
+        : key === 'd' && !isDoubleDownDisabled ? () => gameDispatch({ type: GameAction.DoubleDown, playerKey })
+        : key === 'w' && !isBtnDisabled ? () => gameDispatch({ type: GameAction.Bet, playerKey, betAmount: minimumBet })
+        : (key === 'enter' || key === 'n') && isRoundComplete ? nextHand
+        : (key === 'enter' || key === 'n') && !isDealDisabled ? deal
+        : undefined;
+      if (!action) return;
+      event.preventDefault();
+      action();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [
+    hidden,
+    npcFlag,
+    isPlayDisabled,
+    isDoubleDownDisabled,
+    isBtnDisabled,
+    isRoundComplete,
+    isDealDisabled,
+    minimumBet,
+    playerKey,
+    profiles,
+    gameDispatch,
+  ]);
+
   // Once the hand is over the human gets two choices instead of the action toolbar
   if (!hidden && !npcFlag && isRoundComplete) {
     return (
       <div className={styles.endActions}>
-        <Button appearance="primary" size="large" disabledFocusable={isWaiting} onClick={nextHand}>Next hand</Button>
+        <Button ref={nextHandButton} appearance="primary" size="large" disabledFocusable={isWaiting} onClick={nextHand}>Next hand</Button>
         <Button appearance="secondary" size="large" onClick={openPlayers}>Change players</Button>
       </div>
     );
@@ -123,18 +173,18 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
         </Text>
       )}
       <Toolbar aria-label={`${player.title}'s actions`} className={`player-controlpanel ${styles.toolbar}`}>
-        <Tooltip content="Draw one card from the top of the deck" relationship="label">
-          <ToolbarButton className={styles.button} appearance={isPlayDisabled ? 'subtle' : 'primary'} icon={<Add20Regular />} disabled={isPlayDisabled} disabledFocusable={waitUnless(isPlayDisabled)} onClick={_hit}>
+        <Tooltip content="Draw one card from the top of the deck (H)" relationship="label">
+          <ToolbarButton ref={hitButton} className={styles.button} appearance={isPlayDisabled ? 'subtle' : 'primary'} icon={<Add20Regular />} disabled={isPlayDisabled} disabledFocusable={waitUnless(isPlayDisabled)} onClick={_hit}>
             <Label>Hit</Label>
           </ToolbarButton>
         </Tooltip>
-        <Tooltip content="Stand on your current hand" relationship="description">
+        <Tooltip content="Stand on your current hand (S)" relationship="description">
           <ToolbarButton className={styles.button} aria-label="Stay" icon={<ArrowForward20Regular />} disabled={isPlayDisabled} disabledFocusable={waitUnless(isPlayDisabled)} onClick={() => gameDispatch({ type: GameAction.Stay, playerKey })}>
             <Label>Stay</Label>
           </ToolbarButton>
         </Tooltip>
         {!npcFlag && (
-          <Tooltip content="Double your stake, take exactly one more card, then stand" relationship="description">
+          <Tooltip content="Double your stake, take exactly one more card, then stand (D)" relationship="description">
             <ToolbarButton className={styles.button} aria-label="Double Down" icon={<ArrowUpload20Regular />} disabled={isDoubleDownDisabled} disabledFocusable={waitUnless(isDoubleDownDisabled)} onClick={() => gameDispatch({ type: GameAction.DoubleDown, playerKey })}>
               <Label>Double Down</Label>
             </ToolbarButton>
@@ -147,7 +197,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
             </ToolbarButton>
           </Tooltip>
         )}
-        <Tooltip content={`Add $${minimumBet} to the pot`} relationship="description">
+        <Tooltip content={`Add $${minimumBet} to the pot (W)`} relationship="description">
           <ToolbarButton className={styles.button} aria-label={wagerLabel} icon={<ArrowUp20Regular />} disabled={isBtnDisabled} disabledFocusable={waitUnless(isBtnDisabled)} onClick={() => gameDispatch({ type: GameAction.Bet, playerKey, betAmount: minimumBet })}>
             <Label>{wagerLabel}</Label>
           </ToolbarButton>
@@ -156,7 +206,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
         <ToolbarDivider />
 
         {!npcFlag && (
-          <Tooltip content="Deal a new round" relationship="description">
+          <Tooltip content="Deal a new round (Enter or N)" relationship="description">
             <ToolbarButton className={styles.button} aria-label="Deal" appearance={isRoundComplete ? 'primary' : 'subtle'} icon={<ArrowClockwise20Regular />} disabled={isDealDisabled} disabledFocusable={waitUnless(isDealDisabled)} onClick={deal}>
               <Label>Deal</Label>
             </ToolbarButton>

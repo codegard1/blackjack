@@ -36,7 +36,7 @@ it.each([
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
   if (hit) {
     vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
-    fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
   }
 
   expect(screen.getByText(humanStatus)).toBeInTheDocument();
@@ -70,7 +70,7 @@ it('replaces the controls with Next hand and Change players when the hand ends',
   expect(screen.queryByRole('button', { name: 'Next hand' })).not.toBeInTheDocument();
 
   // busting ends the hand: the toolbar gives way to the end-of-hand buttons
-  fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
   expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Deal' })).not.toBeInTheDocument();
 
@@ -133,7 +133,7 @@ describe('changing the roster', () => {
     expect(container.querySelector('[data-seat-key="ogion"]')).not.toBeInTheDocument();
 
     // still ignored when the hand ends
-    fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
     expect(screen.getByRole('button', { name: 'Next hand' })).toBeInTheDocument();
     expect(container.querySelector('[data-seat-key="ogion"]')).not.toBeInTheDocument();
 
@@ -147,7 +147,7 @@ describe('changing the roster', () => {
     const { container } = render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
     fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Change players' }));
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Players' })).getByRole('checkbox', { name: 'Ogion, The Rock' }));
@@ -171,7 +171,7 @@ it('starts a new game with the selected player and the dealer', () => {
   expect(screen.getByText('Faxe ($1000)')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Wager $25' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Stay' })).toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Draw one card from the top of the deck' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' })).toBeDisabled();
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
   fireEvent.click(screen.getByText('Reset Game'));
@@ -181,6 +181,10 @@ it('starts a new game with the selected player and the dealer', () => {
 
 it('always shows card ranks and opens the activity log drawer by default from the setting', () => {
   vi.useFakeTimers();
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
@@ -200,6 +204,7 @@ it('always shows card ranks and opens the activity log drawer by default from th
   expect(screen.getByRole('region', { name: "Chris's hand" })).toBeVisible();
   // the dealer's seat is collapsed while Chris is in control; its hand shows in the rail and its chip brings the seat forward
   expect(screen.getByRole('region', { name: "Faxe's hand" })).toBeVisible();
+  expect(screen.getByRole('region', { name: "Faxe's hand" }).querySelector('.playing-card.is-back')).toHaveAccessibleName('Face-down card');
   fireEvent.click(screen.getByRole('button', { name: /^Faxe \(\$/ }));
   expect(screen.getByRole('region', { name: "Faxe's hand" })).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: /^Chris \(\$/ }));
@@ -258,6 +263,10 @@ it('resumes a saved game after a reload', () => {
 });
 
 it('changes the theme, accent, card style and card back from the Appearance section and remembers them', () => {
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
   const first = render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   // FluentProvider writes the theme as CSS variables into a style sheet rule for its class

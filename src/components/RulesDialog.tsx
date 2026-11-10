@@ -76,6 +76,11 @@ export const RulesDialog: React.FC<IRulesDialogProps> = ({ open, onOpenChange })
               <Text as="p">Pairs must have the same rank: tens, jacks, queens and kings do not count as a pair with one another.</Text>
             </section>
 
+            <section className={styles.section} aria-labelledby="rules-shortcuts">
+              <Text as="h3" id="rules-shortcuts" weight="semibold">Keyboard shortcuts</Text>
+              <Text as="p">H: Hit · S: Stay · D: Double Down · W: Wager · Enter or N: Deal or Next hand. Shortcuts are paused while typing in a text field.</Text>
+            </section>
+
             <section className={styles.section} aria-labelledby="rules-dealer">
               <Text as="h3" id="rules-dealer" weight="semibold">Dealer and results</Text>
               <Text as="p">The dealer draws below 17 and stands on 17 or higher. Each hand is compared with the dealer's on its own: the higher total wins and equal totals push. A two-card 21 is a natural blackjack. If the dealer has a natural, the round ends at once: a player with a natural pushes and every other hand loses.</Text>
