@@ -7,7 +7,8 @@ import { defaultProfileState, profileReducer } from './profiles';
 import { loadSyncState, saveSyncState } from './remote';
 import { SYNC_DEBOUNCE_MS, useProfileSync } from './useProfileSync';
 
-const OWNER = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c';
+/** an id of the shape the server issues; the client only checks the shape */
+const OWNER = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c.c2lnbmVkLWJ5LXRoZS1zZXJ2ZXItZm9yLXRlc3RzLTAx';
 const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 const flush = () => act(async () => { await Promise.resolve(); await Promise.resolve(); });
 
@@ -28,7 +29,7 @@ afterEach(() => {
 
 describe('useProfileSync', () => {
   it('replaces the local profiles when the server copy is newer', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: 10 });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 10, game: 0 } });
     const remote = profileReducer(defaultProfileState(), { type: 'create', name: 'Remote' });
     const fetch = vi.fn().mockResolvedValue(jsonResponse({ profiles: remote, updatedAt: 20 }));
 
@@ -36,12 +37,73 @@ describe('useProfileSync', () => {
     await flush();
 
     expect(result.current.profiles.profiles.some((profile) => profile.name === 'Remote')).toBe(true);
-    expect(loadSyncState().syncedAt).toBe(20);
+    expect(loadSyncState().syncedAt.profiles).toBe(20);
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
+  it('ignores a server copy of the wrong shape and sends the local one', async () => {
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ profiles: { selectedId: 'x' }, updatedAt: 20 }))
+      .mockResolvedValueOnce(jsonResponse({ updatedAt: 21 }));
+
+    const { result } = renderSync(defaultProfileState(), fetch);
+    await flush();
+
+    expect(result.current.profiles).toEqual(defaultProfileState());
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch.mock.calls[1][1]).toMatchObject({ method: 'PUT' });
+  });
+
+  it('asks the server for an owner id first when this browser has none, then syncs under it', async () => {
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ ownerId: OWNER }, 201))
+      .mockResolvedValueOnce(jsonResponse({ error: 'Not found.' }, 404))
+      .mockResolvedValueOnce(jsonResponse({ updatedAt: 5 }));
+
+    renderSync(defaultProfileState(), fetch);
+    await flush();
+    await flush();
+
+    expect(fetch.mock.calls[0]).toEqual(['/api/owner', expect.objectContaining({ method: 'POST' })]);
+    expect(fetch.mock.calls[1][0]).toBe(`/api/profiles/${encodeURIComponent(OWNER)}`);
+    expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 5, game: 0 } });
+  });
+
+  it('replaces an owner id the server rejects and sends the local profiles under the new one', async () => {
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 9, game: 9 } });
+    const replacement = `${OWNER.slice(0, -4)}ZZZZ`;
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ error: 'Unknown owner id.' }, 403))
+      .mockResolvedValueOnce(jsonResponse({ ownerId: replacement }, 201))
+      .mockResolvedValueOnce(jsonResponse({ updatedAt: 30 }));
+    const local = profileReducer(defaultProfileState(), { type: 'create', name: 'Kept' });
+
+    const { result } = renderSync(local, fetch);
+    await flush();
+    await flush();
+
+    expect(result.current.profiles).toEqual(local);
+    expect(fetch.mock.calls[1][0]).toBe('/api/owner');
+    expect(fetch.mock.calls[2][0]).toBe(`/api/profiles/${encodeURIComponent(replacement)}`);
+    expect(fetch.mock.calls[2][1]).toMatchObject({ method: 'PUT' });
+    expect(loadSyncState()).toEqual({ ownerId: replacement, syncedAt: { profiles: 30, game: 0 } });
+  });
+
+  it('sends nothing while the server will not issue an owner id', async () => {
+    const fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+    const { result } = renderSync(defaultProfileState(), fetch);
+    await flush();
+    await flush();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(loadSyncState().ownerId).toBeUndefined();
+
+    act(() => result.current.dispatch({ type: 'create', name: 'Alex' }));
+    expect(result.current.profiles.profiles.some((profile) => profile.name === 'Alex')).toBe(true);
+  });
+
   it('pushes the local profiles when the server has nothing newer', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: 0 });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
     const fetch = vi.fn()
       .mockResolvedValueOnce(jsonResponse({ error: 'Not found.' }, 404))
       .mockResolvedValueOnce(jsonResponse({ updatedAt: 5 }));
@@ -52,11 +114,11 @@ describe('useProfileSync', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(fetch.mock.calls[1][1]).toMatchObject({ method: 'PUT' });
     expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({ profiles: result.current.profiles });
-    expect(loadSyncState().syncedAt).toBe(5);
+    expect(loadSyncState().syncedAt.profiles).toBe(5);
   });
 
   it('sends a later change once it settles, and not an unchanged state', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: 0 });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
     const fetch = vi.fn()
       .mockResolvedValueOnce(jsonResponse({ error: 'Not found.' }, 404))
       .mockResolvedValue(jsonResponse({ updatedAt: 6 }));
@@ -82,7 +144,7 @@ describe('useProfileSync', () => {
   });
 
   it('keeps working offline and pushes pending changes when the page is hidden', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: 0 });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
     const fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
     const { result } = renderSync(defaultProfileState(), fetch);
     await flush();
@@ -91,6 +153,7 @@ describe('useProfileSync', () => {
     vi.useFakeTimers();
     act(() => result.current.dispatch({ type: 'create', name: 'Alex' }));
     act(() => { window.dispatchEvent(new Event('pagehide')); });
+    await flush();
     expect(fetch).toHaveBeenCalledTimes(3);
     expect(fetch.mock.calls[2][1]).toMatchObject({ method: 'PUT', keepalive: true });
     expect(result.current.profiles.profiles.some((profile) => profile.name === 'Alex')).toBe(true);

@@ -9,13 +9,13 @@ export default defineConfig(({ command, mode }) => {
   // They read MONGODB_URI and MONGODB_DB from process.env, so load those from a local
   // .env file (ignored by git; see .env.example). In production Netlify provides them.
   const isDevServer = command === 'serve' && !process.env.VITEST;
-  if (isDevServer) Object.assign(process.env, loadEnv(mode, process.cwd(), 'MONGODB_'));
+  if (isDevServer) Object.assign(process.env, loadEnv(mode, process.cwd(), ['MONGODB_', 'OWNER_ID_']));
 
   return {
     plugins: [
       react(),
       legacy({ targets: ['>0.2%', 'not dead', 'not op_mini all'] }),
-      ...(isDevServer ? [netlify()] : []),
+      ...(isDevServer ? [netlify({ edgeFunctions: { enabled: false } })] : []),
     ],
     server: {
       host: '0.0.0.0',

@@ -8,6 +8,12 @@ export const DEALER_PROFILE_ID = DEALER_ID;
 
 export const MAX_NAME_LENGTH = 20;
 
+/**
+ * How many profiles can exist, the computer characters and the dealer included.
+ * The server accepts no more than this (netlify/lib/validate.ts), so creation stops here.
+ */
+export const MAX_PROFILES = 50;
+
 export function emptyStats(): PlayerStats {
   return { ...playerDefaults.stats };
 }
@@ -41,6 +47,7 @@ export function humanProfiles(profiles: PlayerProfile[]): PlayerProfile[] {
 export function validateProfileName(name: string, profiles: PlayerProfile[]): string | undefined {
   const trimmed = name.trim();
   if (trimmed === '') return 'Enter a name.';
+  if (profiles.length >= MAX_PROFILES) return `There can be up to ${MAX_PROFILES} profiles. Clear application data to start over.`;
   if (trimmed.length > MAX_NAME_LENGTH) return `Names can be up to ${MAX_NAME_LENGTH} characters.`;
   const lower = trimmed.toLowerCase();
   const taken = [...profiles.map((profile) => profile.name), ...CHARACTERS.map((character) => character.name), 'Dealer'];

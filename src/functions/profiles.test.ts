@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { GameAction } from '../enums';
 import { createGameState } from '../context';
 import { gameReducer } from './gameReducer';
-import { DEALER_PROFILE_ID, defaultProfileState, emptyStats, normalizeProfileState, profileReducer, seatsFor, summarizeStats, validateProfileName } from './profiles';
+import { DEALER_PROFILE_ID, defaultProfileState, emptyStats, MAX_PROFILES, normalizeProfileState, profileReducer, seatsFor, summarizeStats, validateProfileName } from './profiles';
 import { PlayerStats, ProfileState } from '../types';
 
 describe('validateProfileName', () => {
@@ -15,6 +15,14 @@ describe('validateProfileName', () => {
     expect(validateProfileName('CHRIS', profiles)).toBe('That name is already in use.');
     expect(validateProfileName('dealer', profiles)).toBe('That name is already in use.');
     expect(validateProfileName('ogion', profiles)).toBe('That name is already in use.');
+  });
+
+  it('stops at the number of profiles the server stores', () => {
+    let state = defaultProfileState();
+    while (state.profiles.length < MAX_PROFILES) state = profileReducer(state, { type: 'create', name: `Player ${state.profiles.length}` });
+    expect(state.profiles).toHaveLength(MAX_PROFILES);
+    expect(validateProfileName('One more', state.profiles)).toMatch(/up to 50 profiles/);
+    expect(profileReducer(state, { type: 'create', name: 'One more' })).toBe(state);
   });
 });
 

@@ -15,4 +15,6 @@ export * from './botStrategy';
 export * from './history';
 export * from './format';
 export * from './remote';
+export * from './useRemoteSync';
 export * from './useProfileSync';
+export * from './useGameSync';

@@ -2,20 +2,26 @@
 // Function tests live here rather than beside the functions: every file in
 // netlify/functions is deployed as a function.
 import type { Context } from '@netlify/functions';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { resetIndexes, STALE_AFTER_DAYS, STALE_INDEX } from '../lib/handler';
 import { ConfigError } from '../lib/mongo';
+import { mintOwnerId } from '../lib/owner';
 import handler, { config } from '../functions/profiles';
 
 const findOne = vi.fn();
 const updateOne = vi.fn();
-const getDb = vi.fn(() => ({ collection: () => ({ findOne, updateOne }) }));
+const createIndex = vi.fn();
+const updateMany = vi.fn();
+const getDb = vi.fn(() => ({ collection: () => ({ findOne, updateOne, updateMany, createIndex, dbName: 'blackjack', collectionName: 'profiles' }) }));
 
 vi.mock('../lib/mongo', async (importOriginal) => ({
   ...await importOriginal<typeof import('../lib/mongo')>(),
   getDb: () => getDb(),
 }));
 
-const OWNER = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c';
+const SECRET = 'correct-horse-battery-staple-2026';
+const OWNER = mintOwnerId('browser', SECRET);
+const UNSIGNED = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c';
 const profiles = { profiles: [{ id: 'chris', name: 'Chris', createdAt: 0, stats: { numberOfGamesPlayed: 1 } }], selectedId: 'chris', opponentIds: [] };
 
 const call = (method: string, ownerId = OWNER, body?: unknown) => handler(
@@ -23,9 +29,17 @@ const call = (method: string, ownerId = OWNER, body?: unknown) => handler(
   { params: { ownerId } } as unknown as Context,
 );
 
+beforeEach(() => {
+  vi.stubEnv('OWNER_ID_SECRET', SECRET);
+  createIndex.mockResolvedValue(STALE_INDEX);
+  updateMany.mockResolvedValue({ acknowledged: true });
+});
+
 afterEach(() => {
   vi.clearAllMocks();
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+  resetIndexes();
 });
 
 describe('profiles function', () => {
@@ -44,6 +58,15 @@ describe('profiles function', () => {
     expect((await call('GET', 'browser:%E0%A4%A')).status).toBe(400);
   });
 
+  it('refuses an owner id the server did not issue, for reads and writes', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect((await call('GET', UNSIGNED)).status).toBe(403);
+    expect((await call('PUT', UNSIGNED, { profiles })).status).toBe(403);
+    expect((await call('PUT', mintOwnerId('browser', 'some-other-secret-value'), { profiles })).status).toBe(403);
+    expect(findOne).not.toHaveBeenCalled();
+    expect(updateOne).not.toHaveBeenCalled();
+  });
+
   it('accepts the owner id as the browser sends it, with the colon percent-encoded', async () => {
     findOne.mockResolvedValueOnce(null);
     const response = await call('GET', encodeURIComponent(OWNER));
@@ -56,24 +79,40 @@ describe('profiles function', () => {
     const found = await call('GET');
     expect(found.status).toBe(200);
     expect(await found.json()).toEqual({ profiles, updatedAt: 1700000000000 });
-    expect(findOne).toHaveBeenCalledWith({ _id: OWNER });
 
     findOne.mockResolvedValueOnce(null);
     expect((await call('GET')).status).toBe(404);
   });
 
-  it('upserts a valid body and returns the server timestamp', async () => {
+  it('upserts a valid body with the write time, after making sure stale documents expire', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1700000000123);
-    updateOne.mockResolvedValueOnce({ acknowledged: true });
+    updateOne.mockResolvedValue({ acknowledged: true });
 
     const response = await call('PUT', OWNER, { profiles });
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ updatedAt: 1700000000123 });
     expect(updateOne).toHaveBeenCalledWith(
       { _id: OWNER },
-      { $set: { profiles, updatedAt: 1700000000123 }, $setOnInsert: { createdAt: 1700000000123 } },
+      { $set: { profiles, updatedAt: 1700000000123, touchedAt: new Date(1700000000123) }, $setOnInsert: { createdAt: 1700000000123 } },
       { upsert: true },
     );
+    expect(createIndex).toHaveBeenCalledWith({ touchedAt: 1 }, { name: STALE_INDEX, expireAfterSeconds: STALE_AFTER_DAYS * 24 * 60 * 60 });
+    // documents from before the index carry only the numeric time; give them a date so they expire too
+    expect(updateMany).toHaveBeenCalledWith({ touchedAt: { $exists: false } }, [{ $set: { touchedAt: { $toDate: '$updatedAt' } } }]);
+
+    await call('PUT', OWNER, { profiles });
+    expect(createIndex).toHaveBeenCalledTimes(1);
+    expect(updateMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('still writes when the index cannot be ensured, and tries again next time', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    createIndex.mockRejectedValueOnce(new Error('not authorized'));
+    updateOne.mockResolvedValue({ acknowledged: true });
+    expect((await call('PUT', OWNER, { profiles })).status).toBe(200);
+    expect(error).toHaveBeenCalled();
+    expect((await call('PUT', OWNER, { profiles })).status).toBe(200);
+    expect(createIndex).toHaveBeenCalledTimes(2);
   });
 
   it('rejects a bad body without writing', async () => {
@@ -91,6 +130,10 @@ describe('profiles function', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     getDb.mockImplementationOnce(() => { throw new ConfigError('MONGODB_URI is not set'); });
     expect((await call('GET')).status).toBe(500);
+
+    vi.stubEnv('OWNER_ID_SECRET', '');
+    expect((await call('GET')).status).toBe(500);
+    vi.stubEnv('OWNER_ID_SECRET', SECRET);
 
     findOne.mockRejectedValueOnce(new Error('server selection timed out'));
     const response = await call('GET');

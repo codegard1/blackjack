@@ -5,6 +5,7 @@ import { gameDefaults } from '../context';
 import { GameAction, GameStatus } from '../enums';
 import { GameState } from '../types';
 import { gameReducer } from './gameReducer';
+import { gameSnapshot } from './persistence';
 import { defaultProfileState, seatsFor } from './profiles';
 import { canDoubleDown, canSplit, decideSeatMove } from './round';
 import { handValue } from './getHandValue';
@@ -654,5 +655,19 @@ describe('computer players', () => {
 
       expect(state.activityLog).toHaveLength(logLength);
     });
+  });
+});
+
+describe('RestoreGame', () => {
+  it('resumes a saved game and ignores a snapshot that is not valid', () => {
+    const dealt = gameReducer(startDefaultGame(), { type: GameAction.Deal });
+    const restored = gameReducer(createGameState(), { type: GameAction.RestoreGame, snapshot: gameSnapshot(dealt) });
+    expect(restored.gameStatus).toBe(dealt.gameStatus);
+    expect(restored.deck.playerHands.chris.cards).toEqual(dealt.deck.playerHands.chris.cards);
+    expect(restored.playerStore.activePlayerKeys).toEqual(dealt.playerStore.activePlayerKeys);
+
+    const fresh = createGameState();
+    expect(gameReducer(fresh, { type: GameAction.RestoreGame, snapshot: { nope: true } }).playerStore.length).toBe(0);
+    expect(gameReducer(fresh, { type: GameAction.RestoreGame }).gameStatus).toBe(GameStatus.Init);
   });
 });

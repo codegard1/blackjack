@@ -20,6 +20,9 @@ export const CLIENT_OPTIONS: MongoClientOptions = {
 /** The collection that holds each owner's profiles document */
 export const PROFILES_COLLECTION = 'profiles';
 
+/** The collection that holds each owner's game in progress */
+export const GAMES_COLLECTION = 'games';
+
 let client: MongoClient | undefined;
 
 /** Read the connection settings, or throw a ConfigError naming what is missing */
