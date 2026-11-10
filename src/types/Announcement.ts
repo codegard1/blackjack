@@ -29,6 +29,7 @@ export type PlayerSnapshot = {
   isNPC: boolean;
   role: PlayerRole;
   cardCount: number;
+  cards?: string[];
   total: number;
   isBusted: boolean;
   isStaying: boolean;

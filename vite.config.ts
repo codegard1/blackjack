@@ -2,6 +2,7 @@ import netlify from '@netlify/vite-plugin';
 import legacy from '@vitejs/plugin-legacy';
 import react from '@vitejs/plugin-react';
 import { loadEnv } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig(({ command, mode }) => {
@@ -15,6 +16,15 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       react(),
       legacy({ targets: ['>0.2%', 'not dead', 'not op_mini all'] }),
+      VitePWA({
+        registerType: 'autoUpdate',
+        manifest: false,
+        includeAssets: ['manifest.json'],
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,svg,png,ico,woff,woff2}'],
+          navigateFallbackDenylist: [/^\/api(?:\/|$)/, /^\/\.netlify\//],
+        },
+      }),
       ...(isDevServer ? [netlify({ edgeFunctions: { enabled: false } })] : []),
     ],
     server: {

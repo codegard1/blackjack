@@ -49,9 +49,13 @@ describe('CardContainer', () => {
   it('renders a face-down card with no indices and an accessible name', () => {
     const card = renderCard('Club_10', { isBackFacing: true });
     expect(card).toHaveClass('is-back', 'is-pattern-rings');
-    expect(card).toHaveAccessibleName('Ten of Clubs');
+    expect(card).toHaveAccessibleName('Face-down card');
     expect(card.querySelectorAll('.playing-card-corner, .playing-card-frame, .playing-card-center')).toHaveLength(0);
     expect(card.style.getPropertyValue('--card-back-primary')).toBe('var(--colorBrandBackground)');
+  });
+
+  it('names a face-up card by rank and suit', () => {
+    expect(renderCard('Heart_12')).toHaveAccessibleName('Queen of Hearts');
   });
 
   it('draws the back from the pattern and color settings, or from props', () => {

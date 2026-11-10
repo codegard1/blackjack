@@ -119,7 +119,7 @@ export const Table: React.FC = () => {
       <div className="table-shell">
         {/* the board's bottom corners square off while the drawer is attached to them */}
         <main ref={boardRef} className="table-board" style={{ animation: 'table-enter 180ms ease-out', backgroundColor: tokens.colorNeutralBackground1, color: tokens.colorNeutralForeground1, borderRadius: activityDrawer.isOpen ? `${tokens.borderRadiusLarge} ${tokens.borderRadiusLarge} 0 0` : tokens.borderRadiusLarge, boxShadow: tokens.shadow16, display: 'flex', flexDirection: 'column', gap: 10, padding: '10px 10px 56px' }}>
-          {gameState.isSpinnerVisible && <Spinner size="large" label="Wait, wait..." aria-live="assertive" />}
+          {gameState.isSpinnerVisible && <Spinner size="large" label="Wait, wait..." aria-live="polite" />}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
 

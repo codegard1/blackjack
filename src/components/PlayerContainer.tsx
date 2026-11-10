@@ -245,7 +245,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
         {player.isNPC && isActive &&
           <div className="player-agent">
-            <Spinner size="large" label="Thinking" aria-live="assertive" />
+            <Spinner size="large" label="Thinking" />
           </div>
         }
 

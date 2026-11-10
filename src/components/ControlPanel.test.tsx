@@ -76,10 +76,48 @@ describe('player controls', () => {
   it('enables gameplay on the human turn', () => {
     renderControls(GameStatus.InProgress, 'chris', ['Club_10', 'Heart_6']);
 
-    ['Draw one card from the top of the deck', 'Stay', 'Double Down', 'Wager $25', 'Deal'].forEach((name) => {
+    ['Draw one card from the top of the deck (H)', 'Stay', 'Double Down', 'Wager $25'].forEach((name) => {
       expect(screen.getByRole('button', { name })).toBeEnabled();
     });
+    expect(screen.getByRole('button', { name: 'Deal' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Split' })).toBeDisabled();
+  });
+
+  it.each([
+    ['h', ['Club_10', 'Heart_6'], { type: GameAction.Draw, playerKey: 'chris', numberOfCards: 1, deckSide: 'top' }],
+    ['s', ['Club_10', 'Heart_6'], { type: GameAction.Stay, playerKey: 'chris' }],
+    ['d', ['Club_10', 'Heart_6'], { type: GameAction.DoubleDown, playerKey: 'chris' }],
+    ['w', [], { type: GameAction.Bet, playerKey: 'chris', betAmount: 25 }],
+    ['n', [], { type: GameAction.Deal }],
+    ['Enter', [], { type: GameAction.Deal }],
+  ])('runs the %s keyboard shortcut when its action is enabled', (key, cards, expectedAction) => {
+    const dispatch = renderControls(GameStatus.InProgress, 'chris', cards);
+
+    fireEvent.keyDown(document.body, { key });
+
+    expect(dispatch).toHaveBeenCalledWith(expectedAction);
+  });
+
+  it('ignores shortcuts while focus is in a text field', () => {
+    const dispatch = renderControls(GameStatus.InProgress, 'chris', ['Club_10', 'Heart_6']);
+    const input = document.createElement('input');
+    document.body.append(input);
+
+    fireEvent.keyDown(input, { key: 'h' });
+
+    expect(dispatch).not.toHaveBeenCalled();
+    input.remove();
+  });
+
+  it('focuses Next hand when the round ends and does not allow Deal during a hand', () => {
+    renderControls(GameStatus.RoundOver, 'chris');
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Next hand' }));
+    cleanup();
+
+    const dispatch = renderControls(GameStatus.InProgress, 'chris', ['Club_10', 'Heart_6']);
+    expect(screen.getByRole('button', { name: 'Deal' })).toBeDisabled();
+    fireEvent.keyDown(document.body, { key: 'n' });
+    expect(dispatch).not.toHaveBeenCalled();
   });
 
   it('offers Split for a same-rank pair and dispatches the active hand index', () => {
@@ -94,7 +132,7 @@ describe('player controls', () => {
   it('keeps Hit and Stay disabled until the hand is dealt', () => {
     const dispatch = renderControls(GameStatus.InProgress, 'chris');
 
-    expect(screen.getByRole('button', { name: 'Draw one card from the top of the deck' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Stay' })).toBeDisabled();
     expect(screen.getByText('Before dealing, use Wager to add $25 to your stake. You can add more than once.')).toBeInTheDocument();
 
