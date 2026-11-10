@@ -1,6 +1,6 @@
 import { PlayerStore, PlayingCardDeck } from "../classes";
 import { GameStatus } from "../enums";
-import { PlayerKey } from "./";
+import { PlayerKey, TableRules } from "./";
 
 export type GameState = {
   activityLog: ActivityLogEntry[];
@@ -17,6 +17,7 @@ export type GameState = {
   playerStore: PlayerStore;
   pot: number;
   round: number;
+  tableRules: TableRules;
   turnCount: number;
   winner?: PlayerKey;
 }

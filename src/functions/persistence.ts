@@ -4,11 +4,11 @@ import { createGameState } from "../context/GameContext";
 import { settingDefaults } from "../context/SettingContext";
 import { StoreName } from "../enums";
 import { IPlayerStoreState } from "../interfaces";
-import { DeckState, GameState, ProfileState, SavedGame, SavedGameSnapshot, SettingKey, SettingsState, settingOptions } from "../types";
+import { DeckState, GameState, ProfileState, SavedGame, SavedGameSnapshot, SettingKey, SettingsState, defaultTableRules, isTableRules, settingOptions, tableRulesFrom } from "../types";
 import { defaultProfileState, normalizeProfileState } from "./profiles";
 
 /** Bump when the shape of the saved game snapshot changes. */
-export const GAME_STORE_VERSION = 4;
+export const GAME_STORE_VERSION = 5;
 
 /** How many of the newest activity log entries a snapshot sent to the server keeps */
 export const MAX_SYNCED_ACTIVITY = 200;
@@ -47,7 +47,8 @@ function isPlayerState(value: unknown): value is IPlayerStoreState {
 
 function isSavedGame(value: unknown): value is SavedGame {
   return isObject(value)
-    && value.version === GAME_STORE_VERSION
+    && (value.version === GAME_STORE_VERSION || value.version === 4)
+    && (value.version === 4 || isTableRules(value.tableRules))
     && typeof value.gameStatus === 'number'
     && typeof value.activeHandIndex === 'number'
     && typeof value.pot === 'number'
@@ -78,6 +79,7 @@ export function gameSnapshot(state: GameState, { maxActivity }: { maxActivity?: 
       minimumBet: state.minimumBet,
       pot: state.pot,
       round: state.round,
+      tableRules: tableRulesFrom(state.tableRules),
       turnCount: state.turnCount,
       winner: state.winner,
     },
@@ -95,10 +97,12 @@ export function restoreGameState(snapshot: unknown): GameState | undefined {
 
   try {
     const { version, ...saved } = game;
+    const tableRules = version === 4 ? { ...defaultTableRules } : tableRulesFrom(saved.tableRules);
     return {
       ...createGameState(),
       ...saved,
-      deck: new PlayingCardDeck(deck),
+      tableRules,
+      deck: new PlayingCardDeck(deck, Number(tableRules.numberOfDecks)),
       playerStore: new PlayerStore(players),
     };
   } catch {

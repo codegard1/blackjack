@@ -8,9 +8,10 @@ import { IPlayingCardDeck } from "../interfaces";
 import { DeckState, PlayerHand, PlayerHandList, PlayerKey, PlayingCardKey } from "../types";
 
 /**
- * A set of 52 Playing Cards in random order
+ * A shoe of one or more decks in random order
  */
 export class PlayingCardDeck implements IPlayingCardDeck {
+  public numberOfDecks: number;
   public selected: PlayingCard[] = [];
   public drawn: PlayingCard[] = [];
   public cards: PlayingCard[] = [];
@@ -20,9 +21,9 @@ export class PlayingCardDeck implements IPlayingCardDeck {
    * Static method to generate 52 unique card keys
    * @returns 
    */
-  static cardKeys(): PlayingCardKey[] {
+  static cardKeys(numberOfDecks = 1): PlayingCardKey[] {
     // Initialize an array to hold our output value
-    let _: PlayingCardKey[] = [];
+    let keys: PlayingCardKey[] = [];
 
     // For each suit defined in the PlayingCard class
     for (let key in PlayingCard.cardSuits) {
@@ -35,16 +36,18 @@ export class PlayingCardDeck implements IPlayingCardDeck {
 
         // Compose the Card key from the Suit name, the Card name, and the Card sort 
         // Add the card key to our output array
-        _.push([suitName.single, index].join('_'));
+        keys.push([suitName.single, index].join('_'));
 
       }
     }
 
     // Return a copy of the array
-    return _.slice();
+    return Array.from({ length: numberOfDecks }, (_, index) =>
+      index === 0 ? keys.slice() : keys.map((key) => `${key}_${index + 1}`)).flat();
   }
 
-  constructor(options?: DeckState) {
+  constructor(options?: DeckState, numberOfDecks = 1) {
+    this.numberOfDecks = numberOfDecks;
     if (undefined !== options) {
       this.selected = options.selectedKeys.map(this.newCard);
       this.drawn = options.drawnKeys.map(this.newCard);
@@ -135,7 +138,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
    * Generate a set of cards for the deck
    */
   private makeCards(): void {
-    this.cards = PlayingCardDeck.cardKeys().map(this.newCard);
+    this.cards = PlayingCardDeck.cardKeys(this.numberOfDecks).map(this.newCard);
   }
 
   /**
@@ -154,7 +157,8 @@ export class PlayingCardDeck implements IPlayingCardDeck {
     return this.newCard(key);
   }
 
-  public reset(): void {
+  public reset(numberOfDecks = this.numberOfDecks): void {
+    this.numberOfDecks = numberOfDecks;
     this.makeCards();
     this.shuffle();
     this.drawn = [];

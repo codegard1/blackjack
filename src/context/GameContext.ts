@@ -2,7 +2,7 @@ import { Dispatch, createContext, useContext } from 'react';
 import { PlayerStore, PlayingCardDeck } from '../classes';
 import { GameStatus } from '../enums';
 import { IGameReducerAction } from '../interfaces';
-import { GameState } from '../types';
+import { GameState, defaultTableRules } from '../types';
 
 export const createGameState = (): GameState => ({
   activeHandIndex: 0,
@@ -17,6 +17,7 @@ export const createGameState = (): GameState => ({
   minimumBet: 25,
   pot: 0,
   round: 0,
+  tableRules: { ...defaultTableRules },
   turnCount: 0,
   lastWriteTime: new Date().toISOString(),
   controllingPlayer: undefined,

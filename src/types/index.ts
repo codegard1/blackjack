@@ -1,6 +1,7 @@
 export * from './DeckState';
 export * from './GameState';
 export * from './SavedGame';
+export * from './TableRules';
 export * from './PlayerCollection';
 export * from './PlayerHand';
 export * from './PlayerKey';

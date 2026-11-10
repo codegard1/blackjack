@@ -2,7 +2,7 @@ import { GameStatus } from "../enums";
 import { IGameReducerAction, IPlayer } from "../interfaces";
 import { GameState } from "../types";
 import { recordActivity } from "./activity";
-import { collectAntes, isDealer, roundStake } from "./round";
+import { collectAntes, isDealer, netFor, roundStake } from "./round";
 
 export { roundStake } from "./round";
 
@@ -29,7 +29,7 @@ function activityEvent(player: IPlayer): 'win' | 'loss' | 'push' {
 /**
  * Pay out a finished round, then record stats. Each hand was settled against
  * the dealer when the round ended (see finishRound): a win pays even money,
- * a natural blackjack pays 3:2, a push returns the stake, and the dealer
+ * a natural blackjack pays the table rate, a push returns the stake, and the dealer
  * keeps a losing stake. The dealer's bank takes the other side of every hand.
  * Guarded by gameStatusFlag so a round is never settled twice.
  */
@@ -41,8 +41,7 @@ function settleRound(state: GameState): void {
     state.deck.getHands(player.key).forEach((hand, index) => {
       if (!hand.result) return;
       const stake = hand.stake ?? roundStake(state, player.key);
-      const net = hand.net ?? (hand.result === 'blackjack' ? Math.floor(stake * 1.5)
-        : hand.result === 'win' ? stake : hand.result === 'loss' ? -stake : 0);
+      const net = hand.net ?? netFor(hand.result, stake, state.tableRules.blackjackPayout);
       hand.net = net;
       const amount = Math.max(0, stake + net);
       if (amount !== 0) playerStore.payout(player.key, amount);

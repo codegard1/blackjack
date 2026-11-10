@@ -4,10 +4,50 @@ import { PlayingCard } from '../classes/PlayingCard';
 import { gameReducer } from './gameReducer';
 import { GAME_STORE_VERSION, gameSnapshot, loadGameState, loadSettings, restoreGameState, saveGameState, saveSettings } from './persistence';
 import { createGameState, settingDefaults } from '../context';
+import { defaultTableRules } from '../types';
 
 const startedGame = () => gameReducer(createGameState(), { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] });
 
 describe('persistence', () => {
+  it('restores active rules independently of pending settings, including the shoe size', () => {
+    const tableRules = { ...defaultTableRules, numberOfDecks: '8' as const, dealerSoft17: 'hit' as const };
+    const state = gameReducer(createGameState(), {
+      type: GameAction.NewGame, playerKey: ['chris', 'dealer'], tableRules,
+    });
+    saveGameState(state);
+    saveSettings({ ...settingDefaults, numberOfDecks: '2', blackjackPayout: '6:5' });
+    const restored = loadGameState();
+    expect(restored.tableRules).toEqual(tableRules);
+    expect(restored.deck.length).toBe(416);
+    restored.deck.reset();
+    expect(restored.deck.length).toBe(416);
+    expect(loadSettings()).toMatchObject({ numberOfDecks: '2', dealerSoft17: 'stand', blackjackPayout: '6:5' });
+    const next = gameReducer(restored, { type: GameAction.NewRound, tableRules: loadSettings() });
+    expect(next.tableRules).toEqual({ numberOfDecks: '2', dealerSoft17: 'stand', blackjackPayout: '6:5' });
+    expect(next.deck.length).toBe(104);
+  });
+
+  it('migrates version-4 saves to default rules without losing the hand', () => {
+    const state = startedGame();
+    state.deck.cards = ['Club_7', 'Heart_10', 'Diamond_9', 'Spade_10'].map((key) => new PlayingCard(key));
+    const snapshot = gameSnapshot(gameReducer(state, { type: GameAction.Deal }));
+    const { tableRules, ...oldGame } = snapshot.game;
+    const restored = restoreGameState({ ...snapshot, game: { ...oldGame, version: 4 } });
+    expect(restored?.tableRules).toEqual(defaultTableRules);
+    expect(restored?.deck.playerHands).toEqual(snapshot.deck.playerHands);
+    expect(restored?.round).toBe(snapshot.game.round);
+    expect(restored && gameSnapshot(restored).game.version).toBe(GAME_STORE_VERSION);
+  });
+
+  it('rejects invalid active table rules and ignores invalid saved settings', () => {
+    const snapshot = gameSnapshot(startedGame());
+    expect(restoreGameState({ ...snapshot, game: { ...snapshot.game, tableRules: { numberOfDecks: '100' } } })).toBeUndefined();
+    localStorage.setItem(StoreName.SETTINGSTORE, JSON.stringify({
+      numberOfDecks: '3', dealerSoft17: true, blackjackPayout: '2:1',
+    }));
+    expect(loadSettings()).toMatchObject(defaultTableRules);
+  });
+
   it('returns a fresh game when nothing is saved', () => {
     const state = loadGameState();
     expect(state.gameStatus).toBe(GameStatus.Init);

@@ -1,7 +1,7 @@
 import { IPlayerStoreState } from ".";
 import { IPlayerOptions } from "./IPlayerOpts";
 import { GameAction, GameStatus } from "../enums";
-import { DeckState, PlayerKey, PlayingCardKey } from "../types";
+import { DeckState, PlayerKey, PlayingCardKey, TableRules } from "../types";
 
 export interface IGameReducerAction {
   cardKey?: PlayingCardKey;
@@ -21,5 +21,6 @@ export interface IGameReducerAction {
   potIncrement?: number;
   /** a saved game to resume, for RestoreGame; ignored when it is not a valid snapshot */
   snapshot?: unknown;
+  tableRules?: TableRules;
   type: GameAction;
 }

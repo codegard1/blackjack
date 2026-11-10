@@ -5,7 +5,7 @@ import { createGameState } from "../context";
 import { defaultplayersArr } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
 import { IGameReducerAction, IPlayerOptions } from "../interfaces";
-import { ActivityLogEntry, GameState, PlayerHand } from "../types";
+import { ActivityLogEntry, GameState, PlayerHand, isTableRules, tableRulesFrom } from "../types";
 import { evaluateGame } from "./evaluateGame";
 import { debugLog } from "./debugLog";
 import { recordActivity } from "./activity";
@@ -86,7 +86,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
      * Replace the current deck with one initialized from saved options
      */
     case GameAction.SetDeckState: {
-      if (undefined !== deckState) state.deck = new PlayingCardDeck(deckState);
+      if (undefined !== deckState) state.deck = new PlayingCardDeck(deckState, Number(state.tableRules.numberOfDecks));
       return state;
     }
 
@@ -157,8 +157,9 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
      * Initiate a new game from scratch
      */
     case GameAction.NewGame: {
+      if (isTableRules(action.tableRules)) state.tableRules = tableRulesFrom(action.tableRules);
       state.playerStore = new PlayerStore();
-      state.deck = new PlayingCardDeck();
+      state.deck = new PlayingCardDeck(undefined, Number(state.tableRules.numberOfDecks));
       state.pot = 0;
       state.winner = undefined;
       state.loser = undefined;
@@ -235,6 +236,15 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
      * Start a new round of a continuous game
      */
     case GameAction.NewRound: {
+      if (isTableRules(action.tableRules)) {
+        const decksChanged = state.tableRules.numberOfDecks !== action.tableRules.numberOfDecks;
+        state.tableRules = tableRulesFrom(action.tableRules);
+        if (decksChanged) {
+          state.deck.reset(Number(state.tableRules.numberOfDecks));
+          state.playerStore.all.forEach((player) => state.deck.newPlayerHand(player.key));
+          recordActivity(state, '', 'Deck shuffled', 'shuffle');
+        }
+      }
       state.deck.clearHands();
       state.playerStore.reset();
       state.controllingPlayer = undefined;
@@ -371,7 +381,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     case GameAction.Deal: {
       const hasCardsInHands = state.playerStore.all.some((player) => state.deck.getHands(player.key).some((hand) => hand.cards.length));
       if (hasCardsInHands || state.gameStatus >= GameStatus.RoundOver) {
-        state = gameReducer(state, { type: GameAction.NewRound });
+        state = gameReducer(state, { type: GameAction.NewRound, tableRules: action.tableRules });
       }
       if (state.playerStore.length === 0) return state;
       const dealtKeys = seatOrder(state).filter((key) => !state.playerStore.player(key).isSittingOut);
@@ -432,7 +442,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       state.deck.updateHandValue(key, index);
       state.deck.updateHandValue(key, index + 1);
 
-      const isSplitAces = Number(movedCard.slice(movedCard.lastIndexOf('_') + 1)) === 14;
+      const isSplitAces = Number(movedCard.split('_')[1]) === 14;
       if (isSplitAces) {
         hand.isSplitAces = true;
         splitHand.isSplitAces = true;
