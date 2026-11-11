@@ -1,11 +1,11 @@
 // React
 import React from "react";
 
-import { Badge, Button, Spinner, makeStyles, mergeClasses, tokens } from '@fluentui/react-components';
+import { Badge, Button, Spinner, Text, makeStyles, mergeClasses, tokens } from '@fluentui/react-components';
 
 // Local Resources
 import {
-  ActivityLog, ActivityLogToggle, Agent, BOT_ACTION_DELAY_MS, CardStack, DEALER_ACTION_DELAY_MS, PlayerContainer, SeatChip, TableToasts,
+  ActivityLog, ActivityLogToggle, Agent, BOT_ACTION_DELAY_MS, CardStack, ControlPanel, DEALER_ACTION_DELAY_MS, PlayerContainer, SeatChip, TableToasts,
 } from ".";
 import { useActivityDrawer } from "./ActivityLog";
 import { useTableToasts } from "./TableToasts";
@@ -28,32 +28,39 @@ const EMPTY_HAND_VALUE: PlayerHandValue = { aceAsEleven: 0, aceAsOne: 0, highest
 const useStyles = makeStyles({
   potBadge: {
     display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalS,
-    minWidth: '180px',
-    minHeight: '128px',
+    gap: tokens.spacingHorizontalS,
     height: 'auto',
-    padding: `${tokens.spacingVerticalM} ${tokens.spacingHorizontalL}`,
+    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`,
     borderRadius: tokens.borderRadiusXLarge,
-    boxShadow: tokens.shadow8,
     backgroundColor: tokens.colorBrandBackground2,
     color: tokens.colorBrandForeground2,
-    fontSize: tokens.fontSizeBase500,
-    lineHeight: tokens.lineHeightBase500,
+    fontSize: tokens.fontSizeBase400,
+    lineHeight: tokens.lineHeightBase400,
+    whiteSpace: 'nowrap',
   },
   potIcon: {
-    fontSize: '48px',
+    fontSize: tokens.fontSizeBase500,
     lineHeight: 1,
+  },
+  dock: {
+    backgroundColor: tokens.colorNeutralBackground2,
+    borderTop: `${tokens.strokeWidthThin} solid ${tokens.colorNeutralStroke2}`,
+  },
+  dockStatus: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalS,
+    color: tokens.colorNeutralForeground3,
   },
 });
 
 /**
  * The board. Before the game starts, the selected player and the dealer float as chips
- * on the left, with a button to start. Once it starts, the seat in control expands into
- * the right two thirds, and the other seats collapse into chips on the left. Clicking a
- * chip brings that seat forward. The pot stays in the top-left corner, or the bottom-left
- * corner on a narrow board. The activity log is a drawer that extends from the board's
- * bottom edge, opened from a button in the board's bottom right corner.
+ * on the left. Once it starts, the seat in control expands into the right two thirds, and
+ * the other seats collapse into chips on the left. Clicking a chip brings that seat forward.
+ * The dock is one row along the board's bottom edge: the pot, then the game's buttons
+ * (Start game, the human's actions, or who is playing during a computer's turn), then the
+ * button that opens the activity log, a drawer that extends from the board's bottom edge.
  */
 export const Table: React.FC = () => {
 
@@ -81,6 +88,8 @@ export const Table: React.FC = () => {
   // Computer autoplay runs here, not in a seat, so it keeps going while that seat is collapsed
   const controller = players.find((player) => player.key === gameState.controllingPlayer);
   const controllerHand = controller ? deck.hand(controller.key, gameState.activeHandIndex) : undefined;
+  // while a computer seat plays, the dock names it in place of the human's buttons
+  const isComputerTurn = !!controller?.isNPC && gameStatus === GameStatus.InProgress;
 
   // Before the game starts, the seats the next game will use: the selected player, the chosen computer players and the dealer
   const seats = seatsFor(profiles);
@@ -92,20 +101,20 @@ export const Table: React.FC = () => {
   const { toasts, activityLog, isBacklogged } = useTableToasts(gameState, revealDealerTotal);
   const activityDrawer = useActivityDrawer();
 
-  // The pot stays in its corner, even after a hand ends. Between hands it slides up out of
-  // view and back in; when it grows it shimmers and bounces. Play waits for all of it.
+  // The pot stays at the start of the dock, even after a hand ends. Between hands it slides
+  // up out of view and back in; when it grows it shimmers and bounces. Play waits for all of it.
   const potMotion = usePotMotion(pot, round, isStarted);
-  const renderPotBadge = (floating = false) => (
+  const potBadge = (
     <Badge
       key={potMotion.key}
       size="extra-large"
       appearance="tint"
       color="brand"
       shape="rounded"
-      className={mergeClasses(styles.potBadge, 'table-pot-badge', floating && 'is-floating', potMotion.phase !== 'idle' && `is-${potMotion.phase}`)}
+      className={mergeClasses(styles.potBadge, 'table-pot-badge', potMotion.phase !== 'idle' && `is-${potMotion.phase}`)}
     >
       {potMotion.phase === 'bouncing' && <span className="table-pot-shimmer" aria-hidden="true" />}
-      <span className={styles.potIcon} aria-hidden="true">💰</span>
+      <span className={mergeClasses('table-pot-icon', styles.potIcon)} aria-hidden="true">💰</span>
       <span>Pot: ${potMotion.shownPot}</span>
     </Badge>
   );
@@ -118,17 +127,14 @@ export const Table: React.FC = () => {
     <PotAnimationContext.Provider value={potMotion.isBusy}>
       <div className="table-shell">
         {/* the board's bottom corners square off while the drawer is attached to them */}
-        <main ref={boardRef} className="table-board" style={{ animation: 'table-enter 180ms ease-out', backgroundColor: tokens.colorNeutralBackground1, color: tokens.colorNeutralForeground1, borderRadius: activityDrawer.isOpen ? `${tokens.borderRadiusLarge} ${tokens.borderRadiusLarge} 0 0` : tokens.borderRadiusLarge, boxShadow: tokens.shadow16, display: 'flex', flexDirection: 'column', gap: 10, padding: '10px 10px 56px' }}>
+        <main ref={boardRef} className="table-board" style={{ animation: 'table-enter 180ms ease-out', backgroundColor: tokens.colorNeutralBackground1, color: tokens.colorNeutralForeground1, borderRadius: activityDrawer.isOpen ? `${tokens.borderRadiusLarge} ${tokens.borderRadiusLarge} 0 0` : tokens.borderRadiusLarge, boxShadow: tokens.shadow16, display: 'flex', flexDirection: 'column' }}>
           {gameState.isSpinnerVisible && <Spinner size="large" label="Wait, wait..." aria-live="polite" />}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
+          <div className="table-field">
 
             {isStarted ? (
               <>
                 <div className="table-layout is-started">
-                  <div className="table-pot table-pot-corner-slot">
-                    {renderPotBadge()}
-                  </div>
                   {focusPlayer && (
                     <div key={focusPlayer.key} className="table-focus" data-seat-key={focusPlayer.key} data-seat-role="focus">
                       <PlayerContainer playerKey={focusPlayer.key} />
@@ -157,20 +163,11 @@ export const Table: React.FC = () => {
               </>
             ) : (
               <div className="table-layout is-pregame">
-                <div className="table-pot table-pot-pregame-slot">
-                  {renderPotBadge(true)}
-                </div>
                 {pendingPlayers.map((player, index) => (
                   <div key={player.key} className="table-pregame-slot" data-seat-key={player.key} data-seat-role="pregame">
                     <SeatChip player={player} floating index={index} />
                   </div>
                 ))}
-              </div>
-            )}
-
-            {!isStarted && (
-              <div className="table-start">
-                <Button appearance="primary" size="large" onClick={startGame}>Start game</Button>
               </div>
             )}
 
@@ -215,7 +212,22 @@ export const Table: React.FC = () => {
             }
           </div>
 
-          <ActivityLogToggle isOpen={activityDrawer.isOpen} onToggle={activityDrawer.toggle} />
+          <div className={mergeClasses('table-dock', styles.dock)}>
+            <div className="table-pot">{potBadge}</div>
+            <div className="table-dock-actions">
+              {!isStarted ? (
+                <Button appearance="primary" size="large" onClick={startGame}>Start game</Button>
+              ) : isComputerTurn ? (
+                <Text className={mergeClasses('table-dock-status', styles.dockStatus)}>
+                  <Spinner size="tiny" aria-hidden="true" />
+                  {`${controller.title} is playing`}
+                </Text>
+              ) : human && (
+                <ControlPanel playerKey={human.key} />
+              )}
+            </div>
+            <ActivityLogToggle isOpen={activityDrawer.isOpen} onToggle={activityDrawer.toggle} />
+          </div>
         </main>
         <ActivityLog entries={activityLog} isOpen={activityDrawer.isOpen} />
       </div>

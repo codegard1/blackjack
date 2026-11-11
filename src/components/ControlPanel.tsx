@@ -6,7 +6,6 @@ import {
   Toolbar,
   ToolbarButton,
   ToolbarDivider,
-  Text,
   Tooltip,
   makeStyles,
   tokens,
@@ -54,14 +53,17 @@ const useStyles = makeStyles({
 });
 
 /**
- * Wraps a control's visible text so the seat's container query can
- * collapse the toolbar to icons on narrow screens. Buttons keep an
+ * Wraps a control's visible text so the dock's container query can
+ * collapse the toolbar to icons when it is short of room. Buttons keep an
  * aria-label (or tooltip label) so their accessible name survives.
  */
 const Label: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   <span className="seat-control-label">{children}</span>;
 
-// Component
+/**
+ * The human's game buttons, shown in the Table's dock: the action toolbar during a hand,
+ * or Next hand and Change players once the hand is over
+ */
 export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
 
   // Props
@@ -160,7 +162,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   // Once the hand is over the human gets two choices instead of the action toolbar
   if (!hidden && !npcFlag && isRoundComplete) {
     return (
-      <div className={styles.endActions}>
+      <div className={`player-endactions ${styles.endActions}`}>
         <Button ref={nextHandButton} appearance="primary" size="large" disabledFocusable={isWaiting} onClick={nextHand}>Next hand</Button>
         <Button appearance="secondary" size="large" onClick={openPlayers}>Change players</Button>
       </div>
@@ -168,12 +170,6 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   }
 
   return hidden ? null : (
-    <>
-      {!npcFlag && !isRoundDealt && !isRoundComplete && currentPlayerKey === playerKey && (
-        <Text as="p" size={200}>
-          Before dealing, use Wager to add ${minimumBet} to your stake. You can add more than once.
-        </Text>
-      )}
       <Toolbar aria-label={`${player.title}'s actions`} className={`player-controlpanel ${styles.toolbar}`}>
         <Tooltip content="Draw one card from the top of the deck (H)" relationship="label">
           <ToolbarButton ref={hitButton} className={styles.button} appearance={isPlayDisabled ? 'subtle' : 'primary'} icon={<Add20Regular />} disabled={isPlayDisabled} disabledFocusable={waitUnless(isPlayDisabled)} onClick={_hit}>
@@ -215,6 +211,5 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
           </Tooltip>
         )}
       </Toolbar>
-    </>
   );
 }

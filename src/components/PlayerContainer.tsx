@@ -16,7 +16,7 @@ import {
 import { Info24Regular } from '@fluentui/react-icons';
 
 /* custom stuff */
-import { CardStack, ControlPanel, DeckCallout, StatusDisplay } from '.';
+import { CardStack, DeckCallout, StatusDisplay } from '.';
 import { getCharacter } from "../characters";
 import { CharacterDialog } from "./CharacterCard";
 import { CharacterPortrait } from "./CharacterPortrait";
@@ -137,7 +137,7 @@ const SPARKLES = [
 ];
 
 /**
- * The expanded seat: name, bank, status, cards, and (for the human) the action toolbar
+ * The expanded seat: name, bank, status and cards. The human's buttons are in the Table's dock.
  */
 export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
 
@@ -151,15 +151,16 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   // computed values
   const playerState = gameState.playerStore.state;
   const player = playerState.players[playerKey];
-  const playerStatusFlag = (player.isBusted ||
-    player.isFinished ||
-    player.isStaying ||
-    !player.turn);
   const hands = gameState.deck.getHands(playerKey);
 
   const { gameStatus } = gameState;
   const isWinner = isSeatWinner(player, gameStatus);
   const isActive = !!player.turn && !isRoundOver(gameStatus);
+
+  // the human's seat explains the wager until the first cards are dealt
+  const isRoundDealt = Object.values(gameState.deck.state.playerHands).some((hand) => hand.cards.length > 0);
+  const isAwaitingDeal = !player.isNPC && !isRoundDealt && gameStatus < GameStatus.RoundOver
+    && playerState.currentPlayerKey === playerKey;
 
   const id = `DeckCalloutTarget-${player.title}`;
 
@@ -168,12 +169,8 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   const [isCharacterOpen, setCharacterOpen] = React.useState(false);
   const character = getCharacter(playerKey);
 
-  // shorthand methods to show and hide the deck callout
-  const _showDeckCallout = () => setDeckCalloutVisible(true);
+  // shorthand method to hide the deck callout
   const _hideDeckCallout = () => setDeckCalloutVisible(false);
-
-  /* selectedFlag is true if getSelected() returns an array */
-  const selectedFlag = false;
 
   // Status badge (one at a time, most important first)
   const status = seatStatus(player, gameStatus);
@@ -249,14 +246,11 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
           </div>
         }
 
-        <ControlPanel
-          hidden={player.isNPC}
-          playerKey={props.playerKey}
-          playerStatusFlag={playerStatusFlag}
-          selectedFlag={selectedFlag}
-          showDeckCallout={_showDeckCallout}
-          isDeckCalloutVisible={isDeckCalloutVisible}
-        />
+        {isAwaitingDeal && (
+          <Text as="p" size={200}>
+            Before dealing, use Wager to add ${gameState.minimumBet} to your stake. You can add more than once.
+          </Text>
+        )}
       </div>
       <DeckCallout player={player} hidden={!isDeckCalloutVisible} onHideCallout={_hideDeckCallout} target={'#' + id} />
     </Card>

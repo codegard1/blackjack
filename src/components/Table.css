@@ -27,20 +27,34 @@
   padding: 10px;
 }
 
-/* In play: the focused seat on top, the rail of collapsed seats below,
-   and the pot fixed in the bottom-left corner */
+/* In play: the focused seat on top, the rail of collapsed seats below */
 .table-layout.is-started {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
     "focus"
-    "rail"
-    "pot";
+    "rail";
   align-items: start;
   gap: 16px;
 }
 
 .table-layout.is-started .table-focus { grid-area: focus; }
+.table-layout.is-started .table-rail { grid-area: rail; }
+
+/* the focused seat takes the right two thirds, with the rail in the left third */
+@container table-board (min-width: 720px) {
+  .table-layout.is-started {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    grid-template-areas: "rail focus";
+  }
+
+  .table-layout.is-started .table-rail {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+}
+
+.table-focus { grid-area: focus; }
 .table-layout.is-started .table-rail { grid-area: rail; }
 .table-layout.is-started .table-pot-corner-slot {
   grid-area: pot;
@@ -94,38 +108,121 @@
   width: 100%;
 }
 
-/* the start button before a game, left-aligned under the chips */
-.table-start {
+/* the seats and the table's cards; fills the height above the dock */
+.table-field {
   display: flex;
-  justify-content: flex-start;
-  padding: 0 10px 10px;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
 }
 
-.table-pot {
+/* The dock: the pot, the game's buttons and the activity log button in one row along the
+   board's bottom edge. It stays at the bottom of the window while a tall board scrolls. */
+.table-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
   display: flex;
   align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 16px;
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+/* the buttons take the room between the pot and the log button; they size to this box */
+.table-dock-actions {
+  container: dock-actions / inline-size;
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
   justify-content: center;
-  min-width: 180px;
+  min-width: 0;
+  min-height: 40px;
+}
+
+.table-dock-actions .player-controlpanel {
+  flex-wrap: nowrap;
   max-width: 100%;
 }
 
-.table-pot-pregame-slot {
-  min-width: 0;
-  max-width: 100%;
+/* Collapse the action toolbar to icon-only buttons, and tighten the end-of-hand buttons,
+   when the dock is short of room. */
+@container dock-actions (max-width: 640px) {
+  .seat-control-label {
+    display: none;
+  }
+
+  .player-controlpanel {
+    gap: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .player-controlpanel .fui-Button {
+    min-width: 32px;
+    max-width: 40px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .player-controlpanel .fui-Divider {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+
+  .player-controlpanel .fui-Button__icon {
+    margin-right: 0;
+  }
 }
 
-.table-pot-corner-slot {
-  min-width: 0;
-  max-width: 100%;
+/* the end-of-hand buttons stay on the dock's one row */
+.table-dock-actions .player-endactions {
+  flex-wrap: nowrap;
+}
+
+@container dock-actions (max-width: 340px) {
+  .player-endactions {
+    gap: 6px;
+  }
+
+  .player-endactions .fui-Button {
+    min-width: 0;
+    padding: 5px 8px;
+    font-size: var(--fontSizeBase300);
+    line-height: var(--lineHeightBase300);
+    white-space: nowrap;
+  }
+}
+
+/* The pot's slot clips it, so between hands the pot slides out of the dock and back in
+   without crossing the seats above. The padding leaves room for the bounce. */
+.table-pot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  margin: -8px 0;
+  padding: 8px 0;
+  overflow: hidden;
+}
+
+/* a narrow board tightens the dock */
+@container table-board (max-width: 479.98px) {
+  .table-dock {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .table-pot-icon {
+    display: none;
+  }
 }
 
 .table-pot-badge {
   position: relative;
   overflow: hidden;
-}
-
-.table-pot-badge.is-floating {
-  animation: table-pot-float 3600ms ease-in-out infinite;
 }
 
 /* Between hands the last pot slides up out of view and the new one slides in from the top.
@@ -159,21 +256,21 @@
 
 @keyframes table-pot-leave {
   from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(-120%); opacity: 0; }
+  to { transform: translateY(-150%); opacity: 0; }
 }
 
 @keyframes table-pot-enter {
-  from { transform: translateY(-120%); opacity: 0; }
+  from { transform: translateY(-150%); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes table-pot-bounce {
   0% { transform: translateY(0) scale(1); }
-  18% { transform: translateY(-12px) scale(1.06); }
+  18% { transform: translateY(-6px) scale(1.06); }
   36% { transform: translateY(0) scale(0.98, 1.02); }
-  52% { transform: translateY(-5px) scale(1.02); }
+  52% { transform: translateY(-3px) scale(1.02); }
   68% { transform: translateY(0) scale(1); }
-  82% { transform: translateY(-2px); }
+  82% { transform: translateY(-1px); }
   100% { transform: translateY(0) scale(1); }
 }
 
@@ -182,17 +279,11 @@
   to { transform: translateX(120%); }
 }
 
-@keyframes table-pot-float {
-  0%, 100% { transform: translateY(0) rotate(-1.5deg); }
-  50% { transform: translateY(-8px) rotate(1.5deg); }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .table-board {
     transition: none;
   }
 
-  .table-pot-badge.is-floating,
   .table-pot-badge.is-leaving,
   .table-pot-badge.is-entering,
   .table-pot-badge.is-bouncing,

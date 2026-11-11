@@ -66,7 +66,13 @@ it('replaces the controls with Next hand and Change players when the hand ends',
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  // until the deal, the human's seat explains the wager; the buttons are in the dock, not the seat
+  const hint = screen.getByText('Before dealing, use Wager to add $25 to your stake. You can add more than once.');
+  expect(hint.closest('.table-focus')).not.toBeNull();
+  expect(screen.getByRole('toolbar').closest('.table-dock')).not.toBeNull();
+  expect(screen.getByRole('toolbar').closest('.table-focus')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  expect(screen.queryByText(/Before dealing/)).not.toBeInTheDocument();
   expect(screen.getByRole('toolbar')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Next hand' })).not.toBeInTheDocument();
 
@@ -217,7 +223,7 @@ it('always shows card ranks and opens the activity log drawer by default from th
   expect(cards().every((card) => Array.from(card.querySelectorAll('.playing-card-corner')).every((corner) => corner.children.length === 2))).toBe(true);
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-  // the drawer starts closed, with its button always in the table's corner
+  // the drawer starts closed, with its button always at the end of the dock
   expect(screen.getByRole('button', { name: 'Activity log' })).toHaveAttribute('aria-expanded', 'false');
   expect(screen.queryByRole('heading', { name: 'Activity Log' })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('switch', { name: 'Open Activity Log by default' }));
@@ -226,8 +232,8 @@ it('always shows card ranks and opens the activity log drawer by default from th
   expect(cards().every((card) => Array.from(card.querySelectorAll('.playing-card-corner')).every((corner) => corner.children.length === 2))).toBe(true);
   expect(screen.getByRole('button', { name: 'Activity log' })).toHaveAttribute('aria-expanded', 'true');
   expect(screen.getByRole('heading', { name: 'Activity Log' })).toBeInTheDocument();
-  // the button is in the table's corner and the drawer hangs from the table's bottom edge
-  expect(screen.getByRole('button', { name: 'Activity log' }).closest('.table-board')).not.toBeNull();
+  // the button is in the dock and the drawer hangs from the table's bottom edge
+  expect(screen.getByRole('button', { name: 'Activity log' }).closest('.table-dock')).not.toBeNull();
   expect(screen.getByRole('heading', { name: 'Activity Log' }).closest('.table-shell')).not.toBeNull();
   expect(screen.getByRole('heading', { name: 'Activity Log' }).closest('.table-board')).toBeNull();
 
@@ -436,11 +442,13 @@ const allowMotion = () => {
   vi.spyOn(window, 'matchMedia').mockImplementation((query: string) => ({ ...matchMedia(query), matches: false }));
 };
 
-it('keeps the pot in its corner and bounces it when a wager is made, holding play until it finishes', () => {
+it('keeps the pot in the dock and bounces it when a wager is made, holding play until it finishes', () => {
   allowMotion();
   const { container } = render(<App />);
 
-  expect(container.querySelector('.table-pot-pregame-slot')).toBeInTheDocument();
+  // before a game the pot already waits in the dock, beside Start game
+  expect(container.querySelector('.table-dock .table-pot')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Start game' }).closest('.table-dock')).not.toBeNull();
   expect(screen.getByText('Pot: $0')).toBeInTheDocument();
 
   vi.useFakeTimers();
@@ -449,11 +457,11 @@ it('keeps the pot in its corner and bounces it when a wager is made, holding pla
   // the new game's pot slides in from the top, then bounces for the ante; the controls wait
   // (only players ante, so one human player puts in $25)
   expect(screen.getByText('Pot: $25')).toBeInTheDocument();
-  expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-entering')).toBeInTheDocument();
+  expect(container.querySelector('.table-dock .table-pot .table-pot-badge.is-entering')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Wager $25' })).toHaveAttribute('aria-disabled', 'true');
 
   act(() => vi.advanceTimersByTime(POT_ENTER_MS));
-  expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-bouncing')).toBeInTheDocument();
+  expect(container.querySelector('.table-dock .table-pot .table-pot-badge.is-bouncing')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Wager $25' })).toHaveAttribute('aria-disabled', 'true');
 
   act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
@@ -463,19 +471,19 @@ it('keeps the pot in its corner and bounces it when a wager is made, holding pla
 
   fireEvent.click(wager);
   expect(screen.getByText('Pot: $50')).toBeInTheDocument();
-  expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-bouncing')).toBeInTheDocument();
+  expect(container.querySelector('.table-dock .table-pot .table-pot-badge.is-bouncing')).toBeInTheDocument();
   expect(container.querySelector('.table-pot-shimmer')).toBeInTheDocument();
 
   // a click during the bounce does nothing
   fireEvent.click(screen.getByRole('button', { name: 'Wager $25' }));
   expect(screen.getByText('Pot: $50')).toBeInTheDocument();
 
-  // the pot never leaves its corner, even while its contribution toast is showing
+  // the pot never leaves the dock, even while its contribution toast is showing
   act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
   // the ante and the wager are both $25, so their two notices can show at once
   expect(screen.getAllByText('+$25 added to the pot').length).toBeGreaterThan(0);
   expect(container.querySelectorAll('.table-pot')).toHaveLength(1);
-  expect(container.querySelector('.table-pot-corner-slot')).toBeInTheDocument();
+  expect(container.querySelector('.table-dock .table-pot')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Wager $25' })).not.toHaveAttribute('aria-disabled');
   vi.useRealTimers();
 });
@@ -492,23 +500,23 @@ it('keeps the pot after a hand ends, then slides it up and back in for the next 
   act(() => vi.advanceTimersByTime(POT_ENTER_MS));
   act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
 
-  // a natural blackjack ends the hand at once; the pot stays in its corner
+  // a natural blackjack ends the hand at once; the pot stays in the dock
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
   expect(screen.getByText('✨ Blackjack')).toBeInTheDocument();
-  expect(container.querySelector('.table-pot-corner-slot')).toHaveTextContent('Pot: $25');
+  expect(container.querySelector('.table-dock .table-pot')).toHaveTextContent('Pot: $25');
 
   // the next hand: the last pot slides up out of view, showing its amount as it goes
   act(() => vi.advanceTimersByTime(3000));
   fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
-  expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-leaving')).toBeInTheDocument();
-  expect(container.querySelector('.table-pot-corner-slot')).toHaveTextContent('Pot: $25');
+  expect(container.querySelector('.table-dock .table-pot .table-pot-badge.is-leaving')).toBeInTheDocument();
+  expect(container.querySelector('.table-dock .table-pot')).toHaveTextContent('Pot: $25');
   expect(screen.getByRole('button', { name: 'Next hand' })).toHaveAttribute('aria-disabled', 'true');
 
   // then the new hand's pot slides in from the top and bounces for the antes
   act(() => vi.advanceTimersByTime(POT_LEAVE_MS));
-  expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-entering')).toBeInTheDocument();
+  expect(container.querySelector('.table-dock .table-pot .table-pot-badge.is-entering')).toBeInTheDocument();
   act(() => vi.advanceTimersByTime(POT_ENTER_MS));
-  expect(container.querySelector('.table-pot-corner-slot .table-pot-badge.is-bouncing')).toBeInTheDocument();
+  expect(container.querySelector('.table-dock .table-pot .table-pot-badge.is-bouncing')).toBeInTheDocument();
   act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
   expect(container.querySelector('.table-pot-badge[class*="is-"]')).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Next hand' })).not.toHaveAttribute('aria-disabled');
@@ -650,6 +658,10 @@ it('seats chosen computer players, who play their turns before the dealer', () =
 
   // Ogion has control and his seat comes forward; The Rock stands on 13
   expect(screen.getByRole('region', { name: "Ogion's hand" }).closest('.table-focus')).not.toBeNull();
+
+  // while a computer seat plays, the dock names it in place of the human's buttons
+  expect(screen.getByText('Ogion is playing').closest('.table-dock')).not.toBeNull();
+  expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
 
   // computer play waits for the toasts announcing the earlier moves, so allow for them
   const hasFocus = (seat: string) => screen.getByRole('region', { name: `${seat}'s hand` }).closest('.table-focus') !== null;
