@@ -8,6 +8,15 @@ export function isRoundOver(gameStatus: GameStatus): boolean {
   return gameStatus === GameStatus.RoundOver;
 }
 
+/**
+ * True while the dealer's first card is face down: from the deal until the round
+ * ends, unless the Show Dealer Hand setting turns it up sooner. Only the dealer
+ * has a hole card, so this is false for every other seat.
+ */
+export function isHoleCardHidden(player: IPlayer | undefined, isDealerHandVisible: boolean, gameStatus: GameStatus): boolean {
+  return isDealer(player) && !isDealerHandVisible && !isRoundOver(gameStatus);
+}
+
 /** True when the player came out ahead in the settled round */
 export function isSeatWinner(player: IPlayer, gameStatus: GameStatus): boolean {
   return isRoundOver(gameStatus) && (player.result === 'win' || player.result === 'blackjack');

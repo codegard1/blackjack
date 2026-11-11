@@ -9,6 +9,8 @@ export interface ICardContainerProps {
   index?: number;
   deselect?: () => void;
   isBackFacing?: boolean;
+  /** keep both faces on the card, so it turns over when isBackFacing changes; the dealer's hole card */
+  isFlippable?: boolean;
   isSelectable?: boolean;
   isDescVisible?: boolean;
   /** face layout; defaults to the card style setting */

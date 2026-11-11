@@ -9,6 +9,7 @@ import {
 } from ".";
 import { useActivityDrawer } from "./ActivityLog";
 import { useTableToasts } from "./TableToasts";
+import { useCardFlip } from "./useCardFlip";
 import { usePotMotion } from "./usePotMotion";
 import { useSeatFlip } from "./useSeatFlip";
 import "./Table.css";
@@ -17,7 +18,7 @@ import "./Table.css";
 import { PotAnimationContext, useGameContext, useProfileContext, useSettingContext } from '../context';
 import { playerDefaults } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
-import { seatStatus, isRoundOver } from "../functions/seatStatus";
+import { seatStatus, isHoleCardHidden, isRoundOver } from "../functions/seatStatus";
 import { decideSeatMove, isDealer, isHuman } from "../functions/round";
 import { seatsFor } from "../functions/profiles";
 import { IPlayer } from "../interfaces";
@@ -74,7 +75,14 @@ export const Table: React.FC = () => {
   React.useEffect(() => setPinnedKey(undefined), [gameState.controllingPlayer, gameStatus]);
 
   // The seat in control, unless the user has picked another; after a round, the human
-  const focusKey = (players.some((player) => player.key === pinnedKey) ? pinnedKey : undefined) ?? gameState.controllingPlayer ?? human?.key;
+  const dealer = players.find(isDealer);
+  const turnKey = (players.some((player) => player.key === pinnedKey) ? pinnedKey : undefined) ?? gameState.controllingPlayer ?? human?.key;
+
+  // The dealer's hole card turns over when the round ends, as control passes back to the human.
+  // The dealer's seat keeps focus until the card has turned, so the flip is seen at full size.
+  const holeCardKey = dealer ? deck.hand(dealer.key)?.cards[0] : undefined;
+  const holeCardFlip = useCardFlip(holeCardKey, isHoleCardHidden(dealer, !!settings.isDealerHandVisible, gameStatus), !!dealer && turnKey === dealer.key);
+  const focusKey = holeCardFlip.holdsFocus ? dealer?.key : turnKey;
   const focusPlayer = players.find((player) => player.key === focusKey);
   const railPlayers = players.filter((player) => player !== focusPlayer);
 
@@ -115,7 +123,7 @@ export const Table: React.FC = () => {
   useSeatFlip(boardRef);
 
   return (
-    <PotAnimationContext.Provider value={potMotion.isBusy}>
+    <PotAnimationContext.Provider value={potMotion.isBusy || holeCardFlip.isBusy}>
       <div className="table-shell">
         {/* the board's bottom corners square off while the drawer is attached to them */}
         <main ref={boardRef} className="table-board" style={{ animation: 'table-enter 180ms ease-out', backgroundColor: tokens.colorNeutralBackground1, color: tokens.colorNeutralForeground1, borderRadius: activityDrawer.isOpen ? `${tokens.borderRadiusLarge} ${tokens.borderRadiusLarge} 0 0` : tokens.borderRadiusLarge, boxShadow: tokens.shadow16, display: 'flex', flexDirection: 'column', gap: 10, padding: '10px 10px 56px' }}>
@@ -182,7 +190,7 @@ export const Table: React.FC = () => {
                 handValue={controllerHand?.handValue ?? EMPTY_HAND_VALUE}
                 cardCount={controllerHand?.cards.length ?? 0}
                 handIndex={gameState.activeHandIndex}
-                isPaused={potMotion.isBusy || isBacklogged}
+                isPaused={potMotion.isBusy || holeCardFlip.isBusy || isBacklogged}
                 playerKey={controller.key}
                 decide={() => decideSeatMove(gameState, controller.key, Math.random, gameState.activeHandIndex)}
                 delayMs={isDealer(controller) ? DEALER_ACTION_DELAY_MS : BOT_ACTION_DELAY_MS}

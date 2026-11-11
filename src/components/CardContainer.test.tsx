@@ -5,6 +5,7 @@ import { GameDispatchContext, SettingContext, settingDefaults } from '../context
 import { GameAction } from '../enums';
 import { CardStyle, PlayingCardKey, SettingsState } from '../types';
 import { CardContainer } from './CardContainer';
+import { CARD_FLIP_MS } from './useCardFlip';
 
 const renderCard = (key: PlayingCardKey, props: Partial<React.ComponentProps<typeof CardContainer>> = {}, settings: Partial<SettingsState> = {}, dispatch = vi.fn()) => {
   render(
@@ -19,8 +20,10 @@ const renderCard = (key: PlayingCardKey, props: Partial<React.ComponentProps<typ
 
 describe('CardContainer', () => {
   it('colors red and black suits through classes and keeps the classic frame', () => {
-    expect(renderCard('Heart_5')).toHaveClass('playing-card', 'is-face', 'is-red', 'is-style-classic');
-    expect(screen.getByRole('button').querySelector('.playing-card-frame')).toBeInTheDocument();
+    const card = renderCard('Heart_5');
+    expect(card).toHaveClass('playing-card', 'is-red', 'is-style-classic');
+    expect(card).not.toHaveClass('is-face-down');
+    expect(card.querySelector('.playing-card-face.is-face .playing-card-frame')).toBeInTheDocument();
   });
 
   it.each<[CardStyle, boolean, boolean]>([
@@ -48,10 +51,12 @@ describe('CardContainer', () => {
 
   it('renders a face-down card with no indices and an accessible name', () => {
     const card = renderCard('Club_10', { isBackFacing: true });
-    expect(card).toHaveClass('is-back', 'is-pattern-rings');
+    const back = card.querySelector('.playing-card-face') as HTMLElement;
+    expect(card).toHaveClass('is-face-down');
+    expect(back).toHaveClass('is-back', 'is-pattern-rings');
     expect(card).toHaveAccessibleName('Face-down card');
     expect(card.querySelectorAll('.playing-card-corner, .playing-card-frame, .playing-card-center')).toHaveLength(0);
-    expect(card.style.getPropertyValue('--card-back-primary')).toBe('var(--colorBrandBackground)');
+    expect(back.style.getPropertyValue('--card-back-primary')).toBe('var(--colorBrandBackground)');
   });
 
   it('names a face-up card by rank and suit', () => {
@@ -60,18 +65,62 @@ describe('CardContainer', () => {
 
   it('draws the back from the pattern and color settings, or from props', () => {
     const card = renderCard('Club_10', { isBackFacing: true }, { cardBackPattern: 'lattice', cardBackColor: 'red' });
-    expect(card).toHaveClass('is-pattern-lattice');
-    expect(card.style.getPropertyValue('--card-back-primary')).toBe('var(--colorPaletteRedBackground3)');
-    expect(card.style.getPropertyValue('--card-back-secondary')).toBe('var(--colorPaletteRedBackground1)');
+    const back = card.querySelector('.playing-card-face') as HTMLElement;
+    expect(back).toHaveClass('is-pattern-lattice');
+    expect(back.style.getPropertyValue('--card-back-primary')).toBe('var(--colorPaletteRedBackground3)');
+    expect(back.style.getPropertyValue('--card-back-secondary')).toBe('var(--colorPaletteRedBackground1)');
     cleanup();
 
     const overridden = renderCard('Club_10', { isBackFacing: true, cardBackPattern: 'solid', cardBackColor: 'graphite' }, { cardBackPattern: 'lattice' });
-    expect(overridden).toHaveClass('is-pattern-solid');
-    expect(overridden.style.getPropertyValue('--card-back-primary')).toBe('var(--colorNeutralForeground2)');
+    const overriddenBack = overridden.querySelector('.playing-card-face') as HTMLElement;
+    expect(overriddenBack).toHaveClass('is-pattern-solid');
+    expect(overriddenBack.style.getPropertyValue('--card-back-primary')).toBe('var(--colorNeutralForeground2)');
   });
 
-  it('does not set back colors on a face-up card', () => {
-    expect(renderCard('Club_10').style.getPropertyValue('--card-back-primary')).toBe('');
+  it('draws only the face it shows when it cannot flip', () => {
+    expect(renderCard('Club_10').querySelectorAll('.playing-card-face')).toHaveLength(1);
+    expect(screen.getByRole('button').querySelector('.is-back')).toBeNull();
+    expect(screen.getByRole('button').querySelector('.playing-card-inner')).toBeNull();
+    cleanup();
+
+    renderCard('Club_10', { isBackFacing: true });
+    expect(screen.getByRole('button').querySelectorAll('.playing-card-face')).toHaveLength(1);
+    expect(screen.getByRole('button').querySelector('.is-face')).toBeNull();
+  });
+
+  describe('when flippable', () => {
+    const flippable = (isBackFacing: boolean) => (
+      <SettingContext.Provider value={settingDefaults}>
+        <GameDispatchContext.Provider value={vi.fn()}>
+          <CardContainer {...new PlayingCard('Spade_12')} key="Spade_12" id="Spade_12" isFlippable isBackFacing={isBackFacing} />
+        </GameDispatchContext.Provider>
+      </SettingContext.Provider>
+    );
+
+    it('keeps both faces on an inner layer, hidden from assistive technology', () => {
+      render(flippable(true));
+      const card = screen.getByRole('button');
+      const inner = card.querySelector('.playing-card-inner') as HTMLElement;
+      expect(card).toHaveClass('is-flippable', 'is-face-down');
+      expect(Array.from(inner.children).map((face) => face.className.split(' ').filter((name) => ['is-face', 'is-back'].includes(name)).join())).toEqual(['is-face', 'is-back']);
+      Array.from(inner.children).forEach((face) => expect(face).toHaveAttribute('aria-hidden', 'true'));
+      expect(card).toHaveAccessibleName('Face-down card');
+      expect(card.style.getPropertyValue('--card-flip-ms')).toBe(`${CARD_FLIP_MS}ms`);
+    });
+
+    it('turns over on the same element when isBackFacing changes, and renames itself', () => {
+      const { rerender } = render(flippable(true));
+      const card = screen.getByRole('button');
+      const inner = card.querySelector('.playing-card-inner');
+      rerender(flippable(false));
+      expect(screen.getByRole('button')).toBe(card);
+      expect(card.querySelector('.playing-card-inner')).toBe(inner);
+      expect(card).not.toHaveClass('is-face-down');
+      expect(card).toHaveAccessibleName('Queen of Spades');
+      expect(card.querySelectorAll('.playing-card-face')).toHaveLength(2);
+      rerender(flippable(true));
+      expect(card).toHaveClass('is-face-down');
+    });
   });
 
   it('toggles selection and dispatches when selectable', () => {

@@ -5,6 +5,7 @@ import { webDarkTheme } from '@fluentui/react-components';
 import { PlayingCardDeck } from './classes/PlayingCardDeck';
 import { brandPresets, createAppTheme } from './theme';
 import App from './App';
+import { CARD_FLIP_MS } from './components/useCardFlip';
 import { POT_BOUNCE_MS, POT_ENTER_MS, POT_LEAVE_MS } from './components/usePotMotion';
 import { TOAST_EXIT_MS, TOAST_HOLD_MS } from './components/TableToasts';
 import { formatNet } from './functions/format';
@@ -205,7 +206,7 @@ it('always shows card ranks and opens the activity log drawer by default from th
   expect(screen.getByRole('region', { name: "Chris's hand" })).toBeVisible();
   // the dealer's seat is collapsed while Chris is in control; its hand shows in the rail and its chip brings the seat forward
   expect(screen.getByRole('region', { name: "Faxe's hand" })).toBeVisible();
-  expect(screen.getByRole('region', { name: "Faxe's hand" }).querySelector('.playing-card.is-back')).toHaveAccessibleName('Face-down card');
+  expect(screen.getByRole('region', { name: "Faxe's hand" }).querySelector('.playing-card.is-face-down')).toHaveAccessibleName('Face-down card');
   fireEvent.click(screen.getByRole('button', { name: /^Faxe \(\$/ }));
   expect(screen.getByRole('region', { name: "Faxe's hand" })).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: /^Chris \(\$/ }));
@@ -301,14 +302,14 @@ it('changes the theme, accent, card style and card back from the Appearance sect
 
   fireEvent.click(screen.getByRole('radio', { name: 'Stripes' }));
   fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Card back color' })).getByRole('radio', { name: 'Red' }));
-  expect(screen.getByRole('img', { name: 'Card back preview: Stripes, Red' })).toHaveClass('is-pattern-stripes');
+  expect(screen.getByRole('img', { name: 'Card back preview: Stripes, Red' }).querySelector('.playing-card-face')).toHaveClass('is-pattern-stripes');
   fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
   const cards = screen.getByRole('region', { name: "Chris's hand" }).querySelectorAll('.playing-card');
   expect(cards.length).toBeGreaterThan(0);
   cards.forEach((card) => expect(card).toHaveClass('is-style-bold'));
-  const dealerBack = screen.getByRole('region', { name: "Faxe's hand" }).querySelector('.playing-card.is-back') as HTMLElement;
+  const dealerBack = screen.getByRole('region', { name: "Faxe's hand" }).querySelector('.playing-card.is-face-down .playing-card-face.is-back') as HTMLElement;
   expect(dealerBack).toHaveClass('is-pattern-stripes');
   expect(dealerBack.style.getPropertyValue('--card-back-primary')).toBe('var(--colorPaletteRedBackground3)');
   first.unmount();
@@ -539,6 +540,79 @@ it("announces the dealer's turn as a toast that leaves on its own", () => {
   expect(screen.queryByText("Faxe's turn")).not.toBeInTheDocument();
 });
 
+it("turns the dealer's hole card over when the round ends, keeping the dealer's seat in view until it has", () => {
+  allowMotion();
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
+  vi.useFakeTimers();
+  const { container } = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  act(() => vi.advanceTimersByTime(POT_ENTER_MS));
+  act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
+
+  // the dealer plays from the focused seat, hole card down, and stays on 17
+  const holeCard = () => within(screen.getByRole('region', { name: "Faxe's hand" })).getAllByRole('button')[0];
+  const dealerHole = holeCard();
+  expect(dealerHole).toHaveClass('is-flippable', 'is-face-down');
+  for (let waited = 0; holeCard().classList.contains('is-face-down') && waited < 30_000; waited += 100) {
+    act(() => vi.advanceTimersByTime(100));
+  }
+
+  // the card turned over in place, in the dealer's seat, which keeps focus while it does;
+  // the human's controls are not back yet
+  expect(holeCard()).toBe(dealerHole);
+  expect(dealerHole).not.toHaveClass('is-face-down');
+  expect(dealerHole).toHaveAccessibleName('Ten of Clubs');
+  expect(container.querySelector('.table-focus')).toContainElement(dealerHole);
+  expect(screen.queryByRole('button', { name: 'Next hand' })).not.toBeInTheDocument();
+
+  // then focus returns to the human, whose Next hand is ready
+  act(() => vi.advanceTimersByTime(CARD_FLIP_MS));
+  expect(container.querySelector('.table-focus')).not.toContainElement(holeCard());
+  expect(container.querySelector('.table-focus')).toContainElement(screen.getByRole('region', { name: "Chris's hand" }));
+  expect(screen.getByRole('button', { name: 'Next hand' })).not.toHaveAttribute('aria-disabled');
+  vi.useRealTimers();
+});
+
+it("turns the dealer's hole card over in the rail when Show Dealer Hand is switched on, holding play until it has", () => {
+  allowMotion();
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
+  vi.useFakeTimers();
+  const { container } = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  act(() => vi.advanceTimersByTime(POT_ENTER_MS));
+  act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+
+  const holeCard = () => within(screen.getByRole('region', { name: "Faxe's hand" })).getAllByRole('button')[0];
+  const dealerHole = holeCard();
+  expect(dealerHole.closest('.table-rail')).not.toBeNull();
+  expect(dealerHole).toHaveClass('is-face-down');
+  expect(screen.getByRole('button', { name: 'Stay' })).not.toHaveAttribute('aria-disabled');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  fireEvent.click(screen.getByRole('switch', { name: 'Show Dealer Hand' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+
+  // the same card turns over where it is: the dealer is not brought forward, and the controls wait
+  expect(holeCard()).toBe(dealerHole);
+  expect(dealerHole).not.toHaveClass('is-face-down');
+  expect(dealerHole.closest('.table-rail')).not.toBeNull();
+  expect(container.querySelector('.table-focus')).toContainElement(screen.getByRole('region', { name: "Chris's hand" }));
+  expect(screen.getByRole('button', { name: 'Stay' })).toHaveAttribute('aria-disabled', 'true');
+
+  act(() => vi.advanceTimersByTime(CARD_FLIP_MS));
+  expect(screen.getByRole('button', { name: 'Stay' })).not.toHaveAttribute('aria-disabled');
+  vi.useRealTimers();
+});
+
 it("shows the collapsed players' hands as cards in the rail during the human's turn", () => {
   vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
     this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
@@ -552,8 +626,11 @@ it("shows the collapsed players' hands as cards in the rail during the human's t
   const dealerCards = within(dealerHand).getAllByRole('button');
   expect(dealerCards).toHaveLength(2);
   // the hole card stays face down unless "Show Dealer Hand" is on
-  expect(dealerCards[0].querySelectorAll('.playing-card-corner')).toHaveLength(0);
+  expect(dealerCards[0]).toHaveClass('is-face-down', 'is-flippable');
+  expect(dealerCards[0]).toHaveAccessibleName('Face-down card');
+  expect(dealerCards[1]).not.toHaveClass('is-face-down');
   expect(dealerCards[1].querySelectorAll('.playing-card-corner')).toHaveLength(2);
+  expect(dealerCards[1].querySelector('.playing-card-face.is-back')).toBeNull();
   expect(dealerHand.closest('.table-rail')).not.toBeNull();
   expect(screen.getByRole('region', { name: "Chris's hand" }).closest('.table-focus')).not.toBeNull();
 });

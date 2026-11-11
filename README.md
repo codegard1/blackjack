@@ -53,6 +53,7 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, `n
 * The activity log records each deal, draw, wager, stay, and result. It is a drawer that extends from the bottom edge of the table, opened and closed with the icon button in the table's bottom right corner; the Options panel's Open Activity Log by default switch decides whether it starts open. A new entry slides down into the log once the toast announcing it has faded out
 * Appearance settings in the Options panel: a light, dark, system or high contrast theme; five accent colors that recolor the Fluent UI theme and the table felt; three card face layouts (classic, minimal, bold); and a card back chosen from five patterns and five colors with a live preview. A Reset appearance button restores the defaults
 * Cards are styled with CSS from the Fluent UI theme tokens, so they follow the chosen theme, and animate onto the table
+* When a round ends, the dealer's hole card turns over with a 3D CSS flip (also when Show Dealer Hand is switched on). The dealer's seat stays in view until the card has turned, and play waits for the flip like it does for the pot. With reduced motion requested by the system, the card swaps faces at once, with no turn and no wait
 * The table fills the window below the header, with the same margin above it and on its left, right and bottom edges
 * Seats collapse into name-and-bank chips until a round is dealt; the seat in control takes the right two thirds of the table (full width on phones), and its cards scale to fill their container
 * The pot floats beside the pre-game seats and stays fixed in the table's top-left corner during play (bottom-left on narrow screens), including after a hand ends. Between hands it slides up out of view and the new pot slides in from the top. When money is added to it, it shimmers and bounces. Play waits for these animations to finish
@@ -67,4 +68,4 @@ Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, `n
 
 #### Wish List
 * Show recommended moves to teach the human player good strategy
-* Use CSS transitions to flip cards
+* Flip newly dealt cards as they land
