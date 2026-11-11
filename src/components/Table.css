@@ -17,59 +17,46 @@
   transition: border-radius 360ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Pre-game: floating chips, left-aligned */
+/* One column on a narrow board: the queue of seats, then the dealer's bench, then the stage */
 .table-layout {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 10px;
-}
-
-/* In play: the focused seat on top, the rail of collapsed seats below,
-   and the pot fixed in the bottom-left corner */
-.table-layout.is-started {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
-    "focus"
-    "rail"
-    "pot";
+    "queue"
+    "bench"
+    "stage";
   align-items: start;
   gap: 16px;
+  padding: 10px;
 }
 
-.table-layout.is-started .table-focus { grid-area: focus; }
-.table-layout.is-started .table-rail { grid-area: rail; }
-.table-layout.is-started .table-pot-corner-slot {
-  grid-area: pot;
-  justify-self: start;
-}
+.table-queue { grid-area: queue; }
+.table-bench { grid-area: bench; }
+.table-focus { grid-area: stage; }
 
-/* the focused seat takes the right two thirds; the pot sits in the top-left corner
-   with the rail below it in the left third */
+/* On a wide board the queue takes a third at the side, the left unless the Seat queue side
+   setting says otherwise. The dealer's bench sits above the stage in the other two thirds. */
 @container table-board (min-width: 720px) {
-  .table-layout.is-started {
+  .table-layout {
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
     grid-template-rows: auto 1fr;
     grid-template-areas:
-      "pot focus"
-      "rail focus";
+      "queue bench"
+      "queue stage";
   }
 
-  .table-layout.is-started .table-rail {
-    flex-direction: column;
-    flex-wrap: nowrap;
+  .table-layout.is-queue-right {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-areas:
+      "bench queue"
+      "stage queue";
   }
 }
 
-/* before a game on a narrow board, the pot follows the seats to the bottom-left */
+/* on a narrow board the dealer keeps extra room above and below, apart from the players */
 @container table-board (max-width: 719.98px) {
-  .table-layout.is-pregame .table-pot-pregame-slot {
-    order: 1;
-    flex-basis: 100%;
-    justify-content: flex-start;
+  .table-bench {
+    margin: 16px 0;
   }
 }
 
@@ -78,54 +65,168 @@
   width: 100%;
 }
 
-/* a slot wraps one collapsed seat; useSeatFlip animates the slot itself */
-.table-rail-slot,
-.table-pregame-slot {
-  min-width: 0;
-  max-width: 100%;
-}
-
-.table-rail {
+.table-queue,
+.table-bench {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  flex-direction: column;
   gap: 10px;
   min-width: 0;
+}
+
+/* a slot wraps one collapsed seat; useSeatFlip animates the slot itself */
+.table-seat-slot {
+  min-width: 0;
+}
+
+/* a chip fills its column */
+.table-layout .seat-chip {
+  box-sizing: border-box;
   width: 100%;
+  min-width: 0;
 }
 
-/* the start button before a game, left-aligned under the chips */
-.table-start {
+/* The dealer's chip, and every chip on a narrow board, is one compact row:
+   the seat's identity at the start and its cards at the end */
+.table-bench .seat-chip {
+  flex-flow: row wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@container table-board (max-width: 719.98px) {
+  .table-queue .seat-chip {
+    flex-flow: row wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* the seat's identity gives way so a two-card hand stays on the row; longer hands wrap below */
+  .table-layout .seat-chip > :first-child {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+
+  /* the tagline gives its room to the cards */
+  .table-layout .seat-chip-tagline {
+    display: none;
+  }
+}
+
+/* the seats and the table's cards; fills the height above the dock */
+.table-field {
   display: flex;
-  justify-content: flex-start;
-  padding: 0 10px 10px;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
 }
 
-.table-pot {
+/* The dock: the pot, the game's buttons and the activity log button in one row along the
+   board's bottom edge. It stays at the bottom of the window while a tall board scrolls. */
+.table-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
   display: flex;
   align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 16px;
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+/* the buttons take the room between the pot and the log button; they size to this box */
+.table-dock-actions {
+  container: dock-actions / inline-size;
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
   justify-content: center;
-  min-width: 180px;
+  min-width: 0;
+  min-height: 40px;
+}
+
+.table-dock-actions .player-controlpanel {
+  flex-wrap: nowrap;
   max-width: 100%;
 }
 
-.table-pot-pregame-slot {
-  min-width: 0;
-  max-width: 100%;
+/* Collapse the action toolbar to icon-only buttons, and tighten the end-of-hand buttons,
+   when the dock is short of room. */
+@container dock-actions (max-width: 640px) {
+  .seat-control-label {
+    display: none;
+  }
+
+  .player-controlpanel {
+    gap: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .player-controlpanel .fui-Button {
+    min-width: 32px;
+    max-width: 40px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .player-controlpanel .fui-Divider {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+
+  .player-controlpanel .fui-Button__icon {
+    margin-right: 0;
+  }
 }
 
-.table-pot-corner-slot {
-  min-width: 0;
-  max-width: 100%;
+/* the end-of-hand buttons stay on the dock's one row */
+.table-dock-actions .player-endactions {
+  flex-wrap: nowrap;
+}
+
+@container dock-actions (max-width: 340px) {
+  .player-endactions {
+    gap: 6px;
+  }
+
+  .player-endactions .fui-Button {
+    min-width: 0;
+    padding: 5px 8px;
+    font-size: var(--fontSizeBase300);
+    line-height: var(--lineHeightBase300);
+    white-space: nowrap;
+  }
+}
+
+/* The pot's slot clips it, so between hands the pot slides out of the dock and back in
+   without crossing the seats above. The padding leaves room for the bounce. */
+.table-pot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  margin: -8px 0;
+  padding: 8px 0;
+  overflow: hidden;
+}
+
+/* a narrow board tightens the dock */
+@container table-board (max-width: 479.98px) {
+  .table-dock {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .table-pot-icon {
+    display: none;
+  }
 }
 
 .table-pot-badge {
   position: relative;
   overflow: hidden;
-}
-
-.table-pot-badge.is-floating {
-  animation: table-pot-float 3600ms ease-in-out infinite;
 }
 
 /* Between hands the last pot slides up out of view and the new one slides in from the top.
@@ -159,21 +260,21 @@
 
 @keyframes table-pot-leave {
   from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(-120%); opacity: 0; }
+  to { transform: translateY(-150%); opacity: 0; }
 }
 
 @keyframes table-pot-enter {
-  from { transform: translateY(-120%); opacity: 0; }
+  from { transform: translateY(-150%); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes table-pot-bounce {
   0% { transform: translateY(0) scale(1); }
-  18% { transform: translateY(-12px) scale(1.06); }
+  18% { transform: translateY(-6px) scale(1.06); }
   36% { transform: translateY(0) scale(0.98, 1.02); }
-  52% { transform: translateY(-5px) scale(1.02); }
+  52% { transform: translateY(-3px) scale(1.02); }
   68% { transform: translateY(0) scale(1); }
-  82% { transform: translateY(-2px); }
+  82% { transform: translateY(-1px); }
   100% { transform: translateY(0) scale(1); }
 }
 
@@ -182,17 +283,11 @@
   to { transform: translateX(120%); }
 }
 
-@keyframes table-pot-float {
-  0%, 100% { transform: translateY(0) rotate(-1.5deg); }
-  50% { transform: translateY(-8px) rotate(1.5deg); }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .table-board {
     transition: none;
   }
 
-  .table-pot-badge.is-floating,
   .table-pot-badge.is-leaving,
   .table-pot-badge.is-entering,
   .table-pot-badge.is-bouncing,

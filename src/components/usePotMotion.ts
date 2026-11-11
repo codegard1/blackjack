@@ -53,7 +53,7 @@ export function usePotMotion(pot: number, round: number, isStarted: boolean): Mo
     if (prefersReducedMotion()) {
       setMotion((current) => ({ ...current, phase: 'idle', shownPot: pot }));
     } else if (tracked.hand !== hand) {
-      // the last hand's pot leaves only when the pot stays in its corner
+      // the last hand's pot leaves only between hands; a new game's pot just slides in
       const leave = tracked.isStarted && isStarted;
       setMotion((current) => ({ phase: leave ? 'leaving' : 'entering', key: current.key + 1, shownPot: leave ? tracked.pot : pot }));
     } else if (motion.phase !== 'leaving') {

@@ -20,6 +20,10 @@ export type CardBackPattern = typeof cardBackPatterns[number];
 export const cardBackColors = ['brand', 'red', 'blue', 'green', 'graphite'] as const;
 export type CardBackColor = typeof cardBackColors[number];
 
+/** The side of the table where seats queue for their turn */
+export const queueSides = ['left', 'right'] as const;
+export type QueueSide = typeof queueSides[number];
+
 /**
  * Object containing all app settings
  */
@@ -37,6 +41,7 @@ export type SettingsState = TableRules & {
   cardStyle: CardStyle;
   cardBackPattern: CardBackPattern;
   cardBackColor: CardBackColor;
+  queueSide: QueueSide;
 }
 
 export type SettingKey = keyof SettingsState;
@@ -48,6 +53,7 @@ export const settingOptions = {
   cardStyle: cardStyles,
   cardBackPattern: cardBackPatterns,
   cardBackColor: cardBackColors,
+  queueSide: queueSides,
   numberOfDecks: deckCounts,
   dealerSoft17: dealerSoft17Options,
   blackjackPayout: blackjackPayouts,

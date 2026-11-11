@@ -25,14 +25,7 @@ const renderControls = (gameStatus: GameStatus, currentPlayerKey: string, chrisC
     <GameContext.Provider value={state}>
       <GameDispatchContext.Provider value={dispatch}>
         <PotAnimationContext.Provider value={isPotBouncing}>
-          <ControlPanel
-            playerKey="chris"
-            hidden={false}
-            isDeckCalloutVisible={false}
-            playerStatusFlag={false}
-            selectedFlag={false}
-            showDeckCallout={vi.fn()}
-          />
+          <ControlPanel playerKey="chris" />
         </PotAnimationContext.Provider>
       </GameDispatchContext.Provider>
     </GameContext.Provider>,
@@ -134,7 +127,6 @@ describe('player controls', () => {
 
     expect(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Stay' })).toBeDisabled();
-    expect(screen.getByText('Before dealing, use Wager to add $25 to your stake. You can add more than once.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wager $25' }));
     expect(dispatch).toHaveBeenCalledWith({ type: GameAction.Bet, playerKey: 'chris', betAmount: 25 });
@@ -142,7 +134,6 @@ describe('player controls', () => {
 
   it('only offers double down on a two-card hand', () => {
     const dispatch = renderControls(GameStatus.InProgress, 'chris', ['Club_10', 'Heart_6']);
-    expect(screen.queryByText(/Before dealing/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Double Down' }));
     expect(dispatch).toHaveBeenCalledWith({ type: GameAction.DoubleDown, playerKey: 'chris' });
 

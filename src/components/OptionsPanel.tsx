@@ -35,7 +35,7 @@ import { useGameContext, useProfileContext, useSettingContext } from "../context
 import { GameAction } from "../enums";
 import { clearStores, seatsFor } from "../functions";
 import { brandPresets, cardBackColorList, cardBackPatternList, cardStyleList, cardStylePresets, themeModeList } from "../theme";
-import { AccentKey, CardBackColor, CardBackPattern, CardStyle, TableRules, ThemeMode, accentKeys, appearanceSettingKeys, blackjackPayouts, deckCounts, tableRulesFrom } from "../types";
+import { AccentKey, CardBackColor, CardBackPattern, CardStyle, QueueSide, TableRules, ThemeMode, accentKeys, appearanceSettingKeys, blackjackPayouts, deckCounts, tableRulesFrom } from "../types";
 
 export const OptionsPanel: React.FC = () => {
 
@@ -128,6 +128,16 @@ export const OptionsPanel: React.FC = () => {
           <Switch checked={settings.isDealerHandVisible} label="Show Dealer Hand" onChange={(_, data) => toggleSetting({ key: 'isDealerHandVisible', value: data.checked })} />
           <Switch checked={settings.isHandValueVisible} label="Show Hand Value" onChange={(_, data) => toggleSetting({ key: 'isHandValueVisible', value: data.checked })} />
           <Switch checked={settings.isActivityLogVisible} label="Open Activity Log by default" onChange={(_, data) => toggleSetting({ key: 'isActivityLogVisible', value: data.checked })} />
+          <Field label="Seat queue side" hint="Where seats wait for their turn on a wide table">
+            <RadioGroup
+              layout="horizontal"
+              value={settings.queueSide}
+              onChange={(_, data) => toggleSetting({ key: 'queueSide', value: data.value as QueueSide })}
+            >
+              <Radio value="left" label="Left" />
+              <Radio value="right" label="Right" />
+            </RadioGroup>
+          </Field>
         </div>
 
         <Divider />

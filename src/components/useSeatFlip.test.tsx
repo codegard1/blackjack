@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { COLLAPSE_MS, EXPAND_MS, useSeatFlip } from './useSeatFlip';
+import { COLLAPSE_MS, EXPAND_MS, SHIFT_MS, useSeatFlip } from './useSeatFlip';
 
 /** a board with one focused seat and one rail slot per key */
 const Board: React.FC<{ focus: string; keys: string[] }> = ({ focus, keys }) => {
@@ -16,13 +16,10 @@ const Board: React.FC<{ focus: string; keys: string[] }> = ({ focus, keys }) => 
   );
 };
 
-// focused seats are wide, rail slots are narrow; boxes follow the role each element has
-const boxFor = function (this: HTMLElement) {
-  const focused = this.dataset.seatRole === 'focus';
-  return focused
-    ? { left: 300, top: 0, width: 900, height: 420, x: 300, y: 0, right: 1200, bottom: 420, toJSON: () => ({}) }
-    : { left: 0, top: 100, width: 260, height: 150, x: 0, y: 100, right: 260, bottom: 250, toJSON: () => ({}) };
-};
+// focused seats are wide; rail slots are narrow and stack in document order
+const boxOf = (element: HTMLElement) => element.dataset.seatRole === 'focus'
+  ? { left: 300, top: 0, width: 900, height: 420 }
+  : { left: 0, top: 100 + 160 * Array.from(element.parentElement?.children ?? []).indexOf(element), width: 260, height: 150 };
 
 let animate: ReturnType<typeof vi.fn>;
 
@@ -32,7 +29,11 @@ beforeEach(() => {
   vi.spyOn(window, 'matchMedia').mockImplementation((query: string) => ({ ...matchMedia(query), matches: false }));
   animate = vi.fn(() => ({ onfinish: null }));
   (HTMLElement.prototype as unknown as { animate: typeof animate }).animate = animate;
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(boxFor as () => DOMRect);
+  // the hook measures layout offsets, which ignore the transforms of a running animation
+  vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(function (this: HTMLElement) { return boxOf(this).left; });
+  vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function (this: HTMLElement) { return boxOf(this).top; });
+  vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) { return boxOf(this).width; });
+  vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) { return boxOf(this).height; });
 });
 
 afterEach(() => {
@@ -61,7 +62,18 @@ describe('useSeatFlip', () => {
     expect(expandOptions).toMatchObject({ delay: COLLAPSE_MS });
   });
 
-  it('does not animate slots whose role did not change', () => {
+  it('slides a waiting seat to its new place when the queue moves up', () => {
+    const { rerender } = render(<Board focus="chris" keys={['chris', 'ogion', 'shevek']} />);
+    // Ogion leaves the queue for the stage, so Shevek moves up one place
+    rerender(<Board focus="chris" keys={['chris', 'shevek']} />);
+
+    expect(animate).toHaveBeenCalledTimes(1);
+    const [frames, options] = animate.mock.calls[0];
+    expect(options).toMatchObject({ duration: SHIFT_MS });
+    expect(frames[0].transform).toBe('translate(0px, 160px)');
+  });
+
+  it('does not animate slots that kept their role and their place', () => {
     const { rerender } = render(<Board focus="chris" keys={['chris', 'dealer']} />);
     rerender(<Board focus="chris" keys={['chris', 'dealer']} />);
     expect(animate).not.toHaveBeenCalled();
