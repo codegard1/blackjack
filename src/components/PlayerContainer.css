@@ -12,37 +12,6 @@
   text-align: center;
 }
 
-/* Collapse the action toolbar to icon-only buttons when the seat is narrow.
-   Seats are size containers named "seat" (see PlayerContainer styles). */
-@container seat (max-width: 560px) {
-  .seat-control-label {
-    display: none;
-  }
-
-  .player-controlpanel {
-    flex-wrap: nowrap;
-    gap: 2px;
-    padding-left: 4px;
-    padding-right: 4px;
-  }
-
-  .player-controlpanel .fui-Button {
-    min-width: 32px;
-    max-width: 40px;
-    padding-left: 4px;
-    padding-right: 4px;
-  }
-
-  .player-controlpanel .fui-Divider {
-    padding-left: 2px;
-    padding-right: 2px;
-  }
-
-  .player-controlpanel .fui-Button__icon {
-    margin-right: 0;
-  }
-}
-
 /* the callout that appears beneath the deck when a player action occurs */
 .DeckCallout {
   padding: 1em;

@@ -1,8 +1,5 @@
 export interface IControlPanelProps {
-  hidden: boolean;
-  isDeckCalloutVisible: boolean;
+  /** the human seat the controls act for */
   playerKey: string,
-  playerStatusFlag: boolean;
-  selectedFlag: boolean;
-  showDeckCallout: () => void,
+  hidden?: boolean;
 }

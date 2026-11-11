@@ -105,7 +105,7 @@ export function useActivityDrawer(): { isOpen: boolean; toggle: () => void } {
   return { isOpen, toggle };
 }
 
-/** The icon button in the Table's bottom right corner that opens and closes the drawer */
+/** The icon button at the end of the Table's dock that opens and closes the drawer */
 export const ActivityLogToggle: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpen, onToggle }) => (
   <Tooltip content="Activity log" relationship="label">
     <Button

@@ -20,6 +20,7 @@ export const settingDefaults: SettingsState = {
   cardStyle: 'classic',
   cardBackPattern: 'rings',
   cardBackColor: 'brand',
+  queueSide: 'left',
 }
 
 // Create context with default values
