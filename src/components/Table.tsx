@@ -86,7 +86,7 @@ export const Table: React.FC = () => {
   const isStarted = gameStatus !== GameStatus.Init && players.length > 0;
   const revealDealerTotal = !!settings.isDealerHandVisible || roundOver;
 
-  // A seat the user chose from the rail. Cleared whenever control moves.
+  // A seat the user chose from the queue or the bench. Cleared whenever control moves.
   const [pinnedKey, setPinnedKey] = React.useState<string>();
   React.useEffect(() => setPinnedKey(undefined), [gameState.controllingPlayer, gameStatus]);
 
@@ -167,7 +167,7 @@ export const Table: React.FC = () => {
     </Badge>
   );
 
-  // Seats that change between the focus column and the rail flow between their positions
+  // Seats flow between the queue, the dealer's bench and the stage, and slide when the queue moves up
   const boardRef = React.useRef<HTMLElement>(null);
   useSeatFlip(boardRef);
 
