@@ -43,6 +43,38 @@ const advance = (ms: number) => act(() => { vi.advanceTimersByTime(ms); });
 const titles = (toasts: { title: string }[]) => toasts.map((toast) => toast.title);
 const descriptions = (entries: { description: string }[]) => entries.map((entry) => entry.description);
 
+describe('who a toast is about', () => {
+  const wagerToast = (playerKey: string, playerName: string) => ({
+    id: 1,
+    title: `${playerName} wagered $25`,
+    subtitle: 'Pot: $75',
+    tone: 'brand' as const,
+    kind: 'pot-contribution' as const,
+    playerKey,
+    playerName,
+    isLeaving: false,
+  });
+
+  it("shows a player's initials beside their name when they have no portrait", () => {
+    const { container } = render(<TableToasts toasts={[wagerToast('chris', 'Chris')]} />);
+    expect(screen.getByRole('status')).toHaveTextContent('Chris wagered $25');
+    expect(container.querySelector('.fui-Avatar')).toHaveTextContent('C');
+    expect(container.querySelector('img')).toBeNull();
+  });
+
+  it("shows a character's portrait beside their name", () => {
+    const { container } = render(<TableToasts toasts={[wagerToast('dealer', 'Faxe')]} />);
+    expect(screen.getByRole('status')).toHaveTextContent('Faxe wagered $25');
+    expect(container.querySelector('img')).not.toBeNull();
+    expect(container.querySelector('.fui-Avatar')).toBeNull();
+  });
+
+  it('shows no picture on a toast that is not about a seat', () => {
+    const { container } = render(<TableToasts toasts={[{ id: 1, title: '+$50 added to the pot', subtitle: 'Pot: $50', tone: 'brand', kind: 'pot-contribution', isLeaving: false }]} />);
+    expect(container.querySelector('img, .fui-Avatar')).toBeNull();
+  });
+});
+
 describe('toast timing', () => {
   it('announces visible table toasts through a polite status region', () => {
     render(
@@ -67,7 +99,7 @@ describe('toast timing', () => {
 
     rerender({ state: wager(startedGame()) });
     expect(result.current.toasts).toHaveLength(1);
-    expect(result.current.toasts[0]).toMatchObject({ title: '+$25 added to the pot', isLeaving: false });
+    expect(result.current.toasts[0]).toMatchObject({ title: 'Chris wagered $25', playerKey: 'chris', playerName: 'Chris', isLeaving: false });
 
     advance(TOAST_HOLD_MS - 1);
     expect(result.current.toasts[0].isLeaving).toBe(false);
@@ -133,12 +165,12 @@ describe('toast timing', () => {
       advance(STEP_MS);
     }
 
-    expect(Array.from(appeared.keys())).toEqual(['+$25 added to the pot', "Faxe's turn"]);
+    expect(Array.from(appeared.keys())).toEqual(['Chris wagered $25', "Faxe's turn"]);
     for (const title of appeared.keys()) {
       expect(gone.get(title)! - appeared.get(title)!).toBe(TOAST_HOLD_MS + TOAST_EXIT_MS);
     }
     // one starts as the other starts to leave
-    expect(appeared.get("Faxe's turn")! - appeared.get('+$25 added to the pot')!).toBe(TOAST_HOLD_MS);
+    expect(appeared.get("Faxe's turn")! - appeared.get('Chris wagered $25')!).toBe(TOAST_HOLD_MS);
   });
 });
 

@@ -80,6 +80,10 @@ const useStyles = makeStyles({
   danger: { backgroundColor: tokens.colorPaletteRedBackground3 },
   success: { backgroundColor: tokens.colorPaletteGreenBackground3 },
   info: { backgroundColor: tokens.colorPaletteBlueBackground2, color: tokens.colorPaletteBlueForeground2 },
+  // a ring keeps the picture from blending into the toast, whose brand color matches a player's initials
+  portrait: {
+    boxShadow: `0 0 0 2px ${tokens.colorNeutralForegroundOnBrand}`,
+  },
   subtitle: {
     fontSize: 'clamp(14px, 2.2vw, 18px)',
     fontWeight: tokens.fontWeightRegular,
@@ -91,8 +95,8 @@ const TableToast: React.FC<{ toast: VisibleToast }> = ({ toast }) => {
   const styles = useStyles();
   return (
     <div className={mergeClasses(styles.toast, styles[toast.tone], toast.isLeaving && styles.leaving)}>
-      {toast.playerKey && getCharacter(toast.playerKey) && (
-        <CharacterPortrait id={toast.playerKey} name={toast.title} size="md" decorative />
+      {toast.playerKey && (getCharacter(toast.playerKey) || toast.playerName) && (
+        <CharacterPortrait id={toast.playerKey} name={toast.playerName ?? toast.title} size="md" decorative className={styles.portrait} />
       )}
       <span>{toast.title}</span>
       {toast.subtitle && <span className={styles.subtitle}>{toast.subtitle}</span>}
@@ -219,7 +223,9 @@ export function useTableToasts(
     // Each toast appears no sooner than TOAST_HOLD_MS after the previous one
     let last: ToastPlan | undefined;
     for (const item of items) {
-      const toast: ToastItem = { ...item, id: nextId.current++ };
+      // a seat's name lets a player without a portrait show their initials
+      const playerName = current.players.find((player) => player.key === item.playerKey)?.title;
+      const toast: ToastItem = { ...item, ...(playerName ? { playerName } : {}), id: nextId.current++ };
       const showAt = Math.max(Date.now(), nextShowAt.current);
       nextShowAt.current = showAt + TOAST_HOLD_MS;
       last = { revealId: 0, generation: generation.current };

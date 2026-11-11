@@ -14,6 +14,8 @@ export type Announcement = {
   kind?: 'pot-contribution';
   /** the seat the notice is about; its portrait is shown when it has one */
   playerKey?: PlayerKey;
+  /** that seat's name, for the initials a player without a portrait shows */
+  playerName?: string;
 };
 
 /** An announcement that has been queued for display */
@@ -37,12 +39,29 @@ export type PlayerSnapshot = {
   result?: RoundResult;
 };
 
+/**
+ * Money a player added to the pot after the antes: a wager, a double down or a split.
+ * Taken from the activity log, so it carries the log's own wording.
+ */
+export type WagerSnapshot = {
+  /** the log entry's id; ids only grow within a game */
+  id: number;
+  /** the player's name, as the log has it */
+  name: string;
+  /** what the player did, e.g. "wagered $25" */
+  description: string;
+  /** dollars added to the pot */
+  amount: number;
+};
+
 /** The parts of the game that announcements are derived from */
 export type GameSnapshot = {
   gameStatus: GameStatus;
   round: number;
   pot: number;
   totalPotContributions: number;
+  /** the wagers in the log, oldest first */
+  wagers: WagerSnapshot[];
   controllingPlayer?: PlayerKey;
   players: PlayerSnapshot[];
 };

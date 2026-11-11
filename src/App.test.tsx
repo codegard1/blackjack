@@ -481,8 +481,13 @@ it('keeps the pot in the dock and bounces it when a wager is made, holding play 
 
   // the pot never leaves the dock, even while its contribution toast is showing
   act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
-  // the ante and the wager are both $25, so their two notices can show at once
-  expect(screen.getAllByText('+$25 added to the pot').length).toBeGreaterThan(0);
+  // the ante, the turn and the wager each get a toast in turn, and the wager's names who made it
+  expect(screen.getByText('+$25 added to the pot')).toBeInTheDocument();
+  for (let waited = 0; !screen.queryByText('Chris wagered $25') && waited < 10 * TOAST_HOLD_MS; waited += 100) {
+    act(() => vi.advanceTimersByTime(100));
+  }
+  expect(screen.getByText('Chris wagered $25')).toBeInTheDocument();
+  expect(screen.getByText('Pot: $50', { selector: '[role=status] *' })).toBeInTheDocument();
   expect(container.querySelectorAll('.table-pot')).toHaveLength(1);
   expect(container.querySelector('.table-dock .table-pot')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Wager $25' })).not.toHaveAttribute('aria-disabled');

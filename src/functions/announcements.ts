@@ -1,8 +1,11 @@
 import { GameStatus } from "../enums";
 import { PlayingCard } from "../classes";
-import { Announcement, GameSnapshot, GameState, PlayerSnapshot } from "../types";
+import { Announcement, GameSnapshot, GameState, PlayerSnapshot, WagerSnapshot } from "../types";
 import { roleOf } from "./round";
 import { isRoundOver } from "./seatStatus";
+
+/** True for the log entries where a player added to the pot after the antes */
+const isWagerEvent = (event: string | undefined): boolean => event === 'bet' || event === 'double' || event === 'split';
 
 /**
  * Capture the parts of the game state that announcements are derived from
@@ -17,6 +20,11 @@ export function snapshotGame(state: GameState): GameSnapshot {
         ? total + Math.max(0, -(entry.amount ?? 0))
         : total
     ), 0),
+    wagers: state.activityLog.flatMap((entry): WagerSnapshot[] => (
+      isWagerEvent(entry.event) && (entry.amount ?? 0) < 0
+        ? [{ id: entry.id, name: entry.name, description: entry.description, amount: -(entry.amount ?? 0) }]
+        : []
+    )),
     controllingPlayer: state.controllingPlayer,
     players: state.playerStore.all.map((player): PlayerSnapshot => {
       const handIndex = state.controllingPlayer === player.key ? state.activeHandIndex : 0;
@@ -84,17 +92,38 @@ function resultAnnouncement(next: GameSnapshot): Announcement {
 export function diffAnnouncements(prev: GameSnapshot, next: GameSnapshot, revealDealerTotal: boolean): Announcement[] {
   const announcements: Announcement[] = [];
   const before = new Map(prev.players.map((player) => [player.key, player] as const));
-  const potContribution = next.totalPotContributions >= prev.totalPotContributions
-    ? next.totalPotContributions - prev.totalPotContributions
-    : next.totalPotContributions;
+  const logRestarted = next.totalPotContributions < prev.totalPotContributions;
+  const potContribution = logRestarted
+    ? next.totalPotContributions
+    : next.totalPotContributions - prev.totalPotContributions;
   const newRound = next.round !== prev.round;
 
-  if (potContribution > 0) {
+  // Each wager gets a toast in its player's name; whatever else went into the pot is the antes, one toast for all
+  const lastWagerId = prev.wagers.at(-1)?.id ?? 0;
+  const newWagers = logRestarted || (next.wagers.at(-1)?.id ?? 0) < lastWagerId
+    ? next.wagers
+    : next.wagers.filter((wager) => wager.id > lastWagerId);
+  const wagered = newWagers.reduce((total, wager) => total + wager.amount, 0);
+  const anted = Math.max(0, potContribution - wagered);
+
+  // the pot as each toast leaves it, working back from the pot as it is now
+  let potSoFar = Math.max(0, next.pot - wagered);
+  if (anted > 0) {
     announcements.push({
-      title: `+$${potContribution} added to the pot`,
-      subtitle: `Pot: $${next.pot}`,
+      title: `+$${anted} added to the pot`,
+      subtitle: `Pot: $${potSoFar}`,
       tone: 'brand',
       kind: 'pot-contribution',
+    });
+  }
+  for (const wager of newWagers) {
+    potSoFar += wager.amount;
+    announcements.push({
+      title: `${wager.name} ${wager.description}`,
+      subtitle: `Pot: $${potSoFar}`,
+      tone: 'brand',
+      kind: 'pot-contribution',
+      playerKey: next.players.find((player) => player.title === wager.name)?.key,
     });
   }
 

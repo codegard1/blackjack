@@ -23,6 +23,7 @@ const snapshot = (overrides: Partial<GameSnapshot> = {}, players: PlayerSnapshot
   round: 1,
   pot: 0,
   totalPotContributions: 0,
+  wagers: [],
   controllingPlayer: 'chris',
   players: players.length ? players : [
     player({ key: 'chris', title: 'Chris', isNPC: false }),
@@ -57,13 +58,82 @@ describe('diffAnnouncements', () => {
     });
   });
 
-  it('announces an added wager', () => {
+  it('announces money added to the pot that no wager accounts for as one pooled amount', () => {
     const before = snapshot({ pot: 50, totalPotContributions: 50 });
     const after = snapshot({ pot: 75, totalPotContributions: 75 });
 
     expect(diffAnnouncements(before, after, true)[0]).toMatchObject({
       title: '+$25 added to the pot',
       subtitle: 'Pot: $75',
+    });
+  });
+
+  describe('wagers', () => {
+    const chrisWager = { id: 7, name: 'Chris', description: 'wagered $25', amount: 25 };
+
+    it("announces a wager in the player's name, with the pot after it", () => {
+      const before = snapshot({ pot: 50, totalPotContributions: 50 });
+      const after = snapshot({ pot: 75, totalPotContributions: 75, wagers: [chrisWager] });
+
+      expect(diffAnnouncements(before, after, true)).toEqual([{
+        title: 'Chris wagered $25',
+        subtitle: 'Pot: $75',
+        tone: 'brand',
+        kind: 'pot-contribution',
+        playerKey: 'chris',
+      }]);
+    });
+
+    it('words a double down and a split the way the activity log does', () => {
+      const before = snapshot({ pot: 50, totalPotContributions: 50 });
+      const doubled = snapshot({ pot: 100, totalPotContributions: 100, wagers: [{ id: 8, name: 'Chris', description: 'doubled down for $50', amount: 50 }] });
+      const split = snapshot({ pot: 100, totalPotContributions: 100, wagers: [{ id: 9, name: 'Chris', description: 'split for $50', amount: 50 }] });
+
+      expect(diffAnnouncements(before, doubled, true)[0]).toMatchObject({ title: 'Chris doubled down for $50', subtitle: 'Pot: $100', playerKey: 'chris' });
+      expect(diffAnnouncements(before, split, true)[0]).toMatchObject({ title: 'Chris split for $50', playerKey: 'chris' });
+    });
+
+    it('announces only the wagers that are new, one toast each, with the pot growing through them', () => {
+      const earlier = { id: 3, name: 'Dealer', description: 'wagered $25', amount: 25 };
+      const before = snapshot({ pot: 100, totalPotContributions: 100, wagers: [earlier] });
+      const after = snapshot({
+        pot: 150,
+        totalPotContributions: 150,
+        wagers: [earlier, chrisWager, { id: 8, name: 'Dealer', description: 'wagered $25', amount: 25 }],
+      });
+
+      expect(diffAnnouncements(before, after, true).map((item) => [item.title, item.subtitle, item.playerKey])).toEqual([
+        ['Chris wagered $25', 'Pot: $125', 'chris'],
+        ['Dealer wagered $25', 'Pot: $150', 'dealer'],
+      ]);
+    });
+
+    it('keeps the antes in one pooled toast ahead of the wagers made with them', () => {
+      const before = snapshot({ pot: 0, totalPotContributions: 0 });
+      const after = snapshot({ pot: 75, totalPotContributions: 75, wagers: [chrisWager] });
+
+      expect(diffAnnouncements(before, after, true).map((item) => [item.title, item.subtitle])).toEqual([
+        ['+$50 added to the pot', 'Pot: $50'],
+        ['Chris wagered $25', 'Pot: $75'],
+      ]);
+    });
+
+    it('announces every wager after the log starts over for a new game', () => {
+      const before = snapshot({ pot: 200, totalPotContributions: 300, wagers: [{ ...chrisWager, id: 40 }] });
+      const after = snapshot({ pot: 50, totalPotContributions: 50, wagers: [{ ...chrisWager, id: 2 }] });
+
+      // the new game's log is shorter than the old one, so everything in it is new: $25 of antes, then the wager
+      expect(diffAnnouncements(before, after, true).map((item) => [item.title, item.subtitle])).toEqual([
+        ['+$25 added to the pot', 'Pot: $25'],
+        ['Chris wagered $25', 'Pot: $50'],
+      ]);
+    });
+
+    it('still names the wager when no seat has the logged name', () => {
+      const before = snapshot({ pot: 50, totalPotContributions: 50 });
+      const after = snapshot({ pot: 75, totalPotContributions: 75, wagers: [{ ...chrisWager, name: 'Someone' }] });
+
+      expect(diffAnnouncements(before, after, true)[0]).toMatchObject({ title: 'Someone wagered $25', playerKey: undefined });
     });
   });
 
