@@ -150,6 +150,14 @@ describe('persistence', () => {
     expect(loaded.isDeckVisible).toBe(false);
   });
 
+  it('round-trips the queue side and falls back to the left for a value it does not accept', () => {
+    saveSettings({ ...settingDefaults, queueSide: 'right' });
+    expect(loadSettings().queueSide).toBe('right');
+
+    localStorage.setItem(StoreName.SETTINGSTORE, JSON.stringify({ queueSide: 'top' }));
+    expect(loadSettings().queueSide).toBe('left');
+  });
+
   it('fills in appearance defaults for a settings store saved before they existed', () => {
     localStorage.setItem(StoreName.SETTINGSTORE, JSON.stringify({ isActivityLogVisible: true }));
     const loaded = loadSettings();
