@@ -109,6 +109,7 @@ export const SeatChip: React.FC<ISeatChipProps> = (props) => {
   const styles = useStyles();
 
   const className = mergeClasses(
+    'seat-chip',
     styles.chip,
     onSelect && styles.interactive,
     floating && styles.floating,
@@ -121,7 +122,7 @@ export const SeatChip: React.FC<ISeatChipProps> = (props) => {
       <CharacterPortrait id={player.key} name={player.title} size="md" decorative />
       <span className={styles.text}>
         <span className={styles.name}>{`${player.title} ($${player.bank || 0})`}</span>
-        {character && <span className={styles.tagline}>{character.tagline}</span>}
+        {character && <span className={mergeClasses('seat-chip-tagline', styles.tagline)}>{character.tagline}</span>}
         {status && <Badge size="small" appearance={status.appearance} color={status.color}>{status.text}</Badge>}
         {total !== undefined && <span className={styles.total}>{`Total ${total}`}</span>}
       </span>

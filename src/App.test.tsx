@@ -209,7 +209,7 @@ it('always shows card ranks and opens the activity log drawer by default from th
   expect(screen.queryByRole('button', { name: 'Chris (2)' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Faxe (2)' })).not.toBeInTheDocument();
   expect(screen.getByRole('region', { name: "Chris's hand" })).toBeVisible();
-  // the dealer's seat is collapsed while Chris is in control; its hand shows in the rail and its chip brings the seat forward
+  // the dealer's seat is collapsed while Chris is in control; its hand shows on its bench and its chip brings the seat forward
   expect(screen.getByRole('region', { name: "Faxe's hand" })).toBeVisible();
   expect(screen.getByRole('region', { name: "Faxe's hand" }).querySelector('.playing-card.is-back')).toHaveAccessibleName('Face-down card');
   fireEvent.click(screen.getByRole('button', { name: /^Faxe \(\$/ }));
@@ -547,7 +547,7 @@ it("announces the dealer's turn as a toast that leaves on its own", () => {
   expect(screen.queryByText("Faxe's turn")).not.toBeInTheDocument();
 });
 
-it("shows the collapsed players' hands as cards in the rail during the human's turn", () => {
+it("shows the dealer's hand as cards on its bench during the human's turn", () => {
   vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
     this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
     this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
@@ -562,7 +562,9 @@ it("shows the collapsed players' hands as cards in the rail during the human's t
   // the hole card stays face down unless "Show Dealer Hand" is on
   expect(dealerCards[0].querySelectorAll('.playing-card-corner')).toHaveLength(0);
   expect(dealerCards[1].querySelectorAll('.playing-card-corner')).toHaveLength(2);
-  expect(dealerHand.closest('.table-rail')).not.toBeNull();
+  // the dealer waits on its bench above the stage, not in the players' queue
+  expect(dealerHand.closest('.table-bench')).not.toBeNull();
+  expect(dealerHand.closest('.table-queue')).toBeNull();
   expect(screen.getByRole('region', { name: "Chris's hand" }).closest('.table-focus')).not.toBeNull();
 });
 
@@ -654,7 +656,19 @@ it('seats chosen computer players, who play their turns before the dealer', () =
   vi.useFakeTimers();
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+
+  // Chris is on the stage, so Ogion leads the queue of seats still to play
+  const queue = () => within(screen.getByRole('group', { name: 'Seats in turn order' }));
+  expect(queue().getByText('Up next')).toBeInTheDocument();
+  expect(queue().queryByText('Played')).not.toBeInTheDocument();
+  expect(queue().getByRole('button', { name: /^Ogion \(\$/ })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
+
+  // Chris has played and waits behind; no seat but the dealer is still to play
+  expect(queue().getByText('Played')).toBeInTheDocument();
+  expect(queue().queryByText('Up next')).not.toBeInTheDocument();
+  expect(queue().getByRole('button', { name: /^Chris \(\$/ })).toBeInTheDocument();
+  expect(within(screen.getByRole('group', { name: 'Dealer' })).getByRole('button', { name: /^Faxe \(\$/ })).toBeInTheDocument();
 
   // Ogion has control and his seat comes forward; The Rock stands on 13
   expect(screen.getByRole('region', { name: "Ogion's hand" }).closest('.table-focus')).not.toBeNull();
@@ -669,6 +683,20 @@ it('seats chosen computer players, who play their turns before the dealer', () =
     act(() => vi.advanceTimersByTime(100));
   }
   expect(hasFocus('Faxe')).toBe(true);
+});
+
+it('queues seats on the left by default, or on the right from the Seat queue side setting', () => {
+  const { container } = render(<App />);
+  expect(container.querySelector('.table-layout')).not.toHaveClass('is-queue-right');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Seat queue side' })).getByRole('radio', { name: 'Right' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+  expect(container.querySelector('.table-layout')).toHaveClass('is-queue-right');
+
+  // the choice outlasts the start of a game
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  expect(container.querySelector('.table-layout')).toHaveClass('is-queue-right');
 });
 
 it("opens a character's card from the Players dialog", () => {
