@@ -7,7 +7,7 @@ import { brandPresets, createAppTheme } from './theme';
 import App from './App';
 import { CARD_FLIP_MS } from './components/useCardFlip';
 import { POT_BOUNCE_MS, POT_ENTER_MS, POT_LEAVE_MS } from './components/usePotMotion';
-import { TOAST_EXIT_MS, TOAST_HOLD_MS } from './components/TableToasts';
+import { TOAST_EXIT_MS, TOAST_GAP_MS, TOAST_LIFE_MS, TOAST_REVEAL_MS } from './components/TableToasts';
 import { formatNet } from './functions/format';
 import { CHARACTER_HISTORY } from './functions/history';
 import { StoreName } from './enums';
@@ -238,8 +238,8 @@ it('always shows card ranks and opens the activity log drawer by default from th
   expect(screen.getByRole('heading', { name: 'Activity Log' }).closest('.table-shell')).not.toBeNull();
   expect(screen.getByRole('heading', { name: 'Activity Log' }).closest('.table-board')).toBeNull();
 
-  // the rows follow the toasts announcing them; once those have faded out they are all there
-  act(() => vi.advanceTimersByTime(10 * (TOAST_HOLD_MS + TOAST_EXIT_MS)));
+  // the rows follow the toasts announcing them; once those have had their moment they are all there
+  act(() => vi.advanceTimersByTime(10 * (TOAST_GAP_MS + TOAST_REVEAL_MS)));
   expect(screen.getAllByText('was dealt two cards')).toHaveLength(2);
 });
 
@@ -483,7 +483,7 @@ it('keeps the pot in the dock and bounces it when a wager is made, holding play 
   act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
   // the ante, the turn and the wager each get a toast in turn, and the wager's names who made it
   expect(screen.getByText('+$25 added to the pot')).toBeInTheDocument();
-  for (let waited = 0; !screen.queryByText('Chris wagered $25') && waited < 10 * TOAST_HOLD_MS; waited += 100) {
+  for (let waited = 0; !screen.queryByText('Chris wagered $25') && waited < 10 * TOAST_GAP_MS; waited += 100) {
     act(() => vi.advanceTimersByTime(100));
   }
   expect(screen.getByText('Chris wagered $25')).toBeInTheDocument();
@@ -542,12 +542,13 @@ it("announces the dealer's turn as a toast that leaves on its own", () => {
   fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
 
   // the toasts before it take their turns first, each for the same time
-  for (let waited = 0; !screen.queryByText("Faxe's turn") && waited < 10 * TOAST_HOLD_MS; waited += 100) {
+  for (let waited = 0; !screen.queryByText("Faxe's turn") && waited < 10 * TOAST_GAP_MS; waited += 100) {
     act(() => vi.advanceTimersByTime(100));
   }
   expect(screen.getByText("Faxe's turn")).toBeInTheDocument();
 
-  act(() => vi.advanceTimersByTime(TOAST_HOLD_MS + TOAST_EXIT_MS - 100));
+  // the line stays in the feed for its time, then fades and goes
+  act(() => vi.advanceTimersByTime(TOAST_LIFE_MS + TOAST_EXIT_MS - 100));
   expect(screen.getByText("Faxe's turn")).toBeInTheDocument();
   act(() => vi.advanceTimersByTime(200));
   expect(screen.queryByText("Faxe's turn")).not.toBeInTheDocument();

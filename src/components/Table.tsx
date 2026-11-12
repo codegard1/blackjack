@@ -227,8 +227,6 @@ export const Table: React.FC = () => {
               />
             )}
 
-            <TableToasts toasts={toasts} />
-
             {gameState.deck.length > 0 &&
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
                   <CardStack
@@ -254,6 +252,8 @@ export const Table: React.FC = () => {
           </div>
 
           <div className={mergeClasses('table-dock', styles.dock)}>
+            {/* the notices run just above the dock, beside the buttons, wherever a tall board is scrolled to */}
+            <TableToasts toasts={toasts} />
             <div className="table-pot">{potBadge}</div>
             <div className="table-dock-actions">
               {!isStarted ? (
