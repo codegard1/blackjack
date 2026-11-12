@@ -5,8 +5,6 @@ This project is an attempt to build a game of blackjack from scratch, as a way t
 
 ![image](https://user-images.githubusercontent.com/5205131/112094450-a8884400-8b71-11eb-9853-0eaba33d5b23.png)
 
-https://mango-cliff-08390e60f.azurestaticapps.net/
-
 ### How to Play
 1. Clone the repo 
 2. `cd` into the repo directory
