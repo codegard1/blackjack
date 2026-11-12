@@ -52,34 +52,64 @@ function totalLine(player: PlayerSnapshot, revealDealerTotal: boolean): string |
   return `Total ${player.total}`;
 }
 
-/** The end of the round, told from the human's seat */
-function resultAnnouncement(next: GameSnapshot): Announcement {
-  const human = next.players.find((player) => player.role === 'human');
-  const dealer = next.players.find((player) => player.role === 'dealer');
-  if (!human?.result || !dealer) return { title: 'Round over', tone: 'info' };
-
-  switch (human.result) {
+/** How one seat's hand ended against the dealer, told in the seat's name */
+function seatResult(player: PlayerSnapshot, dealer: PlayerSnapshot): Announcement | undefined {
+  const base = { kind: 'result' as const, playerKey: player.key };
+  switch (player.result) {
     case 'blackjack':
-      return { title: `${human.title} wins!`, subtitle: 'Blackjack', tone: 'success', playerKey: human.key };
+      return { ...base, title: `${player.title} wins!`, subtitle: 'Blackjack', tone: 'success' };
     case 'win':
       return {
-        title: `${human.title} wins!`,
-        subtitle: dealer.isBusted ? `${dealer.title} busted` : `${human.total} to ${dealer.total}`,
+        ...base,
+        title: `${player.title} wins!`,
+        subtitle: dealer.isBusted ? `${dealer.title} busted` : `${player.total} to ${dealer.total}`,
         tone: 'success',
-        playerKey: human.key,
       };
     case 'push':
-      return { title: 'Push', subtitle: 'Stake returned', tone: 'info' };
-    default:
+      return { ...base, title: `${player.title} pushes`, subtitle: 'Stake returned', tone: 'info' };
+    case 'loss':
       return {
-        title: `${dealer.title} wins!`,
-        subtitle: human.isBusted ? `${human.title} busted`
-          : dealer.isBlackjack ? 'Blackjack'
-          : `${dealer.total} to ${human.total}`,
+        ...base,
+        title: `${player.title} loses`,
+        subtitle: player.isBusted ? 'Busted'
+          : dealer.isBlackjack ? `${dealer.title} has blackjack`
+          : `${dealer.total} to ${player.total}`,
         tone: 'danger',
-        playerKey: dealer.key,
       };
+    default:
+      return undefined;
   }
+}
+
+/** How the dealer came out of the round against the whole table */
+function dealerResult(dealer: PlayerSnapshot): Announcement | undefined {
+  const base = { kind: 'result' as const, playerKey: dealer.key };
+  switch (dealer.result) {
+    case 'win':
+      return { ...base, title: `${dealer.title} wins!`, tone: 'success' };
+    case 'loss':
+      return { ...base, title: `${dealer.title} loses`, tone: 'danger' };
+    case 'push':
+      return { ...base, title: `${dealer.title} breaks even`, tone: 'info' };
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * The end of the round, one announcement per seat in turn order: the players, then the dealer.
+ * A seat with no result, as one that sat the round out, has none.
+ */
+function resultAnnouncements(next: GameSnapshot): Announcement[] {
+  const dealers = next.players.filter((player) => player.role === 'dealer');
+  const dealer = dealers[0];
+  if (!dealer) return [{ title: 'Round over', tone: 'info' }];
+
+  const results = [
+    ...next.players.filter((player) => player.role !== 'dealer').map((player) => seatResult(player, dealer)),
+    dealerResult(dealer),
+  ].filter((result): result is Announcement => !!result);
+  return results.length ? results : [{ title: 'Round over', tone: 'info' }];
 }
 
 /**
@@ -189,7 +219,7 @@ export function diffAnnouncements(prev: GameSnapshot, next: GameSnapshot, reveal
 
   // Compare round numbers too: a natural blackjack can end one round and start the next within a single action
   const roundJustEnded = isRoundOver(next.gameStatus) && (!isRoundOver(prev.gameStatus) || prev.round !== next.round);
-  if (roundJustEnded) announcements.push(resultAnnouncement(next));
+  if (roundJustEnded) announcements.push(...resultAnnouncements(next));
 
   return announcements;
 }

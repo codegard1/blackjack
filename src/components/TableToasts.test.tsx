@@ -5,7 +5,7 @@ import { createGameState } from '../context';
 import { GameAction } from '../enums';
 import { gameReducer } from '../functions';
 import { GameState, VisibleToast } from '../types';
-import { TableToasts, TOAST_EXIT_MS, TOAST_GAP_MS, TOAST_LIFE_MS, TOAST_MAX_LINES, TOAST_REVEAL_MS, useTableToasts } from './TableToasts';
+import { TableToasts, TOAST_EXIT_MS, TOAST_GAP_MS, TOAST_LIFE_MS, TOAST_MAX_LINES, TOAST_RESULT_MS, TOAST_REVEAL_MS, useTableToasts } from './TableToasts';
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -205,6 +205,87 @@ describe('toast timing', () => {
     }
     // the second arrives a gap after the first
     expect(appeared.get("Faxe's turn")! - appeared.get('Chris wagered $25')!).toBe(TOAST_GAP_MS);
+  });
+});
+
+describe('results at the end of a round', () => {
+  // Chris stays on 11 and the dealer stays on 17: Chris loses and the dealer wins
+  const dealerStays = (state: GameState): GameState => gameReducer(state, { type: GameAction.Stay, playerKey: 'dealer' });
+  const setupResults = (initial: GameState) => renderHook(
+    ({ state, hold }: { state: GameState; hold: number }) => useTableToasts(state, true, hold),
+    { initialProps: { state: initial, hold: 0 } },
+  );
+
+  it("tells each seat's result in turn, the seat in focus while its toast is the newest", () => {
+    const dealersTurn = stay(startedGame());
+    const { result, rerender } = setupResults(dealersTurn);
+    expect(result.current.isAnnouncingResults).toBe(false);
+    rerender({ state: dealerStays(dealersTurn), hold: 0 });
+
+    // the dealer's stand is told first, as any notice; the results are queued behind it
+    expect(titles(result.current.toasts)).toEqual(['Faxe stands']);
+    expect(result.current.isAnnouncingResults).toBe(true);
+    expect(result.current.focus).toBeUndefined();
+
+    // Chris's result arrives a gap later, and Chris is in focus for as long as it is the newest
+    advance(TOAST_GAP_MS - 1);
+    expect(result.current.focus).toBeUndefined();
+    advance(1);
+    expect(titles(result.current.toasts)).toEqual(['Faxe stands', 'Chris loses']);
+    expect(result.current.focus).toMatchObject({ key: 'chris', tone: 'danger' });
+
+    // the dealer's follows, and takes the focus with it
+    advance(TOAST_RESULT_MS - 1);
+    expect(result.current.focus).toMatchObject({ key: 'chris' });
+    advance(1);
+    expect(titles(result.current.toasts)).toEqual(['Faxe stands', 'Chris loses', 'Faxe wins!']);
+    expect(result.current.focus).toMatchObject({ key: 'dealer', tone: 'success' });
+    expect(result.current.isAnnouncingResults).toBe(true);
+
+    // once the last seat has had its turn nothing is in focus and the announcing is over
+    advance(TOAST_RESULT_MS);
+    expect(result.current.focus).toBeUndefined();
+    expect(result.current.isAnnouncingResults).toBe(false);
+  });
+
+  it('holds the results back while the dealer\'s hole card is still turning over', () => {
+    const dealersTurn = stay(startedGame());
+    const { result, rerender } = setupResults(dealersTurn);
+    const hold = 1500;
+    rerender({ state: dealerStays(dealersTurn), hold });
+
+    // the first result waits out the hold, longer than the usual gap; announcing starts at once
+    expect(result.current.isAnnouncingResults).toBe(true);
+    advance(hold - 1);
+    expect(result.current.focus).toBeUndefined();
+    expect(titles(result.current.toasts)).toEqual(['Faxe stands']);
+    advance(1);
+    expect(result.current.focus).toMatchObject({ key: 'chris' });
+    expect(titles(result.current.toasts)).toEqual(['Faxe stands', 'Chris loses']);
+  });
+
+  it('does not hold results that no card turn precedes', () => {
+    const dealersTurn = stay(startedGame());
+    const { result, rerender } = setupResults(dealersTurn);
+    rerender({ state: dealerStays(dealersTurn), hold: 0 });
+    advance(TOAST_GAP_MS);
+    expect(result.current.focus).toMatchObject({ key: 'chris' });
+  });
+
+  it('reports the activity log entries only after the last result has been on screen a while', () => {
+    const dealersTurn = stay(startedGame());
+    const { result, rerender } = setupResults(dealersTurn);
+    rerender({ state: dealerStays(dealersTurn), hold: 0 });
+    advance(TOAST_GAP_MS + TOAST_RESULT_MS);
+    expect(titles(result.current.toasts).at(-1)).toBe('Faxe wins!');
+
+    // the dealer's stay is the round's entry; it follows the last toast of the round
+    const stays = () => descriptions(result.current.activityLog).filter((description) => description === 'stayed');
+    expect(stays()).toHaveLength(1);
+    advance(TOAST_REVEAL_MS - 1);
+    expect(stays()).toHaveLength(1);
+    advance(1);
+    expect(stays()).toHaveLength(2);
   });
 });
 

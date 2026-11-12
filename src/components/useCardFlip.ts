@@ -30,13 +30,15 @@ const prefersReducedMotion = () => window.matchMedia?.('(prefers-reduced-motion:
  * @param isHidden true while that card is face down
  * @param isInFocus true when the dealer's seat has focus, before any hold
  * @param isRoundOver true once the round has ended; revealing the card then is followed by the pause
+ * @returns whether the table is waiting, whether the dealer's seat holds focus, and how long the
+ * wait lasts from when it starts (0 when not waiting), so what must follow it can be held back
  */
 export function useCardFlip(
   cardKey: PlayingCardKey | undefined,
   isHidden: boolean,
   isInFocus: boolean,
   isRoundOver = false,
-): { isBusy: boolean; holdsFocus: boolean } {
+): { isBusy: boolean; holdsFocus: boolean; waitMs: number } {
   const [tracked, setTracked] = React.useState<Tracked>({ cardKey, isHidden, isInFocus });
   const [flip, setFlip] = React.useState<Flip>();
 
@@ -57,5 +59,5 @@ export function useCardFlip(
     return () => window.clearTimeout(timeoutId);
   }, [flipId, flipMs]);
 
-  return { isBusy: !!flip, holdsFocus: !!flip?.holdsFocus };
+  return { isBusy: !!flip, holdsFocus: !!flip?.holdsFocus, waitMs: flip?.ms ?? 0 };
 }

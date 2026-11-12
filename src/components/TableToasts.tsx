@@ -8,7 +8,7 @@ import { getCharacter } from '../characters';
 import { diffAnnouncements, snapshotGame } from '../functions/announcements';
 import { CharacterPortrait } from './CharacterPortrait';
 import { ITableToastsProps } from '../interfaces';
-import { ActivityLogEntry, GameState, GameSnapshot, ToastItem, VisibleToast } from '../types';
+import { ActivityLogEntry, GameState, GameSnapshot, ToastFocus, ToastItem, VisibleToast } from '../types';
 
 /** how long a line takes to open up in the feed; keep in step with the enter animation below */
 export const TOAST_ENTER_MS = 300;
@@ -26,6 +26,12 @@ export const TOAST_EXIT_MS = 400;
 export const TOAST_MAX_LINES = 3;
 /** how long after a line arrives the activity log entries recorded by the same change appear */
 export const TOAST_REVEAL_MS = 2000;
+/**
+ * How long a seat's result holds the newest place before the next may arrive, longer than
+ * other notices so each seat's chip has time to pulse as its result is told. It is also how
+ * long that chip keeps focus.
+ */
+export const TOAST_RESULT_MS = 1200;
 
 // a line opens up from nothing and closes back to nothing, so the lines around it slide rather than jump
 const enterKeyframes = {
@@ -186,17 +192,32 @@ const latestEntryId = (entries: ActivityLogEntry[]): number => entries[entries.l
  * Computer players move faster than the toasts show. While a toast is waiting for its turn
  * the hook reports `isBacklogged`, and the Table holds computer play until the toast has
  * appeared; the moves then keep pace with the notices.
+ *
+ * At the end of a round each seat's result is a toast of its own, each holding the newest
+ * place for TOAST_RESULT_MS. While one is shown its seat has `focus`, so its chip can pulse,
+ * and `isAnnouncingResults` stays true from the moment the results are queued until the last
+ * seat has had its turn. The results wait out `holdResultsMs` first, the time the Table is
+ * still showing the dealer's hole card turning over.
  * @param gameState current game state
  * @param revealDealerTotal true when the dealer's total may be shown
- * @returns the toasts on screen, the activity log entries that may be shown, and whether a toast is waiting
+ * @param holdResultsMs how long the results of a round that has just ended must wait before they start
+ * @returns the toasts on screen, the activity log entries that may be shown, whether a toast is waiting,
+ * the seat in focus, and whether results are being announced
  */
 export function useTableToasts(
   gameState: GameState,
   revealDealerTotal: boolean,
-): { toasts: VisibleToast[]; activityLog: ActivityLogEntry[]; isBacklogged: boolean } {
+  holdResultsMs = 0,
+): { toasts: VisibleToast[]; activityLog: ActivityLogEntry[]; isBacklogged: boolean; focus?: ToastFocus; isAnnouncingResults: boolean } {
   const [shown, setShown] = React.useState<VisibleToast[]>([]);
   /** toasts scheduled but not yet on screen */
   const [waiting, setWaiting] = React.useState(0);
+  /** result toasts queued or in focus */
+  const [announcing, setAnnouncing] = React.useState(0);
+  const [focus, setFocus] = React.useState<ToastFocus>();
+  // the latest wait, read when a round's results are queued so a change to it does not rerun the diff
+  const holdResults = React.useRef(holdResultsMs);
+  holdResults.current = holdResultsMs;
   const [revealedId, setRevealedId] = React.useState(() => latestEntryId(gameState.activityLog));
   const previous = React.useRef<GameSnapshot | null>(null);
   const nextId = React.useRef(1);
@@ -242,11 +263,21 @@ export function useTableToasts(
 
   /** show a toast, schedule its leaving, and hand over its log entries once it has had its moment */
   const present = React.useCallback((toast: ToastItem, plan: ToastPlan, delayMs: number) => {
+    const isResult = toast.kind === 'result';
     if (delayMs > 0) setWaiting((count) => count + 1);
+    if (isResult) setAnnouncing((count) => count + 1);
     later(delayMs, () => {
       if (delayMs > 0) setWaiting((count) => count - 1);
       leaving.current.set(toast.id, false);
       setShown((list) => [...list, { ...toast, isLeaving: false }]);
+      if (isResult) {
+        // the seat is in focus while its result is the newest notice
+        if (toast.playerKey) setFocus({ id: toast.id, key: toast.playerKey, tone: toast.tone });
+        later(TOAST_RESULT_MS, () => {
+          setFocus((current) => current?.id === toast.id ? undefined : current);
+          setAnnouncing((count) => count - 1);
+        });
+      }
       later(TOAST_REVEAL_MS, () => {
         if (tail.current === plan) tail.current = null;
         if (plan.generation === generation.current) {
@@ -280,16 +311,25 @@ export function useTableToasts(
     loggedId.current = latestId;
     if (!prior) return;
 
+    // a seat left in focus from the last round has no claim on the next
+    if (current.round !== prior.round) setFocus(undefined);
+
     const items = diffAnnouncements(prior, current, revealDealerTotal);
 
-    // Each toast appears no sooner than TOAST_GAP_MS after the previous one
+    // Each toast appears no sooner than TOAST_GAP_MS after the previous one, a result TOAST_RESULT_MS;
+    // the first result also waits for the dealer's hole card to finish turning over
     let last: ToastPlan | undefined;
+    let isHeld = false;
     for (const item of items) {
       // a seat's name lets a player without a portrait show their initials
       const playerName = current.players.find((player) => player.key === item.playerKey)?.title;
       const toast: ToastItem = { ...item, ...(playerName ? { playerName } : {}), id: nextId.current++ };
+      if (item.kind === 'result' && !isHeld) {
+        isHeld = true;
+        nextShowAt.current = Math.max(nextShowAt.current, Date.now() + holdResults.current);
+      }
       const showAt = Math.max(Date.now(), nextShowAt.current);
-      nextShowAt.current = showAt + TOAST_GAP_MS;
+      nextShowAt.current = showAt + (item.kind === 'result' ? TOAST_RESULT_MS : TOAST_GAP_MS);
       last = { revealId: 0, generation: generation.current };
       tail.current = last;
       present(toast, last, showAt - Date.now());
@@ -310,5 +350,5 @@ export function useTableToasts(
     [gameState.activityLog, revealedId],
   );
 
-  return { toasts: shown, activityLog, isBacklogged: waiting > 0 };
+  return { toasts: shown, activityLog, isBacklogged: waiting > 0, focus, isAnnouncingResults: announcing > 0 };
 }

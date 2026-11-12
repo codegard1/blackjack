@@ -11,7 +11,11 @@ export type Announcement = {
   title: string;
   subtitle?: string;
   tone: AnnouncementTone;
-  kind?: 'pot-contribution';
+  /**
+   * pot-contribution: money added to the pot.
+   * result: how a seat's hand ended; its chip pulses while the toast is announced.
+   */
+  kind?: 'pot-contribution' | 'result';
   /** the seat the notice is about; its portrait is shown when it has one */
   playerKey?: PlayerKey;
   /** that seat's name, for the initials a player without a portrait shows */
@@ -20,6 +24,9 @@ export type Announcement = {
 
 /** An announcement that has been queued for display */
 export type ToastItem = Announcement & { id: number };
+
+/** The seat a result is being announced for, and how it went for that seat; its chip pulses meanwhile */
+export type ToastFocus = { id: number; key: PlayerKey; tone: AnnouncementTone };
 
 /** A toast on the stack; a leaving one is fading out beneath the card that replaced it */
 export type VisibleToast = ToastItem & { isLeaving: boolean };

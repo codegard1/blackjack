@@ -26,7 +26,7 @@ describe('useCardFlip', () => {
   it('is idle on the first render, even when the card is already face up', () => {
     allowMotion();
     const { result } = renderFlip({ cardKey: 'Club_10', isHidden: false, isInFocus: false });
-    expect(result.current).toEqual({ isBusy: false, holdsFocus: false });
+    expect(result.current).toMatchObject({ isBusy: false, holdsFocus: false });
   });
 
   it('is busy for the flip when the card turns face up, then idle', () => {
@@ -55,6 +55,23 @@ describe('useCardFlip', () => {
     expect(result.current.isBusy).toBe(false);
   });
 
+  it('reports how long the wait lasts from its start, so what follows it can be held back', () => {
+    allowMotion();
+    const { result, rerender } = renderFlip({ cardKey: 'Club_10', isHidden: true, isInFocus: false });
+    expect(result.current.waitMs).toBe(0);
+
+    rerender({ cardKey: 'Club_10', isHidden: false, isInFocus: false, isRoundOver: true });
+    expect(result.current.waitMs).toBe(CARD_FLIP_MS + CARD_REVEAL_PAUSE_MS);
+    act(() => { vi.advanceTimersByTime(CARD_FLIP_MS + CARD_REVEAL_PAUSE_MS); });
+    expect(result.current.waitMs).toBe(0);
+
+    // a reveal that does not end the round waits only for the turn
+    rerender({ cardKey: 'Club_10', isHidden: true, isInFocus: false });
+    act(() => { vi.advanceTimersByTime(CARD_FLIP_MS); });
+    rerender({ cardKey: 'Club_10', isHidden: false, isInFocus: false });
+    expect(result.current.waitMs).toBe(CARD_FLIP_MS);
+  });
+
   it('pauses for at least a second after the card has turned', () => {
     expect(CARD_REVEAL_PAUSE_MS).toBeGreaterThanOrEqual(1000);
   });
@@ -64,9 +81,9 @@ describe('useCardFlip', () => {
     const { result, rerender } = renderFlip({ cardKey: 'Club_10', isHidden: true, isInFocus: true });
     rerender({ cardKey: 'Club_10', isHidden: false, isInFocus: false, isRoundOver: true });
     act(() => { vi.advanceTimersByTime(CARD_FLIP_MS + CARD_REVEAL_PAUSE_MS - 1); });
-    expect(result.current).toEqual({ isBusy: true, holdsFocus: true });
+    expect(result.current).toMatchObject({ isBusy: true, holdsFocus: true });
     act(() => { vi.advanceTimersByTime(1); });
-    expect(result.current).toEqual({ isBusy: false, holdsFocus: false });
+    expect(result.current).toMatchObject({ isBusy: false, holdsFocus: false });
   });
 
   it('does not pause when the card turns face down again, even in a finished round', () => {
@@ -99,14 +116,14 @@ describe('useCardFlip', () => {
     const held = renderFlip({ cardKey: 'Club_10', isHidden: true, isInFocus: true });
     // the round ends: control passes back to the human, so the dealer no longer has focus on its own
     held.rerender({ cardKey: 'Club_10', isHidden: false, isInFocus: false });
-    expect(held.result.current).toEqual({ isBusy: true, holdsFocus: true });
+    expect(held.result.current).toMatchObject({ isBusy: true, holdsFocus: true });
     act(() => { vi.advanceTimersByTime(CARD_FLIP_MS); });
-    expect(held.result.current).toEqual({ isBusy: false, holdsFocus: false });
+    expect(held.result.current).toMatchObject({ isBusy: false, holdsFocus: false });
 
     // flipped in the rail: the table does not bring the dealer forward
     const railed = renderFlip({ cardKey: 'Club_10', isHidden: true, isInFocus: false });
     railed.rerender({ cardKey: 'Club_10', isHidden: false, isInFocus: false });
-    expect(railed.result.current).toEqual({ isBusy: true, holdsFocus: false });
+    expect(railed.result.current).toMatchObject({ isBusy: true, holdsFocus: false });
   });
 
   it('starts the wait over when the card turns again mid-flip', () => {
@@ -125,6 +142,6 @@ describe('useCardFlip', () => {
     allowMotion(true);
     const { result, rerender } = renderFlip({ cardKey: 'Club_10', isHidden: true, isInFocus: true });
     rerender({ cardKey: 'Club_10', isHidden: false, isInFocus: false, isRoundOver: true });
-    expect(result.current).toEqual({ isBusy: false, holdsFocus: false });
+    expect(result.current).toMatchObject({ isBusy: false, holdsFocus: false });
   });
 });

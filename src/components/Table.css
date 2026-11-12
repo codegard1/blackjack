@@ -30,8 +30,8 @@
 
 /* On a wide board the seats take a third at the side, the left unless the Seat queue side
    setting says otherwise: those still to play at the top of the column, those that have played
-   at the bottom, and the stage in the other two thirds, beside both. Before a game, with no
-   stage, the chips float together in the middle. */
+   at the bottom, and the stage in the other two thirds, beside both. With no stage, before a
+   game and once a round is over, the chips make one column together in the middle. */
 @container table-board (min-width: 720px) {
   .table-layout {
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
@@ -58,15 +58,22 @@
   .table-played { grid-area: played; }
   .table-focus { grid-area: stage; }
 
-  .table-layout.is-pregame,
-  .table-layout.is-pregame.is-queue-right {
+  .table-layout.is-stageless,
+  .table-layout.is-stageless.is-queue-right {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto;
-    grid-template-areas: "waiting";
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "waiting"
+      "played";
     justify-items: center;
   }
 
-  .table-layout.is-pregame .table-waiting {
+  .table-layout.is-stageless .table-waiting {
+    margin-bottom: 10px;
+  }
+
+  .table-layout.is-stageless .table-waiting,
+  .table-layout.is-stageless .table-played {
     width: min(100%, 420px);
   }
 }

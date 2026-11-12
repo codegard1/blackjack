@@ -87,11 +87,12 @@ export const Table: React.FC = () => {
   const [pinnedKey, setPinnedKey] = React.useState<string>();
   React.useEffect(() => setPinnedKey(undefined), [gameState.controllingPlayer, gameStatus]);
 
-  // The seat in control, unless the user has picked another; after a round, the human
+  // The seat in control, unless the user has picked another; before the deal, the human. Once the round
+  // is over nobody has the stage: every seat is a chip, and each is brought into focus as its result is told.
   const dealer = players.find(isDealer);
-  const turnKey = (players.some((player) => player.key === pinnedKey) ? pinnedKey : undefined) ?? gameState.controllingPlayer ?? human?.key;
+  const turnKey = (players.some((player) => player.key === pinnedKey) ? pinnedKey : undefined) ?? gameState.controllingPlayer ?? (roundOver ? undefined : human?.key);
 
-  // The dealer's hole card turns over when the round ends, as control passes back to the human.
+  // The dealer's hole card turns over when the round ends, and the stage empties.
   // The dealer's seat keeps the stage until the card has turned and the pause after it is over, so the flip and the hand are seen at full size.
   const holeCardKey = dealer ? deck.hand(dealer.key)?.cards[0] : undefined;
   const holeCardFlip = useCardFlip(holeCardKey, isHoleCardHidden(dealer, !!settings.isDealerHandVisible, gameStatus), !!dealer && turnKey === dealer.key, roundOver);
@@ -134,6 +135,7 @@ export const Table: React.FC = () => {
             status={seatTag(player, gameStatus)}
             total={showTotal ? hand.handValue.highest : undefined}
             cards={hand?.cards}
+            focus={toastFocus?.key === player.key ? toastFocus.tone : undefined}
             onSelect={() => setPinnedKey(player.key)}
           />
         ) : (
@@ -145,9 +147,15 @@ export const Table: React.FC = () => {
 
   const startGame = () => gameDispatch({ type: GameAction.NewGame, players: seats, tableRules: tableRulesFrom(settings) });
 
-  // Toasts announce each change; its activity log entries follow once its toasts have faded out.
-  // Computer play waits while a toast is queued, so the moves keep pace with the notices.
-  const { toasts, activityLog, isBacklogged } = useTableToasts(gameState, revealDealerTotal);
+  // Toasts announce each change; its activity log entries follow once its toasts have had their moment.
+  // Computer play waits while a toast is queued, so the moves keep pace with the notices. At the end of
+  // a round each seat's result is a toast of its own, after the dealer's card has turned, and the seat's
+  // chip is in focus meanwhile; the game's buttons wait until the last result has been told.
+  const { toasts, activityLog, isBacklogged, focus: toastFocus, isAnnouncingResults } = useTableToasts(
+    gameState,
+    revealDealerTotal,
+    holeCardFlip.isBusy ? holeCardFlip.waitMs : 0,
+  );
   const activityDrawer = useActivityDrawer();
 
   // The pot stays at the start of the dock, even after a hand ends. Between hands it slides
@@ -173,7 +181,7 @@ export const Table: React.FC = () => {
   useSeatFlip(boardRef);
 
   return (
-    <PotAnimationContext.Provider value={potMotion.isBusy || holeCardFlip.isBusy}>
+    <PotAnimationContext.Provider value={potMotion.isBusy || holeCardFlip.isBusy || isAnnouncingResults}>
       <div className="table-shell">
         {/* the board's bottom corners square off while the drawer is attached to them */}
         <main ref={boardRef} className="table-board" style={{ animation: 'table-enter 180ms ease-out', backgroundColor: tokens.colorNeutralBackground1, color: tokens.colorNeutralForeground1, borderRadius: activityDrawer.isOpen ? `${tokens.borderRadiusLarge} ${tokens.borderRadiusLarge} 0 0` : tokens.borderRadiusLarge, boxShadow: tokens.shadow16, display: 'flex', flexDirection: 'column' }}>
@@ -181,7 +189,7 @@ export const Table: React.FC = () => {
 
           <div className="table-field">
 
-            <div className={mergeClasses('table-layout', isStarted ? 'is-started' : 'is-pregame', settings.queueSide === 'right' && 'is-queue-right')}>
+            <div className={mergeClasses('table-layout', isStarted ? 'is-started' : 'is-pregame', !focusPlayer && 'is-stageless', settings.queueSide === 'right' && 'is-queue-right')}>
               {waitingSeats.length > 0 && (
                 <div className="table-waiting" role="group" aria-label="Seats still to play, the dealer first">
                   {waitingSeats.map((player) => renderChip(player, 'waiting', tablePlayers.indexOf(player)))}

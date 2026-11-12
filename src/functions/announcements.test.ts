@@ -247,7 +247,7 @@ describe('diffAnnouncements', () => {
     );
     expect(diffAnnouncements(before, after, true)).toEqual([
       { title: 'Dealer stands', subtitle: 'Total 17', tone: 'neutral', playerKey: 'dealer' },
-      { title: 'Chris wins!', subtitle: '18 to 17', tone: 'success', playerKey: 'chris' },
+      { title: 'Chris wins!', subtitle: '18 to 17', tone: 'success', playerKey: 'chris', kind: 'result' },
     ]);
   });
 
@@ -259,12 +259,13 @@ describe('diffAnnouncements', () => {
     expect(diffAnnouncements(before, after, true)[1]).toMatchObject({ subtitle: 'Dealer busted' });
   });
 
-  it('announces a human bust with a dealer win', () => {
+  it('announces a human bust, then the loss and the dealer winning', () => {
     const before = snapshot();
-    const after = roundOver({ cardCount: 3, total: 23, isBusted: true, result: 'loss' });
+    const after = withPlayer(roundOver({ cardCount: 3, total: 23, isBusted: true, result: 'loss' }), 'dealer', { result: 'win' });
     expect(diffAnnouncements(before, after, true)).toEqual([
       { title: 'Chris busts!', subtitle: 'Total 23', tone: 'danger', playerKey: 'chris' },
-      { title: 'Dealer wins!', subtitle: 'Chris busted', tone: 'danger', playerKey: 'dealer' },
+      { title: 'Chris loses', subtitle: 'Busted', tone: 'danger', playerKey: 'chris', kind: 'result' },
+      { title: 'Dealer wins!', tone: 'success', playerKey: 'dealer', kind: 'result' },
     ]);
   });
 
@@ -273,7 +274,7 @@ describe('diffAnnouncements', () => {
     const after = roundOver({ isBlackjack: true, result: 'blackjack' }, { round: 1 });
     expect(diffAnnouncements(before, after, true)).toEqual([
       { title: 'Chris has blackjack!', tone: 'success', playerKey: 'chris' },
-      { title: 'Chris wins!', subtitle: 'Blackjack', tone: 'success', playerKey: 'chris' },
+      { title: 'Chris wins!', subtitle: 'Blackjack', tone: 'success', playerKey: 'chris', kind: 'result' },
     ]);
   });
 
@@ -284,10 +285,70 @@ describe('diffAnnouncements', () => {
     expect(diffAnnouncements(before, after, true).map((a) => a.title)).toContain('Chris wins!');
   });
 
-  it('announces a push', () => {
+  it('announces a push in the seat\'s name', () => {
     const before = snapshot();
     const after = roundOver({ result: 'push' });
-    expect(diffAnnouncements(before, after, true)).toEqual([{ title: 'Push', subtitle: 'Stake returned', tone: 'info' }]);
+    expect(diffAnnouncements(before, after, true)).toEqual([
+      { title: 'Chris pushes', subtitle: 'Stake returned', tone: 'info', playerKey: 'chris', kind: 'result' },
+    ]);
+  });
+
+  describe('results at the end of a round', () => {
+    const table = [
+      player({ key: 'chris', title: 'Chris', isNPC: false, total: 18 }),
+      player({ key: 'ogion', title: 'Ogion', isNPC: true, role: 'bot', total: 12 }),
+      player({ key: 'shevek', title: 'Shevek', isNPC: true, role: 'bot', total: 20 }),
+      player({ key: 'dealer', title: 'Faxe', isNPC: true, total: 19 }),
+    ];
+    const ended = (changes: Record<string, Partial<PlayerSnapshot>>): GameSnapshot => {
+      const base = snapshot({ gameStatus: GameStatus.RoundOver, controllingPlayer: undefined }, table);
+      return { ...base, players: base.players.map((p) => ({ ...p, ...(changes[p.key] ?? {}) })) };
+    };
+    const results = (next: GameSnapshot) => diffAnnouncements(snapshot({ controllingPlayer: 'dealer' }, table), next, true)
+      .filter((announcement) => announcement.kind === 'result');
+
+    it('tells every seat\'s result in turn order, the players first and the dealer last', () => {
+      const next = ended({ chris: { result: 'loss' }, ogion: { result: 'loss', isBusted: true }, shevek: { result: 'win' }, dealer: { result: 'push' } });
+      expect(results(next).map((a) => [a.title, a.playerKey])).toEqual([
+        ['Chris loses', 'chris'],
+        ['Ogion loses', 'ogion'],
+        ['Shevek wins!', 'shevek'],
+        ['Faxe breaks even', 'dealer'],
+      ]);
+    });
+
+    it('says why a seat won or lost', () => {
+      const next = ended({
+        chris: { result: 'loss' },
+        ogion: { result: 'loss', isBusted: true },
+        shevek: { result: 'win' },
+        dealer: { result: 'win' },
+      });
+      expect(results(next).map((a) => a.subtitle)).toEqual(['19 to 18', 'Busted', '20 to 19', undefined]);
+    });
+
+    it('credits a win to the dealer busting, and a loss to the dealer having blackjack', () => {
+      const busted = ended({ chris: { result: 'win' }, dealer: { result: 'loss', isBusted: true, total: 24 } });
+      expect(results(busted)[0]).toMatchObject({ title: 'Chris wins!', subtitle: 'Faxe busted' });
+      const natural = ended({ chris: { result: 'loss' }, dealer: { result: 'win', isBlackjack: true, total: 21 } });
+      expect(results(natural)[0]).toMatchObject({ title: 'Chris loses', subtitle: 'Faxe has blackjack' });
+    });
+
+    it('colors a result by how it went for that seat, the dealer included', () => {
+      const next = ended({ chris: { result: 'win' }, ogion: { result: 'push' }, shevek: { result: 'loss' }, dealer: { result: 'loss' } });
+      expect(results(next).map((a) => a.tone)).toEqual(['success', 'info', 'danger', 'danger']);
+    });
+
+    it('skips a seat with no result, as one that sat the round out', () => {
+      const next = ended({ chris: { result: 'win' }, shevek: { result: 'loss' }, dealer: { result: 'push' } });
+      expect(results(next).map((a) => a.playerKey)).toEqual(['chris', 'shevek', 'dealer']);
+    });
+
+    it('falls back to a plain notice when no seat has a result', () => {
+      const next = ended({});
+      expect(diffAnnouncements(snapshot({ controllingPlayer: 'dealer' }, table), next, true).filter((a) => a.title === 'Round over'))
+        .toEqual([{ title: 'Round over', tone: 'info' }]);
+    });
   });
 
   it('announces computer players hitting and standing, with their totals', () => {
