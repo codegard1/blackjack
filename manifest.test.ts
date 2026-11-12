@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import manifest from './public/manifest.json';
-import hosting from './public/staticwebapp.config.json';
 
 describe('PWA installation assets', () => {
   it('defines a standalone app with brand colors and a stable root scope', () => {
@@ -25,10 +24,5 @@ describe('PWA installation assets', () => {
     expect(png.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
     expect(png.readUInt32BE(16)).toBe(size);
     expect(png.readUInt32BE(20)).toBe(size);
-  });
-
-  it.each(['/sw.js', '/workbox-*.js'])('prevents Azure from caching %s', (route) => {
-    expect(hosting.routes.find((entry) => entry.route === route)?.headers['Cache-Control'])
-      .toBe('no-cache, no-store, must-revalidate');
   });
 });

@@ -4,7 +4,7 @@ on:
   push:
     branches: [master]
   pull_request:
-    types: [opened, synchronize, reopened, closed]
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 permissions:
@@ -17,7 +17,6 @@ concurrency:
 jobs:
   check:
     name: Typecheck, lint, test and build
-    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -31,54 +30,4 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
-      - run: npx vite build
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist
-          retention-days: 7
-
-  # Publishes the build to Azure Static Web Apps: production on pushes to master and a
-  # preview environment for each pull request. It is skipped until the repository has an
-  # AZURE_STATIC_WEB_APPS_API_TOKEN secret (and on forks, which cannot read secrets).
-  deploy:
-    name: Deploy to Azure Static Web Apps
-    needs: check
-    if: github.event_name != 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    env:
-      SWA_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-    steps:
-      - uses: actions/download-artifact@v4
-        if: env.SWA_TOKEN != ''
-        with:
-          name: dist
-          path: dist
-
-      - uses: Azure/static-web-apps-deploy@v1
-        if: env.SWA_TOKEN != ''
-        with:
-          azure_static_web_apps_api_token: ${{ env.SWA_TOKEN }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: upload
-          app_location: dist
-          output_location: ''
-          skip_app_build: true
-
-  close-preview:
-    name: Close Azure preview environment
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
-    runs-on: ubuntu-latest
-    env:
-      SWA_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-    steps:
-      - uses: Azure/static-web-apps-deploy@v1
-        if: env.SWA_TOKEN != ''
-        with:
-          azure_static_web_apps_api_token: ${{ env.SWA_TOKEN }}
-          action: close
-          app_location: ''
+      - run: npm run build

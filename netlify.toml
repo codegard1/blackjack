@@ -20,3 +20,14 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Never cache the service worker or its workbox runtime, so updates ship immediately.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/workbox-*.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
