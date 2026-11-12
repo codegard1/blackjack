@@ -92,9 +92,9 @@ export const Table: React.FC = () => {
   const turnKey = (players.some((player) => player.key === pinnedKey) ? pinnedKey : undefined) ?? gameState.controllingPlayer ?? human?.key;
 
   // The dealer's hole card turns over when the round ends, as control passes back to the human.
-  // The dealer's seat keeps the stage until the card has turned, so the flip is seen at full size.
+  // The dealer's seat keeps the stage until the card has turned and the pause after it is over, so the flip and the hand are seen at full size.
   const holeCardKey = dealer ? deck.hand(dealer.key)?.cards[0] : undefined;
-  const holeCardFlip = useCardFlip(holeCardKey, isHoleCardHidden(dealer, !!settings.isDealerHandVisible, gameStatus), !!dealer && turnKey === dealer.key);
+  const holeCardFlip = useCardFlip(holeCardKey, isHoleCardHidden(dealer, !!settings.isDealerHandVisible, gameStatus), !!dealer && turnKey === dealer.key, roundOver);
   const focusKey = holeCardFlip.holdsFocus ? dealer?.key : turnKey;
   const focusPlayer = isStarted ? players.find((player) => player.key === focusKey) : undefined;
 

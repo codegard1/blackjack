@@ -5,7 +5,7 @@ import { webDarkTheme } from '@fluentui/react-components';
 import { PlayingCardDeck } from './classes/PlayingCardDeck';
 import { brandPresets, createAppTheme } from './theme';
 import App from './App';
-import { CARD_FLIP_MS } from './components/useCardFlip';
+import { CARD_FLIP_MS, CARD_REVEAL_PAUSE_MS } from './components/useCardFlip';
 import { POT_BOUNCE_MS, POT_ENTER_MS, POT_LEAVE_MS } from './components/usePotMotion';
 import { TOAST_EXIT_MS, TOAST_GAP_MS, TOAST_LIFE_MS, TOAST_REVEAL_MS } from './components/TableToasts';
 import { formatNet } from './functions/format';
@@ -584,8 +584,15 @@ it("turns the dealer's hole card over when the round ends, keeping the dealer's 
   expect(container.querySelector('.table-focus')).toContainElement(dealerHole);
   expect(screen.getByRole('button', { name: 'Next hand' })).toHaveAttribute('aria-disabled', 'true');
 
-  // then the stage returns to the human, the dealer drops below it, and Next hand is ready
+  // the card has turned, but the dealer's hand stays on the stage for a pause before the table moves on
   act(() => vi.advanceTimersByTime(CARD_FLIP_MS));
+  expect(container.querySelector('.table-focus')).toContainElement(dealerHole);
+  expect(screen.getByRole('button', { name: 'Next hand' })).toHaveAttribute('aria-disabled', 'true');
+  act(() => vi.advanceTimersByTime(CARD_REVEAL_PAUSE_MS - 1));
+  expect(container.querySelector('.table-focus')).toContainElement(dealerHole);
+
+  // then the stage returns to the human, the dealer drops below it, and Next hand is ready
+  act(() => vi.advanceTimersByTime(1));
   expect(container.querySelector('.table-played')).toContainElement(screen.getByRole('region', { name: "Faxe's hand" }));
   expect(container.querySelector('.table-focus')).not.toContainElement(holeCard());
   expect(container.querySelector('.table-focus')).toContainElement(screen.getByRole('region', { name: "Chris's hand" }));
@@ -617,8 +624,10 @@ it("keeps the dealer above the stage while its hole card turns over after the hu
   expect(dealerHand().closest('.table-waiting')).not.toBeNull();
   expect(container.querySelector('.table-played')).toBeNull();
 
-  // once the card has turned, the dealer joins the seats below the stage
-  act(() => vi.advanceTimersByTime(CARD_FLIP_MS));
+  // the dealer stays up there through the pause after the card has turned, then joins the seats below the stage
+  act(() => vi.advanceTimersByTime(CARD_FLIP_MS + CARD_REVEAL_PAUSE_MS - 1));
+  expect(dealerHand().closest('.table-waiting')).not.toBeNull();
+  act(() => vi.advanceTimersByTime(1));
   expect(dealerHand().closest('.table-played')).not.toBeNull();
   expect(container.querySelector('.table-waiting')).toBeNull();
   vi.useRealTimers();

@@ -1,11 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlayingCardKey } from '../types';
-import { CARD_FLIP_MS, useCardFlip } from './useCardFlip';
+import { CARD_FLIP_MS, CARD_REVEAL_PAUSE_MS, useCardFlip } from './useCardFlip';
 
-type Args = { cardKey?: PlayingCardKey; isHidden: boolean; isInFocus: boolean };
+type Args = { cardKey?: PlayingCardKey; isHidden: boolean; isInFocus: boolean; isRoundOver?: boolean };
 
-const renderFlip = (initial: Args) => renderHook((args: Args) => useCardFlip(args.cardKey, args.isHidden, args.isInFocus), { initialProps: initial });
+const renderFlip = (initial: Args) => renderHook((args: Args) => useCardFlip(args.cardKey, args.isHidden, args.isInFocus, args.isRoundOver), { initialProps: initial });
 
 /** the test setup reports reduced motion; these tests need motion unless they say otherwise */
 const allowMotion = (isReduced = false) => {
@@ -38,6 +38,42 @@ describe('useCardFlip', () => {
     act(() => { vi.advanceTimersByTime(CARD_FLIP_MS - 1); });
     expect(result.current.isBusy).toBe(true);
     act(() => { vi.advanceTimersByTime(1); });
+    expect(result.current.isBusy).toBe(false);
+  });
+
+  it('keeps waiting for a pause after the card has turned when the reveal ends the round', () => {
+    allowMotion();
+    const { result, rerender } = renderFlip({ cardKey: 'Club_10', isHidden: true, isInFocus: false });
+    rerender({ cardKey: 'Club_10', isHidden: false, isInFocus: false, isRoundOver: true });
+
+    // past the turn itself, the table is still waiting
+    act(() => { vi.advanceTimersByTime(CARD_FLIP_MS); });
+    expect(result.current.isBusy).toBe(true);
+    act(() => { vi.advanceTimersByTime(CARD_REVEAL_PAUSE_MS - 1); });
+    expect(result.current.isBusy).toBe(true);
+    act(() => { vi.advanceTimersByTime(1); });
+    expect(result.current.isBusy).toBe(false);
+  });
+
+  it('pauses for at least a second after the card has turned', () => {
+    expect(CARD_REVEAL_PAUSE_MS).toBeGreaterThanOrEqual(1000);
+  });
+
+  it('holds the dealer in focus through the pause', () => {
+    allowMotion();
+    const { result, rerender } = renderFlip({ cardKey: 'Club_10', isHidden: true, isInFocus: true });
+    rerender({ cardKey: 'Club_10', isHidden: false, isInFocus: false, isRoundOver: true });
+    act(() => { vi.advanceTimersByTime(CARD_FLIP_MS + CARD_REVEAL_PAUSE_MS - 1); });
+    expect(result.current).toEqual({ isBusy: true, holdsFocus: true });
+    act(() => { vi.advanceTimersByTime(1); });
+    expect(result.current).toEqual({ isBusy: false, holdsFocus: false });
+  });
+
+  it('does not pause when the card turns face down again, even in a finished round', () => {
+    allowMotion();
+    const { result, rerender } = renderFlip({ cardKey: 'Club_10', isHidden: false, isInFocus: false, isRoundOver: true });
+    rerender({ cardKey: 'Club_10', isHidden: true, isInFocus: false, isRoundOver: true });
+    act(() => { vi.advanceTimersByTime(CARD_FLIP_MS); });
     expect(result.current.isBusy).toBe(false);
   });
 
@@ -88,7 +124,7 @@ describe('useCardFlip', () => {
   it('never waits or holds focus with reduced motion', () => {
     allowMotion(true);
     const { result, rerender } = renderFlip({ cardKey: 'Club_10', isHidden: true, isInFocus: true });
-    rerender({ cardKey: 'Club_10', isHidden: false, isInFocus: false });
+    rerender({ cardKey: 'Club_10', isHidden: false, isInFocus: false, isRoundOver: true });
     expect(result.current).toEqual({ isBusy: false, holdsFocus: false });
   });
 });
