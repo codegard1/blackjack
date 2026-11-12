@@ -18,9 +18,9 @@ afterEach(() => {
 });
 
 it.each([
-  { humanCards: ['Spade_11', 'Diamond_14'], dealerCards: ['Club_10', 'Heart_7'], hit: false, humanStatus: '✨ Blackjack', dealerStatus: '💔 Loser', humanLog: 'won $37 with blackjack', dealerLog: 'paid out $37' },
-  { humanCards: ['Spade_10', 'Diamond_7'], dealerCards: ['Club_11', 'Heart_14'], hit: false, humanStatus: '💔 Loser', dealerStatus: '✨ Blackjack', humanLog: 'lost $25', dealerLog: 'took $25' },
-  { humanCards: ['Spade_10', 'Diamond_10'], dealerCards: ['Club_10', 'Heart_7'], hit: true, humanStatus: '💥 Busted', dealerStatus: '🏆 Winner', humanLog: 'busted, lost $25', dealerLog: 'took $25' },
+  { humanCards: ['Spade_11', 'Diamond_14'], dealerCards: ['Club_10', 'Heart_7'], hit: false, humanStatus: '✨ Blackjack', dealerStatus: 'Dealer · 💔 Loser', humanLog: 'won $37 with blackjack', dealerLog: 'paid out $37' },
+  { humanCards: ['Spade_10', 'Diamond_7'], dealerCards: ['Club_11', 'Heart_14'], hit: false, humanStatus: '💔 Loser', dealerStatus: 'Dealer · ✨ Blackjack', humanLog: 'lost $25', dealerLog: 'took $25' },
+  { humanCards: ['Spade_10', 'Diamond_10'], dealerCards: ['Club_10', 'Heart_7'], hit: true, humanStatus: '💥 Busted', dealerStatus: 'Dealer · 🏆 Winner', humanLog: 'busted, lost $25', dealerLog: 'took $25' },
 ])('shows the result on the seats and in the activity log: $humanLog', ({ humanCards, dealerCards, hit, humanStatus, dealerStatus, humanLog, dealerLog }) => {
   vi.spyOn(PlayingCardDeck.prototype, 'deal')
     .mockImplementationOnce(function (this: PlayingCardDeck) {
@@ -584,15 +584,47 @@ it("turns the dealer's hole card over when the round ends, keeping the dealer's 
   expect(container.querySelector('.table-focus')).toContainElement(dealerHole);
   expect(screen.getByRole('button', { name: 'Next hand' })).toHaveAttribute('aria-disabled', 'true');
 
-  // then the stage returns to the human, and Next hand is ready
+  // then the stage returns to the human, the dealer drops below it, and Next hand is ready
   act(() => vi.advanceTimersByTime(CARD_FLIP_MS));
+  expect(container.querySelector('.table-played')).toContainElement(screen.getByRole('region', { name: "Faxe's hand" }));
   expect(container.querySelector('.table-focus')).not.toContainElement(holeCard());
   expect(container.querySelector('.table-focus')).toContainElement(screen.getByRole('region', { name: "Chris's hand" }));
   expect(screen.getByRole('button', { name: 'Next hand' })).not.toHaveAttribute('aria-disabled');
   vi.useRealTimers();
 });
 
-it("turns the dealer's hole card over on its bench when Show Dealer Hand is switched on, holding play until it has", () => {
+it("keeps the dealer above the stage while its hole card turns over after the human busts, then moves it below", () => {
+  allowMotion();
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_10'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
+  vi.useFakeTimers();
+  const { container } = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  act(() => vi.advanceTimersByTime(POT_ENTER_MS));
+  act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  const dealerHand = () => screen.getByRole('region', { name: "Faxe's hand" });
+  const dealerHole = within(dealerHand()).getAllByRole('button')[0];
+  expect(dealerHand().closest('.table-waiting')).not.toBeNull();
+
+  // busting ends the round without the dealer playing, so the dealer never had the stage
+  vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
+  fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
+  expect(within(dealerHand()).getAllByRole('button')[0]).toBe(dealerHole);
+  expect(dealerHole).not.toHaveClass('is-face-down');
+  expect(dealerHand().closest('.table-waiting')).not.toBeNull();
+  expect(container.querySelector('.table-played')).toBeNull();
+
+  // once the card has turned, the dealer joins the seats below the stage
+  act(() => vi.advanceTimersByTime(CARD_FLIP_MS));
+  expect(dealerHand().closest('.table-played')).not.toBeNull();
+  expect(container.querySelector('.table-waiting')).toBeNull();
+  vi.useRealTimers();
+});
+
+it("turns the dealer's hole card over where it waits when Show Dealer Hand is switched on, holding play until it has", () => {
   allowMotion();
   vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
     this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
@@ -607,7 +639,7 @@ it("turns the dealer's hole card over on its bench when Show Dealer Hand is swit
 
   const holeCard = () => within(screen.getByRole('region', { name: "Faxe's hand" })).getAllByRole('button')[0];
   const dealerHole = holeCard();
-  expect(dealerHole.closest('.table-bench')).not.toBeNull();
+  expect(dealerHole.closest('.table-waiting')).not.toBeNull();
   expect(dealerHole).toHaveClass('is-face-down');
   expect(screen.getByRole('button', { name: 'Stay' })).not.toHaveAttribute('aria-disabled');
 
@@ -618,7 +650,7 @@ it("turns the dealer's hole card over on its bench when Show Dealer Hand is swit
   // the same card turns over where it is: the dealer is not brought to the stage, and the controls wait
   expect(holeCard()).toBe(dealerHole);
   expect(dealerHole).not.toHaveClass('is-face-down');
-  expect(dealerHole.closest('.table-bench')).not.toBeNull();
+  expect(dealerHole.closest('.table-waiting')).not.toBeNull();
   expect(container.querySelector('.table-focus')).toContainElement(screen.getByRole('region', { name: "Chris's hand" }));
   expect(screen.getByRole('button', { name: 'Stay' })).toHaveAttribute('aria-disabled', 'true');
 
@@ -627,7 +659,7 @@ it("turns the dealer's hole card over on its bench when Show Dealer Hand is swit
   vi.useRealTimers();
 });
 
-it("shows the dealer's hand as cards on its bench during the human's turn", () => {
+it("shows the dealer's hand as cards among the seats still to play during the human's turn", () => {
   vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
     this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
     this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
@@ -645,9 +677,10 @@ it("shows the dealer's hand as cards on its bench during the human's turn", () =
   expect(dealerCards[1]).not.toHaveClass('is-face-down');
   expect(dealerCards[1].querySelectorAll('.playing-card-corner')).toHaveLength(2);
   expect(dealerCards[1].querySelector('.playing-card-face.is-back')).toBeNull();
-  // the dealer waits on its bench above the stage, not in the players' queue
-  expect(dealerHand.closest('.table-bench')).not.toBeNull();
-  expect(dealerHand.closest('.table-queue')).toBeNull();
+  // the dealer plays last, so it waits above the stage, and is tagged as the dealer
+  expect(dealerHand.closest('.table-waiting')).not.toBeNull();
+  expect(dealerHand.closest('.table-played')).toBeNull();
+  expect(within(dealerHand.closest('.table-seat-slot') as HTMLElement).getByText('Dealer · Waiting')).toBeInTheDocument();
   expect(screen.getByRole('region', { name: "Chris's hand" }).closest('.table-focus')).not.toBeNull();
 });
 
@@ -726,7 +759,7 @@ it('seats chosen computer players, who play their turns before the dealer', () =
     this.playerHands.ogion.cards = ['Club_10', 'Heart_3'];
     this.playerHands.dealer.cards = ['Club_9', 'Heart_8'];
   });
-  render(<App />);
+  const { container } = render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
   const dialog = screen.getByRole('dialog', { name: 'Players' });
@@ -736,22 +769,28 @@ it('seats chosen computer players, who play their turns before the dealer', () =
   expect(screen.getByText('Ogion ($1000)')).toBeInTheDocument();
   expect(screen.getByText('Thirteen is plenty.')).toBeInTheDocument();
 
+  // before the game the seats float together in the reverse of turn order: the dealer first, tagged as the dealer
+  const seatsIn = (group: string) => Array.from(container.querySelectorAll<HTMLElement>(`${group} [data-seat-key]`)).map((slot) => slot.dataset.seatKey);
+  expect(seatsIn('.table-waiting')).toEqual(['dealer', 'ogion', 'chris']);
+  expect(within(container.querySelector('.table-waiting') as HTMLElement).getByText('Dealer')).toBeInTheDocument();
+
   vi.useFakeTimers();
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
-  // Chris is on the stage, so Ogion leads the queue of seats still to play
-  const queue = () => within(screen.getByRole('group', { name: 'Seats in turn order' }));
-  expect(queue().getByText('Up next')).toBeInTheDocument();
-  expect(queue().queryByText('Played')).not.toBeInTheDocument();
-  expect(queue().getByRole('button', { name: /^Ogion \(\$/ })).toBeInTheDocument();
+  // Chris, who plays first, is on the stage; the seats still to play wait above it with no headings,
+  // the dealer, who plays last, at the top and Ogion, who plays next, closest to the stage
+  expect(seatsIn('.table-waiting')).toEqual(['dealer', 'ogion']);
+  expect(container.querySelector('.table-played')).toBeNull();
+  ['Up next', 'Played', 'Turn order'].forEach((heading) => expect(screen.queryByText(heading)).not.toBeInTheDocument());
+  expect(screen.queryByText('Dealer', { selector: 'span:not([class*="Badge"])' })).not.toBeInTheDocument();
+  expect(container.querySelector('.table-focus')).toContainElement(screen.getByRole('region', { name: "Chris's hand" }));
   fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
 
-  // Chris has played and waits behind; no seat but the dealer is still to play
-  expect(queue().getByText('Played')).toBeInTheDocument();
-  expect(queue().queryByText('Up next')).not.toBeInTheDocument();
-  expect(queue().getByRole('button', { name: /^Chris \(\$/ })).toBeInTheDocument();
-  expect(within(screen.getByRole('group', { name: 'Dealer' })).getByRole('button', { name: /^Faxe \(\$/ })).toBeInTheDocument();
+  // Chris has played and moves below the stage; only the dealer is still to play above it
+  expect(seatsIn('.table-waiting')).toEqual(['dealer']);
+  expect(seatsIn('.table-played')).toEqual(['chris']);
+  expect(within(container.querySelector('.table-waiting') as HTMLElement).getByText('Dealer · Waiting')).toBeInTheDocument();
 
   // Ogion has control and his seat comes forward; The Rock stands on 13
   expect(screen.getByRole('region', { name: "Ogion's hand" }).closest('.table-focus')).not.toBeNull();
@@ -766,6 +805,11 @@ it('seats chosen computer players, who play their turns before the dealer', () =
     act(() => vi.advanceTimersByTime(100));
   }
   expect(hasFocus('Faxe')).toBe(true);
+
+  // the dealer plays last: nobody is left waiting, and the seats below the stage run from the one
+  // that played latest down to the first to play
+  expect(container.querySelector('.table-waiting')).toBeNull();
+  expect(seatsIn('.table-played')).toEqual(['ogion', 'chris']);
 });
 
 it('queues seats on the left by default, or on the right from the Seat queue side setting', () => {

@@ -4,7 +4,7 @@ import { GameAction, GameStatus } from '../enums';
 import { gameReducer } from './gameReducer';
 import { GameSnapshot, PlayerSnapshot } from '../types';
 import { diffAnnouncements, snapshotGame } from './announcements';
-import { isRoundOver, isSeatLoser, seatStatus } from './seatStatus';
+import { isRoundOver, isSeatLoser, seatStatus, seatTag } from './seatStatus';
 import { playerDefaults } from '../definitions';
 import { IPlayer } from '../interfaces';
 
@@ -350,5 +350,32 @@ describe('seatStatus', () => {
   it('knows which statuses end the round', () => {
     expect(isRoundOver(GameStatus.InProgress)).toBe(false);
     expect(isRoundOver(GameStatus.RoundOver)).toBe(true);
+  });
+});
+
+describe('seatTag', () => {
+  const seat = (overrides: Partial<IPlayer>): IPlayer => ({ ...playerDefaults, key: 'x', title: 'X', ...overrides });
+  const dealer = (overrides: Partial<IPlayer> = {}) => seat({ isNPC: true, role: 'dealer', ...overrides });
+
+  it("is a player's status as it is, or nothing", () => {
+    expect(seatTag(seat({ isNPC: true, role: 'bot', isStaying: true }), GameStatus.InProgress)?.text).toBe('Standing');
+    expect(seatTag(seat({ isNPC: false }), GameStatus.InProgress)).toBeUndefined();
+  });
+
+  it('names the dealer before a game, with nothing else to say', () => {
+    expect(seatTag(dealer(), GameStatus.Init)).toEqual({ text: 'Dealer', color: 'subtle', appearance: 'tint' });
+  });
+
+  it('shows the dealer waiting while the players play', () => {
+    expect(seatTag(dealer(), GameStatus.InProgress)?.text).toBe('Dealer · Waiting');
+  });
+
+  it("puts the dealer's status after its name, in the status's own color", () => {
+    const playing = seatTag(dealer({ turn: true }), GameStatus.InProgress);
+    expect(playing?.text).toBe('Dealer · Playing');
+    expect(playing?.color).toBe(seatStatus(dealer({ turn: true }), GameStatus.InProgress)?.color);
+    expect(seatTag(dealer({ isStaying: true }), GameStatus.InProgress)?.text).toBe('Dealer · Standing');
+    expect(seatTag(dealer({ result: 'win' }), GameStatus.RoundOver)?.text).toBe('Dealer · 🏆 Winner');
+    expect(seatTag(dealer({ result: 'push' }), GameStatus.RoundOver)?.text).toBe('Dealer · 🤝 Even');
   });
 });

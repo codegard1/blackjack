@@ -18,8 +18,8 @@ import "./Table.css";
 import { PotAnimationContext, useGameContext, useProfileContext, useSettingContext } from '../context';
 import { playerDefaults } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
-import { seatStatus, isHoleCardHidden, isRoundOver } from "../functions/seatStatus";
-import { decideSeatMove, isDealer, isHuman, seatOrder } from "../functions/round";
+import { seatTag, isHoleCardHidden, isRoundOver } from "../functions/seatStatus";
+import { decideSeatMove, isDealer, isHuman, seatOrder, seatQueues } from "../functions/round";
 import { seatsFor } from "../functions/profiles";
 import { IPlayer } from "../interfaces";
 import { PlayerHandValue, tableRulesFrom } from "../types";
@@ -47,13 +47,6 @@ const useStyles = makeStyles({
     backgroundColor: tokens.colorNeutralBackground2,
     borderTop: `${tokens.strokeWidthThin} solid ${tokens.colorNeutralStroke2}`,
   },
-  zoneLabel: {
-    color: tokens.colorNeutralForeground3,
-    fontSize: tokens.fontSizeBase200,
-    fontWeight: tokens.fontWeightSemibold,
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase',
-  },
   dockStatus: {
     display: 'flex',
     alignItems: 'center',
@@ -63,12 +56,15 @@ const useStyles = makeStyles({
 });
 
 /**
- * The board. Players queue at the side in turn order as chips (the left by default; the
- * Seat queue side setting moves them right), and the dealer waits on its bench above the
- * stage. The seat in control moves to the stage and expands; clicking a chip brings that
- * seat forward instead. During a hand the queue is a conveyor: seats still to play lead it
- * and seats that have played collect behind. On a narrow board everything is one column:
- * the queue, then the dealer, then the stage. Before a game the chips float in place.
+ * The board. Seats that are not on the stage wait as chips, in the reverse of turn order: the
+ * dealer, who plays last, at the top and the human, who plays first, at the bottom. Seats still
+ * to play wait above the stage, the next to play closest to it; the seat in control moves to the
+ * stage and expands, and when its turn is over it moves down to just below the stage, so the
+ * first to play ends at the bottom. Clicking a chip brings that seat forward instead. On a wide
+ * board the chips are a column at the side (the left by default; the Seat queue side setting
+ * moves it right), the waiting seats at its top and the seats that have played at its bottom.
+ * On a narrow board everything is one column: the waiting seats, the stage, then the seats that
+ * have played. Before a game the chips float in place, with the dealer's tag naming it.
  * The dock is one row along the board's bottom edge: the pot, then the game's buttons
  * (Start game, the human's actions, or who is playing during a computer's turn), then the
  * button that opens the activity log, a drawer that extends from the board's bottom edge.
@@ -112,24 +108,21 @@ export const Table: React.FC = () => {
   const seats = seatsFor(profiles);
   const pendingPlayers: IPlayer[] = seats.map((seat) => ({ ...playerDefaults, ...seat, stats: { ...playerDefaults.stats, ...seat.stats } }));
 
-  // Seats wait at the side in turn order, and the dealer waits on its bench above the stage;
-  // the focused seat has left for the stage. During a hand the queue moves like a conveyor:
-  // the seats still to play lead it and the seats that have played collect behind them.
+  // The seats off the stage wait in the reverse of turn order, the dealer first: those still to play
+  // above the stage, the next to play closest to it, and those that have played below it
   const tablePlayers = isStarted ? players : pendingPlayers;
-  const queueSeats = tablePlayers.filter((player) => !isDealer(player) && player !== focusPlayer);
-  const benchDealer = tablePlayers.find((player) => isDealer(player) && player !== focusPlayer);
-  const turnOrder = isStarted ? seatOrder(gameState) : [];
-  const controlIndex = gameStatus === GameStatus.InProgress && controller ? turnOrder.indexOf(controller.key) : -1;
-  const hasPlayed = (player: IPlayer) => turnOrder.indexOf(player.key) < controlIndex;
-  const queueGroups = (controlIndex < 0
-    ? [{ label: 'Turn order', seats: queueSeats }]
-    : [
-      { label: 'Up next', seats: queueSeats.filter((player) => !hasPlayed(player)) },
-      { label: 'Played', seats: queueSeats.filter(hasPlayed) },
-    ]).filter((group) => group.seats.length > 0);
+  const turnOrder = isStarted
+    ? seatOrder(gameState)
+    : [...tablePlayers.filter((player) => !isDealer(player)), ...tablePlayers.filter(isDealer)].map((player) => player.key);
+  // a dealer that was waiting when the round ended stays up there until its hole card has turned over, so the flip is seen
+  const isTurning = holeCardFlip.isBusy && !holeCardFlip.holdsFocus && gameStatus >= GameStatus.RoundOver ? dealer?.key : undefined;
+  const queues = seatQueues(turnOrder, focusPlayer?.key, controller?.key, gameStatus >= GameStatus.RoundOver, isTurning);
+  const seatsOf = (keys: string[]) => keys.flatMap((key) => tablePlayers.find((player) => player.key === key) ?? []);
+  const waitingSeats = seatsOf(queues.waiting);
+  const playedSeats = seatsOf(queues.played);
 
   // A collapsed seat. During a game its chip brings the seat forward; before one it floats.
-  const renderChip = (player: IPlayer, role: 'queue' | 'bench', index: number) => {
+  const renderChip = (player: IPlayer, role: 'waiting' | 'played', index: number) => {
     const hand = isStarted ? deck.state.playerHands[player.key] : undefined;
     // only the dealer's total waits on the hole card; players' cards are face up
     const showTotal = settings.isHandValueVisible && !!hand?.cards.length && (!isDealer(player) || revealDealerTotal);
@@ -138,13 +131,13 @@ export const Table: React.FC = () => {
         {isStarted ? (
           <SeatChip
             player={player}
-            status={seatStatus(player, gameStatus)}
+            status={seatTag(player, gameStatus)}
             total={showTotal ? hand.handValue.highest : undefined}
             cards={hand?.cards}
             onSelect={() => setPinnedKey(player.key)}
           />
         ) : (
-          <SeatChip player={player} floating index={index} />
+          <SeatChip player={player} status={seatTag(player, gameStatus)} floating index={index} />
         )}
       </div>
     );
@@ -175,7 +168,7 @@ export const Table: React.FC = () => {
     </Badge>
   );
 
-  // Seats flow between the queue, the dealer's bench and the stage, and slide when the queue moves up
+  // Seats flow between the waiting seats above the stage, the stage and the played seats below it, and slide when a seat joins those below
   const boardRef = React.useRef<HTMLElement>(null);
   useSeatFlip(boardRef);
 
@@ -189,25 +182,21 @@ export const Table: React.FC = () => {
           <div className="table-field">
 
             <div className={mergeClasses('table-layout', isStarted ? 'is-started' : 'is-pregame', settings.queueSide === 'right' && 'is-queue-right')}>
-              <div className="table-queue" role="group" aria-label="Seats in turn order">
-                {queueGroups.map((group) => (
-                  <React.Fragment key={group.label}>
-                    <Text className={mergeClasses('table-zone-label', styles.zoneLabel)}>{group.label}</Text>
-                    {group.seats.map((player) => renderChip(player, 'queue', tablePlayers.indexOf(player)))}
-                  </React.Fragment>
-                ))}
-              </div>
-
-              {benchDealer && (
-                <div className="table-bench" role="group" aria-label="Dealer">
-                  <Text className={mergeClasses('table-zone-label', styles.zoneLabel)}>Dealer</Text>
-                  {renderChip(benchDealer, 'bench', tablePlayers.indexOf(benchDealer))}
+              {waitingSeats.length > 0 && (
+                <div className="table-waiting" role="group" aria-label="Seats still to play, the dealer first">
+                  {waitingSeats.map((player) => renderChip(player, 'waiting', tablePlayers.indexOf(player)))}
                 </div>
               )}
 
               {focusPlayer && (
                 <div key={focusPlayer.key} className="table-focus" data-seat-key={focusPlayer.key} data-seat-role="focus">
                   <PlayerContainer playerKey={focusPlayer.key} />
+                </div>
+              )}
+
+              {playedSeats.length > 0 && (
+                <div className="table-played" role="group" aria-label="Seats that have played, the latest first">
+                  {playedSeats.map((player) => renderChip(player, 'played', tablePlayers.indexOf(player)))}
                 </div>
               )}
             </div>
