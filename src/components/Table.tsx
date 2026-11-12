@@ -9,6 +9,7 @@ import {
 } from ".";
 import { useActivityDrawer } from "./ActivityLog";
 import { useTableToasts } from "./TableToasts";
+import { useCardFlip } from "./useCardFlip";
 import { usePotMotion } from "./usePotMotion";
 import { useSeatFlip } from "./useSeatFlip";
 import "./Table.css";
@@ -17,8 +18,8 @@ import "./Table.css";
 import { PotAnimationContext, useGameContext, useProfileContext, useSettingContext } from '../context';
 import { playerDefaults } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
-import { seatStatus, isRoundOver } from "../functions/seatStatus";
-import { decideSeatMove, isDealer, isHuman, seatOrder } from "../functions/round";
+import { seatTag, isHoleCardHidden, isRoundOver } from "../functions/seatStatus";
+import { decideSeatMove, isDealer, isHuman, seatOrder, seatQueues } from "../functions/round";
 import { seatsFor } from "../functions/profiles";
 import { IPlayer } from "../interfaces";
 import { PlayerHandValue, tableRulesFrom } from "../types";
@@ -46,13 +47,6 @@ const useStyles = makeStyles({
     backgroundColor: tokens.colorNeutralBackground2,
     borderTop: `${tokens.strokeWidthThin} solid ${tokens.colorNeutralStroke2}`,
   },
-  zoneLabel: {
-    color: tokens.colorNeutralForeground3,
-    fontSize: tokens.fontSizeBase200,
-    fontWeight: tokens.fontWeightSemibold,
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase',
-  },
   dockStatus: {
     display: 'flex',
     alignItems: 'center',
@@ -62,12 +56,15 @@ const useStyles = makeStyles({
 });
 
 /**
- * The board. Players queue at the side in turn order as chips (the left by default; the
- * Seat queue side setting moves them right), and the dealer waits on its bench above the
- * stage. The seat in control moves to the stage and expands; clicking a chip brings that
- * seat forward instead. During a hand the queue is a conveyor: seats still to play lead it
- * and seats that have played collect behind. On a narrow board everything is one column:
- * the queue, then the dealer, then the stage. Before a game the chips float in place.
+ * The board. Seats that are not on the stage wait as chips, in the reverse of turn order: the
+ * dealer, who plays last, at the top and the human, who plays first, at the bottom. Seats still
+ * to play wait above the stage, the next to play closest to it; the seat in control moves to the
+ * stage and expands, and when its turn is over it moves down to just below the stage, so the
+ * first to play ends at the bottom. Clicking a chip brings that seat forward instead. On a wide
+ * board the chips are a column at the side (the left by default; the Seat queue side setting
+ * moves it right), the waiting seats at its top and the seats that have played at its bottom.
+ * On a narrow board everything is one column: the waiting seats, the stage, then the seats that
+ * have played. Before a game the chips float in place, with the dealer's tag naming it.
  * The dock is one row along the board's bottom edge: the pot, then the game's buttons
  * (Start game, the human's actions, or who is playing during a computer's turn), then the
  * button that opens the activity log, a drawer that extends from the board's bottom edge.
@@ -90,8 +87,16 @@ export const Table: React.FC = () => {
   const [pinnedKey, setPinnedKey] = React.useState<string>();
   React.useEffect(() => setPinnedKey(undefined), [gameState.controllingPlayer, gameStatus]);
 
-  // The seat in control, unless the user has picked another; after a round, the human
-  const focusKey = (players.some((player) => player.key === pinnedKey) ? pinnedKey : undefined) ?? gameState.controllingPlayer ?? human?.key;
+  // The seat in control, unless the user has picked another; before the deal, the human. Once the round
+  // is over nobody has the stage: every seat is a chip, and each is brought into focus as its result is told.
+  const dealer = players.find(isDealer);
+  const turnKey = (players.some((player) => player.key === pinnedKey) ? pinnedKey : undefined) ?? gameState.controllingPlayer ?? (roundOver ? undefined : human?.key);
+
+  // The dealer's hole card turns over when the round ends, and the stage empties.
+  // The dealer's seat keeps the stage until the card has turned and the pause after it is over, so the flip and the hand are seen at full size.
+  const holeCardKey = dealer ? deck.hand(dealer.key)?.cards[0] : undefined;
+  const holeCardFlip = useCardFlip(holeCardKey, isHoleCardHidden(dealer, !!settings.isDealerHandVisible, gameStatus), !!dealer && turnKey === dealer.key, roundOver);
+  const focusKey = holeCardFlip.holdsFocus ? dealer?.key : turnKey;
   const focusPlayer = isStarted ? players.find((player) => player.key === focusKey) : undefined;
 
   // Computer autoplay runs here, not in a seat, so it keeps going while that seat is collapsed
@@ -104,24 +109,21 @@ export const Table: React.FC = () => {
   const seats = seatsFor(profiles);
   const pendingPlayers: IPlayer[] = seats.map((seat) => ({ ...playerDefaults, ...seat, stats: { ...playerDefaults.stats, ...seat.stats } }));
 
-  // Seats wait at the side in turn order, and the dealer waits on its bench above the stage;
-  // the focused seat has left for the stage. During a hand the queue moves like a conveyor:
-  // the seats still to play lead it and the seats that have played collect behind them.
+  // The seats off the stage wait in the reverse of turn order, the dealer first: those still to play
+  // above the stage, the next to play closest to it, and those that have played below it
   const tablePlayers = isStarted ? players : pendingPlayers;
-  const queueSeats = tablePlayers.filter((player) => !isDealer(player) && player !== focusPlayer);
-  const benchDealer = tablePlayers.find((player) => isDealer(player) && player !== focusPlayer);
-  const turnOrder = isStarted ? seatOrder(gameState) : [];
-  const controlIndex = gameStatus === GameStatus.InProgress && controller ? turnOrder.indexOf(controller.key) : -1;
-  const hasPlayed = (player: IPlayer) => turnOrder.indexOf(player.key) < controlIndex;
-  const queueGroups = (controlIndex < 0
-    ? [{ label: 'Turn order', seats: queueSeats }]
-    : [
-      { label: 'Up next', seats: queueSeats.filter((player) => !hasPlayed(player)) },
-      { label: 'Played', seats: queueSeats.filter(hasPlayed) },
-    ]).filter((group) => group.seats.length > 0);
+  const turnOrder = isStarted
+    ? seatOrder(gameState)
+    : [...tablePlayers.filter((player) => !isDealer(player)), ...tablePlayers.filter(isDealer)].map((player) => player.key);
+  // a dealer that was waiting when the round ended stays up there until its hole card has turned over, so the flip is seen
+  const isTurning = holeCardFlip.isBusy && !holeCardFlip.holdsFocus && gameStatus >= GameStatus.RoundOver ? dealer?.key : undefined;
+  const queues = seatQueues(turnOrder, focusPlayer?.key, controller?.key, gameStatus >= GameStatus.RoundOver, isTurning);
+  const seatsOf = (keys: string[]) => keys.flatMap((key) => tablePlayers.find((player) => player.key === key) ?? []);
+  const waitingSeats = seatsOf(queues.waiting);
+  const playedSeats = seatsOf(queues.played);
 
   // A collapsed seat. During a game its chip brings the seat forward; before one it floats.
-  const renderChip = (player: IPlayer, role: 'queue' | 'bench', index: number) => {
+  const renderChip = (player: IPlayer, role: 'waiting' | 'played', index: number) => {
     const hand = isStarted ? deck.state.playerHands[player.key] : undefined;
     // only the dealer's total waits on the hole card; players' cards are face up
     const showTotal = settings.isHandValueVisible && !!hand?.cards.length && (!isDealer(player) || revealDealerTotal);
@@ -130,13 +132,14 @@ export const Table: React.FC = () => {
         {isStarted ? (
           <SeatChip
             player={player}
-            status={seatStatus(player, gameStatus)}
+            status={seatTag(player, gameStatus)}
             total={showTotal ? hand.handValue.highest : undefined}
             cards={hand?.cards}
+            focus={toastFocus?.key === player.key ? toastFocus.tone : undefined}
             onSelect={() => setPinnedKey(player.key)}
           />
         ) : (
-          <SeatChip player={player} floating index={index} />
+          <SeatChip player={player} status={seatTag(player, gameStatus)} floating index={index} />
         )}
       </div>
     );
@@ -144,9 +147,15 @@ export const Table: React.FC = () => {
 
   const startGame = () => gameDispatch({ type: GameAction.NewGame, players: seats, tableRules: tableRulesFrom(settings) });
 
-  // Toasts announce each change; its activity log entries follow once its toasts have faded out.
-  // Computer play waits while a toast is queued, so the moves keep pace with the notices.
-  const { toasts, activityLog, isBacklogged } = useTableToasts(gameState, revealDealerTotal);
+  // Toasts announce each change; its activity log entries follow once its toasts have had their moment.
+  // Computer play waits while a toast is queued, so the moves keep pace with the notices. At the end of
+  // a round each seat's result is a toast of its own, after the dealer's card has turned, and the seat's
+  // chip is in focus meanwhile; the game's buttons wait until the last result has been told.
+  const { toasts, activityLog, isBacklogged, focus: toastFocus, isAnnouncingResults } = useTableToasts(
+    gameState,
+    revealDealerTotal,
+    holeCardFlip.isBusy ? holeCardFlip.waitMs : 0,
+  );
   const activityDrawer = useActivityDrawer();
 
   // The pot stays at the start of the dock, even after a hand ends. Between hands it slides
@@ -167,12 +176,12 @@ export const Table: React.FC = () => {
     </Badge>
   );
 
-  // Seats flow between the queue, the dealer's bench and the stage, and slide when the queue moves up
+  // Seats flow between the waiting seats above the stage, the stage and the played seats below it, and slide when a seat joins those below
   const boardRef = React.useRef<HTMLElement>(null);
   useSeatFlip(boardRef);
 
   return (
-    <PotAnimationContext.Provider value={potMotion.isBusy}>
+    <PotAnimationContext.Provider value={potMotion.isBusy || holeCardFlip.isBusy || isAnnouncingResults}>
       <div className="table-shell">
         {/* the board's bottom corners square off while the drawer is attached to them */}
         <main ref={boardRef} className="table-board" style={{ animation: 'table-enter 180ms ease-out', backgroundColor: tokens.colorNeutralBackground1, color: tokens.colorNeutralForeground1, borderRadius: activityDrawer.isOpen ? `${tokens.borderRadiusLarge} ${tokens.borderRadiusLarge} 0 0` : tokens.borderRadiusLarge, boxShadow: tokens.shadow16, display: 'flex', flexDirection: 'column' }}>
@@ -180,26 +189,22 @@ export const Table: React.FC = () => {
 
           <div className="table-field">
 
-            <div className={mergeClasses('table-layout', isStarted ? 'is-started' : 'is-pregame', settings.queueSide === 'right' && 'is-queue-right')}>
-              <div className="table-queue" role="group" aria-label="Seats in turn order">
-                {queueGroups.map((group) => (
-                  <React.Fragment key={group.label}>
-                    <Text className={mergeClasses('table-zone-label', styles.zoneLabel)}>{group.label}</Text>
-                    {group.seats.map((player) => renderChip(player, 'queue', tablePlayers.indexOf(player)))}
-                  </React.Fragment>
-                ))}
-              </div>
-
-              {benchDealer && (
-                <div className="table-bench" role="group" aria-label="Dealer">
-                  <Text className={mergeClasses('table-zone-label', styles.zoneLabel)}>Dealer</Text>
-                  {renderChip(benchDealer, 'bench', tablePlayers.indexOf(benchDealer))}
+            <div className={mergeClasses('table-layout', isStarted ? 'is-started' : 'is-pregame', !focusPlayer && 'is-stageless', settings.queueSide === 'right' && 'is-queue-right')}>
+              {waitingSeats.length > 0 && (
+                <div className="table-waiting" role="group" aria-label="Seats still to play, the dealer first">
+                  {waitingSeats.map((player) => renderChip(player, 'waiting', tablePlayers.indexOf(player)))}
                 </div>
               )}
 
               {focusPlayer && (
                 <div key={focusPlayer.key} className="table-focus" data-seat-key={focusPlayer.key} data-seat-role="focus">
                   <PlayerContainer playerKey={focusPlayer.key} />
+                </div>
+              )}
+
+              {playedSeats.length > 0 && (
+                <div className="table-played" role="group" aria-label="Seats that have played, the latest first">
+                  {playedSeats.map((player) => renderChip(player, 'played', tablePlayers.indexOf(player)))}
                 </div>
               )}
             </div>
@@ -212,14 +217,12 @@ export const Table: React.FC = () => {
                 handValue={controllerHand?.handValue ?? EMPTY_HAND_VALUE}
                 cardCount={controllerHand?.cards.length ?? 0}
                 handIndex={gameState.activeHandIndex}
-                isPaused={potMotion.isBusy || isBacklogged}
+                isPaused={potMotion.isBusy || holeCardFlip.isBusy || isBacklogged}
                 playerKey={controller.key}
                 decide={() => decideSeatMove(gameState, controller.key, Math.random, gameState.activeHandIndex)}
                 delayMs={isDealer(controller) ? DEALER_ACTION_DELAY_MS : BOT_ACTION_DELAY_MS}
               />
             )}
-
-            <TableToasts toasts={toasts} />
 
             {gameState.deck.length > 0 &&
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
@@ -246,6 +249,8 @@ export const Table: React.FC = () => {
           </div>
 
           <div className={mergeClasses('table-dock', styles.dock)}>
+            {/* the notices run just above the dock, beside the buttons, wherever a tall board is scrolled to */}
+            <TableToasts toasts={toasts} />
             <div className="table-pot">{potBadge}</div>
             <div className="table-dock-actions">
               {!isStarted ? (

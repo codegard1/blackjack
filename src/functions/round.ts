@@ -44,6 +44,35 @@ export function seatOrder(state: GameState): PlayerKey[] {
   return [...playerSeats(state).map((player) => player.key), ...(dealer ? [dealer.key] : [])];
 }
 
+/**
+ * Where the seats that are not on the stage wait, both lists in the reverse of turn order: the
+ * dealer, who plays last, comes first, and the first to play comes last. Seats still to play wait
+ * above the stage, the next to play last in its list so it is closest to the stage. A seat that
+ * has played sits below the stage, the one that played most recently first, so it is closest to
+ * the stage and the first to play ends at the bottom. When the round is over every seat has played.
+ * A seat in control that the user has not brought to the stage still counts as waiting.
+ * @param turnOrder every seat in turn order, the dealer last
+ * @param onStage the seat on the stage, which waits nowhere
+ * @param inControl the seat whose turn it is, if a hand is in play
+ * @param isRoundOver true once every hand has a result
+ * @param stillWaiting a seat to keep waiting although the round is over, while its card turns over
+ */
+export function seatQueues(
+  turnOrder: PlayerKey[],
+  onStage: PlayerKey | undefined,
+  inControl: PlayerKey | undefined,
+  isRoundOver: boolean,
+  stillWaiting?: PlayerKey,
+): { waiting: PlayerKey[]; played: PlayerKey[] } {
+  const controlIndex = !isRoundOver && inControl ? turnOrder.indexOf(inControl) : -1;
+  const hasPlayed = (key: PlayerKey) => key !== stillWaiting && (isRoundOver || (controlIndex >= 0 && turnOrder.indexOf(key) < controlIndex));
+  const others = turnOrder.filter((key) => key !== onStage);
+  return {
+    waiting: others.filter((key) => !hasPlayed(key)).reverse(),
+    played: others.filter(hasPlayed).reverse(),
+  };
+}
+
 /** True when the seat was dealt into the current round */
 export function hasHand(state: GameState, player: IPlayer): boolean {
   return !player.isSittingOut && state.deck.getHands(player.key).some((hand) => hand.cards.length > 0);

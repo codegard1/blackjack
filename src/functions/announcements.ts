@@ -1,8 +1,11 @@
 import { GameStatus } from "../enums";
 import { PlayingCard } from "../classes";
-import { Announcement, GameSnapshot, GameState, PlayerSnapshot } from "../types";
+import { Announcement, GameSnapshot, GameState, PlayerSnapshot, WagerSnapshot } from "../types";
 import { roleOf } from "./round";
 import { isRoundOver } from "./seatStatus";
+
+/** True for the log entries where a player added to the pot after the antes */
+const isWagerEvent = (event: string | undefined): boolean => event === 'bet' || event === 'double' || event === 'split';
 
 /**
  * Capture the parts of the game state that announcements are derived from
@@ -17,6 +20,11 @@ export function snapshotGame(state: GameState): GameSnapshot {
         ? total + Math.max(0, -(entry.amount ?? 0))
         : total
     ), 0),
+    wagers: state.activityLog.flatMap((entry): WagerSnapshot[] => (
+      isWagerEvent(entry.event) && (entry.amount ?? 0) < 0
+        ? [{ id: entry.id, name: entry.name, description: entry.description, amount: -(entry.amount ?? 0) }]
+        : []
+    )),
     controllingPlayer: state.controllingPlayer,
     players: state.playerStore.all.map((player): PlayerSnapshot => {
       const handIndex = state.controllingPlayer === player.key ? state.activeHandIndex : 0;
@@ -44,34 +52,64 @@ function totalLine(player: PlayerSnapshot, revealDealerTotal: boolean): string |
   return `Total ${player.total}`;
 }
 
-/** The end of the round, told from the human's seat */
-function resultAnnouncement(next: GameSnapshot): Announcement {
-  const human = next.players.find((player) => player.role === 'human');
-  const dealer = next.players.find((player) => player.role === 'dealer');
-  if (!human?.result || !dealer) return { title: 'Round over', tone: 'info' };
-
-  switch (human.result) {
+/** How one seat's hand ended against the dealer, told in the seat's name */
+function seatResult(player: PlayerSnapshot, dealer: PlayerSnapshot): Announcement | undefined {
+  const base = { kind: 'result' as const, playerKey: player.key };
+  switch (player.result) {
     case 'blackjack':
-      return { title: `${human.title} wins!`, subtitle: 'Blackjack', tone: 'success', playerKey: human.key };
+      return { ...base, title: `${player.title} wins!`, subtitle: 'Blackjack', tone: 'success' };
     case 'win':
       return {
-        title: `${human.title} wins!`,
-        subtitle: dealer.isBusted ? `${dealer.title} busted` : `${human.total} to ${dealer.total}`,
+        ...base,
+        title: `${player.title} wins!`,
+        subtitle: dealer.isBusted ? `${dealer.title} busted` : `${player.total} to ${dealer.total}`,
         tone: 'success',
-        playerKey: human.key,
       };
     case 'push':
-      return { title: 'Push', subtitle: 'Stake returned', tone: 'info' };
-    default:
+      return { ...base, title: `${player.title} pushes`, subtitle: 'Stake returned', tone: 'info' };
+    case 'loss':
       return {
-        title: `${dealer.title} wins!`,
-        subtitle: human.isBusted ? `${human.title} busted`
-          : dealer.isBlackjack ? 'Blackjack'
-          : `${dealer.total} to ${human.total}`,
+        ...base,
+        title: `${player.title} loses`,
+        subtitle: player.isBusted ? 'Busted'
+          : dealer.isBlackjack ? `${dealer.title} has blackjack`
+          : `${dealer.total} to ${player.total}`,
         tone: 'danger',
-        playerKey: dealer.key,
       };
+    default:
+      return undefined;
   }
+}
+
+/** How the dealer came out of the round against the whole table */
+function dealerResult(dealer: PlayerSnapshot): Announcement | undefined {
+  const base = { kind: 'result' as const, playerKey: dealer.key };
+  switch (dealer.result) {
+    case 'win':
+      return { ...base, title: `${dealer.title} wins!`, tone: 'success' };
+    case 'loss':
+      return { ...base, title: `${dealer.title} loses`, tone: 'danger' };
+    case 'push':
+      return { ...base, title: `${dealer.title} breaks even`, tone: 'info' };
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * The end of the round, one announcement per seat in turn order: the players, then the dealer.
+ * A seat with no result, as one that sat the round out, has none.
+ */
+function resultAnnouncements(next: GameSnapshot): Announcement[] {
+  const dealers = next.players.filter((player) => player.role === 'dealer');
+  const dealer = dealers[0];
+  if (!dealer) return [{ title: 'Round over', tone: 'info' }];
+
+  const results = [
+    ...next.players.filter((player) => player.role !== 'dealer').map((player) => seatResult(player, dealer)),
+    dealerResult(dealer),
+  ].filter((result): result is Announcement => !!result);
+  return results.length ? results : [{ title: 'Round over', tone: 'info' }];
 }
 
 /**
@@ -84,17 +122,38 @@ function resultAnnouncement(next: GameSnapshot): Announcement {
 export function diffAnnouncements(prev: GameSnapshot, next: GameSnapshot, revealDealerTotal: boolean): Announcement[] {
   const announcements: Announcement[] = [];
   const before = new Map(prev.players.map((player) => [player.key, player] as const));
-  const potContribution = next.totalPotContributions >= prev.totalPotContributions
-    ? next.totalPotContributions - prev.totalPotContributions
-    : next.totalPotContributions;
+  const logRestarted = next.totalPotContributions < prev.totalPotContributions;
+  const potContribution = logRestarted
+    ? next.totalPotContributions
+    : next.totalPotContributions - prev.totalPotContributions;
   const newRound = next.round !== prev.round;
 
-  if (potContribution > 0) {
+  // Each wager gets a toast in its player's name; whatever else went into the pot is the antes, one toast for all
+  const lastWagerId = prev.wagers.at(-1)?.id ?? 0;
+  const newWagers = logRestarted || (next.wagers.at(-1)?.id ?? 0) < lastWagerId
+    ? next.wagers
+    : next.wagers.filter((wager) => wager.id > lastWagerId);
+  const wagered = newWagers.reduce((total, wager) => total + wager.amount, 0);
+  const anted = Math.max(0, potContribution - wagered);
+
+  // the pot as each toast leaves it, working back from the pot as it is now
+  let potSoFar = Math.max(0, next.pot - wagered);
+  if (anted > 0) {
     announcements.push({
-      title: `+$${potContribution} added to the pot`,
-      subtitle: `Pot: $${next.pot}`,
+      title: `+$${anted} added to the pot`,
+      subtitle: `Pot: $${potSoFar}`,
       tone: 'brand',
       kind: 'pot-contribution',
+    });
+  }
+  for (const wager of newWagers) {
+    potSoFar += wager.amount;
+    announcements.push({
+      title: `${wager.name} ${wager.description}`,
+      subtitle: `Pot: $${potSoFar}`,
+      tone: 'brand',
+      kind: 'pot-contribution',
+      playerKey: next.players.find((player) => player.title === wager.name)?.key,
     });
   }
 
@@ -160,7 +219,7 @@ export function diffAnnouncements(prev: GameSnapshot, next: GameSnapshot, reveal
 
   // Compare round numbers too: a natural blackjack can end one round and start the next within a single action
   const roundJustEnded = isRoundOver(next.gameStatus) && (!isRoundOver(prev.gameStatus) || prev.round !== next.round);
-  if (roundJustEnded) announcements.push(resultAnnouncement(next));
+  if (roundJustEnded) announcements.push(...resultAnnouncements(next));
 
   return announcements;
 }

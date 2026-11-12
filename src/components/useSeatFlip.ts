@@ -1,10 +1,10 @@
 import React from "react";
 
-/** time for a seat to collapse from the stage into the queue or the dealer's bench */
+/** time for a seat to collapse from the stage into the seats waiting or those that have played */
 export const COLLAPSE_MS = 650;
 /** time for a seat to expand onto the stage; starts once the collapse has finished */
 export const EXPAND_MS = 700;
-/** time for a waiting seat to slide to its new place when the queue moves up */
+/** time for a chip to slide to its new place when the seats beside it change */
 export const SHIFT_MS = 400;
 
 const COLLAPSE_EASING = 'cubic-bezier(0.4, 0, 0.2, 1)';
@@ -71,10 +71,11 @@ function animateMove({ element, from, to, role }: Move, delay: number, reduceMot
 
 /**
  * Animate seat slots as they move around the table. Each element with data-seat-key and
- * data-seat-role is tracked. When a slot's role changes (between the stage and the queue
- * or the dealer's bench), it flows from its previous box: a collapsing seat first, then
- * the expanding seat once the collapse is done. A slot that keeps its role but changes
- * place, as when the queue moves up, slides there. Nothing moves when the root itself
+ * data-seat-role is tracked. When a slot's role changes (between the stage, the seats
+ * waiting above it and the seats that have played below it), it flows from its previous
+ * box: a collapsing seat first, then the expanding seat once the collapse is done. A slot
+ * that keeps its role but changes place, as when another seat joins those that have played,
+ * slides there. Nothing moves when the root itself
  * changed width, since then the whole table was laid out again.
  * @param rootRef positioned element that contains the seat slots
  */

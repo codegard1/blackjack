@@ -17,46 +17,64 @@
   transition: border-radius 360ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* One column on a narrow board: the queue of seats, then the dealer's bench, then the stage */
+/* One column on a narrow board, in the order the elements come: the seats still to play (the
+   dealer first, the next to play last), the stage, then the seats that have played (the one
+   that played latest first, so the first to play is last) */
 .table-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas:
-    "queue"
-    "bench"
-    "stage";
   align-items: start;
   gap: 16px;
   padding: 10px;
 }
 
-.table-queue { grid-area: queue; }
-.table-bench { grid-area: bench; }
-.table-focus { grid-area: stage; }
-
-/* On a wide board the queue takes a third at the side, the left unless the Seat queue side
-   setting says otherwise. The dealer's bench sits above the stage in the other two thirds. */
+/* On a wide board the seats take a third at the side, the left unless the Seat queue side
+   setting says otherwise: those still to play at the top of the column, those that have played
+   at the bottom, and the stage in the other two thirds, beside both. With no stage, before a
+   game and once a round is over, the chips make one column together in the middle. */
 @container table-board (min-width: 720px) {
   .table-layout {
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-    grid-template-rows: auto 1fr;
+    grid-template-rows: 1fr auto;
+    /* no gap between the rows, so an empty top row leaves no space; the waiting seats bring their own */
+    row-gap: 0;
     grid-template-areas:
-      "queue bench"
-      "queue stage";
+      "waiting stage"
+      "played stage";
   }
 
   .table-layout.is-queue-right {
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
     grid-template-areas:
-      "bench queue"
-      "stage queue";
+      "stage waiting"
+      "stage played";
   }
-}
 
-/* on a narrow board the dealer keeps extra room above and below, apart from the players */
-@container table-board (max-width: 719.98px) {
-  .table-bench {
-    margin: 16px 0;
+  .table-waiting {
+    grid-area: waiting;
+    margin-bottom: 16px;
+  }
+
+  .table-played { grid-area: played; }
+  .table-focus { grid-area: stage; }
+
+  .table-layout.is-stageless,
+  .table-layout.is-stageless.is-queue-right {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "waiting"
+      "played";
+    justify-items: center;
+  }
+
+  .table-layout.is-stageless .table-waiting {
+    margin-bottom: 10px;
+  }
+
+  .table-layout.is-stageless .table-waiting,
+  .table-layout.is-stageless .table-played {
+    width: min(100%, 420px);
   }
 }
 
@@ -65,8 +83,8 @@
   width: 100%;
 }
 
-.table-queue,
-.table-bench {
+.table-waiting,
+.table-played {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -85,16 +103,11 @@
   min-width: 0;
 }
 
-/* The dealer's chip, and every chip on a narrow board, is one compact row:
+/* On a narrow board every chip is one compact row:
    the seat's identity at the start and its cards at the end */
-.table-bench .seat-chip {
-  flex-flow: row wrap;
-  align-items: center;
-  justify-content: space-between;
-}
-
 @container table-board (max-width: 719.98px) {
-  .table-queue .seat-chip {
+  .table-waiting .seat-chip,
+  .table-played .seat-chip {
     flex-flow: row wrap;
     align-items: center;
     justify-content: space-between;

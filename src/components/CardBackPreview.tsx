@@ -31,13 +31,14 @@ export const CardBackPreview: React.FC<ICardBackPreviewProps> = ({ pattern, colo
     <span
       role="img"
       aria-label={`Card back preview: ${patternLabel}, ${colorLabel}`}
-      className={['playing-card', 'is-preview', ...cardBackClassNames(backPattern)].join(' ')}
+      className="playing-card is-preview is-face-down"
       style={{
         '--playing-card-height': `${height}px`,
         height,
         width: Math.round(height * 0.65),
-        ...cardBackColorVariables(backColor),
       } as React.CSSProperties}
-    />
+    >
+      <span className={['playing-card-face', ...cardBackClassNames(backPattern)].join(' ')} style={cardBackColorVariables(backColor)} />
+    </span>
   );
 }

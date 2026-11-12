@@ -8,6 +8,27 @@ export function isRoundOver(gameStatus: GameStatus): boolean {
   return gameStatus === GameStatus.RoundOver;
 }
 
+/**
+ * True while the dealer's first card is face down: from the deal until the round
+ * ends, unless the Show Dealer Hand setting turns it up sooner. Only the dealer
+ * has a hole card, so this is false for every other seat.
+ */
+export function isHoleCardHidden(player: IPlayer | undefined, isDealerHandVisible: boolean, gameStatus: GameStatus): boolean {
+  return isDealer(player) && !isDealerHandVisible && !isRoundOver(gameStatus);
+}
+
+/**
+ * The tag on a collapsed seat's chip: its status, or nothing. The dealer's tag also says what
+ * the dealer is, since its chip has no heading: just "Dealer" before a game, then "Dealer ·
+ * Waiting" while the players play, then "Dealer ·" and its status ("Playing", "Standing", its result).
+ */
+export function seatTag(player: IPlayer, gameStatus: GameStatus): SeatStatus | undefined {
+  const status = seatStatus(player, gameStatus);
+  if (!isDealer(player)) return status;
+  if (status) return { ...status, text: `Dealer · ${status.text}` };
+  return { text: gameStatus === GameStatus.Init ? 'Dealer' : 'Dealer · Waiting', color: 'subtle', appearance: 'tint' };
+}
+
 /** True when the player came out ahead in the settled round */
 export function isSeatWinner(player: IPlayer, gameStatus: GameStatus): boolean {
   return isRoundOver(gameStatus) && (player.result === 'win' || player.result === 'blackjack');

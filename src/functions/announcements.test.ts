@@ -4,7 +4,7 @@ import { GameAction, GameStatus } from '../enums';
 import { gameReducer } from './gameReducer';
 import { GameSnapshot, PlayerSnapshot } from '../types';
 import { diffAnnouncements, snapshotGame } from './announcements';
-import { isRoundOver, isSeatLoser, seatStatus } from './seatStatus';
+import { isRoundOver, isSeatLoser, seatStatus, seatTag } from './seatStatus';
 import { playerDefaults } from '../definitions';
 import { IPlayer } from '../interfaces';
 
@@ -23,6 +23,7 @@ const snapshot = (overrides: Partial<GameSnapshot> = {}, players: PlayerSnapshot
   round: 1,
   pot: 0,
   totalPotContributions: 0,
+  wagers: [],
   controllingPlayer: 'chris',
   players: players.length ? players : [
     player({ key: 'chris', title: 'Chris', isNPC: false }),
@@ -57,13 +58,82 @@ describe('diffAnnouncements', () => {
     });
   });
 
-  it('announces an added wager', () => {
+  it('announces money added to the pot that no wager accounts for as one pooled amount', () => {
     const before = snapshot({ pot: 50, totalPotContributions: 50 });
     const after = snapshot({ pot: 75, totalPotContributions: 75 });
 
     expect(diffAnnouncements(before, after, true)[0]).toMatchObject({
       title: '+$25 added to the pot',
       subtitle: 'Pot: $75',
+    });
+  });
+
+  describe('wagers', () => {
+    const chrisWager = { id: 7, name: 'Chris', description: 'wagered $25', amount: 25 };
+
+    it("announces a wager in the player's name, with the pot after it", () => {
+      const before = snapshot({ pot: 50, totalPotContributions: 50 });
+      const after = snapshot({ pot: 75, totalPotContributions: 75, wagers: [chrisWager] });
+
+      expect(diffAnnouncements(before, after, true)).toEqual([{
+        title: 'Chris wagered $25',
+        subtitle: 'Pot: $75',
+        tone: 'brand',
+        kind: 'pot-contribution',
+        playerKey: 'chris',
+      }]);
+    });
+
+    it('words a double down and a split the way the activity log does', () => {
+      const before = snapshot({ pot: 50, totalPotContributions: 50 });
+      const doubled = snapshot({ pot: 100, totalPotContributions: 100, wagers: [{ id: 8, name: 'Chris', description: 'doubled down for $50', amount: 50 }] });
+      const split = snapshot({ pot: 100, totalPotContributions: 100, wagers: [{ id: 9, name: 'Chris', description: 'split for $50', amount: 50 }] });
+
+      expect(diffAnnouncements(before, doubled, true)[0]).toMatchObject({ title: 'Chris doubled down for $50', subtitle: 'Pot: $100', playerKey: 'chris' });
+      expect(diffAnnouncements(before, split, true)[0]).toMatchObject({ title: 'Chris split for $50', playerKey: 'chris' });
+    });
+
+    it('announces only the wagers that are new, one toast each, with the pot growing through them', () => {
+      const earlier = { id: 3, name: 'Dealer', description: 'wagered $25', amount: 25 };
+      const before = snapshot({ pot: 100, totalPotContributions: 100, wagers: [earlier] });
+      const after = snapshot({
+        pot: 150,
+        totalPotContributions: 150,
+        wagers: [earlier, chrisWager, { id: 8, name: 'Dealer', description: 'wagered $25', amount: 25 }],
+      });
+
+      expect(diffAnnouncements(before, after, true).map((item) => [item.title, item.subtitle, item.playerKey])).toEqual([
+        ['Chris wagered $25', 'Pot: $125', 'chris'],
+        ['Dealer wagered $25', 'Pot: $150', 'dealer'],
+      ]);
+    });
+
+    it('keeps the antes in one pooled toast ahead of the wagers made with them', () => {
+      const before = snapshot({ pot: 0, totalPotContributions: 0 });
+      const after = snapshot({ pot: 75, totalPotContributions: 75, wagers: [chrisWager] });
+
+      expect(diffAnnouncements(before, after, true).map((item) => [item.title, item.subtitle])).toEqual([
+        ['+$50 added to the pot', 'Pot: $50'],
+        ['Chris wagered $25', 'Pot: $75'],
+      ]);
+    });
+
+    it('announces every wager after the log starts over for a new game', () => {
+      const before = snapshot({ pot: 200, totalPotContributions: 300, wagers: [{ ...chrisWager, id: 40 }] });
+      const after = snapshot({ pot: 50, totalPotContributions: 50, wagers: [{ ...chrisWager, id: 2 }] });
+
+      // the new game's log is shorter than the old one, so everything in it is new: $25 of antes, then the wager
+      expect(diffAnnouncements(before, after, true).map((item) => [item.title, item.subtitle])).toEqual([
+        ['+$25 added to the pot', 'Pot: $25'],
+        ['Chris wagered $25', 'Pot: $50'],
+      ]);
+    });
+
+    it('still names the wager when no seat has the logged name', () => {
+      const before = snapshot({ pot: 50, totalPotContributions: 50 });
+      const after = snapshot({ pot: 75, totalPotContributions: 75, wagers: [{ ...chrisWager, name: 'Someone' }] });
+
+      expect(diffAnnouncements(before, after, true)[0]).toMatchObject({ title: 'Someone wagered $25', playerKey: undefined });
     });
   });
 
@@ -177,7 +247,7 @@ describe('diffAnnouncements', () => {
     );
     expect(diffAnnouncements(before, after, true)).toEqual([
       { title: 'Dealer stands', subtitle: 'Total 17', tone: 'neutral', playerKey: 'dealer' },
-      { title: 'Chris wins!', subtitle: '18 to 17', tone: 'success', playerKey: 'chris' },
+      { title: 'Chris wins!', subtitle: '18 to 17', tone: 'success', playerKey: 'chris', kind: 'result' },
     ]);
   });
 
@@ -189,12 +259,13 @@ describe('diffAnnouncements', () => {
     expect(diffAnnouncements(before, after, true)[1]).toMatchObject({ subtitle: 'Dealer busted' });
   });
 
-  it('announces a human bust with a dealer win', () => {
+  it('announces a human bust, then the loss and the dealer winning', () => {
     const before = snapshot();
-    const after = roundOver({ cardCount: 3, total: 23, isBusted: true, result: 'loss' });
+    const after = withPlayer(roundOver({ cardCount: 3, total: 23, isBusted: true, result: 'loss' }), 'dealer', { result: 'win' });
     expect(diffAnnouncements(before, after, true)).toEqual([
       { title: 'Chris busts!', subtitle: 'Total 23', tone: 'danger', playerKey: 'chris' },
-      { title: 'Dealer wins!', subtitle: 'Chris busted', tone: 'danger', playerKey: 'dealer' },
+      { title: 'Chris loses', subtitle: 'Busted', tone: 'danger', playerKey: 'chris', kind: 'result' },
+      { title: 'Dealer wins!', tone: 'success', playerKey: 'dealer', kind: 'result' },
     ]);
   });
 
@@ -203,7 +274,7 @@ describe('diffAnnouncements', () => {
     const after = roundOver({ isBlackjack: true, result: 'blackjack' }, { round: 1 });
     expect(diffAnnouncements(before, after, true)).toEqual([
       { title: 'Chris has blackjack!', tone: 'success', playerKey: 'chris' },
-      { title: 'Chris wins!', subtitle: 'Blackjack', tone: 'success', playerKey: 'chris' },
+      { title: 'Chris wins!', subtitle: 'Blackjack', tone: 'success', playerKey: 'chris', kind: 'result' },
     ]);
   });
 
@@ -214,10 +285,70 @@ describe('diffAnnouncements', () => {
     expect(diffAnnouncements(before, after, true).map((a) => a.title)).toContain('Chris wins!');
   });
 
-  it('announces a push', () => {
+  it('announces a push in the seat\'s name', () => {
     const before = snapshot();
     const after = roundOver({ result: 'push' });
-    expect(diffAnnouncements(before, after, true)).toEqual([{ title: 'Push', subtitle: 'Stake returned', tone: 'info' }]);
+    expect(diffAnnouncements(before, after, true)).toEqual([
+      { title: 'Chris pushes', subtitle: 'Stake returned', tone: 'info', playerKey: 'chris', kind: 'result' },
+    ]);
+  });
+
+  describe('results at the end of a round', () => {
+    const table = [
+      player({ key: 'chris', title: 'Chris', isNPC: false, total: 18 }),
+      player({ key: 'ogion', title: 'Ogion', isNPC: true, role: 'bot', total: 12 }),
+      player({ key: 'shevek', title: 'Shevek', isNPC: true, role: 'bot', total: 20 }),
+      player({ key: 'dealer', title: 'Faxe', isNPC: true, total: 19 }),
+    ];
+    const ended = (changes: Record<string, Partial<PlayerSnapshot>>): GameSnapshot => {
+      const base = snapshot({ gameStatus: GameStatus.RoundOver, controllingPlayer: undefined }, table);
+      return { ...base, players: base.players.map((p) => ({ ...p, ...(changes[p.key] ?? {}) })) };
+    };
+    const results = (next: GameSnapshot) => diffAnnouncements(snapshot({ controllingPlayer: 'dealer' }, table), next, true)
+      .filter((announcement) => announcement.kind === 'result');
+
+    it('tells every seat\'s result in turn order, the players first and the dealer last', () => {
+      const next = ended({ chris: { result: 'loss' }, ogion: { result: 'loss', isBusted: true }, shevek: { result: 'win' }, dealer: { result: 'push' } });
+      expect(results(next).map((a) => [a.title, a.playerKey])).toEqual([
+        ['Chris loses', 'chris'],
+        ['Ogion loses', 'ogion'],
+        ['Shevek wins!', 'shevek'],
+        ['Faxe breaks even', 'dealer'],
+      ]);
+    });
+
+    it('says why a seat won or lost', () => {
+      const next = ended({
+        chris: { result: 'loss' },
+        ogion: { result: 'loss', isBusted: true },
+        shevek: { result: 'win' },
+        dealer: { result: 'win' },
+      });
+      expect(results(next).map((a) => a.subtitle)).toEqual(['19 to 18', 'Busted', '20 to 19', undefined]);
+    });
+
+    it('credits a win to the dealer busting, and a loss to the dealer having blackjack', () => {
+      const busted = ended({ chris: { result: 'win' }, dealer: { result: 'loss', isBusted: true, total: 24 } });
+      expect(results(busted)[0]).toMatchObject({ title: 'Chris wins!', subtitle: 'Faxe busted' });
+      const natural = ended({ chris: { result: 'loss' }, dealer: { result: 'win', isBlackjack: true, total: 21 } });
+      expect(results(natural)[0]).toMatchObject({ title: 'Chris loses', subtitle: 'Faxe has blackjack' });
+    });
+
+    it('colors a result by how it went for that seat, the dealer included', () => {
+      const next = ended({ chris: { result: 'win' }, ogion: { result: 'push' }, shevek: { result: 'loss' }, dealer: { result: 'loss' } });
+      expect(results(next).map((a) => a.tone)).toEqual(['success', 'info', 'danger', 'danger']);
+    });
+
+    it('skips a seat with no result, as one that sat the round out', () => {
+      const next = ended({ chris: { result: 'win' }, shevek: { result: 'loss' }, dealer: { result: 'push' } });
+      expect(results(next).map((a) => a.playerKey)).toEqual(['chris', 'shevek', 'dealer']);
+    });
+
+    it('falls back to a plain notice when no seat has a result', () => {
+      const next = ended({});
+      expect(diffAnnouncements(snapshot({ controllingPlayer: 'dealer' }, table), next, true).filter((a) => a.title === 'Round over'))
+        .toEqual([{ title: 'Round over', tone: 'info' }]);
+    });
   });
 
   it('announces computer players hitting and standing, with their totals', () => {
@@ -280,5 +411,32 @@ describe('seatStatus', () => {
   it('knows which statuses end the round', () => {
     expect(isRoundOver(GameStatus.InProgress)).toBe(false);
     expect(isRoundOver(GameStatus.RoundOver)).toBe(true);
+  });
+});
+
+describe('seatTag', () => {
+  const seat = (overrides: Partial<IPlayer>): IPlayer => ({ ...playerDefaults, key: 'x', title: 'X', ...overrides });
+  const dealer = (overrides: Partial<IPlayer> = {}) => seat({ isNPC: true, role: 'dealer', ...overrides });
+
+  it("is a player's status as it is, or nothing", () => {
+    expect(seatTag(seat({ isNPC: true, role: 'bot', isStaying: true }), GameStatus.InProgress)?.text).toBe('Standing');
+    expect(seatTag(seat({ isNPC: false }), GameStatus.InProgress)).toBeUndefined();
+  });
+
+  it('names the dealer before a game, with nothing else to say', () => {
+    expect(seatTag(dealer(), GameStatus.Init)).toEqual({ text: 'Dealer', color: 'subtle', appearance: 'tint' });
+  });
+
+  it('shows the dealer waiting while the players play', () => {
+    expect(seatTag(dealer(), GameStatus.InProgress)?.text).toBe('Dealer · Waiting');
+  });
+
+  it("puts the dealer's status after its name, in the status's own color", () => {
+    const playing = seatTag(dealer({ turn: true }), GameStatus.InProgress);
+    expect(playing?.text).toBe('Dealer · Playing');
+    expect(playing?.color).toBe(seatStatus(dealer({ turn: true }), GameStatus.InProgress)?.color);
+    expect(seatTag(dealer({ isStaying: true }), GameStatus.InProgress)?.text).toBe('Dealer · Standing');
+    expect(seatTag(dealer({ result: 'win' }), GameStatus.RoundOver)?.text).toBe('Dealer · 🏆 Winner');
+    expect(seatTag(dealer({ result: 'push' }), GameStatus.RoundOver)?.text).toBe('Dealer · 🤝 Even');
   });
 });

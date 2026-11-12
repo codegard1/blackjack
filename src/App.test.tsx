@@ -5,8 +5,9 @@ import { webDarkTheme } from '@fluentui/react-components';
 import { PlayingCardDeck } from './classes/PlayingCardDeck';
 import { brandPresets, createAppTheme } from './theme';
 import App from './App';
+import { CARD_FLIP_MS, CARD_REVEAL_PAUSE_MS } from './components/useCardFlip';
 import { POT_BOUNCE_MS, POT_ENTER_MS, POT_LEAVE_MS } from './components/usePotMotion';
-import { TOAST_EXIT_MS, TOAST_HOLD_MS } from './components/TableToasts';
+import { TOAST_EXIT_MS, TOAST_GAP_MS, TOAST_LIFE_MS, TOAST_REVEAL_MS } from './components/TableToasts';
 import { formatNet } from './functions/format';
 import { CHARACTER_HISTORY } from './functions/history';
 import { StoreName } from './enums';
@@ -16,10 +17,13 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+/** let the toasts tell every seat's result, after which the game's buttons are free again; needs fake timers */
+const finishResults = () => act(() => { vi.advanceTimersByTime(10_000); });
+
 it.each([
-  { humanCards: ['Spade_11', 'Diamond_14'], dealerCards: ['Club_10', 'Heart_7'], hit: false, humanStatus: '✨ Blackjack', dealerStatus: '💔 Loser', humanLog: 'won $37 with blackjack', dealerLog: 'paid out $37' },
-  { humanCards: ['Spade_10', 'Diamond_7'], dealerCards: ['Club_11', 'Heart_14'], hit: false, humanStatus: '💔 Loser', dealerStatus: '✨ Blackjack', humanLog: 'lost $25', dealerLog: 'took $25' },
-  { humanCards: ['Spade_10', 'Diamond_10'], dealerCards: ['Club_10', 'Heart_7'], hit: true, humanStatus: '💥 Busted', dealerStatus: '🏆 Winner', humanLog: 'busted, lost $25', dealerLog: 'took $25' },
+  { humanCards: ['Spade_11', 'Diamond_14'], dealerCards: ['Club_10', 'Heart_7'], hit: false, humanStatus: '✨ Blackjack', dealerStatus: 'Dealer · 💔 Loser', humanLog: 'won $37 with blackjack', dealerLog: 'paid out $37' },
+  { humanCards: ['Spade_10', 'Diamond_7'], dealerCards: ['Club_11', 'Heart_14'], hit: false, humanStatus: '💔 Loser', dealerStatus: 'Dealer · ✨ Blackjack', humanLog: 'lost $25', dealerLog: 'took $25' },
+  { humanCards: ['Spade_10', 'Diamond_10'], dealerCards: ['Club_10', 'Heart_7'], hit: true, humanStatus: '💥 Busted', dealerStatus: 'Dealer · 🏆 Winner', humanLog: 'busted, lost $25', dealerLog: 'took $25' },
 ])('shows the result on the seats and in the activity log: $humanLog', ({ humanCards, dealerCards, hit, humanStatus, dealerStatus, humanLog, dealerLog }) => {
   vi.spyOn(PlayingCardDeck.prototype, 'deal')
     .mockImplementationOnce(function (this: PlayingCardDeck) {
@@ -63,6 +67,7 @@ it('replaces the controls with Next hand and Change players when the hand ends',
   });
 
   vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
+  vi.useFakeTimers();
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
@@ -80,6 +85,11 @@ it('replaces the controls with Next hand and Change players when the hand ends',
   fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
   expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Deal' })).not.toBeInTheDocument();
+
+  // the buttons wait while the toasts tell each seat's result
+  expect(screen.getByRole('button', { name: 'Next hand' })).toHaveAttribute('aria-disabled', 'true');
+  finishResults();
+  expect(screen.getByRole('button', { name: 'Next hand' })).not.toHaveAttribute('aria-disabled');
 
   // Change players opens the same dialog as the header button
   fireEvent.click(screen.getByRole('button', { name: 'Change players' }));
@@ -130,6 +140,7 @@ describe('changing the roster', () => {
 
   it('ignores roster changes while a hand is in play, then seats them for the next hand', () => {
     mockBustableHand();
+    vi.useFakeTimers();
     const { container } = render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
     fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
@@ -144,6 +155,7 @@ describe('changing the roster', () => {
     expect(screen.getByRole('button', { name: 'Next hand' })).toBeInTheDocument();
     expect(container.querySelector('[data-seat-key="ogion"]')).not.toBeInTheDocument();
 
+    finishResults();
     fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
     expect(container.querySelector('[data-seat-key="ogion"]')).toBeInTheDocument();
     expect(screen.getByRole('toolbar')).toBeInTheDocument();
@@ -211,7 +223,7 @@ it('always shows card ranks and opens the activity log drawer by default from th
   expect(screen.getByRole('region', { name: "Chris's hand" })).toBeVisible();
   // the dealer's seat is collapsed while Chris is in control; its hand shows on its bench and its chip brings the seat forward
   expect(screen.getByRole('region', { name: "Faxe's hand" })).toBeVisible();
-  expect(screen.getByRole('region', { name: "Faxe's hand" }).querySelector('.playing-card.is-back')).toHaveAccessibleName('Face-down card');
+  expect(screen.getByRole('region', { name: "Faxe's hand" }).querySelector('.playing-card.is-face-down')).toHaveAccessibleName('Face-down card');
   fireEvent.click(screen.getByRole('button', { name: /^Faxe \(\$/ }));
   expect(screen.getByRole('region', { name: "Faxe's hand" })).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: /^Chris \(\$/ }));
@@ -237,8 +249,8 @@ it('always shows card ranks and opens the activity log drawer by default from th
   expect(screen.getByRole('heading', { name: 'Activity Log' }).closest('.table-shell')).not.toBeNull();
   expect(screen.getByRole('heading', { name: 'Activity Log' }).closest('.table-board')).toBeNull();
 
-  // the rows follow the toasts announcing them; once those have faded out they are all there
-  act(() => vi.advanceTimersByTime(10 * (TOAST_HOLD_MS + TOAST_EXIT_MS)));
+  // the rows follow the toasts announcing them; once those have had their moment they are all there
+  act(() => vi.advanceTimersByTime(10 * (TOAST_GAP_MS + TOAST_REVEAL_MS)));
   expect(screen.getAllByText('was dealt two cards')).toHaveLength(2);
 });
 
@@ -308,14 +320,14 @@ it('changes the theme, accent, card style and card back from the Appearance sect
 
   fireEvent.click(screen.getByRole('radio', { name: 'Stripes' }));
   fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Card back color' })).getByRole('radio', { name: 'Red' }));
-  expect(screen.getByRole('img', { name: 'Card back preview: Stripes, Red' })).toHaveClass('is-pattern-stripes');
+  expect(screen.getByRole('img', { name: 'Card back preview: Stripes, Red' }).querySelector('.playing-card-face')).toHaveClass('is-pattern-stripes');
   fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
   const cards = screen.getByRole('region', { name: "Chris's hand" }).querySelectorAll('.playing-card');
   expect(cards).toHaveLength(2);
   cards.forEach((card) => expect(card).toHaveClass('is-style-bold'));
-  const dealerBack = screen.getByRole('region', { name: "Faxe's hand" }).querySelector('.playing-card.is-back') as HTMLElement;
+  const dealerBack = screen.getByRole('region', { name: "Faxe's hand" }).querySelector('.playing-card.is-face-down .playing-card-face.is-back') as HTMLElement;
   expect(dealerBack).toHaveClass('is-pattern-stripes');
   expect(dealerBack.style.getPropertyValue('--card-back-primary')).toBe('var(--colorPaletteRedBackground3)');
   first.unmount();
@@ -351,6 +363,7 @@ it.each(['Next hand', 'Options Deal'])('defers table rules through a reload unti
   expect(screen.getByRole('radio', { name: '6:5' })).toBeChecked();
   first.unmount();
 
+  vi.useFakeTimers();
   render(<App />);
   const checkRules = (decks: number, payout: string, dealerRule: string) => {
     fireEvent.click(screen.getByRole('button', { name: 'Blackjack rules' }));
@@ -368,6 +381,7 @@ it.each(['Next hand', 'Options Deal'])('defers table rules through a reload unti
   fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
   checkRules(1, '3:2', 'stands on 17 or higher');
 
+  finishResults();
   if (dealFrom === 'Options Deal') {
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     fireEvent.click(screen.getByRole('button', { name: 'Start a new round with the selected players' }));
@@ -481,8 +495,13 @@ it('keeps the pot in the dock and bounces it when a wager is made, holding play 
 
   // the pot never leaves the dock, even while its contribution toast is showing
   act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
-  // the ante and the wager are both $25, so their two notices can show at once
-  expect(screen.getAllByText('+$25 added to the pot').length).toBeGreaterThan(0);
+  // the ante, the turn and the wager each get a toast in turn, and the wager's names who made it
+  expect(screen.getByText('+$25 added to the pot')).toBeInTheDocument();
+  for (let waited = 0; !screen.queryByText('Chris wagered $25') && waited < 10 * TOAST_GAP_MS; waited += 100) {
+    act(() => vi.advanceTimersByTime(100));
+  }
+  expect(screen.getByText('Chris wagered $25')).toBeInTheDocument();
+  expect(screen.getByText('Pot: $50', { selector: '[role=status] *' })).toBeInTheDocument();
   expect(container.querySelectorAll('.table-pot')).toHaveLength(1);
   expect(container.querySelector('.table-dock .table-pot')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Wager $25' })).not.toHaveAttribute('aria-disabled');
@@ -506,8 +525,8 @@ it('keeps the pot after a hand ends, then slides it up and back in for the next 
   expect(screen.getByText('✨ Blackjack')).toBeInTheDocument();
   expect(container.querySelector('.table-dock .table-pot')).toHaveTextContent('Pot: $25');
 
-  // the next hand: the last pot slides up out of view, showing its amount as it goes
-  act(() => vi.advanceTimersByTime(3000));
+  // the next hand, once the results have been told: the last pot slides up out of view, showing its amount as it goes
+  finishResults();
   fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
   expect(container.querySelector('.table-dock .table-pot .table-pot-badge.is-leaving')).toBeInTheDocument();
   expect(container.querySelector('.table-dock .table-pot')).toHaveTextContent('Pot: $25');
@@ -520,6 +539,9 @@ it('keeps the pot after a hand ends, then slides it up and back in for the next 
   expect(container.querySelector('.table-dock .table-pot .table-pot-badge.is-bouncing')).toBeInTheDocument();
   act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
   expect(container.querySelector('.table-pot-badge[class*="is-"]')).not.toBeInTheDocument();
+  // the mocked deal is a natural again, so the new hand's results are told before the buttons are free
+  expect(screen.getByRole('button', { name: 'Next hand' })).toHaveAttribute('aria-disabled', 'true');
+  finishResults();
   expect(screen.getByRole('button', { name: 'Next hand' })).not.toHaveAttribute('aria-disabled');
   vi.useRealTimers();
 });
@@ -537,18 +559,162 @@ it("announces the dealer's turn as a toast that leaves on its own", () => {
   fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
 
   // the toasts before it take their turns first, each for the same time
-  for (let waited = 0; !screen.queryByText("Faxe's turn") && waited < 10 * TOAST_HOLD_MS; waited += 100) {
+  for (let waited = 0; !screen.queryByText("Faxe's turn") && waited < 10 * TOAST_GAP_MS; waited += 100) {
     act(() => vi.advanceTimersByTime(100));
   }
   expect(screen.getByText("Faxe's turn")).toBeInTheDocument();
 
-  act(() => vi.advanceTimersByTime(TOAST_HOLD_MS + TOAST_EXIT_MS - 100));
+  // the line stays in the feed for its time, then fades and goes
+  act(() => vi.advanceTimersByTime(TOAST_LIFE_MS + TOAST_EXIT_MS - 100));
   expect(screen.getByText("Faxe's turn")).toBeInTheDocument();
   act(() => vi.advanceTimersByTime(200));
   expect(screen.queryByText("Faxe's turn")).not.toBeInTheDocument();
 });
 
-it("shows the dealer's hand as cards on its bench during the human's turn", () => {
+it("turns the dealer's hole card over when the round ends, then empties the stage and tells each seat's result", () => {
+  allowMotion();
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+    // the dealer stays on 18, so Chris on 17 loses
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_8'];
+  });
+  vi.useFakeTimers();
+  const { container } = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  act(() => vi.advanceTimersByTime(POT_ENTER_MS));
+  act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
+
+  // the dealer plays from the focused seat, hole card down, and stays on 18
+  const holeCard = () => within(screen.getByRole('region', { name: "Faxe's hand" })).getAllByRole('button')[0];
+  const dealerHole = holeCard();
+  expect(dealerHole).toHaveClass('is-flippable', 'is-face-down');
+  for (let waited = 0; holeCard().classList.contains('is-face-down') && waited < 30_000; waited += 100) {
+    act(() => vi.advanceTimersByTime(100));
+  }
+
+  // the card turned over in place, in the dealer's seat, which keeps the stage while it does;
+  // Next hand in the dock waits for it
+  expect(holeCard()).toBe(dealerHole);
+  expect(dealerHole).not.toHaveClass('is-face-down');
+  expect(dealerHole).toHaveAccessibleName('Ten of Clubs');
+  expect(container.querySelector('.table-focus')).toContainElement(dealerHole);
+  expect(screen.getByRole('button', { name: 'Next hand' })).toHaveAttribute('aria-disabled', 'true');
+
+  // the card has turned, but the dealer's hand stays on the stage for a pause before the table moves on
+  act(() => vi.advanceTimersByTime(CARD_FLIP_MS));
+  expect(container.querySelector('.table-focus')).toContainElement(dealerHole);
+  expect(screen.getByRole('button', { name: 'Next hand' })).toHaveAttribute('aria-disabled', 'true');
+  act(() => vi.advanceTimersByTime(CARD_REVEAL_PAUSE_MS - 1));
+  expect(container.querySelector('.table-focus')).toContainElement(dealerHole);
+
+  // then nobody has the stage: every seat is a chip in one column, the dealer first and Chris last
+  act(() => vi.advanceTimersByTime(1));
+  const seatsIn = (group: string) => Array.from(container.querySelectorAll<HTMLElement>(`${group} [data-seat-key]`)).map((slot) => slot.dataset.seatKey);
+  expect(container.querySelector('.table-focus')).toBeNull();
+  expect(container.querySelector('.table-layout')).toHaveClass('is-stageless');
+  expect(container.querySelector('.table-waiting')).toBeNull();
+  expect(seatsIn('.table-played')).toEqual(['dealer', 'chris']);
+  expect(screen.getByRole('region', { name: "Chris's hand" }).closest('.table-played')).not.toBeNull();
+
+  // each seat is brought into focus as its result is told, Chris first and the dealer last,
+  // and Next hand waits until the last seat has had its turn
+  const inFocus = () => container.querySelector('[data-focus]')?.closest<HTMLElement>('[data-seat-key]')?.dataset.seatKey;
+  const waitFor = (done: () => boolean) => {
+    for (let waited = 0; !done() && waited < 20_000; waited += 100) act(() => vi.advanceTimersByTime(100));
+  };
+  expect(screen.getByRole('button', { name: 'Next hand' })).toHaveAttribute('aria-disabled', 'true');
+  waitFor(() => inFocus() === 'chris');
+  expect(inFocus()).toBe('chris');
+  expect(container.querySelector('[data-focus]')).toHaveAttribute('data-focus', 'danger');
+  expect(screen.getByText('Chris loses')).toBeInTheDocument();
+  waitFor(() => inFocus() === 'dealer');
+  expect(inFocus()).toBe('dealer');
+  expect(screen.getByText('Faxe wins!')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Next hand' })).toHaveAttribute('aria-disabled', 'true');
+  waitFor(() => !screen.getByRole('button', { name: 'Next hand' }).hasAttribute('aria-disabled'));
+  expect(screen.getByRole('button', { name: 'Next hand' })).not.toHaveAttribute('aria-disabled');
+  expect(container.querySelector('[data-focus]')).toBeNull();
+  expect(container.querySelector('.table-focus')).toBeNull();
+  vi.useRealTimers();
+});
+
+it("keeps the dealer above the stage while its hole card turns over after the human busts, then moves it below", () => {
+  allowMotion();
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_10'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
+  vi.useFakeTimers();
+  const { container } = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  act(() => vi.advanceTimersByTime(POT_ENTER_MS));
+  act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  const dealerHand = () => screen.getByRole('region', { name: "Faxe's hand" });
+  const dealerHole = within(dealerHand()).getAllByRole('button')[0];
+  expect(dealerHand().closest('.table-waiting')).not.toBeNull();
+
+  // busting ends the round without the dealer playing, so the dealer never had the stage
+  vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
+  fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
+  expect(within(dealerHand()).getAllByRole('button')[0]).toBe(dealerHole);
+  expect(dealerHole).not.toHaveClass('is-face-down');
+  expect(dealerHand().closest('.table-waiting')).not.toBeNull();
+
+  // the round is over, so nobody has the stage: Chris is a chip below the dealer, who still waits above
+  const seatsIn = (group: string) => Array.from(container.querySelectorAll<HTMLElement>(`${group} [data-seat-key]`)).map((slot) => slot.dataset.seatKey);
+  expect(container.querySelector('.table-focus')).toBeNull();
+  expect(seatsIn('.table-waiting')).toEqual(['dealer']);
+  expect(seatsIn('.table-played')).toEqual(['chris']);
+
+  // the dealer stays up there through the pause after the card has turned, then joins Chris below
+  act(() => vi.advanceTimersByTime(CARD_FLIP_MS + CARD_REVEAL_PAUSE_MS - 1));
+  expect(dealerHand().closest('.table-waiting')).not.toBeNull();
+  act(() => vi.advanceTimersByTime(1));
+  expect(dealerHand().closest('.table-played')).not.toBeNull();
+  expect(container.querySelector('.table-waiting')).toBeNull();
+  expect(seatsIn('.table-played')).toEqual(['dealer', 'chris']);
+  vi.useRealTimers();
+});
+
+it("turns the dealer's hole card over where it waits when Show Dealer Hand is switched on, holding play until it has", () => {
+  allowMotion();
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
+  vi.useFakeTimers();
+  const { container } = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  act(() => vi.advanceTimersByTime(POT_ENTER_MS));
+  act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+
+  const holeCard = () => within(screen.getByRole('region', { name: "Faxe's hand" })).getAllByRole('button')[0];
+  const dealerHole = holeCard();
+  expect(dealerHole.closest('.table-waiting')).not.toBeNull();
+  expect(dealerHole).toHaveClass('is-face-down');
+  expect(screen.getByRole('button', { name: 'Stay' })).not.toHaveAttribute('aria-disabled');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  fireEvent.click(screen.getByRole('switch', { name: 'Show Dealer Hand' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+
+  // the same card turns over where it is: the dealer is not brought to the stage, and the controls wait
+  expect(holeCard()).toBe(dealerHole);
+  expect(dealerHole).not.toHaveClass('is-face-down');
+  expect(dealerHole.closest('.table-waiting')).not.toBeNull();
+  expect(container.querySelector('.table-focus')).toContainElement(screen.getByRole('region', { name: "Chris's hand" }));
+  expect(screen.getByRole('button', { name: 'Stay' })).toHaveAttribute('aria-disabled', 'true');
+
+  act(() => vi.advanceTimersByTime(CARD_FLIP_MS));
+  expect(screen.getByRole('button', { name: 'Stay' })).not.toHaveAttribute('aria-disabled');
+  vi.useRealTimers();
+});
+
+it("shows the dealer's hand as cards among the seats still to play during the human's turn", () => {
   vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
     this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
     this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
@@ -561,11 +727,15 @@ it("shows the dealer's hand as cards on its bench during the human's turn", () =
   const dealerCards = within(dealerHand).getAllByRole('button');
   expect(dealerCards).toHaveLength(2);
   // the hole card stays face down unless "Show Dealer Hand" is on
-  expect(dealerCards[0].querySelectorAll('.playing-card-corner')).toHaveLength(0);
+  expect(dealerCards[0]).toHaveClass('is-face-down', 'is-flippable');
+  expect(dealerCards[0]).toHaveAccessibleName('Face-down card');
+  expect(dealerCards[1]).not.toHaveClass('is-face-down');
   expect(dealerCards[1].querySelectorAll('.playing-card-corner')).toHaveLength(2);
-  // the dealer waits on its bench above the stage, not in the players' queue
-  expect(dealerHand.closest('.table-bench')).not.toBeNull();
-  expect(dealerHand.closest('.table-queue')).toBeNull();
+  expect(dealerCards[1].querySelector('.playing-card-face.is-back')).toBeNull();
+  // the dealer plays last, so it waits above the stage, and is tagged as the dealer
+  expect(dealerHand.closest('.table-waiting')).not.toBeNull();
+  expect(dealerHand.closest('.table-played')).toBeNull();
+  expect(within(dealerHand.closest('.table-seat-slot') as HTMLElement).getByText('Dealer · Waiting')).toBeInTheDocument();
   expect(screen.getByRole('region', { name: "Chris's hand" }).closest('.table-focus')).not.toBeNull();
 });
 
@@ -644,7 +814,7 @@ it('seats chosen computer players, who play their turns before the dealer', () =
     this.playerHands.ogion.cards = ['Club_10', 'Heart_3'];
     this.playerHands.dealer.cards = ['Club_9', 'Heart_8'];
   });
-  render(<App />);
+  const { container } = render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
   const dialog = screen.getByRole('dialog', { name: 'Players' });
@@ -654,22 +824,28 @@ it('seats chosen computer players, who play their turns before the dealer', () =
   expect(screen.getByText('Ogion ($1000)')).toBeInTheDocument();
   expect(screen.getByText('Thirteen is plenty.')).toBeInTheDocument();
 
+  // before the game the seats float together in the reverse of turn order: the dealer first, tagged as the dealer
+  const seatsIn = (group: string) => Array.from(container.querySelectorAll<HTMLElement>(`${group} [data-seat-key]`)).map((slot) => slot.dataset.seatKey);
+  expect(seatsIn('.table-waiting')).toEqual(['dealer', 'ogion', 'chris']);
+  expect(within(container.querySelector('.table-waiting') as HTMLElement).getByText('Dealer')).toBeInTheDocument();
+
   vi.useFakeTimers();
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
-  // Chris is on the stage, so Ogion leads the queue of seats still to play
-  const queue = () => within(screen.getByRole('group', { name: 'Seats in turn order' }));
-  expect(queue().getByText('Up next')).toBeInTheDocument();
-  expect(queue().queryByText('Played')).not.toBeInTheDocument();
-  expect(queue().getByRole('button', { name: /^Ogion \(\$/ })).toBeInTheDocument();
+  // Chris, who plays first, is on the stage; the seats still to play wait above it with no headings,
+  // the dealer, who plays last, at the top and Ogion, who plays next, closest to the stage
+  expect(seatsIn('.table-waiting')).toEqual(['dealer', 'ogion']);
+  expect(container.querySelector('.table-played')).toBeNull();
+  ['Up next', 'Played', 'Turn order'].forEach((heading) => expect(screen.queryByText(heading)).not.toBeInTheDocument());
+  expect(screen.queryByText('Dealer', { selector: 'span:not([class*="Badge"])' })).not.toBeInTheDocument();
+  expect(container.querySelector('.table-focus')).toContainElement(screen.getByRole('region', { name: "Chris's hand" }));
   fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
 
-  // Chris has played and waits behind; no seat but the dealer is still to play
-  expect(queue().getByText('Played')).toBeInTheDocument();
-  expect(queue().queryByText('Up next')).not.toBeInTheDocument();
-  expect(queue().getByRole('button', { name: /^Chris \(\$/ })).toBeInTheDocument();
-  expect(within(screen.getByRole('group', { name: 'Dealer' })).getByRole('button', { name: /^Faxe \(\$/ })).toBeInTheDocument();
+  // Chris has played and moves below the stage; only the dealer is still to play above it
+  expect(seatsIn('.table-waiting')).toEqual(['dealer']);
+  expect(seatsIn('.table-played')).toEqual(['chris']);
+  expect(within(container.querySelector('.table-waiting') as HTMLElement).getByText('Dealer · Waiting')).toBeInTheDocument();
 
   // Ogion has control and his seat comes forward; The Rock stands on 13
   expect(screen.getByRole('region', { name: "Ogion's hand" }).closest('.table-focus')).not.toBeNull();
@@ -684,6 +860,25 @@ it('seats chosen computer players, who play their turns before the dealer', () =
     act(() => vi.advanceTimersByTime(100));
   }
   expect(hasFocus('Faxe')).toBe(true);
+
+  // the dealer plays last: nobody is left waiting, and the seats below the stage run from the one
+  // that played latest down to the first to play
+  expect(container.querySelector('.table-waiting')).toBeNull();
+  expect(seatsIn('.table-played')).toEqual(['ogion', 'chris']);
+
+  // the dealer stands and the round ends: nobody has the stage, and each seat is brought into
+  // focus in turn order as its result is told, Chris, then Ogion, then the dealer
+  const order: string[] = [];
+  const nextHand = () => screen.queryByRole('button', { name: 'Next hand' });
+  for (let waited = 0; waited < 60_000 && !(order.length === 3 && nextHand() && !nextHand()?.hasAttribute('aria-disabled')); waited += 100) {
+    act(() => vi.advanceTimersByTime(100));
+    const key = container.querySelector('[data-focus]')?.closest<HTMLElement>('[data-seat-key]')?.dataset.seatKey;
+    if (key && order.at(-1) !== key) order.push(key);
+  }
+  expect(order).toEqual(['chris', 'ogion', 'dealer']);
+  expect(container.querySelector('.table-focus')).toBeNull();
+  expect(seatsIn('.table-played')).toEqual(['dealer', 'ogion', 'chris']);
+  expect(container.querySelector('[data-focus]')).toBeNull();
 });
 
 it('queues seats on the left by default, or on the right from the Seat queue side setting', () => {
