@@ -365,7 +365,7 @@ it.each(['Next hand', 'Options Deal'])('defers table rules through a reload unti
   expect(screen.getByRole('radio', { name: '2' })).toBeChecked();
   expect(screen.getByRole('radio', { name: '6:5' })).toBeChecked();
   fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
   checkRules(1, '3:2', 'stands on 17 or higher');
 
   if (dealFrom === 'Options Deal') {

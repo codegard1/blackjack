@@ -81,8 +81,8 @@ describe('player controls', () => {
     ['s', ['Club_10', 'Heart_6'], { type: GameAction.Stay, playerKey: 'chris' }],
     ['d', ['Club_10', 'Heart_6'], { type: GameAction.DoubleDown, playerKey: 'chris' }],
     ['w', [], { type: GameAction.Bet, playerKey: 'chris', betAmount: 25 }],
-    ['n', [], { type: GameAction.Deal }],
-    ['Enter', [], { type: GameAction.Deal }],
+    ['n', [], { type: GameAction.Deal, tableRules: { numberOfDecks: '1', dealerSoft17: 'stand', blackjackPayout: '3:2' } }],
+    ['Enter', [], { type: GameAction.Deal, tableRules: { numberOfDecks: '1', dealerSoft17: 'stand', blackjackPayout: '3:2' } }],
   ])('runs the %s keyboard shortcut when its action is enabled', (key, cards, expectedAction) => {
     const dispatch = renderControls(GameStatus.InProgress, 'chris', cards);
 
