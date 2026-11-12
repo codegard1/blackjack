@@ -270,6 +270,7 @@ it('resumes a saved game after a reload', () => {
 });
 
 it('changes the theme, accent, card style and card back from the Appearance section and remembers them', () => {
+  // neither hand is a natural, so the round stays in play and the dealer's hole card stays face down
   vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
     this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
     this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
@@ -312,7 +313,7 @@ it('changes the theme, accent, card style and card back from the Appearance sect
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
   const cards = screen.getByRole('region', { name: "Chris's hand" }).querySelectorAll('.playing-card');
-  expect(cards.length).toBeGreaterThan(0);
+  expect(cards).toHaveLength(2);
   cards.forEach((card) => expect(card).toHaveClass('is-style-bold'));
   const dealerBack = screen.getByRole('region', { name: "Faxe's hand" }).querySelector('.playing-card.is-back') as HTMLElement;
   expect(dealerBack).toHaveClass('is-pattern-stripes');
