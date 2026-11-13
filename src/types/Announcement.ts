@@ -72,3 +72,13 @@ export type GameSnapshot = {
   controllingPlayer?: PlayerKey;
   players: PlayerSnapshot[];
 };
+
+/** What one player has put into the pot in the current hand */
+export type PotShare = {
+  /** the player's name, as the activity log has it */
+  name: string;
+  /** dollars put in so far: the ante and every wager, double down and split */
+  amount: number;
+  /** the player's seat, when the name is still at the table */
+  playerKey?: PlayerKey;
+};

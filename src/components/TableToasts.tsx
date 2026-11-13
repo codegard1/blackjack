@@ -178,8 +178,10 @@ const TableToast: React.FC<{ toast: VisibleToast; age: number; overPot: boolean 
  * its time is up or when more lines than the feed holds are showing. Render it inside the
  * dock, which positions it. The table's notices run above the middle of the dock; with
  * `placement="pot"` the feed sits over the pot instead, for the money going into it.
+ * `isFlat` shows every line at full strength, for the pot's breakdown, which is a list
+ * rather than a sequence.
  */
-export const TableToasts: React.FC<ITableToastsProps> = ({ toasts, placement = 'table' }) => {
+export const TableToasts: React.FC<ITableToastsProps> = ({ toasts, placement = 'table', isFlat = false }) => {
   const styles = useStyles();
   const overPot = placement === 'pot';
   // how many lines newer than this one are still showing
@@ -187,7 +189,7 @@ export const TableToasts: React.FC<ITableToastsProps> = ({ toasts, placement = '
   return (
     <div className={mergeClasses(styles.region, overPot ? styles.potRegion : styles.tableRegion, `table-toasts-${placement}`)} role="status" aria-live="polite">
       {toasts.map((toast) => (
-        <TableToast key={toast.id} toast={toast} overPot={overPot} age={Math.max(0, liveIds.length - 1 - liveIds.indexOf(toast.id))} />
+        <TableToast key={toast.id} toast={toast} overPot={overPot} age={isFlat ? 0 : Math.max(0, liveIds.length - 1 - liveIds.indexOf(toast.id))} />
       ))}
     </div>
   );

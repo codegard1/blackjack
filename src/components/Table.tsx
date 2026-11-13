@@ -10,6 +10,7 @@ import {
 import { useActivityDrawer } from "./ActivityLog";
 import { isPotToast, useTableToasts } from "./TableToasts";
 import { useCardFlip } from "./useCardFlip";
+import { usePotBreakdown } from "./usePotBreakdown";
 import { usePotMotion } from "./usePotMotion";
 import { useSeatFlip } from "./useSeatFlip";
 import "./Table.css";
@@ -20,6 +21,7 @@ import { playerDefaults } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
 import { seatTag, isHoleCardHidden, isRoundOver } from "../functions/seatStatus";
 import { decideSeatMove, isDealer, isHuman, seatOrder, seatQueues } from "../functions/round";
+import { potBreakdown } from "../functions/pot";
 import { seatsFor } from "../functions/profiles";
 import { IPlayer } from "../interfaces";
 import { PlayerHandValue, tableRulesFrom } from "../types";
@@ -65,7 +67,8 @@ const useStyles = makeStyles({
  * moves it right), the waiting seats at its top and the seats that have played at its bottom.
  * On a narrow board everything is one column: the waiting seats, the stage, then the seats that
  * have played. Before a game the chips float in place, with the dealer's tag naming it.
- * The dock is one row along the board's bottom edge: the pot, then the game's buttons
+ * The dock is one row along the board's bottom edge: the pot (a button; tapping it lists what
+ * each player has put in, over the pot), then the game's buttons
  * (Start game, the human's actions, or who is playing during a computer's turn), then the
  * button that opens the activity log, a drawer that extends from the board's bottom edge.
  */
@@ -159,24 +162,31 @@ export const Table: React.FC = () => {
   // money going into the pot is told over the pot; everything else in the feed above the middle of the dock
   const potToasts = toasts.filter(isPotToast);
   const tableToasts = toasts.filter((toast) => !isPotToast(toast));
+  // tapping the pot lists what each player has put in, in the pot's feed; the contribution toasts wait behind it
+  const potShares = React.useMemo(() => potBreakdown(gameState), [gameState]);
+  const breakdown = usePotBreakdown(potShares, round);
+  const hasBreakdown = breakdown.lines.length > 0;
+  const potLines = hasBreakdown ? breakdown.lines : potToasts;
   const activityDrawer = useActivityDrawer();
 
   // The pot stays at the start of the dock, even after a hand ends. Between hands it slides
   // up out of view and back in; when it grows it shimmers and bounces. Play waits for all of it.
   const potMotion = usePotMotion(pot, round, isStarted);
   const potBadge = (
-    <Badge
-      key={potMotion.key}
-      size="extra-large"
-      appearance="tint"
-      color="brand"
-      shape="rounded"
-      className={mergeClasses(styles.potBadge, 'table-pot-badge', potMotion.phase !== 'idle' && `is-${potMotion.phase}`)}
-    >
-      {potMotion.phase === 'bouncing' && <span className="table-pot-shimmer" aria-hidden="true" />}
-      <span className={mergeClasses('table-pot-icon', styles.potIcon)} aria-hidden="true">💰</span>
-      <span>Pot: ${potMotion.shownPot}</span>
-    </Badge>
+    <button type="button" className="table-pot-button" aria-expanded={breakdown.isOpen} title="Show what each player has put in" onClick={breakdown.toggle}>
+      <Badge
+        key={potMotion.key}
+        size="extra-large"
+        appearance="tint"
+        color="brand"
+        shape="rounded"
+        className={mergeClasses(styles.potBadge, 'table-pot-badge', potMotion.phase !== 'idle' && `is-${potMotion.phase}`)}
+      >
+        {potMotion.phase === 'bouncing' && <span className="table-pot-shimmer" aria-hidden="true" />}
+        <span className={mergeClasses('table-pot-icon', styles.potIcon)} aria-hidden="true">💰</span>
+        <span>Pot: ${potMotion.shownPot}</span>
+      </Badge>
+    </button>
   );
 
   // Seats flow between the waiting seats above the stage, the stage and the played seats below it, and slide when a seat joins those below
@@ -251,10 +261,10 @@ export const Table: React.FC = () => {
             }
           </div>
 
-          <div className={mergeClasses('table-dock', styles.dock, potToasts.length > 0 && 'has-pot-toast')}>
+          <div className={mergeClasses('table-dock', styles.dock, potLines.length > 0 && 'has-pot-toast')} style={{ '--pot-lines': potLines.length } as React.CSSProperties}>
             {/* the notices run just above the dock, beside the buttons, wherever a tall board is scrolled to */}
             <TableToasts toasts={tableToasts} />
-            <TableToasts toasts={potToasts} placement="pot" />
+            <TableToasts toasts={potLines} placement="pot" isFlat={hasBreakdown} />
             <div className="table-pot">{potBadge}</div>
             <div className="table-dock-actions">
               {!isStarted ? (

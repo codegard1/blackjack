@@ -236,10 +236,10 @@
 }
 
 /* Where the board is too narrow for the two feeds to pass side by side, the table's notices
-   move up a line while the pot has one. */
+   move up while the pot has any, by a line for each of the pot's (--pot-lines, set on the dock). */
 @container table-board (max-width: 999.98px) {
   .table-dock.has-pot-toast > .table-toasts-table {
-    bottom: calc(100% + 40px);
+    bottom: calc(100% + 4px + var(--pot-lines, 1) * 36px);
   }
 }
 
@@ -263,6 +263,24 @@
   .table-pot-icon {
     display: none;
   }
+}
+
+/* the pot is a button: tapping it lists what each player has put in */
+.table-pot-button {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--borderRadiusXLarge);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.table-pot-button:focus-visible {
+  outline: var(--strokeWidthThick) solid var(--colorStrokeFocus2);
+  outline-offset: 1px;
 }
 
 .table-pot-badge {
