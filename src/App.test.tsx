@@ -502,6 +502,9 @@ it('keeps the pot in the dock and bounces it when a wager is made, holding play 
   }
   expect(screen.getByText('Chris wagered $25')).toBeInTheDocument();
   expect(screen.getByText('Pot: $50', { selector: '[role=status] *' })).toBeInTheDocument();
+  // it is told over the pot, apart from the table's notices
+  expect(screen.getByText('Chris wagered $25').closest('[role=status]')).toHaveClass('table-toasts-pot');
+  expect(screen.getByText("Chris's turn").closest('[role=status]')).toHaveClass('table-toasts-table');
   expect(container.querySelectorAll('.table-pot')).toHaveLength(1);
   expect(container.querySelector('.table-dock .table-pot')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Wager $25' })).not.toHaveAttribute('aria-disabled');

@@ -225,11 +225,39 @@
   overflow: hidden;
 }
 
+/* The pot's notices sit over the pot: the feed starts where the dock's padding ends, less the
+   room each line keeps for its shadow. */
+.table-dock > .table-toasts-pot {
+  left: 8px;
+}
+
+.table-dock > .table-toasts-table {
+  transition: bottom 200ms ease;
+}
+
+/* Where the board is too narrow for the two feeds to pass side by side, the table's notices
+   move up a line while the pot has one. */
+@container table-board (max-width: 999.98px) {
+  .table-dock.has-pot-toast > .table-toasts-table {
+    bottom: calc(100% + 40px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .table-dock > .table-toasts-table {
+    transition: none;
+  }
+}
+
 /* a narrow board tightens the dock */
 @container table-board (max-width: 479.98px) {
   .table-dock {
     gap: 8px;
     padding: 8px;
+  }
+
+  .table-dock > .table-toasts-pot {
+    left: 0;
   }
 
   .table-pot-icon {

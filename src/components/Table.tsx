@@ -8,7 +8,7 @@ import {
   ActivityLog, ActivityLogToggle, Agent, BOT_ACTION_DELAY_MS, CardStack, ControlPanel, DEALER_ACTION_DELAY_MS, PlayerContainer, SeatChip, TableToasts,
 } from ".";
 import { useActivityDrawer } from "./ActivityLog";
-import { useTableToasts } from "./TableToasts";
+import { isPotToast, useTableToasts } from "./TableToasts";
 import { useCardFlip } from "./useCardFlip";
 import { usePotMotion } from "./usePotMotion";
 import { useSeatFlip } from "./useSeatFlip";
@@ -156,6 +156,9 @@ export const Table: React.FC = () => {
     revealDealerTotal,
     holeCardFlip.isBusy ? holeCardFlip.waitMs : 0,
   );
+  // money going into the pot is told over the pot; everything else in the feed above the middle of the dock
+  const potToasts = toasts.filter(isPotToast);
+  const tableToasts = toasts.filter((toast) => !isPotToast(toast));
   const activityDrawer = useActivityDrawer();
 
   // The pot stays at the start of the dock, even after a hand ends. Between hands it slides
@@ -248,9 +251,10 @@ export const Table: React.FC = () => {
             }
           </div>
 
-          <div className={mergeClasses('table-dock', styles.dock)}>
+          <div className={mergeClasses('table-dock', styles.dock, potToasts.length > 0 && 'has-pot-toast')}>
             {/* the notices run just above the dock, beside the buttons, wherever a tall board is scrolled to */}
-            <TableToasts toasts={toasts} />
+            <TableToasts toasts={tableToasts} />
+            <TableToasts toasts={potToasts} placement="pot" />
             <div className="table-pot">{potBadge}</div>
             <div className="table-dock-actions">
               {!isStarted ? (
