@@ -119,7 +119,11 @@ export function forgetOwnerId(rejected: string): void {
 
 const REJECTED_OWNER = 403;
 
-const endpoint = (kind: SyncKind, ownerId: string) => `${SYNC_API[kind]}/${encodeURIComponent(ownerId)}`;
+/**
+ * The owner id is this browser's credential for its data, so it is sent in the
+ * Authorization header and not in the address, which servers and proxies log.
+ */
+const ownerHeaders = (ownerId: string): Record<string, string> => ({ Accept: 'application/json', Authorization: `Bearer ${ownerId}` });
 
 /**
  * Fetch the owner's copy of one kind of state. Resolves to undefined when the server
@@ -127,7 +131,7 @@ const endpoint = (kind: SyncKind, ownerId: string) => `${SYNC_API[kind]}/${encod
  */
 export async function fetchRemote(kind: SyncKind, ownerId: string): Promise<RemoteState | undefined> {
   try {
-    const response = await fetch(endpoint(kind, ownerId), { headers: { Accept: 'application/json' } });
+    const response = await fetch(SYNC_API[kind], { headers: ownerHeaders(ownerId), cache: 'no-store' });
     if (response.status === REJECTED_OWNER) forgetOwnerId(ownerId);
     if (!response.ok) return undefined;
     const body: unknown = await response.json();
@@ -149,9 +153,9 @@ export async function fetchRemote(kind: SyncKind, ownerId: string): Promise<Remo
  */
 export async function pushRemote(kind: SyncKind, ownerId: string, data: unknown, keepalive = false): Promise<number | undefined> {
   try {
-    const response = await fetch(endpoint(kind, ownerId), {
+    const response = await fetch(SYNC_API[kind], {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: { ...ownerHeaders(ownerId), 'Content-Type': 'application/json' },
       body: JSON.stringify({ [kind]: data }),
       keepalive,
     });

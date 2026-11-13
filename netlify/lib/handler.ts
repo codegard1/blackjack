@@ -31,15 +31,23 @@ export const STALE_INDEX = 'expire-stale';
  */
 type StateDocument = { _id: string; updatedAt: number; touchedAt: Date; createdAt: number } & Record<string, unknown>;
 
-const json = (body: unknown, status = 200): Response => Response.json(body, { status });
+/** Answers hold one owner's data, so nothing between the function and the browser may keep them */
+const json = (body: unknown, status = 200): Response =>
+  Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
+
+const BEARER = /^Bearer +(\S+)$/i;
 
 /**
- * The owner id from the route. The client percent-encodes it and the platform hands
- * the parameter over still encoded, so decode it before checking its shape.
+ * The owner id of a request. It is a credential, so clients send it in the
+ * Authorization header (`Bearer <ownerId>`), which stays out of request logs. Clients
+ * from before that sent it in the route, percent-encoded; the platform hands that
+ * parameter over still encoded, so decode it before checking its shape.
  */
-function ownerIdFrom(context: Context): string | undefined {
+function ownerIdFrom(req: Request, context: Context): string | undefined {
+  const bearer = BEARER.exec(req.headers.get('authorization') ?? '');
+  if (bearer) return bearer[1];
   try {
-    return decodeURIComponent(context.params.ownerId ?? '');
+    return decodeURIComponent(context.params?.ownerId ?? '');
   } catch {
     return undefined;
   }
@@ -81,6 +89,8 @@ export function resetIndexes(): void {
  * GET  -> 200 { [field]: data, updatedAt } or 404
  * PUT  <- { [field]: data }  -> 200 { updatedAt }
  *
+ * The owner is named by the Authorization header, or by the route for older clients.
+ *
  * Only owner ids the server issued (see owner.ts) are served. The document is
  * upserted whole; the server stamps updatedAt so clients can tell which copy is
  * newer. Rejected requests are noted in the function log without echoing the body.
@@ -92,7 +102,7 @@ export function createStateHandler<T>({ name, collection, field, maxBodyBytes, p
   };
 
   return async (req: Request, context: Context): Promise<Response> => {
-    const ownerId = ownerIdFrom(context);
+    const ownerId = ownerIdFrom(req, context);
     if (!isOwnerId(ownerId)) return reject(400, 'Invalid owner id.', req);
 
     try {

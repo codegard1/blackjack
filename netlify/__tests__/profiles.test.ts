@@ -43,8 +43,8 @@ afterEach(() => {
 });
 
 describe('profiles function', () => {
-  it('is routed by owner id for GET and PUT, with a rate limit', () => {
-    expect(config.path).toBe('/api/profiles/:ownerId');
+  it('is routed with and without the owner id for GET and PUT, with a rate limit', () => {
+    expect(config.path).toEqual(['/api/profiles', '/api/profiles/:ownerId']);
     expect(config.method).toEqual(['GET', 'PUT']);
     expect(config.rateLimit).toMatchObject({ aggregateBy: ['ip'], windowLimit: 60 });
   });
@@ -67,7 +67,23 @@ describe('profiles function', () => {
     expect(updateOne).not.toHaveBeenCalled();
   });
 
-  it('accepts the owner id as the browser sends it, with the colon percent-encoded', async () => {
+  it('takes the owner id from the Authorization header, ahead of the route', async () => {
+    findOne.mockResolvedValueOnce({ _id: OWNER, profiles, updatedAt: 5, createdAt: 1 });
+    const bearer = (ownerId: string, params: Record<string, string> = {}) => handler(
+      new Request('http://localhost/api/profiles', { headers: { Authorization: `Bearer ${ownerId}` } }),
+      { params } as unknown as Context,
+    );
+    const response = await bearer(OWNER);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(findOne).toHaveBeenCalledWith({ _id: OWNER });
+
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect((await bearer(UNSIGNED, { ownerId: OWNER })).status).toBe(403);
+    expect((await handler(new Request('http://localhost/api/profiles'), { params: {} } as unknown as Context)).status).toBe(400);
+  });
+
+  it('still accepts the owner id in the route, as older clients send it, with the colon percent-encoded', async () => {
     findOne.mockResolvedValueOnce(null);
     const response = await call('GET', encodeURIComponent(OWNER));
     expect(response.status).toBe(404);

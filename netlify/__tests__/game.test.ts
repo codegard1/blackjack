@@ -42,8 +42,8 @@ afterEach(() => {
 });
 
 describe('game function', () => {
-  it('is routed by owner id for GET and PUT, with a looser rate limit than profiles', () => {
-    expect(config.path).toBe('/api/game/:ownerId');
+  it('is routed with and without the owner id for GET and PUT, with a looser rate limit than profiles', () => {
+    expect(config.path).toEqual(['/api/game', '/api/game/:ownerId']);
     expect(config.method).toEqual(['GET', 'PUT']);
     expect(config.rateLimit).toMatchObject({ aggregateBy: ['ip'], windowLimit: 120 });
   });
