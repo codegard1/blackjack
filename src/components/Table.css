@@ -225,6 +225,30 @@
   overflow: hidden;
 }
 
+/* The pot's notices sit over the pot: the feed starts where the dock's padding ends, less the
+   room each line keeps for its shadow. */
+.table-dock > .table-toasts-pot {
+  left: 8px;
+}
+
+.table-dock > .table-toasts-table {
+  transition: bottom 200ms ease;
+}
+
+/* Where the board is too narrow for the two feeds to pass side by side, the table's notices
+   move up while the pot has any, by a line for each of the pot's (--pot-lines, set on the dock). */
+@container table-board (max-width: 999.98px) {
+  .table-dock.has-pot-toast > .table-toasts-table {
+    bottom: calc(100% + 4px + var(--pot-lines, 1) * 36px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .table-dock > .table-toasts-table {
+    transition: none;
+  }
+}
+
 /* a narrow board tightens the dock */
 @container table-board (max-width: 479.98px) {
   .table-dock {
@@ -232,9 +256,31 @@
     padding: 8px;
   }
 
+  .table-dock > .table-toasts-pot {
+    left: 0;
+  }
+
   .table-pot-icon {
     display: none;
   }
+}
+
+/* the pot is a button: tapping it lists what each player has put in */
+.table-pot-button {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--borderRadiusXLarge);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.table-pot-button:focus-visible {
+  outline: var(--strokeWidthThick) solid var(--colorStrokeFocus2);
+  outline-offset: 1px;
 }
 
 .table-pot-badge {

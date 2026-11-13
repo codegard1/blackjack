@@ -5,7 +5,7 @@ import { createGameState } from '../context';
 import { GameAction } from '../enums';
 import { gameReducer } from '../functions';
 import { GameState, VisibleToast } from '../types';
-import { TableToasts, TOAST_EXIT_MS, TOAST_GAP_MS, TOAST_LIFE_MS, TOAST_MAX_LINES, TOAST_RESULT_MS, TOAST_REVEAL_MS, useTableToasts } from './TableToasts';
+import { TableToasts, TOAST_EXIT_MS, TOAST_GAP_MS, TOAST_LIFE_MS, TOAST_MAX_LINES, TOAST_POT_MAX_LINES, TOAST_RESULT_MS, TOAST_REVEAL_MS, useTableToasts } from './TableToasts';
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -99,6 +99,14 @@ describe('the feed', () => {
     expect(status.children).toHaveLength(3);
   });
 
+  it('sits over the pot when placed there, the pot amount left for assistive technology', () => {
+    render(<TableToasts placement="pot" toasts={[line(1, 'Chris wagered $25', { subtitle: 'Pot: $50', kind: 'pot-contribution' })]} />);
+
+    const status = screen.getByRole('status');
+    expect(status).toHaveClass('table-toasts-pot');
+    expect(status).toHaveTextContent('Chris wagered $25Pot: $50');
+  });
+
   it('keeps a line that is leaving in the feed until it has gone', () => {
     render(<TableToasts toasts={[line(1, 'Chris wagered $25', { isLeaving: true }), line(2, "Faxe's turn")]} />);
     expect(screen.getByRole('status')).toHaveTextContent("Chris wagered $25Faxe's turn");
@@ -129,7 +137,7 @@ describe('toast timing', () => {
     const { result, rerender } = setup(first);
     const second = wager(first);
     rerender({ state: second });
-    rerender({ state: wager(second) });
+    rerender({ state: stay(second) });
 
     // the second waits for its turn rather than appearing with the first
     expect(result.current.toasts).toHaveLength(1);
@@ -154,12 +162,12 @@ describe('toast timing', () => {
   });
 
   it('makes the oldest line leave when more are showing than the feed holds', () => {
-    let state = startedGame();
-    const { result, rerender } = setup(state);
-    for (let wagers = 0; wagers < TOAST_MAX_LINES + 1; wagers += 1) {
-      state = wager(state);
-      rerender({ state });
-    }
+    // Chris stays and the dealer stays: the dealer's turn, its stand and the two results, four of the table's notices
+    const first = startedGame();
+    const { result, rerender } = renderHook(({ state }) => useTableToasts(state, true), { initialProps: { state: first } });
+    const dealersTurn = stay(first);
+    rerender({ state: dealersTurn });
+    rerender({ state: gameReducer(dealersTurn, { type: GameAction.Stay, playerKey: 'dealer' }) });
 
     // the feed fills up, a gap apart, with nothing leaving yet
     advance((TOAST_MAX_LINES - 1) * TOAST_GAP_MS);
@@ -168,12 +176,34 @@ describe('toast timing', () => {
     const [oldest, ...rest] = result.current.toasts;
 
     // one more arrives, and the oldest makes way for it at once, long before its own time is up
-    advance(TOAST_GAP_MS);
+    advance(TOAST_RESULT_MS);
     expect(result.current.toasts).toHaveLength(TOAST_MAX_LINES + 1);
     expect(result.current.toasts.map((toast) => toast.isLeaving)).toEqual([true, false, false, false]);
     advance(TOAST_EXIT_MS);
     expect(result.current.toasts.map((toast) => toast.id)).not.toContain(oldest.id);
     expect(result.current.toasts.slice(0, TOAST_MAX_LINES - 1).map((toast) => toast.id)).toEqual(rest.map((toast) => toast.id));
+  });
+
+  it("counts the pot's notices apart from the table's: a new contribution takes the place of the last", () => {
+    const first = startedGame();
+    const { result, rerender } = setup(first);
+    const second = wager(first);
+    rerender({ state: second });
+    const third = stay(second);
+    rerender({ state: third });
+    rerender({ state: wager(third) });
+
+    // the wager and the dealer's turn are in different feeds, so neither pushes the other out
+    advance(TOAST_GAP_MS);
+    expect(titles(result.current.toasts)).toEqual(['Chris wagered $25', "Faxe's turn"]);
+    expect(result.current.toasts.some((toast) => toast.isLeaving)).toBe(false);
+
+    // the next wager takes the first one's place over the pot; the table's notice stays
+    advance(TOAST_GAP_MS);
+    expect(result.current.toasts.filter((toast) => toast.kind === 'pot-contribution' && !toast.isLeaving)).toHaveLength(TOAST_POT_MAX_LINES);
+    expect(result.current.toasts.map((toast) => toast.isLeaving)).toEqual([true, false, false]);
+    advance(TOAST_EXIT_MS);
+    expect(titles(result.current.toasts)).toEqual(["Faxe's turn", 'Chris wagered $25']);
   });
 
   it('gives every kind of toast the same time on screen when nothing pushes it out', () => {
@@ -365,7 +395,8 @@ describe('activity log pacing', () => {
     expect(wagers()).toHaveLength(1);
     advance(1);
     expect(wagers()).toHaveLength(2);
-    expect(result.current.toasts).toHaveLength(2);
+    // over the pot the second wager's toast has taken the first one's place
+    expect(result.current.toasts).toHaveLength(1);
   });
 
   it('keeps entries without a toast behind the toast still due, in order', () => {
