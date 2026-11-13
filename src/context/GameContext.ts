@@ -36,7 +36,7 @@ export const useGameContext = () => {
   const gameDispatch = useContext(GameDispatchContext);
 
   if (!gameState || !gameDispatch) {
-    throw new Error('useSettingContext must be used within a SettingProvider');
+    throw new Error('useGameContext must be used within a GameContext provider');
   }
 
   return { gameState, gameDispatch };
