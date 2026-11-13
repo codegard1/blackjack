@@ -502,9 +502,27 @@ it('keeps the pot in the dock and bounces it when a wager is made, holding play 
   }
   expect(screen.getByText('Chris wagered $25')).toBeInTheDocument();
   expect(screen.getByText('Pot: $50', { selector: '[role=status] *' })).toBeInTheDocument();
+  // it is told over the pot, apart from the table's notices
+  expect(screen.getByText('Chris wagered $25').closest('[role=status]')).toHaveClass('table-toasts-pot');
+  expect(screen.getByText("Chris's turn").closest('[role=status]')).toHaveClass('table-toasts-table');
   expect(container.querySelectorAll('.table-pot')).toHaveLength(1);
   expect(container.querySelector('.table-dock .table-pot')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Wager $25' })).not.toHaveAttribute('aria-disabled');
+
+  // tapping the pot lists what each player has put in, over the pot, in place of the contribution toast
+  const pot = screen.getByRole('button', { name: /Pot: \$50/ });
+  expect(pot).toHaveAttribute('aria-expanded', 'false');
+  fireEvent.click(pot);
+  expect(pot).toHaveAttribute('aria-expanded', 'true');
+  const breakdown = container.querySelector('.table-toasts-pot')!;
+  expect(breakdown).toHaveTextContent('Chris: $50');
+  expect(breakdown).not.toHaveTextContent('Chris wagered $25');
+
+  // tapping it again puts the breakdown away
+  fireEvent.click(pot);
+  expect(pot).toHaveAttribute('aria-expanded', 'false');
+  act(() => vi.advanceTimersByTime(TOAST_EXIT_MS));
+  expect(breakdown).not.toHaveTextContent('Chris: $50');
   vi.useRealTimers();
 });
 

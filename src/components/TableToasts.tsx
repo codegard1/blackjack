@@ -24,6 +24,8 @@ export const TOAST_LIFE_MS = 6000;
 export const TOAST_EXIT_MS = 400;
 /** the lines the feed holds; a fourth arriving makes the oldest fade */
 export const TOAST_MAX_LINES = 3;
+/** the lines the feed over the pot holds; a new contribution takes the place of the last */
+export const TOAST_POT_MAX_LINES = 1;
 /** how long after a line arrives the activity log entries recorded by the same change appear */
 export const TOAST_REVEAL_MS = 2000;
 /**
@@ -48,16 +50,24 @@ const fadeInKeyframes = { from: { opacity: 0 }, to: { opacity: 1 } };
 const fadeOutKeyframes = { from: { opacity: 1 }, to: { opacity: 0 } };
 
 const useStyles = makeStyles({
-  // the feed sits just above the dock, so the notices are beside the buttons wherever the board scrolls to
+  // a feed sits just above the dock, so the notices are beside the buttons wherever the board scrolls to
   region: {
     position: 'absolute',
-    left: '50%',
     bottom: `calc(100% + ${tokens.spacingVerticalXS})`,
-    transform: 'translateX(-50%)',
-    width: 'min(96%, 560px)',
     display: 'flex',
     flexDirection: 'column',
     pointerEvents: 'none',
+  },
+  // the table's notices run above the middle of the dock
+  tableRegion: {
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 'min(96%, 560px)',
+  },
+  // the pot's notices sit over the pot, at the start of the dock; Table.css lines them up with it
+  potRegion: {
+    width: 'max-content',
+    maxWidth: '96%',
   },
   // each line is a grid row that can collapse to nothing
   line: {
@@ -103,6 +113,8 @@ const useStyles = makeStyles({
     fontSize: tokens.fontSizeBase300,
     lineHeight: tokens.lineHeightBase300,
   },
+  // over the pot a line starts where the pot does, rather than in the middle of its feed
+  potPill: { margin: 0 },
   brand: { backgroundColor: tokens.colorBrandBackground },
   neutral: { backgroundColor: tokens.colorNeutralBackground3, color: tokens.colorNeutralForeground1 },
   danger: { backgroundColor: tokens.colorPaletteRedBackground3 },
@@ -126,20 +138,33 @@ const useStyles = makeStyles({
     fontWeight: tokens.fontWeightRegular,
     opacity: 0.9,
   },
+  // the pot's own badge shows the amount, so over the pot it is left for assistive technology
+  hiddenSubtitle: {
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    margin: '-1px',
+    overflow: 'hidden',
+    clip: 'rect(0 0 0 0)',
+    whiteSpace: 'nowrap',
+  },
 });
 
-const TableToast: React.FC<{ toast: VisibleToast; age: number }> = ({ toast, age }) => {
+/** True for a toast about money going into the pot; it is shown over the pot, apart from the table's notices */
+export const isPotToast = (toast: { kind?: ToastItem['kind'] }): boolean => toast.kind === 'pot-contribution';
+
+const TableToast: React.FC<{ toast: VisibleToast; age: number; overPot: boolean }> = ({ toast, age, overPot }) => {
   const styles = useStyles();
   return (
     <div className={mergeClasses(styles.line, age === 1 && styles.older, age >= 2 && styles.oldest, toast.isLeaving && styles.leaving)}>
       <div className={styles.lineInner}>
-        <div className={mergeClasses(styles.pill, styles[toast.tone])}>
+        <div className={mergeClasses(styles.pill, styles[toast.tone], overPot && styles.potPill)}>
           {toast.playerKey && (getCharacter(toast.playerKey) || toast.playerName) && (
             <CharacterPortrait id={toast.playerKey} name={toast.playerName ?? toast.title} size="sm" decorative className={styles.portrait} />
           )}
           <span className={styles.text}>
             <span className={styles.title}>{toast.title}</span>
-            {toast.subtitle && <span className={styles.subtitle}>{toast.subtitle}</span>}
+            {toast.subtitle && <span className={overPot ? styles.hiddenSubtitle : styles.subtitle}>{toast.subtitle}</span>}
           </span>
         </div>
       </div>
@@ -151,16 +176,20 @@ const TableToast: React.FC<{ toast: VisibleToast; age: number }> = ({ toast, age
  * A short running feed of notices, anchored just above the dock. New lines arrive at the
  * bottom, beside the buttons, and push the older ones up and dim them; a line fades once
  * its time is up or when more lines than the feed holds are showing. Render it inside the
- * dock, which positions it.
+ * dock, which positions it. The table's notices run above the middle of the dock; with
+ * `placement="pot"` the feed sits over the pot instead, for the money going into it.
+ * `isFlat` shows every line at full strength, for the pot's breakdown, which is a list
+ * rather than a sequence.
  */
-export const TableToasts: React.FC<ITableToastsProps> = ({ toasts }) => {
+export const TableToasts: React.FC<ITableToastsProps> = ({ toasts, placement = 'table', isFlat = false }) => {
   const styles = useStyles();
+  const overPot = placement === 'pot';
   // how many lines newer than this one are still showing
   const liveIds = toasts.filter((toast) => !toast.isLeaving).map((toast) => toast.id);
   return (
-    <div className={styles.region} role="status" aria-live="polite">
+    <div className={mergeClasses(styles.region, overPot ? styles.potRegion : styles.tableRegion, `table-toasts-${placement}`)} role="status" aria-live="polite">
       {toasts.map((toast) => (
-        <TableToast key={toast.id} toast={toast} age={Math.max(0, liveIds.length - 1 - liveIds.indexOf(toast.id))} />
+        <TableToast key={toast.id} toast={toast} overPot={overPot} age={isFlat ? 0 : Math.max(0, liveIds.length - 1 - liveIds.indexOf(toast.id))} />
       ))}
     </div>
   );
@@ -183,7 +212,9 @@ const latestEntryId = (entries: ActivityLogEntry[]): number => entries[entries.l
  *
  * Toasts show in order, no sooner than TOAST_GAP_MS after the one before, and each stays
  * beside the ones already showing. A toast leaves after TOAST_LIFE_MS, or sooner when more
- * than TOAST_MAX_LINES are showing and it is the oldest. The log entries recorded by the
+ * than its feed holds are showing and it is the oldest: TOAST_MAX_LINES of the table's
+ * notices, TOAST_POT_MAX_LINES of the pot's (see `isPotToast`). Both kinds share the one
+ * queue, so they still arrive in order; the Table shows them in separate places. The log entries recorded by the
  * same change are held back until the last of its toasts has been on screen for
  * TOAST_REVEAL_MS, and are returned from this hook only then, in order. Entries with no
  * toast of their own wait behind whichever toast is still due, so they never overtake
@@ -288,10 +319,12 @@ export function useTableToasts(
     });
   }, [later, dismiss]);
 
-  // the oldest lines make way when more are showing than the feed holds
+  // the oldest lines make way when more are showing than their feed holds
   React.useEffect(() => {
     const showing = shown.filter((item) => !item.isLeaving);
-    showing.slice(0, Math.max(0, showing.length - TOAST_MAX_LINES)).forEach((item) => dismiss(item.id));
+    const makeWay = (lines: VisibleToast[], held: number) => lines.slice(0, Math.max(0, lines.length - held)).forEach((item) => dismiss(item.id));
+    makeWay(showing.filter((item) => !isPotToast(item)), TOAST_MAX_LINES);
+    makeWay(showing.filter(isPotToast), TOAST_POT_MAX_LINES);
   }, [shown, dismiss]);
 
   React.useEffect(() => {
