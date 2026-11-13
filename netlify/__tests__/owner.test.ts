@@ -12,7 +12,7 @@ describe('owner function', () => {
   it('answers POST /api/owner with a tight rate limit', () => {
     expect(config.path).toBe('/api/owner');
     expect(config.method).toBe('POST');
-    expect(config.rateLimit).toMatchObject({ aggregateBy: ['ip'], windowLimit: 10 });
+    expect(config.rateLimit).toMatchObject({ aggregateBy: ['ip'], windowSize: 180, windowLimit: 2 });
   });
 
   it('issues a signed browser id', async () => {
