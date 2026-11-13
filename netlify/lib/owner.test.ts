@@ -29,6 +29,8 @@ describe('owner ids', () => {
   it('reads the secret from the environment and insists on a real one', () => {
     expect(() => readOwnerSecret({})).toThrow(new ConfigError('OWNER_ID_SECRET is not set'));
     expect(() => readOwnerSecret({ OWNER_ID_SECRET: 'short' })).toThrow(ConfigError);
+    expect(() => readOwnerSecret({ OWNER_ID_SECRET: 'x'.repeat(31) })).toThrow(new ConfigError('OWNER_ID_SECRET must be at least 32 characters'));
+    expect(readOwnerSecret({ OWNER_ID_SECRET: 'x'.repeat(32) })).toHaveLength(32);
     vi.stubEnv('OWNER_ID_SECRET', SECRET);
     expect(verifyOwnerId(mintOwnerId())).toBe(true);
   });

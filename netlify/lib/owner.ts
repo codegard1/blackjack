@@ -4,7 +4,8 @@ import { ConfigError } from './mongo';
 /** The kind of owner id handed to an anonymous browser */
 export const BROWSER_OWNER_KIND = 'browser';
 
-const MIN_SECRET_LENGTH = 16;
+/** As the README and .env.example ask: `openssl rand -base64 32` gives 44 characters */
+const MIN_SECRET_LENGTH = 32;
 
 /** The secret that signs owner ids, from OWNER_ID_SECRET; never sent anywhere */
 export function readOwnerSecret(env: NodeJS.ProcessEnv = process.env): string {
