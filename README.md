@@ -14,7 +14,7 @@ This project is an attempt to build a game of blackjack from scratch, as a way t
 6. Run `npm start`
 7. Navigate to `http://localhost:3000`
 
-Run `npm test` for the test suite, `npm run typecheck` for TypeScript checks, `npm run lint` for ESLint, and `npm run build` to create the static site in `dist/`. GitHub Actions runs all four on every pull request and push to `master`.
+Run `npm test` for the test suite (`npm run test:coverage` also measures coverage, writes a report to `coverage/`, and fails below the thresholds in `vite.config.ts`), `npm run typecheck` for TypeScript checks, `npm run lint` for ESLint, and `npm run build` to create the static site in `dist/`. GitHub Actions runs all four on every pull request and push to `master`.
 
 #### Technologies Used
 * [React](https://react.dev/) 19
