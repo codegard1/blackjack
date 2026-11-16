@@ -1,7 +1,6 @@
 // @vitest-environment node
 // Function tests live here rather than beside the functions: every file in
 // netlify/functions is deployed as a function.
-import type { Context } from '@netlify/functions';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetIndexes, STALE_AFTER_DAYS, STALE_INDEX } from '../lib/handler';
 import { ConfigError } from '../lib/mongo';
@@ -25,8 +24,7 @@ const UNSIGNED = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c';
 const profiles = { profiles: [{ id: 'chris', name: 'Chris', createdAt: 0, stats: { numberOfGamesPlayed: 1 } }], selectedId: 'chris', opponentIds: [] };
 
 const call = (method: string, ownerId = OWNER, body?: unknown) => handler(
-  new Request(`http://localhost/api/profiles/${ownerId}`, { method, body: body === undefined ? undefined : JSON.stringify(body) }),
-  { params: { ownerId } } as unknown as Context,
+  new Request('http://localhost/api/profiles', { method, headers: { Authorization: `Bearer ${ownerId}` }, body: body === undefined ? undefined : JSON.stringify(body) }),
 );
 
 beforeEach(() => {
@@ -43,8 +41,8 @@ afterEach(() => {
 });
 
 describe('profiles function', () => {
-  it('is routed by owner id for GET and PUT, with a rate limit', () => {
-    expect(config.path).toBe('/api/profiles/:ownerId');
+  it('is routed without the owner id for GET and PUT, with a rate limit', () => {
+    expect(config.path).toBe('/api/profiles');
     expect(config.method).toEqual(['GET', 'PUT']);
     expect(config.rateLimit).toMatchObject({ aggregateBy: ['ip'], windowLimit: 60 });
   });
@@ -55,7 +53,6 @@ describe('profiles function', () => {
     expect(response.status).toBe(400);
     expect(getDb).not.toHaveBeenCalled();
     expect(warn).toHaveBeenCalledWith('profiles: GET rejected with 400: Invalid owner id.');
-    expect((await call('GET', 'browser:%E0%A4%A')).status).toBe(400);
   });
 
   it('refuses an owner id the server did not issue, for reads and writes', async () => {
@@ -67,11 +64,17 @@ describe('profiles function', () => {
     expect(updateOne).not.toHaveBeenCalled();
   });
 
-  it('accepts the owner id as the browser sends it, with the colon percent-encoded', async () => {
-    findOne.mockResolvedValueOnce(null);
-    const response = await call('GET', encodeURIComponent(OWNER));
-    expect(response.status).toBe(404);
+  it('takes the owner id from the Authorization header only, and marks the answer no-store', async () => {
+    findOne.mockResolvedValueOnce({ _id: OWNER, profiles, updatedAt: 5, createdAt: 1 });
+    const response = await call('GET');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('no-store');
     expect(findOne).toHaveBeenCalledWith({ _id: OWNER });
+
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect((await handler(new Request('http://localhost/api/profiles'))).status).toBe(400);
+    expect((await handler(new Request(`http://localhost/api/profiles/${encodeURIComponent(OWNER)}`))).status).toBe(400);
+    expect(findOne).toHaveBeenCalledTimes(1);
   });
 
   it('returns the stored profiles, or 404 when there are none', async () => {
@@ -119,8 +122,7 @@ describe('profiles function', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     expect((await call('PUT', OWNER, { profiles: { selectedId: 'x' } })).status).toBe(400);
     const big = await handler(
-      new Request(`http://localhost/api/profiles/${OWNER}`, { method: 'PUT', headers: { 'content-length': String(1024 * 1024) }, body: '{}' }),
-      { params: { ownerId: OWNER } } as unknown as Context,
+      new Request('http://localhost/api/profiles', { method: 'PUT', headers: { Authorization: `Bearer ${OWNER}`, 'content-length': String(1024 * 1024) }, body: '{}' }),
     );
     expect(big.status).toBe(413);
     expect(updateOne).not.toHaveBeenCalled();

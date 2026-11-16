@@ -1,4 +1,3 @@
-import type { Context } from '@netlify/functions';
 import type { Collection } from 'mongodb';
 import { ConfigError, getDb } from './mongo';
 import { verifyOwnerId } from './owner';
@@ -31,18 +30,19 @@ export const STALE_INDEX = 'expire-stale';
  */
 type StateDocument = { _id: string; updatedAt: number; touchedAt: Date; createdAt: number } & Record<string, unknown>;
 
-const json = (body: unknown, status = 200): Response => Response.json(body, { status });
+/** Answers hold one owner's data, so nothing between the function and the browser may keep them */
+const json = (body: unknown, status = 200): Response =>
+  Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
+
+const BEARER = /^Bearer +(\S+)$/i;
 
 /**
- * The owner id from the route. The client percent-encodes it and the platform hands
- * the parameter over still encoded, so decode it before checking its shape.
+ * The owner id of a request. It is a credential, so clients send it in the
+ * Authorization header (`Bearer <ownerId>`) and never in the address, which servers
+ * and proxies log.
  */
-function ownerIdFrom(context: Context): string | undefined {
-  try {
-    return decodeURIComponent(context.params.ownerId ?? '');
-  } catch {
-    return undefined;
-  }
+function ownerIdFrom(req: Request): string | undefined {
+  return BEARER.exec(req.headers.get('authorization') ?? '')?.[1];
 }
 
 const indexed = new Map<string, Promise<void>>();
@@ -81,6 +81,8 @@ export function resetIndexes(): void {
  * GET  -> 200 { [field]: data, updatedAt } or 404
  * PUT  <- { [field]: data }  -> 200 { updatedAt }
  *
+ * The owner is named by the Authorization header.
+ *
  * Only owner ids the server issued (see owner.ts) are served. The document is
  * upserted whole; the server stamps updatedAt so clients can tell which copy is
  * newer. Rejected requests are noted in the function log without echoing the body.
@@ -91,8 +93,8 @@ export function createStateHandler<T>({ name, collection, field, maxBodyBytes, p
     return json({ error }, status);
   };
 
-  return async (req: Request, context: Context): Promise<Response> => {
-    const ownerId = ownerIdFrom(context);
+  return async (req: Request): Promise<Response> => {
+    const ownerId = ownerIdFrom(req);
     if (!isOwnerId(ownerId)) return reject(400, 'Invalid owner id.', req);
 
     try {

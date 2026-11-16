@@ -15,7 +15,7 @@
   node_bundler = "esbuild"
 
 # Serve the single page app for every path. Functions declare their own paths
-# (for example /api/profiles/:ownerId) and are matched before this rewrite.
+# (for example /api/profiles) and are matched before this rewrite.
 [[redirects]]
   from = "/*"
   to = "/index.html"

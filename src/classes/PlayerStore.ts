@@ -1,6 +1,6 @@
 // custom stuff
 import { playerDefaults } from '../definitions';
-import { PlayerAction, StoreName } from '../enums';
+import { PlayerAction } from '../enums';
 import { IPlayer, IPlayerOptions, IPlayerStore, IPlayerStoreState } from '../interfaces';
 import { PlayerCollection, PlayerKey, PlayerStats } from '../types';
 
@@ -55,19 +55,6 @@ export class PlayerStore implements IPlayerStore {
   }
 
   /**
-   * save state to local storage
-   */
-  public async saveAll(): Promise<void> {
-    this.lastWriteTime = new Date().toISOString();
-    localStorage.setItem(StoreName.PLAYERSTORE, JSON.stringify(this.state));
-  }
-
-  public clearStore() {
-    this.players = {};
-    this.saveAll();
-  }
-
-  /**
    * Lookup player by key
    * @param {PlayerKey} key
    */
@@ -98,16 +85,6 @@ export class PlayerStore implements IPlayerStore {
   public reset(): void {
     this.activePlayerKeys.forEach(key => this.resetPlayer(key, 'bank'));
     this.currentPlayerKey = this.length > 0 ? this.activePlayerKeys[0] : undefined;
-  }
-
-  /**
-   * Start a new round within the same game. reset all game vars per player except 'bank'
-   */
-  public newRound() {
-    this.activePlayerKeys.forEach(key => this.resetPlayer(key, "bank"));
-    this.currentPlayerKey = this.activePlayerKeys[0];
-    this.allPlayersAnte(20);
-    this.startTurn(this.currentPlayerKey);
   }
 
   /**
@@ -161,14 +138,6 @@ export class PlayerStore implements IPlayerStore {
       p.lastAnte = amount;
       return true;
     }
-  }
-
-  /**
-   * cause all players to ante
-   * @param {number} amount 
-   */
-  public allPlayersAnte(amount: number) {
-    this.activePlayerKeys.forEach(key => this.ante(key, amount))
   }
 
   /**

@@ -1,5 +1,4 @@
 import netlify from '@netlify/vite-plugin';
-import legacy from '@vitejs/plugin-legacy';
 import react from '@vitejs/plugin-react';
 import { loadEnv } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -15,7 +14,6 @@ export default defineConfig(({ command, mode }) => {
   return {
     plugins: [
       react(),
-      legacy({ targets: ['>0.2%', 'not dead', 'not op_mini all'] }),
       VitePWA({
         registerType: 'autoUpdate',
         manifest: false,

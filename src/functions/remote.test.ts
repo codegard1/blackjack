@@ -70,7 +70,9 @@ describe('fetchRemote', () => {
     vi.stubGlobal('fetch', fetch);
 
     expect(await fetchRemote('profiles', OWNER)).toEqual({ data: profiles, updatedAt: 7 });
-    expect(fetch.mock.calls[0][0]).toBe(`${SYNC_API.profiles}/${encodeURIComponent(OWNER)}`);
+    const [url, init] = fetch.mock.calls[0];
+    expect(url).toBe(SYNC_API.profiles);
+    expect(init.headers.Authorization).toBe(`Bearer ${OWNER}`);
   });
 
   it('returns undefined on 404, bad bodies, and network failure', async () => {
@@ -93,8 +95,9 @@ describe('pushRemote', () => {
 
     expect(await pushRemote('profiles', OWNER, profiles, true)).toBe(99);
     const [url, init] = fetch.mock.calls[0];
-    expect(url).toBe(`${SYNC_API.profiles}/${encodeURIComponent(OWNER)}`);
+    expect(url).toBe(SYNC_API.profiles);
     expect(init).toMatchObject({ method: 'PUT', keepalive: true });
+    expect(init.headers).toMatchObject({ Authorization: `Bearer ${OWNER}`, 'Content-Type': 'application/json' });
     expect(JSON.parse(init.body)).toEqual({ profiles });
   });
 

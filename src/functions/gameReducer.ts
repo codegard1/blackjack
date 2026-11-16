@@ -1,5 +1,4 @@
 import { PlayerStore } from "../classes/PlayerStore";
-import { PlayingCard } from "../classes/PlayingCard";
 import { PlayingCardDeck } from "../classes/PlayingCardDeck";
 import { createGameState } from "../context";
 import { defaultplayersArr } from "../definitions";
@@ -58,17 +57,12 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
   const {
     cardKey,
     betAmount,
-    controllingPlayerKey,
     deckSide,
-    deckState,
     gameStatus,
     handIndex,
-    minimumBet,
     numberOfCards,
     playerKey,
-    playerState,
     players,
-    potIncrement,
     type,
   } = action;
 
@@ -82,31 +76,9 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
   // Respond to action dispatch
   switch (type) {
 
-    /**
-     * Replace the current deck with one initialized from saved options
-     */
-    case GameAction.SetDeckState: {
-      if (undefined !== deckState) state.deck = new PlayingCardDeck(deckState, Number(state.tableRules.numberOfDecks));
-      return state;
-    }
-
-    /**
-     * Replace the current playerStore with one initialize from saved options
-     */
-    case GameAction.SetPlayerState: {
-      if (undefined !== playerState) state.playerStore = new PlayerStore(playerState);
-      return state;
-    }
-
     // Toggle visibility of the spinner
     case GameAction.SetSpinnerVisible: {
       state.isSpinnerVisible = !state.isSpinnerVisible;
-      return state;
-    }
-
-    case GameAction.SetMinimumBet: {
-      if (undefined !== minimumBet)
-        state.minimumBet = minimumBet;
       return state;
     }
 
@@ -119,37 +91,6 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
         }
         recordActivity(state, state.playerStore.player(playerKey).title, `wagered $${betAmount}`, 'bet', { amount: -betAmount });
       }
-      return state;
-    }
-
-    case GameAction.AddToPot: {
-      if (undefined !== potIncrement)
-        state.pot += potIncrement;
-      return state;
-    }
-
-    case GameAction.IncrementRound: {
-      state.round += 1;
-      return state;
-    }
-
-    case GameAction.IncrementTurn: {
-      state.turnCount += 1;
-      return state;
-    }
-
-    case GameAction.SetControllingPlayer: {
-      state.controllingPlayer = controllingPlayerKey;
-      state.dealerHasControl = controllingPlayerKey === 'dealer';
-      if (undefined !== controllingPlayerKey) {
-        state.playerStore.currentPlayerKey = controllingPlayerKey;
-        state.playerStore.startTurn(controllingPlayerKey);
-      }
-      return state;
-    }
-
-    case GameAction.SetGameStatus: {
-      if (undefined !== gameStatus) state.gameStatus = gameStatus;
       return state;
     }
 
@@ -218,20 +159,6 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       return { ...createGameState(), activityLog: action.clearActivityLog ? [] : state.activityLog };
     }
 
-    // Record the loser of the current round
-    case GameAction.SetLoser: {
-      if (undefined !== playerKey && typeof playerKey === 'string')
-        state.loser = playerKey;
-      return state;
-    }
-
-    // Record the winner of the current round
-    case GameAction.SetWinner: {
-      if (undefined !== playerKey && typeof playerKey === 'string')
-        state.winner = playerKey;
-      return state;
-    }
-
     /**
      * Start a new round of a continuous game
      */
@@ -283,24 +210,6 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       return state;
     }
 
-    // Clear the list of selected cards
-    case GameAction.ClearSelected: {
-      state.deck.clearSelected();
-      return state;
-    }
-
-    // Create an entry in the playerHands list for the given Player
-    case GameAction.NewPlayerHand: {
-      // Single Player
-      if (undefined !== playerKey && typeof playerKey === 'string')
-        state.deck.newPlayerHand(playerKey);
-      // Multiple Players
-      if (undefined !== playerKey && typeof playerKey !== 'string') {
-        playerKey.forEach((pk) => state.deck.newPlayerHand(pk));
-      }
-      return state;
-    }
-
     // Select a card
     case GameAction.Select: {
       // If no cardKey was passed then do nothing 
@@ -339,34 +248,6 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       }
 
       state.lastWriteTime = new Date().toISOString();
-
-      return state;
-    }
-
-    // Put one card into the deck
-    case GameAction.Put: {
-
-      // If no cardKey was passed then do nothing
-      if (undefined === cardKey) return state;
-
-      // If cardKey is not in the deck already then put it
-      if (!(state.deck.has(cardKey))) {
-
-        // deckSide determines where in the cardKeys array the cardKey goes
-        if (undefined !== deckSide) {
-          switch (deckSide) {
-            case 'top':
-              state.deck.putOnTopOfDeck([new PlayingCard(cardKey)])
-              break;
-            case 'random':
-              state.deck.putInMiddleOfDeck([new PlayingCard(cardKey)]);
-              break;
-            default:
-              state.deck.putOnBottomOfDeck([new PlayingCard(cardKey)]);
-              break;
-          }
-        }
-      }
 
       return state;
     }
@@ -463,12 +344,6 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
         player.isStaying = true;
         advanceTurn(state, key, index);
       }
-      return state;
-    }
-
-    // Populate and shuffle the deck
-    case GameAction.Reset: {
-      state.deck.reset();
       return state;
     }
 

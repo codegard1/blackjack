@@ -6,8 +6,10 @@ import { MAX_BODY_BYTES, parseProfilesBody } from '../lib/validate';
 /**
  * Read or replace the profiles for one owner.
  *
- * GET /api/profiles/:ownerId  -> 200 { profiles, updatedAt } or 404
- * PUT /api/profiles/:ownerId  <- { profiles }  -> 200 { updatedAt }
+ * GET /api/profiles  -> 200 { profiles, updatedAt } or 404
+ * PUT /api/profiles  <- { profiles }  -> 200 { updatedAt }
+ *
+ * The owner id travels in the Authorization header, never in the address.
  */
 export default createStateHandler({
   name: 'profiles',
@@ -18,7 +20,7 @@ export default createStateHandler({
 });
 
 export const config: Config = {
-  path: '/api/profiles/:ownerId',
+  path: '/api/profiles',
   method: ['GET', 'PUT'],
   rateLimit: { action: 'rate_limit', aggregateBy: ['ip'], windowSize: 60, windowLimit: 60 },
 };

@@ -2,8 +2,6 @@ export * from './IAgentProps';
 export * from './ICardContainerProps';
 export * from './ICardStackProps';
 export * from './IControlPanelProps';
-export * from './IControlPanelState';
-export * from './IControlPanelStore';
 export * from './IDeckCalloutProps';
 export * from './IGameReducerAction';
 export * from './IPlayer';
