@@ -4,7 +4,7 @@ import { PlayingCardKey } from "../types";
  * @param cards 
  */
 export function fisherYates(cardKeys: PlayingCardKey[]): PlayingCardKey[] {
-  let _cards = cardKeys.slice();
+  const _cards = cardKeys.slice();
   if (_cards.length === 0) return [];
   let i = _cards.length;
   while (--i) {

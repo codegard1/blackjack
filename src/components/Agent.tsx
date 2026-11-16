@@ -24,7 +24,7 @@ export const Agent: React.FC<IAgentProps> = (props) => {
 
   // the latest decision function, read when the delay is up, so a re-render does not reschedule
   const decide = React.useRef(props.decide);
-  decide.current = props.decide;
+  React.useLayoutEffect(() => { decide.current = props.decide; });
 
   React.useEffect(() => {
     if (isPaused || !hasControl || gameStatus !== GameStatus.InProgress) return;

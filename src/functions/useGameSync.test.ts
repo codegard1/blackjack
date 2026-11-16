@@ -3,7 +3,6 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createGameState } from '../context';
 import { GameAction, GameStatus } from '../enums';
-import { IGameReducerAction } from '../interfaces';
 import { GameState } from '../types';
 import { gameReducer } from './gameReducer';
 import { gameSnapshot, MAX_SYNCED_ACTIVITY } from './persistence';
@@ -22,7 +21,7 @@ function renderSync(initial: GameState, fetch: ReturnType<typeof vi.fn>) {
   return renderHook(() => {
     const [state, dispatch] = React.useReducer(gameReducer, initial);
     useGameSync(state, dispatch, { enabled: true });
-    return { state, dispatch: dispatch as React.Dispatch<IGameReducerAction> };
+    return { state, dispatch: dispatch };
   });
 }
 

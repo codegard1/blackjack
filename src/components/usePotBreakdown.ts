@@ -14,24 +14,26 @@ type Phase = 'closed' | 'open' | 'leaving';
  * @returns the lines to show in the pot's feed, whether the breakdown is open, and the toggle for the pot
  */
 export function usePotBreakdown(shares: PotShare[], round: number): { lines: VisibleToast[]; isOpen: boolean; toggle: () => void } {
-  const [phase, setPhase] = React.useState<Phase>('closed');
+  // the breakdown belongs to the hand it was opened in: in any other hand it is closed
+  const [opened, setOpened] = React.useState<{ phase: Phase; round: number }>({ phase: 'closed', round });
+  const phase = opened.round === round ? opened.phase : 'closed';
 
   React.useEffect(() => {
     if (phase === 'closed') return;
     const timeoutId = window.setTimeout(
-      () => setPhase(phase === 'open' ? 'leaving' : 'closed'),
+      () => setOpened({ phase: phase === 'open' ? 'leaving' : 'closed', round }),
       phase === 'open' ? TOAST_LIFE_MS : TOAST_EXIT_MS,
     );
     return () => window.clearTimeout(timeoutId);
-  }, [phase]);
-
-  // the last hand's breakdown has no place in the next
-  React.useEffect(() => setPhase('closed'), [round]);
+  }, [phase, round]);
 
   const hasShares = shares.length > 0;
   const toggle = React.useCallback(() => {
-    setPhase((current) => current === 'open' ? 'leaving' : hasShares ? 'open' : 'closed');
-  }, [hasShares]);
+    setOpened((current) => {
+      const currentPhase = current.round === round ? current.phase : 'closed';
+      return { phase: currentPhase === 'open' ? 'leaving' : hasShares ? 'open' : 'closed', round };
+    });
+  }, [hasShares, round]);
 
   const lines = React.useMemo<VisibleToast[]>(() => phase === 'closed' ? [] : shares.map((share, index) => ({
     // negative, so a line never shares an id with a queued toast

@@ -86,9 +86,11 @@ export const Table: React.FC = () => {
   const isStarted = gameStatus !== GameStatus.Init && players.length > 0;
   const revealDealerTotal = !!settings.isDealerHandVisible || roundOver;
 
-  // A seat the user chose from the queue or the bench. Cleared whenever control moves.
-  const [pinnedKey, setPinnedKey] = React.useState<string>();
-  React.useEffect(() => setPinnedKey(undefined), [gameState.controllingPlayer, gameStatus]);
+  // A seat the user chose from the queue or the bench. It holds only for the moment it was chosen in:
+  // once control moves, the status changes or a new hand starts, the choice no longer applies.
+  const pinMoment = `${round}:${gameStatus}:${gameState.controllingPlayer ?? ''}`;
+  const [pin, setPin] = React.useState<{ key: string; moment: string }>();
+  const pinnedKey = pin?.moment === pinMoment ? pin.key : undefined;
 
   // The seat in control, unless the user has picked another; before the deal, the human. Once the round
   // is over nobody has the stage: every seat is a chip, and each is brought into focus as its result is told.
@@ -139,7 +141,7 @@ export const Table: React.FC = () => {
             total={showTotal ? hand.handValue.highest : undefined}
             cards={hand?.cards}
             focus={toastFocus?.key === player.key ? toastFocus.tone : undefined}
-            onSelect={() => setPinnedKey(player.key)}
+            onSelect={() => setPin({ key: player.key, moment: pinMoment })}
           />
         ) : (
           <SeatChip player={player} status={seatTag(player, gameStatus)} floating index={index} />

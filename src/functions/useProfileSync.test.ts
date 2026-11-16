@@ -1,7 +1,6 @@
 import React from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { IProfileAction } from '../interfaces';
 import { ProfileState } from '../types';
 import { defaultProfileState, profileReducer } from './profiles';
 import { loadSyncState, saveSyncState } from './remote';
@@ -18,7 +17,7 @@ function renderSync(initial: ProfileState, fetch: ReturnType<typeof vi.fn>) {
   return renderHook(() => {
     const [profiles, dispatch] = React.useReducer(profileReducer, initial);
     useProfileSync(profiles, dispatch, { enabled: true });
-    return { profiles, dispatch: dispatch as React.Dispatch<IProfileAction> };
+    return { profiles, dispatch: dispatch };
   });
 }
 

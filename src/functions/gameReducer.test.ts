@@ -147,7 +147,7 @@ describe('configurable table rules', () => {
 
 describe('game behavior baseline', () => {
   it('starts a game with the selected human and dealer', () => {
-    let state = startDefaultGame();
+    const state = startDefaultGame();
 
     expect(state.gameStatus).toBe(GameStatus.InProgress);
     expect(state.round).toBe(1);

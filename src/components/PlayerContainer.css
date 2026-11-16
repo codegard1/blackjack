@@ -12,11 +12,6 @@
   text-align: center;
 }
 
-/* the callout that appears beneath the deck when a player action occurs */
-.DeckCallout {
-  padding: 1em;
-}
-
 /* the text children of the Agent component */
 #Agent {
   text-align: center;

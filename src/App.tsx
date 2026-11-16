@@ -8,7 +8,7 @@ import { FluentProvider, makeStyles, tokens } from '@fluentui/react-components';
 import './App.css';
 import { AppHeader, OptionsPanel, PlayersDialog, Table } from './components';
 import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
-import { GameAction, GameStatus } from './enums';
+import { GameAction } from './enums';
 import { collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, useGameSync, useProfileSync } from './functions';
 import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark, PAGE_GUTTER } from './theme';
 

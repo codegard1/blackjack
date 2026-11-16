@@ -10,7 +10,7 @@ import { mintOwnerId } from '../lib/owner';
  * limit is as tight as the platform allows (its longest window is 180 seconds),
  * because a real client needs one id for its lifetime and asks again if refused.
  */
-export default async (): Promise<Response> => {
+export default (): Response => {
   try {
     return Response.json({ ownerId: mintOwnerId() }, { status: 201 });
   } catch (error) {
