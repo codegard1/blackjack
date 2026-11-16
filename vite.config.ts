@@ -49,6 +49,7 @@ export default defineConfig(({ command, mode }) => {
     },
     test: {
       environment: 'jsdom',
+      pool: 'vmThreads',
       setupFiles: './src/setupTests.ts',
     },
   };
