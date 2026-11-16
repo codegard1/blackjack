@@ -111,7 +111,8 @@ export function createStateHandler<T>({ name, collection, field, maxBodyBytes, p
 
       if (Number(req.headers.get('content-length') ?? 0) > maxBodyBytes) return reject(413, 'Body too large.', req);
       const text = await req.text();
-      if (text.length > maxBodyBytes) return reject(413, 'Body too large.', req);
+      // the header can be absent or wrong, and a string's length counts characters, so measure the bytes
+      if (Buffer.byteLength(text) > maxBodyBytes) return reject(413, 'Body too large.', req);
       const parsed = parse(text);
       if ('error' in parsed) return reject(400, parsed.error, req);
 

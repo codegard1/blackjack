@@ -125,6 +125,9 @@ describe('profiles function', () => {
       new Request('http://localhost/api/profiles', { method: 'PUT', headers: { Authorization: `Bearer ${OWNER}`, 'content-length': String(1024 * 1024) }, body: '{}' }),
     );
     expect(big.status).toBe(413);
+    // no content-length to go by, and fewer characters than the limit, but more bytes
+    const wide = await call('PUT', OWNER, { profiles: 'é'.repeat(9 * 1024) });
+    expect(wide.status).toBe(413);
     expect(updateOne).not.toHaveBeenCalled();
   });
 

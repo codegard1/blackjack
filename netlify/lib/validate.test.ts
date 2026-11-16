@@ -33,6 +33,8 @@ describe('parseProfilesBody', () => {
 
   it('rejects bodies that are too large, not JSON, or the wrong shape', () => {
     expect(parseProfilesBody('x'.repeat(MAX_BODY_BYTES + 1))).toEqual({ error: 'Body too large.' });
+    // the limit is in bytes: these characters are two bytes each, so fewer of them are too many
+    expect(parseProfilesBody('é'.repeat(MAX_BODY_BYTES / 2 + 1))).toEqual({ error: 'Body too large.' });
     expect(parseProfilesBody('{not json')).toEqual({ error: 'Body is not valid JSON.' });
     expect(parseProfilesBody('[]')).toEqual({ error: 'Body must be a JSON object.' });
     expect(parseProfilesBody('{}')).toEqual({ error: 'Body must be { profiles: ProfileState }.' });
