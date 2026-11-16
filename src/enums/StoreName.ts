@@ -7,5 +7,7 @@ export enum StoreName {
   PROFILESTORE = 'PROFILESTORE',
   /** this browser's owner id and last sync time; survives Clear application data */
   SYNCSTORE = 'SYNCSTORE',
+  /** the characters' stats summed across every table, as the server last sent them */
+  COMMUNITYSTORE = 'COMMUNITYSTORE',
 }
 

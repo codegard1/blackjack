@@ -23,6 +23,12 @@ export const PROFILES_COLLECTION = 'profiles';
 /** The collection that holds each owner's game in progress */
 export const GAMES_COLLECTION = 'games';
 
+/** The collection that holds the characters' stats summed across every owner */
+export const NPC_STATS_COLLECTION = 'npcStats';
+
+/** The collection that records what each owner has already added to those sums */
+export const NPC_LEDGER_COLLECTION = 'npcLedger';
+
 let client: MongoClient | undefined;
 
 /** Read the connection settings, or throw a ConfigError naming what is missing */

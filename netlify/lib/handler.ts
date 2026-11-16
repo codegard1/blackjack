@@ -37,7 +37,7 @@ const json = (body: unknown, status = 200): Response => Response.json(body, { st
  * The owner id from the route. The client percent-encodes it and the platform hands
  * the parameter over still encoded, so decode it before checking its shape.
  */
-function ownerIdFrom(context: Context): string | undefined {
+export function ownerIdFrom(context: Context): string | undefined {
   try {
     return decodeURIComponent(context.params.ownerId ?? '');
   } catch {

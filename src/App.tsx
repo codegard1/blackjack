@@ -9,7 +9,7 @@ import './App.css';
 import { AppHeader, OptionsPanel, PlayersDialog, Table } from './components';
 import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
 import { GameAction, GameStatus } from './enums';
-import { collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, useGameSync, useProfileSync } from './functions';
+import { collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, useCommunitySync, useGameSync, useProfileSync } from './functions';
 import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark, PAGE_GUTTER } from './theme';
 
 // The page behind the table: a striped felt drawn from the brand color, so it follows
@@ -55,6 +55,8 @@ const App = () => {
   // and keep the profiles and the game in step with the server, when there is one
   useProfileSync(profiles, profileDispatch);
   useGameSync(gameState, gameDispatch);
+  // and pick up what every other table has played with the characters
+  useCommunitySync();
 
   // Evaluate game whenever the status changes, or a new round reaches the same
   // status (a natural can end a round in the same action that starts it).

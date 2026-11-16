@@ -39,6 +39,11 @@ describe('parseProfilesBody', () => {
     expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, selectedId: 7 } }))).toHaveProperty('error');
     expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, profiles: [{ id: 'a', name: '', createdAt: 0, stats }] } }))).toHaveProperty('error');
     expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, profiles: [{ ...profiles.profiles[0], stats: { wins: 'many' } }] } }))).toHaveProperty('error');
+    // counts are whole numbers that are not negative; only netResult may fall below zero
+    for (const bad of [{ numberOfGamesPlayed: -1 }, { numberOfGamesWon: 1.5 }, { netResult: 0.5 }, { winLossRatio: -1 }, { totalWinnings: 2 ** 60 }]) {
+      expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, profiles: [{ ...profiles.profiles[0], stats: bad }] } }))).toHaveProperty('error');
+    }
+    expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, profiles: [{ ...profiles.profiles[0], stats: { netResult: -20, winLossRatio: 0.75 } }] } }))).toHaveProperty('data');
     expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, opponentIds: 'ogion' } }))).toHaveProperty('error');
   });
 });
