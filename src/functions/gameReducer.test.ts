@@ -889,6 +889,25 @@ describe('leaving the previous state alone', () => {
     vi.useRealTimers();
   });
 
+  it('leaves the game as it is when there is nothing to draw, without throwing', () => {
+    let state = rig(startDefaultGame(), 'Spade_10', 'Heart_6', 'Club_10', 'Heart_7');
+    state = gameReducer(state, { type: GameAction.Deal });
+    const none = gameReducer(state, { type: GameAction.Draw, playerKey: 'chris', deckSide: 'top', numberOfCards: 0 });
+    expect(none.deck.state).toEqual(state.deck.state);
+
+    // an empty deck outside a round is not refilled
+    const over = { ...state, gameStatus: GameStatus.RoundOver };
+    expect(over.deck.length).toBe(0);
+    const short = gameReducer(over, { type: GameAction.Draw, playerKey: 'chris', deckSide: 'top', numberOfCards: 1 });
+    expect(short.deck.hand('chris')?.cards).toEqual(['Spade_10', 'Heart_6']);
+    expect(short.activityLog).toEqual(over.activityLog);
+
+    // during a round the cards not in a hand are shuffled back in, so play carries on
+    const refilled = gameReducer(state, { type: GameAction.Draw, playerKey: 'chris', deckSide: 'top', numberOfCards: 1 });
+    expect(refilled.deck.hand('chris')?.cards).toHaveLength(3);
+    expect(refilled.deck.length).toBe(47);
+  });
+
   it('gives the same result when one action is applied twice to the same state', () => {
     let state = rig(startDefaultGame(), 'Spade_10', 'Heart_6', 'Club_10', 'Heart_7', 'Club_5');
     state = gameReducer(state, { type: GameAction.Deal });

@@ -241,23 +241,23 @@ function applyAction(state: GameState, action: IGameReducerAction): GameState {
       const _num = numberOfCards ?? 1;
       // a long round with many seats can run the deck dry; reshuffle what is not in play
       if (_num > 0 && state.deck.length < _num && state.gameStatus === GameStatus.InProgress) refillDeck(state);
-      if (_num > 0 && state.deck.length >= _num) {
-        const _drawn = deckSide === 'top' ? state.deck.draw(_num)
-          : deckSide === 'random' ? state.deck.drawRandom(_num)
-          : state.deck.drawFromBottomOfDeck(_num);
-        const where = deckSide === 'top' ? 'from the top' : deckSide === 'random' ? 'at random' : 'from the bottom';
-        if (undefined !== playerKey && typeof playerKey === 'string') {
-          if (!state.deck.playerHands[playerKey]) state.deck.newPlayerHand(playerKey);
-          const index = handIndex ?? state.activeHandIndex;
-          const hand = state.deck.hand(playerKey, index)!;
-          hand.cards.push(..._drawn);
-          state.deck.updateHandValue(playerKey, index);
-          state.playerStore.hit(playerKey);
-          recordActivity(state, state.playerStore.player(playerKey).title, `drew ${_num} card${_num === 1 ? '' : 's'} ${where}`, 'draw');
-          updatePlayerHandStatus(state, playerKey, index);
-        }
-      } else {
-        throw new Error('There are not enough cards left in the deck to draw');
+      // Nothing to draw (no cards asked for, or a deck that cannot cover them outside a round):
+      // leave the game as it is. A reducer that throws takes the whole table down with it.
+      if (_num <= 0 || state.deck.length < _num) return state;
+
+      const _drawn = deckSide === 'top' ? state.deck.draw(_num)
+        : deckSide === 'random' ? state.deck.drawRandom(_num)
+        : state.deck.drawFromBottomOfDeck(_num);
+      const where = deckSide === 'top' ? 'from the top' : deckSide === 'random' ? 'at random' : 'from the bottom';
+      if (undefined !== playerKey && typeof playerKey === 'string') {
+        if (!state.deck.playerHands[playerKey]) state.deck.newPlayerHand(playerKey);
+        const index = handIndex ?? state.activeHandIndex;
+        const hand = state.deck.hand(playerKey, index)!;
+        hand.cards.push(..._drawn);
+        state.deck.updateHandValue(playerKey, index);
+        state.playerStore.hit(playerKey);
+        recordActivity(state, state.playerStore.player(playerKey).title, `drew ${_num} card${_num === 1 ? '' : 's'} ${where}`, 'draw');
+        updatePlayerHandStatus(state, playerKey, index);
       }
 
       return state;
