@@ -8,4 +8,10 @@ registerServiceWorker();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Root element not found');
-createRoot(rootElement).render(<App />);
+// Strict mode runs reducers, renders and effects twice in development, which shows up
+// anything that is not safe to repeat. It changes nothing in a production build.
+createRoot(rootElement).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+);
