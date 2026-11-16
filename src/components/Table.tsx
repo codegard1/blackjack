@@ -87,9 +87,11 @@ export const Table: React.FC = () => {
   const revealDealerTotal = !!settings.isDealerHandVisible || roundOver;
 
   // A seat the user chose from the queue or the bench. It holds only for the moment it was chosen in:
-  // once control moves, the status changes or a new hand starts, the choice no longer applies.
+  // once control moves, the status changes or a new hand starts, the choice is dropped for good, so a
+  // later moment that looks the same (the first hand of a new game) does not bring it back.
   const pinMoment = `${round}:${gameStatus}:${gameState.controllingPlayer ?? ''}`;
   const [pin, setPin] = React.useState<{ key: string; moment: string }>();
+  if (pin && pin.moment !== pinMoment) setPin(undefined);
   const pinnedKey = pin?.moment === pinMoment ? pin.key : undefined;
 
   // The seat in control, unless the user has picked another; before the deal, the human. Once the round

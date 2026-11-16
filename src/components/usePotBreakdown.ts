@@ -14,8 +14,10 @@ type Phase = 'closed' | 'open' | 'leaving';
  * @returns the lines to show in the pot's feed, whether the breakdown is open, and the toggle for the pot
  */
 export function usePotBreakdown(shares: PotShare[], round: number): { lines: VisibleToast[]; isOpen: boolean; toggle: () => void } {
-  // the breakdown belongs to the hand it was opened in: in any other hand it is closed
+  // the breakdown belongs to the hand it was opened in: when the hand changes it is closed for good,
+  // so a later hand with the same number (the first hand of a new game) does not reopen it
   const [opened, setOpened] = React.useState<{ phase: Phase; round: number }>({ phase: 'closed', round });
+  if (opened.round !== round) setOpened({ phase: 'closed', round });
   const phase = opened.round === round ? opened.phase : 'closed';
 
   React.useEffect(() => {

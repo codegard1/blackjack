@@ -320,3 +320,29 @@ it("shows the dealer's hand as cards among the seats still to play during the hu
   expect(within(dealerHand.closest('.table-seat-slot') as HTMLElement).getByText('Dealer · Waiting')).toBeInTheDocument();
   expect(screen.getByRole('region', { name: "Chris's hand" }).closest('.table-focus')).not.toBeNull();
 });
+
+it('forgets a pinned seat and an open pot breakdown when the game is reset and started again', () => {
+  const { container } = render(<App />);
+  const stageKey = () => container.querySelector('.table-focus')?.getAttribute('data-seat-key');
+  const pot = () => screen.getByRole('button', { name: /Pot: \$/ });
+  const startAndDeal = () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  };
+
+  startAndDeal();
+  expect(stageKey()).toBe('chris');
+  // bring the dealer forward and open the pot's breakdown, both during the human's turn in the first hand
+  fireEvent.click(container.querySelector('.table-seat-slot[data-seat-key="dealer"] button')!);
+  expect(stageKey()).toBe('dealer');
+  fireEvent.click(pot());
+  expect(pot()).toHaveAttribute('aria-expanded', 'true');
+
+  // a new game reaches the same hand number, status and turn; neither choice may come back with it
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Clear application data stored locally in the browser' }));
+  startAndDeal();
+  expect(stageKey()).toBe('chris');
+  expect(pot()).toHaveAttribute('aria-expanded', 'false');
+  expect(container.querySelector('.table-toasts-pot')).not.toHaveTextContent('Chris: $');
+});
