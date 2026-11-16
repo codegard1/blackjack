@@ -245,6 +245,8 @@ export const ActivityLog = React.memo(function ActivityLog({ entries, isOpen }: 
                                 </TableCell>
                                 <TableCell><Text weight="semibold">{item.name || 'Game'}</Text></TableCell>
                                 <TableCell>
+                                  {/* the icon takes focus so its tooltip, which names the event, can be reached from the keyboard */}
+                                  {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
                                   <TableCellLayout media={<Tooltip content={event.label} relationship="label"><span className="activity-event-icon" tabIndex={0}>{event.icon}</span></Tooltip>}>
                                     {item.description}
                                   </TableCellLayout>

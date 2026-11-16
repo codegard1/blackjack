@@ -23,10 +23,10 @@ export class PlayingCardDeck implements IPlayingCardDeck {
    */
   static cardKeys(numberOfDecks = 1): PlayingCardKey[] {
     // Initialize an array to hold our output value
-    let keys: PlayingCardKey[] = [];
+    const keys: PlayingCardKey[] = [];
 
     // For each suit defined in the PlayingCard class
-    for (let key in PlayingCard.cardSuits) {
+    for (const key in PlayingCard.cardSuits) {
 
       // Get the suit name
       const suitName = PlayingCard.cardSuits[key];
@@ -49,9 +49,9 @@ export class PlayingCardDeck implements IPlayingCardDeck {
   constructor(options?: DeckState, numberOfDecks = 1) {
     this.numberOfDecks = numberOfDecks;
     if (undefined !== options) {
-      this.selected = options.selectedKeys.map(this.newCard);
-      this.drawn = options.drawnKeys.map(this.newCard);
-      this.cards = options.cardKeys.map(this.newCard);
+      this.selected = options.selectedKeys.map((key) => this.newCard(key));
+      this.drawn = options.drawnKeys.map((key) => this.newCard(key));
+      this.cards = options.cardKeys.map((key) => this.newCard(key));
       this.playerHands = options.playerHands;
     } else {
       this.reset();
@@ -138,7 +138,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
    * Generate a set of cards for the deck
    */
   private makeCards(): void {
-    this.cards = PlayingCardDeck.cardKeys(this.numberOfDecks).map(this.newCard);
+    this.cards = PlayingCardDeck.cardKeys(this.numberOfDecks).map((key) => this.newCard(key));
   }
 
   /**
@@ -221,7 +221,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
     if (this.length === 0) return [];
 
     if (!num || num < 1) num = 1;
-    let cardKeys = [];
+    const cardKeys = [];
     for (let i = 0; i < num; i++) {
       const _popped = this.cards.pop()
       if (_popped !== undefined) {
@@ -240,7 +240,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
       return card;
     };
 
-    let cardKeys = [];
+    const cardKeys = [];
     for (let i = 0; i < num; i++) {
       const _drawn = _draw();
       if (_drawn !== undefined) {
@@ -257,7 +257,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
    * @returns 
    */
   public drawFromBottomOfDeck(numberOfCards: number = 1): PlayingCardKey[] {
-    let cardKeys = [];
+    const cardKeys = [];
     for (let i = 0; i < numberOfCards; i++) {
       const _shifted = this.cards.shift();
       if (_shifted !== undefined) {
@@ -320,7 +320,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
    * Reset all player hands to the default state
    */
   public clearHands() {
-    for (let key in this.playerHands) { this.newPlayerHand(key) }
+    for (const key in this.playerHands) { this.newPlayerHand(key) }
   }
 
   /**
@@ -338,7 +338,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
   public removeSelectedFromPlayerHand(key: PlayerKey, cardKeys: PlayingCardKey[]) {
     const hand = this.playerHands[key].cards.slice();
     cardKeys.forEach(cardKey => {
-      let index = hand.indexOf(cardKey);
+      const index = hand.indexOf(cardKey);
       if (index !== -1) hand.splice(index, 1);
       this.playerHands[key].cards = hand;
     });
@@ -354,7 +354,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
     if (this.state.selectedKeys.length === 0) return [];
 
     let foundMatch = false;
-    let foundCards: PlayingCardKey[] = [];
+    const foundCards: PlayingCardKey[] = [];
     const playerHand = this.getHand(key);
 
     // check each card in selected to see if it's in the specified player's hand 

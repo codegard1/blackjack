@@ -61,8 +61,8 @@ export class PlayingCard implements IPlayingCard {
   }
 
   public toShortDisplayString() {
-    var suit = this.suit.short;
-    var value;
+    const suit = this.suit.short;
+    let value;
 
     return value + suit;
   }

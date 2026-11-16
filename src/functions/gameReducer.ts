@@ -4,7 +4,7 @@ import { createGameState } from "../context";
 import { defaultplayersArr } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
 import { IGameReducerAction, IPlayerOptions } from "../interfaces";
-import { ActivityLogEntry, GameState, PlayerHand, isTableRules, tableRulesFrom } from "../types";
+import { GameState, PlayerHand, isTableRules, tableRulesFrom } from "../types";
 import { evaluateGame } from "./evaluateGame";
 import { debugLog } from "./debugLog";
 import { recordActivity } from "./activity";
@@ -58,7 +58,6 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     cardKey,
     betAmount,
     deckSide,
-    gameStatus,
     handIndex,
     numberOfCards,
     playerKey,
@@ -141,7 +140,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
      * Run status-driven bookkeeping (opening ante, payouts, stats)
      */
     case GameAction.EvaluateGame: {
-      return evaluateGame(state, action);
+      return evaluateGame(state);
     }
 
     /**

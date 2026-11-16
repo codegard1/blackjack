@@ -16,7 +16,7 @@ import {
 import { Info24Regular } from '@fluentui/react-icons';
 
 /* custom stuff */
-import { CardStack, DeckCallout, StatusDisplay } from '.';
+import { CardStack, StatusDisplay } from '.';
 import { getCharacter } from "../characters";
 import { CharacterDialog } from "./CharacterCard";
 import { CharacterPortrait } from "./CharacterPortrait";
@@ -165,12 +165,9 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   const id = `DeckCalloutTarget-${player.title}`;
 
   // State
-  const [isDeckCalloutVisible, setDeckCalloutVisible] = React.useState<boolean>(false);
   const [isCharacterOpen, setCharacterOpen] = React.useState(false);
   const character = getCharacter(playerKey);
 
-  // shorthand method to hide the deck callout
-  const _hideDeckCallout = () => setDeckCalloutVisible(false);
 
   // Status badge (one at a time, most important first)
   const status = seatStatus(player, gameStatus);
@@ -252,7 +249,6 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
           </Text>
         )}
       </div>
-      <DeckCallout player={player} hidden={!isDeckCalloutVisible} onHideCallout={_hideDeckCallout} target={'#' + id} />
     </Card>
   );
 }

@@ -169,7 +169,7 @@ function pickGameSnapshot({ deck, players, game }: SavedGameSnapshot): SavedGame
  * Returns the cleaned snapshot, or the reason the body was rejected.
  */
 export function parseGameBody(text: string): { data: SavedGameSnapshot } | { error: string } {
-  if (text.length > GAME_MAX_BODY_BYTES) return { error: 'Body too large.' };
+  if (Buffer.byteLength(text) > GAME_MAX_BODY_BYTES) return { error: 'Body too large.' };
   const parsed = parseJsonBody(text);
   if ('error' in parsed) return parsed;
   if (!isGameSnapshot(parsed.body.game)) return { error: 'Body must be { game: GameSnapshot }.' };

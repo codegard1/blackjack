@@ -248,7 +248,7 @@ export function useTableToasts(
   const [focus, setFocus] = React.useState<ToastFocus>();
   // the latest wait, read when a round's results are queued so a change to it does not rerun the diff
   const holdResults = React.useRef(holdResultsMs);
-  holdResults.current = holdResultsMs;
+  React.useLayoutEffect(() => { holdResults.current = holdResultsMs; });
   const [revealedId, setRevealedId] = React.useState(() => latestEntryId(gameState.activityLog));
   const previous = React.useRef<GameSnapshot | null>(null);
   const nextId = React.useRef(1);

@@ -29,7 +29,7 @@ export interface IPlayerStore extends IPlayerStoreState {
   player: (key: PlayerKey) => IPlayer;
   playerName: (key: PlayerKey) => string;
   reset: () => void;
-  resetPlayer: (key: PlayerKey, omit: string) => void;
+  resetPlayer: (key: PlayerKey) => void;
   startTurn: (key: PlayerKey) => void;
   state: IPlayerStoreState;
   stats: (key: PlayerKey) => PlayerStats;

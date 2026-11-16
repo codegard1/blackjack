@@ -89,7 +89,7 @@ function pickProfileState(state: ProfileState): ProfileState {
  * Returns the cleaned profiles, or the reason the body was rejected.
  */
 export function parseProfilesBody(text: string): { data: ProfileState } | { error: string } {
-  if (text.length > MAX_BODY_BYTES) return { error: 'Body too large.' };
+  if (Buffer.byteLength(text) > MAX_BODY_BYTES) return { error: 'Body too large.' };
   const parsed = parseJsonBody(text);
   if ('error' in parsed) return parsed;
   if (!isProfileState(parsed.body.profiles)) return { error: 'Body must be { profiles: ProfileState }.' };
