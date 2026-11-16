@@ -848,6 +848,47 @@ describe('leaving the previous state alone', () => {
     expect(state.gameStatus).toBe(GameStatus.Init);
   });
 
+  it('takes its time and its randomness from the action, so a stamped action always gives the same result', () => {
+    const profiles = { ...defaultProfileState(), opponentIds: ['haber', 'shevek'] };
+    const stamp = { now: 1700000000000, seed: 12345 };
+    // one blank table for every game below: the reducer leaves it as it is
+    const blank = createGameState();
+    const random = vi.spyOn(Math, 'random');
+    const play = () => {
+      let state = gameReducer(blank, { type: GameAction.NewGame, players: seatsFor(profiles), ...stamp });
+      state = gameReducer(state, { type: GameAction.EvaluateGame, gameStatus: state.gameStatus, ...stamp, seed: 6 });
+      state = gameReducer(state, { type: GameAction.Deal, ...stamp, now: stamp.now + 1000, seed: 7 });
+      return gameReducer(state, { type: GameAction.Shuffle, ...stamp, seed: 8 });
+    };
+    const first = play();
+    const second = play();
+
+    // a new shoe, the computer players' wagers and the shuffle all came out the same
+    expect(JSON.stringify(gameSnapshot(second))).toBe(JSON.stringify(gameSnapshot(first)));
+    expect(first.deck.length).toBeLessThan(52);
+    expect(random).not.toHaveBeenCalled();
+    // every entry carries the time of the action that made it
+    expect(first.lastWriteTime).toBe(new Date(stamp.now).toISOString());
+    expect(first.activityLog.find((entry) => entry.event === 'game')?.timestamp).toBe(stamp.now);
+    expect(first.activityLog.find((entry) => entry.event === 'deal')?.timestamp).toBe(stamp.now + 1000);
+
+    // another seed gives another shoe
+    const other = gameReducer(blank, { type: GameAction.NewGame, players: seatsFor(profiles), ...stamp, seed: 54321 });
+    const same = gameReducer(blank, { type: GameAction.NewGame, players: seatsFor(profiles), ...stamp });
+    expect(other.deck.cardKeys).not.toEqual(same.deck.cardKeys);
+  });
+
+  it('uses the clock and Math.random for an action that carries neither', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1600000000000);
+    const random = vi.spyOn(Math, 'random');
+    const state = gameReducer(createGameState(), { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] });
+    expect(random).toHaveBeenCalled();
+    expect(state.lastWriteTime).toBe(new Date(1600000000000).toISOString());
+    expect(state.activityLog[0].timestamp).toBe(1600000000000);
+    vi.useRealTimers();
+  });
+
   it('gives the same result when one action is applied twice to the same state', () => {
     let state = rig(startDefaultGame(), 'Spade_10', 'Heart_6', 'Club_10', 'Heart_7', 'Club_5');
     state = gameReducer(state, { type: GameAction.Deal });

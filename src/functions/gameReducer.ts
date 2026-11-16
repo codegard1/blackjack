@@ -9,6 +9,7 @@ import { evaluateGame } from "./evaluateGame";
 import { debugLog } from "./debugLog";
 import { recordActivity } from "./activity";
 import { restoreGameState } from "./persistence";
+import { seededRandom } from "./random";
 import {
   advanceTurn, applyRoster, canDoubleDown, canSplit, collectAntes, isDealer, playerSeats, refillDeck, reshuffleIfLow, resolveNaturals,
   resolveShowdown, roundStake, seatOrder, setControl,
@@ -54,7 +55,12 @@ export function gameReducer(state: GameState, action: IGameReducerAction): GameS
   // Play the action on copies of the deck and the players. Everything below changes them in
   // place, and the state that was passed in must stay as it was: React may run a reducer twice
   // for one action, and whatever holds the earlier state (a snapshot, a comparison) relies on it.
-  return applyAction({ ...state, deck: state.deck.clone(), playerStore: state.playerStore.clone() }, action);
+  const deck = state.deck.clone();
+  // The time and the randomness come from the action when it carries them (see stampAction),
+  // so the same action gives the same result. Without them the clock and Math.random are used.
+  if (action.seed !== undefined) deck.randomSource = seededRandom(action.seed);
+  const lastWriteTime = new Date(action.now ?? Date.now()).toISOString();
+  return applyAction({ ...state, deck, playerStore: state.playerStore.clone(), lastWriteTime }, action);
 }
 
 /**
@@ -78,9 +84,6 @@ function applyAction(state: GameState, action: IGameReducerAction): GameState {
 
   // Announce
   debugLog('GameAction.' + type, action);
-
-  // Mandatory state mutations
-  state.lastWriteTime = new Date().toISOString();
 
 
   // Respond to action dispatch
@@ -110,7 +113,7 @@ function applyAction(state: GameState, action: IGameReducerAction): GameState {
     case GameAction.NewGame: {
       if (isTableRules(action.tableRules)) state.tableRules = tableRulesFrom(action.tableRules);
       state.playerStore = new PlayerStore();
-      state.deck = new PlayingCardDeck(undefined, Number(state.tableRules.numberOfDecks));
+      state.deck = new PlayingCardDeck(undefined, Number(state.tableRules.numberOfDecks), state.deck.randomSource);
       state.pot = 0;
       state.winner = undefined;
       state.loser = undefined;
@@ -256,8 +259,6 @@ function applyAction(state: GameState, action: IGameReducerAction): GameState {
       } else {
         throw new Error('There are not enough cards left in the deck to draw');
       }
-
-      state.lastWriteTime = new Date().toISOString();
 
       return state;
     }

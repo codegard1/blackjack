@@ -8,17 +8,7 @@ import { gameReducer } from "./gameReducer";
 import { emptyStats } from "./profiles";
 import { decideSeatMove, isBot } from "./round";
 
-/** A seeded random number generator (mulberry32): the same seed gives the same history */
-export function seededRandom(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6D2B79F5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+export { seededRandom } from "./random";
 
 export type SimulationOptions = {
   /** rounds to play in all */

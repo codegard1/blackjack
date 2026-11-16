@@ -2,7 +2,6 @@
     https://github.com/codegard1/node-shuffle.git */
 
 import { PlayingCard } from "./PlayingCard";
-import { getRandomIndex } from "../functions/getRandomIndex";
 import { handValue } from "../functions/getHandValue";
 import { IPlayingCardDeck } from "../interfaces";
 import { DeckState, PlayerHand, PlayerHandList, PlayerKey, PlayingCardKey } from "../types";
@@ -46,8 +45,15 @@ export class PlayingCardDeck implements IPlayingCardDeck {
       index === 0 ? keys.slice() : keys.map((key) => `${key}_${index + 1}`)).flat();
   }
 
-  constructor(options?: DeckState, numberOfDecks = 1) {
+  /**
+   * Where shuffles and random draws get their numbers: Math.random unless the deck is given
+   * another source, such as one seeded from the action being played.
+   */
+  public randomSource: () => number = () => Math.random();
+
+  constructor(options?: DeckState, numberOfDecks = 1, randomSource?: () => number) {
     this.numberOfDecks = numberOfDecks;
+    if (randomSource) this.randomSource = randomSource;
     if (undefined !== options) {
       this.selected = options.selectedKeys.map((key) => this.newCard(key));
       this.drawn = options.drawnKeys.map((key) => this.newCard(key));
@@ -58,8 +64,9 @@ export class PlayingCardDeck implements IPlayingCardDeck {
     }
   }
 
-  private random(): number {
-    return Math.random();
+  /** A number in [0, 1) from the deck's random source */
+  public random(): number {
+    return this.randomSource();
   }
 
   /**
@@ -93,7 +100,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
   }
 
   public get randomIndex(): number {
-    return getRandomIndex(this.cards);
+    return Math.floor(this.random() * this.cards.length);
   }
 
   /**
