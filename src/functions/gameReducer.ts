@@ -50,8 +50,19 @@ export { canDoubleDown, canSplit } from "./round";
  * @param action action containing the state parameters
  * @returns modified game state
  */
-export function gameReducer(state: GameState, action: IGameReducerAction) {
-  state = { ...state };
+export function gameReducer(state: GameState, action: IGameReducerAction): GameState {
+  // Play the action on copies of the deck and the players. Everything below changes them in
+  // place, and the state that was passed in must stay as it was: React may run a reducer twice
+  // for one action, and whatever holds the earlier state (a snapshot, a comparison) relies on it.
+  return applyAction({ ...state, deck: state.deck.clone(), playerStore: state.playerStore.clone() }, action);
+}
+
+/**
+ * Apply one action to a state this call owns, changing it in place and returning it.
+ * An action that is made of others (a deal that starts a round, a double down) runs them
+ * here, on the same copies.
+ */
+function applyAction(state: GameState, action: IGameReducerAction): GameState {
 
   // Action props
   const {
@@ -261,7 +272,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     case GameAction.Deal: {
       const hasCardsInHands = state.playerStore.all.some((player) => state.deck.getHands(player.key).some((hand) => hand.cards.length));
       if (hasCardsInHands || state.gameStatus >= GameStatus.RoundOver) {
-        state = gameReducer(state, { type: GameAction.NewRound, tableRules: action.tableRules });
+        state = applyAction(state, { type: GameAction.NewRound, tableRules: action.tableRules });
       }
       if (state.playerStore.length === 0) return state;
       const dealtKeys = seatOrder(state).filter((key) => !state.playerStore.player(key).isSittingOut);
@@ -291,9 +302,9 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       if (hand) hand.stake = (hand.stake ?? stake) + stake;
       recordActivity(state, state.playerStore.player(key).title, `doubled down for $${stake}`, 'double', { amount: -stake });
 
-      state = gameReducer(state, { type: GameAction.Draw, playerKey: key, handIndex: index, deckSide: 'top', numberOfCards: 1 });
+      state = applyAction(state, { type: GameAction.Draw, playerKey: key, handIndex: index, deckSide: 'top', numberOfCards: 1 });
       if (state.gameStatus === GameStatus.InProgress && !state.playerStore.player(key).isBusted) {
-        state = gameReducer(state, { type: GameAction.Stay, playerKey: key, handIndex: index });
+        state = applyAction(state, { type: GameAction.Stay, playerKey: key, handIndex: index });
       }
       return state;
     }

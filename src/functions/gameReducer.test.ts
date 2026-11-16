@@ -781,3 +781,82 @@ describe('RestoreGame', () => {
     expect(gameReducer(fresh, { type: GameAction.RestoreGame }).gameStatus).toBe(GameStatus.Init);
   });
 });
+
+describe('leaving the previous state alone', () => {
+  /** Freeze a state and everything reachable from it, so any write to it throws */
+  const deepFreeze = <T,>(value: T, seen = new Set<unknown>()): T => {
+    if (typeof value !== 'object' || value === null || seen.has(value)) return value;
+    seen.add(value);
+    Object.values(value).forEach((item) => deepFreeze(item, seen));
+    return Object.freeze(value);
+  };
+
+  /** Run an action against a frozen state, and check that state still saves to the same thing */
+  const step = (state: GameState, action: Parameters<typeof gameReducer>[1]): GameState => {
+    const before = JSON.stringify(gameSnapshot(state));
+    const next = gameReducer(deepFreeze(state), action);
+    expect(JSON.stringify(gameSnapshot(state))).toBe(before);
+    expect(next).not.toBe(state);
+    expect(next.deck).not.toBe(state.deck);
+    expect(next.playerStore).not.toBe(state.playerStore);
+    return next;
+  };
+
+  const rig = (state: GameState, ...keys: string[]): GameState => {
+    const deck = state.deck.clone();
+    // the top of the deck is the end of the list
+    deck.cards = [...keys].reverse().map((key) => new PlayingCard(key));
+    return { ...state, deck };
+  };
+
+  it('plays a whole round, with a wager, a split, a double down and the settlement, without writing to any state it was given', () => {
+    const profiles = { ...defaultProfileState(), opponentIds: ['ogion'] };
+    let state = step(createGameState(), { type: GameAction.NewGame, players: seatsFor(profiles) });
+    state = step(state, { type: GameAction.EvaluateGame, gameStatus: state.gameStatus });
+    state = step(state, { type: GameAction.Bet, playerKey: 'chris', betAmount: state.minimumBet });
+
+    // chris gets a pair of eights, ogion 9 and 2, the dealer 10 and 7; then the cards the round will draw
+    state = rig(state, 'Spade_8', 'Heart_8', 'Club_9', 'Diamond_2', 'Club_10', 'Heart_7', 'Club_3', 'Diamond_4', 'Club_5', 'Heart_6', 'Spade_10', 'Diamond_10', 'Club_2', 'Heart_2');
+    state = step(state, { type: GameAction.Deal });
+    expect(state.deck.hand('chris')?.cards).toEqual(['Spade_8', 'Heart_8']);
+
+    state = step(state, { type: GameAction.Split, playerKey: 'chris' });
+    expect(state.deck.getHands('chris')).toHaveLength(2);
+    state = step(state, { type: GameAction.Draw, playerKey: 'chris', deckSide: 'top', numberOfCards: 1 });
+    state = step(state, { type: GameAction.Stay, playerKey: 'chris' });
+    state = step(state, { type: GameAction.Stay, playerKey: 'chris' });
+
+    expect(state.controllingPlayer).toBe('ogion');
+    state = step(state, { type: GameAction.DoubleDown, playerKey: 'ogion' });
+    for (let moves = 0; state.gameStatus === GameStatus.InProgress && moves < 10; moves += 1) {
+      state = step(state, { type: GameAction.Stay, playerKey: state.controllingPlayer });
+    }
+    expect(state.gameStatus).toBe(GameStatus.RoundOver);
+    state = step(state, { type: GameAction.EvaluateGame, gameStatus: state.gameStatus });
+    expect(state.gameStatusFlag).toBe(true);
+
+    // between hands: a roster change, the next round, and the rest of the actions the table sends
+    state = step(state, { type: GameAction.SetRoster, players: seatsFor({ ...profiles, opponentIds: ['ogion', 'shevek'] }) });
+    expect(state.playerStore.activePlayerKeys).toContain('shevek');
+    state = step(state, { type: GameAction.Deal, tableRules: { ...defaultTableRules, numberOfDecks: '2' } });
+    expect(state.round).toBe(2);
+    state = step(state, { type: GameAction.Shuffle });
+    state = step(state, { type: GameAction.Select, cardKey: 'Spade_8' });
+    state = step(state, { type: GameAction.Unselect, cardKey: 'Spade_8' });
+    state = step(state, { type: GameAction.RestoreGame, snapshot: JSON.parse(JSON.stringify(gameSnapshot(state))) });
+    state = step(state, { type: GameAction.ResetGame });
+    expect(state.gameStatus).toBe(GameStatus.Init);
+  });
+
+  it('gives the same result when one action is applied twice to the same state', () => {
+    let state = rig(startDefaultGame(), 'Spade_10', 'Heart_6', 'Club_10', 'Heart_7', 'Club_5');
+    state = gameReducer(state, { type: GameAction.Deal });
+    const action = { type: GameAction.Draw, playerKey: 'chris', deckSide: 'top' as const, numberOfCards: 1 };
+    const once = gameReducer(state, action);
+    const twice = gameReducer(state, action);
+    expect(once.deck.hand('chris')?.cards).toEqual(['Spade_10', 'Heart_6', 'Club_5']);
+    expect(twice.deck.state).toEqual(once.deck.state);
+    expect(twice.playerStore.players).toEqual(once.playerStore.players);
+    expect(state.deck.hand('chris')?.cards).toEqual(['Spade_10', 'Heart_6']);
+  });
+});

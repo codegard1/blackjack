@@ -62,6 +62,27 @@ export class PlayingCardDeck implements IPlayingCardDeck {
     return Math.random();
   }
 
+  /**
+   * A copy that shares nothing that can change with this deck: its own lists of cards
+   * and its own hands. The cards themselves never change, so both decks hold the same ones.
+   * The reducer plays each action on a copy, which leaves the state before it as it was.
+   */
+  public clone(): PlayingCardDeck {
+    const copyHand = (hand: PlayerHand): PlayerHand => ({
+      ...hand,
+      cards: hand.cards.slice(),
+      handValue: { ...hand.handValue },
+      ...(hand.splitHands ? { splitHands: hand.splitHands.map(copyHand) } : {}),
+    });
+    // built from an empty state, so the copy is not shuffled first only to be overwritten
+    const copy = new PlayingCardDeck({ selectedKeys: [], drawnKeys: [], cardKeys: [], playerHands: {} }, this.numberOfDecks);
+    copy.selected = this.selected.slice();
+    copy.drawn = this.drawn.slice();
+    copy.cards = this.cards.slice();
+    copy.playerHands = Object.fromEntries(Object.entries(this.playerHands).map(([key, hand]) => [key, copyHand(hand)]));
+    return copy;
+  }
+
   public get state(): DeckState {
     return {
       selectedKeys: this.selectedKeys,
