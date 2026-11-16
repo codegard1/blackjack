@@ -3,6 +3,7 @@ import { PlayingCard } from '../classes/PlayingCard';
 import { PlayingCardDeck } from '../classes/PlayingCardDeck';
 import { gameDefaults } from '../context';
 import { GameAction, GameStatus } from '../enums';
+import { GameReducerAction } from '../interfaces';
 import { GameState, TableRules, defaultTableRules } from '../types';
 import { gameReducer } from './gameReducer';
 import { gameSnapshot } from './persistence';
@@ -20,9 +21,9 @@ const createGameState = (): GameState => ({
 const startDefaultGame = (): GameState => {
   const started = gameReducer(createGameState(), {
     type: GameAction.NewGame,
-    playerKey: ['chris', 'dealer'],
+    playerKeys: ['chris', 'dealer'],
   });
-  return gameReducer(started, { type: GameAction.EvaluateGame, gameStatus: GameStatus.InProgress });
+  return gameReducer(started, { type: GameAction.EvaluateGame });
 };
 
 beforeEach(() => {
@@ -38,7 +39,7 @@ afterEach(() => {
 describe('configurable table rules', () => {
   const startWithRules = (rules: Partial<TableRules> = {}) => {
     const state = gameReducer(createGameState(), {
-      type: GameAction.NewGame, playerKey: ['chris', 'dealer'],
+      type: GameAction.NewGame, playerKeys: ['chris', 'dealer'],
       tableRules: { ...defaultTableRules, ...rules },
     });
     return gameReducer(state, { type: GameAction.EvaluateGame });
@@ -108,7 +109,8 @@ describe('configurable table rules', () => {
     state.deck.cards = ['Club_7', 'Heart_10', 'Diamond_9', 'Spade_10'].map((key) => new PlayingCard(key));
     state = gameReducer(state, { type: GameAction.Deal });
     const tableRules: TableRules = { numberOfDecks: '2', dealerSoft17: 'hit', blackjackPayout: '6:5' };
-    state = gameReducer(state, { type: GameAction.Stay, playerKey: 'chris', tableRules });
+    // a move during a hand has no place for table rules: the action's type does not take them
+    state = gameReducer(state, { type: GameAction.Stay, playerKey: 'chris' });
     expect(state.tableRules).toEqual(defaultTableRules);
     state = gameReducer(state, { type: GameAction.Stay, playerKey: 'dealer' });
     state = gameReducer(state, { type: GameAction.EvaluateGame });
@@ -212,7 +214,7 @@ describe('game behavior baseline', () => {
     const firstGame = startDefaultGame();
     const wagered = gameReducer(firstGame, { type: GameAction.Bet, playerKey: 'chris', betAmount: 25 });
     const reset = gameReducer(wagered, { type: GameAction.ResetGame });
-    const secondGame = gameReducer(reset, { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] });
+    const secondGame = gameReducer(reset, { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] });
 
     // first game: game started, the human's ante, one wager; second game: game started
     expect(secondGame.activityLog.map((entry) => entry.sessionId)).toEqual([1, 1, 1, 2]);
@@ -362,7 +364,7 @@ const dealHands = (state: GameState, chris: string[], dealer: string[]): GameSta
 };
 
 const settle = (state: GameState): GameState =>
-  gameReducer(state, { type: GameAction.EvaluateGame, gameStatus: state.gameStatus });
+  gameReducer(state, { type: GameAction.EvaluateGame });
 
 describe('blackjack rules', () => {
   it('pushes when both players are dealt blackjack and returns stakes', () => {
@@ -469,7 +471,7 @@ describe('blackjack rules', () => {
 const startWithBots = (opponentIds: string[], random = 0.99): GameState => {
   vi.spyOn(Math, 'random').mockReturnValue(random);
   const started = gameReducer(createGameState(), { type: GameAction.NewGame, players: seatsFor({ ...defaultProfileState(), opponentIds }) });
-  return gameReducer(started, { type: GameAction.EvaluateGame, gameStatus: GameStatus.InProgress });
+  return gameReducer(started, { type: GameAction.EvaluateGame });
 };
 
 /** Unused cards under the stacked ones, so a new round does not reshuffle the stack away */
@@ -778,7 +780,7 @@ describe('RestoreGame', () => {
 
     const fresh = createGameState();
     expect(gameReducer(fresh, { type: GameAction.RestoreGame, snapshot: { nope: true } }).playerStore.length).toBe(0);
-    expect(gameReducer(fresh, { type: GameAction.RestoreGame }).gameStatus).toBe(GameStatus.Init);
+    expect(gameReducer(fresh, { type: GameAction.RestoreGame, snapshot: undefined }).gameStatus).toBe(GameStatus.Init);
   });
 });
 
@@ -812,7 +814,7 @@ describe('leaving the previous state alone', () => {
   it('plays a whole round, with a wager, a split, a double down and the settlement, without writing to any state it was given', () => {
     const profiles = { ...defaultProfileState(), opponentIds: ['ogion'] };
     let state = step(createGameState(), { type: GameAction.NewGame, players: seatsFor(profiles) });
-    state = step(state, { type: GameAction.EvaluateGame, gameStatus: state.gameStatus });
+    state = step(state, { type: GameAction.EvaluateGame });
     state = step(state, { type: GameAction.Bet, playerKey: 'chris', betAmount: state.minimumBet });
 
     // chris gets a pair of eights, ogion 9 and 2, the dealer 10 and 7; then the cards the round will draw
@@ -832,7 +834,7 @@ describe('leaving the previous state alone', () => {
       state = step(state, { type: GameAction.Stay, playerKey: state.controllingPlayer });
     }
     expect(state.gameStatus).toBe(GameStatus.RoundOver);
-    state = step(state, { type: GameAction.EvaluateGame, gameStatus: state.gameStatus });
+    state = step(state, { type: GameAction.EvaluateGame });
     expect(state.gameStatusFlag).toBe(true);
 
     // between hands: a roster change, the next round, and the rest of the actions the table sends
@@ -856,7 +858,7 @@ describe('leaving the previous state alone', () => {
     const random = vi.spyOn(Math, 'random');
     const play = () => {
       let state = gameReducer(blank, { type: GameAction.NewGame, players: seatsFor(profiles), ...stamp });
-      state = gameReducer(state, { type: GameAction.EvaluateGame, gameStatus: state.gameStatus, ...stamp, seed: 6 });
+      state = gameReducer(state, { type: GameAction.EvaluateGame, ...stamp, seed: 6 });
       state = gameReducer(state, { type: GameAction.Deal, ...stamp, now: stamp.now + 1000, seed: 7 });
       return gameReducer(state, { type: GameAction.Shuffle, ...stamp, seed: 8 });
     };
@@ -882,7 +884,7 @@ describe('leaving the previous state alone', () => {
     vi.useFakeTimers();
     vi.setSystemTime(1600000000000);
     const random = vi.spyOn(Math, 'random');
-    const state = gameReducer(createGameState(), { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] });
+    const state = gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] });
     expect(random).toHaveBeenCalled();
     expect(state.lastWriteTime).toBe(new Date(1600000000000).toISOString());
     expect(state.activityLog[0].timestamp).toBe(1600000000000);
@@ -911,12 +913,37 @@ describe('leaving the previous state alone', () => {
   it('gives the same result when one action is applied twice to the same state', () => {
     let state = rig(startDefaultGame(), 'Spade_10', 'Heart_6', 'Club_10', 'Heart_7', 'Club_5');
     state = gameReducer(state, { type: GameAction.Deal });
-    const action = { type: GameAction.Draw, playerKey: 'chris', deckSide: 'top' as const, numberOfCards: 1 };
+    const action: GameReducerAction = { type: GameAction.Draw, playerKey: 'chris', deckSide: 'top', numberOfCards: 1 };
     const once = gameReducer(state, action);
     const twice = gameReducer(state, action);
     expect(once.deck.hand('chris')?.cards).toEqual(['Spade_10', 'Heart_6', 'Club_5']);
     expect(twice.deck.state).toEqual(once.deck.state);
     expect(twice.playerStore.players).toEqual(once.playerStore.players);
     expect(state.deck.hand('chris')?.cards).toEqual(['Spade_10', 'Heart_6']);
+  });
+});
+
+describe('what an action may carry', () => {
+  // These are checked by the compiler (npm run typecheck): each line marked as an error
+  // must be one, or the marker itself fails the check.
+  it('is fixed by its type', () => {
+    const accept = (action: GameReducerAction) => action.type;
+
+    expect(accept({ type: GameAction.Bet, playerKey: 'chris', betAmount: 25 })).toBe(GameAction.Bet);
+    expect(accept({ type: GameAction.Stay })).toBe(GameAction.Stay);
+    expect(accept({ type: GameAction.Deal, now: 1, seed: 2 })).toBe(GameAction.Deal);
+
+    // @ts-expect-error a wager needs its amount
+    accept({ type: GameAction.Bet, playerKey: 'chris' });
+    // @ts-expect-error a move names one seat, not several
+    accept({ type: GameAction.Stay, playerKey: ['chris'] });
+    // @ts-expect-error table rules arrive with a deal or a new game, not with a move
+    accept({ type: GameAction.Draw, playerKey: 'chris', tableRules: defaultTableRules });
+    // @ts-expect-error a roster change needs the roster
+    accept({ type: GameAction.SetRoster });
+    // @ts-expect-error there is nothing to restore without a snapshot
+    accept({ type: GameAction.RestoreGame });
+    // @ts-expect-error a shuffle takes no card
+    accept({ type: GameAction.Shuffle, cardKey: 'Spade_8' });
   });
 });

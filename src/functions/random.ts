@@ -1,4 +1,4 @@
-import { IGameReducerAction } from "../interfaces";
+import { GameReducerAction } from "../interfaces";
 
 /** A seeded random number generator (mulberry32): the same seed gives the same numbers */
 export function seededRandom(seed: number): () => number {
@@ -18,7 +18,7 @@ export function seededRandom(seed: number): () => number {
  * action instead of the clock and Math.random, so the same action applied to the same
  * state always gives the same result. Actions are stamped where they are dispatched.
  */
-export function stampAction(action: IGameReducerAction): IGameReducerAction {
+export function stampAction<Action extends GameReducerAction>(action: Action): Action {
   return {
     ...action,
     now: action.now ?? Date.now(),

@@ -2,7 +2,7 @@ export * from './IAgentProps';
 export * from './ICardContainerProps';
 export * from './ICardStackProps';
 export * from './IControlPanelProps';
-export * from './IGameReducerAction';
+export * from './GameReducerAction';
 export * from './IPlayer';
 export * from './IPlayerContainerProps';
 export * from './IPlayerOpts';

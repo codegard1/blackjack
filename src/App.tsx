@@ -10,7 +10,7 @@ import { AppHeader, OptionsPanel, PlayersDialog, Table } from './components';
 import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
 import { GameAction } from './enums';
 import { collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useGameSync, useProfileSync } from './functions';
-import { IGameReducerAction } from './interfaces';
+import { GameReducerAction } from './interfaces';
 import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark, PAGE_GUTTER } from './theme';
 
 // The page behind the table: a striped felt drawn from the brand color, so it follows
@@ -39,7 +39,7 @@ const App = () => {
   // State from context
   const [gameState, dispatchGame] = React.useReducer(gameReducer, undefined, loadGameState);
   // every action is given its time and a random seed here, so the reducer needs neither the clock nor Math.random
-  const gameDispatch = React.useCallback((action: IGameReducerAction) => dispatchGame(stampAction(action)), []);
+  const gameDispatch = React.useCallback((action: GameReducerAction) => dispatchGame(stampAction(action)), []);
   const [settings, toggleSetting] = React.useReducer(settingReducer, undefined, loadSettings);
   const [profiles, profileDispatch] = React.useReducer(profileReducer, undefined, loadProfiles);
   // The Players dialog opens from the header and from the end-of-hand controls
@@ -68,7 +68,7 @@ const App = () => {
   React.useEffect(() => {
     if (lastEvaluatedStatus.current === statusKey) return;
     lastEvaluatedStatus.current = statusKey;
-    gameDispatch({ type: GameAction.EvaluateGame, gameStatus: gameState.gameStatus });
+    gameDispatch({ type: GameAction.EvaluateGame });
   }, [statusKey, gameState.gameStatus, gameDispatch]);
 
   // When a round settles, carry each player's updated stats back to their profile.

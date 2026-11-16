@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { GameAction } from '../enums';
+import { GameReducerAction } from '../interfaces';
 import { seededRandom, stampAction } from './random';
 
 afterEach(() => {
@@ -25,7 +26,7 @@ describe('stampAction', () => {
     vi.useFakeTimers();
     vi.setSystemTime(1700000000000);
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
-    const action = { type: GameAction.Deal };
+    const action: GameReducerAction = { type: GameAction.Deal };
     expect(stampAction(action)).toEqual({ type: GameAction.Deal, now: 1700000000000, seed: 0x80000000 });
     expect(action).toEqual({ type: GameAction.Deal });
   });

@@ -3,7 +3,7 @@ import { PlayingCardDeck } from "../classes/PlayingCardDeck";
 import { createGameState } from "../context";
 import { defaultplayersArr } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
-import { IGameReducerAction, IPlayerOptions } from "../interfaces";
+import { GameReducerAction, IPlayerOptions } from "../interfaces";
 import { GameState, PlayerHand, isTableRules, tableRulesFrom } from "../types";
 import { evaluateGame } from "./evaluateGame";
 import { debugLog } from "./debugLog";
@@ -51,7 +51,7 @@ export { canDoubleDown, canSplit } from "./round";
  * @param action action containing the state parameters
  * @returns modified game state
  */
-export function gameReducer(state: GameState, action: IGameReducerAction): GameState {
+export function gameReducer(state: GameState, action: GameReducerAction): GameState {
   // Play the action on copies of the deck and the players. Everything below changes them in
   // place, and the state that was passed in must stay as it was: React may run a reducer twice
   // for one action, and whatever holds the earlier state (a snapshot, a comparison) relies on it.
@@ -68,26 +68,13 @@ export function gameReducer(state: GameState, action: IGameReducerAction): GameS
  * An action that is made of others (a deal that starts a round, a double down) runs them
  * here, on the same copies.
  */
-function applyAction(state: GameState, action: IGameReducerAction): GameState {
-
-  // Action props
-  const {
-    cardKey,
-    betAmount,
-    deckSide,
-    handIndex,
-    numberOfCards,
-    playerKey,
-    players,
-    type,
-  } = action;
+function applyAction(state: GameState, action: GameReducerAction): GameState {
 
   // Announce
-  debugLog('GameAction.' + type, action);
+  debugLog('GameAction.' + action.type, action);
 
-
-  // Respond to action dispatch
-  switch (type) {
+  // Respond to action dispatch. Inside each case the action is known to be of that type.
+  switch (action.type) {
 
     // Toggle visibility of the spinner
     case GameAction.SetSpinnerVisible: {
@@ -96,7 +83,8 @@ function applyAction(state: GameState, action: IGameReducerAction): GameState {
     }
 
     case GameAction.Bet: {
-      if (typeof playerKey === 'string' && undefined !== betAmount && state.playerStore.bet(playerKey, betAmount)) {
+      const { playerKey, betAmount } = action;
+      if (state.playerStore.bet(playerKey, betAmount)) {
         state.pot += betAmount;
         if (state.playerStore.currentPlayerKey === playerKey) {
           const hand = state.deck.hand(playerKey, state.activeHandIndex);
@@ -111,6 +99,7 @@ function applyAction(state: GameState, action: IGameReducerAction): GameState {
      * Initiate a new game from scratch
      */
     case GameAction.NewGame: {
+      const { players, playerKeys } = action;
       if (isTableRules(action.tableRules)) state.tableRules = tableRulesFrom(action.tableRules);
       state.playerStore = new PlayerStore();
       state.deck = new PlayingCardDeck(undefined, Number(state.tableRules.numberOfDecks), state.deck.randomSource);
@@ -120,12 +109,10 @@ function applyAction(state: GameState, action: IGameReducerAction): GameState {
       state.gameStatusFlag = false;
 
       // seats come from the players payload; otherwise the keys name default players
-      const seats: IPlayerOptions[] = players ?? (Array.isArray(playerKey)
-        ? playerKey.flatMap((k) => {
-          const p = defaultplayersArr.find((i) => i.key === k);
-          return p ? [{ bank: p.bank, id: p.id, isNPC: p.isNPC, key: k, title: p.title, disabled: p.disabled }] : [];
-        })
-        : []);
+      const seats: IPlayerOptions[] = players ?? (playerKeys ?? []).flatMap((k) => {
+        const p = defaultplayersArr.find((i) => i.key === k);
+        return p ? [{ bank: p.bank, id: p.id, isNPC: p.isNPC, key: k, title: p.title, disabled: p.disabled }] : [];
+      });
       seats.forEach((seat) => {
         state.playerStore.newPlayer(seat);
         state.deck.newPlayerHand(seat.key);
@@ -146,7 +133,8 @@ function applyAction(state: GameState, action: IGameReducerAction): GameState {
      * Seat a new roster between hands; ignored while a hand is in play
      */
     case GameAction.SetRoster: {
-      if (players) applyRoster(state, players);
+      const { players } = action;
+      applyRoster(state, players);
       return state;
     }
 
@@ -205,7 +193,8 @@ function applyAction(state: GameState, action: IGameReducerAction): GameState {
     }
 
     case GameAction.Stay: {
-      const stayingPlayerKey = typeof playerKey === 'string' ? playerKey : state.playerStore.currentPlayerKey;
+      const { playerKey, handIndex } = action;
+      const stayingPlayerKey = playerKey ?? state.playerStore.currentPlayerKey;
       const stayingPlayer = stayingPlayerKey ? state.playerStore.player(stayingPlayerKey) : undefined;
       const stayingHandIndex = handIndex ?? state.activeHandIndex;
       const stayingHand = stayingPlayerKey ? state.deck.hand(stayingPlayerKey, stayingHandIndex) : undefined;
@@ -225,19 +214,21 @@ function applyAction(state: GameState, action: IGameReducerAction): GameState {
 
     // Select a card
     case GameAction.Select: {
-      // If no cardKey was passed then do nothing 
-      if (undefined !== cardKey) state.deck.select(cardKey);
+      const { cardKey } = action;
+      state.deck.select(cardKey);
       return state;
     }
 
     // Unselect a card
     case GameAction.Unselect: {
-      if (undefined !== cardKey) state.deck.unselect(cardKey);
+      const { cardKey } = action;
+      state.deck.unselect(cardKey);
       return state;
     }
 
     // Draw card(s) from the deck
     case GameAction.Draw: {
+      const { playerKey, handIndex, deckSide, numberOfCards } = action;
       const _num = numberOfCards ?? 1;
       // a long round with many seats can run the deck dry; reshuffle what is not in play
       if (_num > 0 && state.deck.length < _num && state.gameStatus === GameStatus.InProgress) refillDeck(state);
@@ -249,7 +240,7 @@ function applyAction(state: GameState, action: IGameReducerAction): GameState {
         : deckSide === 'random' ? state.deck.drawRandom(_num)
         : state.deck.drawFromBottomOfDeck(_num);
       const where = deckSide === 'top' ? 'from the top' : deckSide === 'random' ? 'at random' : 'from the bottom';
-      if (undefined !== playerKey && typeof playerKey === 'string') {
+      if (playerKey !== undefined) {
         if (!state.deck.playerHands[playerKey]) state.deck.newPlayerHand(playerKey);
         const index = handIndex ?? state.activeHandIndex;
         const hand = state.deck.hand(playerKey, index)!;
@@ -292,7 +283,8 @@ function applyAction(state: GameState, action: IGameReducerAction): GameState {
      * (unless the card busts them). Only allowed on a two-card hand.
      */
     case GameAction.DoubleDown: {
-      const key = typeof playerKey === 'string' ? playerKey : state.playerStore.currentPlayerKey;
+      const { playerKey, handIndex } = action;
+      const key = playerKey ?? state.playerStore.currentPlayerKey;
       const index = handIndex ?? state.activeHandIndex;
       if (!key || !canDoubleDown(state, key, index)) return state;
 
@@ -311,7 +303,8 @@ function applyAction(state: GameState, action: IGameReducerAction): GameState {
     }
 
     case GameAction.Split: {
-      const key = typeof playerKey === 'string' ? playerKey : state.playerStore.currentPlayerKey;
+      const { playerKey, handIndex } = action;
+      const key = playerKey ?? state.playerStore.currentPlayerKey;
       const index = handIndex ?? state.activeHandIndex;
       if (!key || !canSplit(state, key, index)) return state;
       const player = state.playerStore.player(key);

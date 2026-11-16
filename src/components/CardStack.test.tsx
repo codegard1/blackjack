@@ -7,7 +7,7 @@ import { CardStack } from './CardStack';
 
 describe('CardStack', () => {
   it('keeps hand totals available to screen readers when visual totals are hidden', () => {
-    const state = gameReducer(createGameState(), { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] });
+    const state = gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] });
     const player = state.playerStore.player('chris');
     const cards = ['Club_10', 'Heart_6'] as const;
 

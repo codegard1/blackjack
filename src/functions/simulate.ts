@@ -89,13 +89,13 @@ export function simulateHistory(options: SimulationOptions): SimulationResult {
       const length = sessionLength[0] + Math.floor(rng() * (sessionLength[1] - sessionLength[0] + 1));
       let state = gameReducer(createGameState(), { type: GameAction.NewGame, players: seatsFor(chooseLineup(rng), stats) });
       // the first evaluation collects the opening antes
-      state = gameReducer(state, { type: GameAction.EvaluateGame, gameStatus: state.gameStatus });
+      state = gameReducer(state, { type: GameAction.EvaluateGame });
 
       for (let inSession = 0; inSession < length && played < rounds; inSession++) {
         state = gameReducer(state, { type: GameAction.Deal });
         if (state.playerStore.all.filter(isBot).every((player) => player.isSittingOut)) break;
         state = playRound(state, rng);
-        state = gameReducer(state, { type: GameAction.EvaluateGame, gameStatus: state.gameStatus });
+        state = gameReducer(state, { type: GameAction.EvaluateGame });
 
         state.playerStore.all.forEach((player) => {
           stats[player.key] = { ...player.stats };

@@ -21,7 +21,7 @@ vi.mock('../lib/mongo', async (importOriginal) => ({
 
 const SECRET = 'correct-horse-battery-staple-2026';
 const OWNER = mintOwnerId('browser', SECRET);
-const snapshot = () => JSON.parse(JSON.stringify(gameSnapshot(gameReducer(createGameState(), { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] }))));
+const snapshot = () => JSON.parse(JSON.stringify(gameSnapshot(gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] }))));
 
 const call = (method: string, body?: unknown) => handler(
   new Request('http://localhost/api/game', { method, headers: { Authorization: `Bearer ${OWNER}` }, body: body === undefined ? undefined : JSON.stringify(body) }),
