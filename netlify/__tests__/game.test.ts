@@ -1,5 +1,4 @@
 // @vitest-environment node
-import type { Context } from '@netlify/functions';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createGameState } from '../../src/context';
 import { GameAction } from '../../src/enums';
@@ -25,8 +24,7 @@ const OWNER = mintOwnerId('browser', SECRET);
 const snapshot = () => JSON.parse(JSON.stringify(gameSnapshot(gameReducer(createGameState(), { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] }))));
 
 const call = (method: string, body?: unknown) => handler(
-  new Request(`http://localhost/api/game/${encodeURIComponent(OWNER)}`, { method, body: body === undefined ? undefined : JSON.stringify(body) }),
-  { params: { ownerId: encodeURIComponent(OWNER) } } as unknown as Context,
+  new Request('http://localhost/api/game', { method, headers: { Authorization: `Bearer ${OWNER}` }, body: body === undefined ? undefined : JSON.stringify(body) }),
 );
 
 beforeEach(() => {
@@ -42,8 +40,8 @@ afterEach(() => {
 });
 
 describe('game function', () => {
-  it('is routed with and without the owner id for GET and PUT, with a looser rate limit than profiles', () => {
-    expect(config.path).toEqual(['/api/game', '/api/game/:ownerId']);
+  it('is routed without the owner id for GET and PUT, with a looser rate limit than profiles', () => {
+    expect(config.path).toBe('/api/game');
     expect(config.method).toEqual(['GET', 'PUT']);
     expect(config.rateLimit).toMatchObject({ aggregateBy: ['ip'], windowLimit: 120 });
   });
@@ -74,8 +72,7 @@ describe('game function', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const unsigned = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c';
     const response = await handler(
-      new Request(`http://localhost/api/game/${unsigned}`, { method: 'PUT', body: JSON.stringify({ game: snapshot() }) }),
-      { params: { ownerId: unsigned } } as unknown as Context,
+      new Request('http://localhost/api/game', { method: 'PUT', headers: { Authorization: `Bearer ${unsigned}` }, body: JSON.stringify({ game: snapshot() }) }),
     );
     expect(response.status).toBe(403);
     expect(updateOne).not.toHaveBeenCalled();

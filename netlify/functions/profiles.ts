@@ -9,8 +9,7 @@ import { MAX_BODY_BYTES, parseProfilesBody } from '../lib/validate';
  * GET /api/profiles  -> 200 { profiles, updatedAt } or 404
  * PUT /api/profiles  <- { profiles }  -> 200 { updatedAt }
  *
- * The owner id travels in the Authorization header. The route with the id in it is
- * kept for installed clients from before that, and can go once they have updated.
+ * The owner id travels in the Authorization header, never in the address.
  */
 export default createStateHandler({
   name: 'profiles',
@@ -21,7 +20,7 @@ export default createStateHandler({
 });
 
 export const config: Config = {
-  path: ['/api/profiles', '/api/profiles/:ownerId'],
+  path: '/api/profiles',
   method: ['GET', 'PUT'],
   rateLimit: { action: 'rate_limit', aggregateBy: ['ip'], windowSize: 60, windowLimit: 60 },
 };

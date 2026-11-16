@@ -11,8 +11,7 @@ import { GAME_MAX_BODY_BYTES, parseGameBody } from '../lib/validateGame';
  *
  * The game changes with every action, so the limit allows a few writes a second.
  *
- * The owner id travels in the Authorization header. The route with the id in it is
- * kept for installed clients from before that, and can go once they have updated.
+ * The owner id travels in the Authorization header, never in the address.
  */
 export default createStateHandler({
   name: 'game',
@@ -23,7 +22,7 @@ export default createStateHandler({
 });
 
 export const config: Config = {
-  path: ['/api/game', '/api/game/:ownerId'],
+  path: '/api/game',
   method: ['GET', 'PUT'],
   rateLimit: { action: 'rate_limit', aggregateBy: ['ip'], windowSize: 60, windowLimit: 120 },
 };
