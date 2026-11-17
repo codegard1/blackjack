@@ -65,11 +65,11 @@ describe('toCommunity', () => {
 
 describe('refreshCommunity', () => {
   it('adopts the server copy and keeps it for the next visit', async () => {
-    const fetchMock = vi.fn(async () => Response.json(community));
+    const fetchMock = vi.fn(() => Promise.resolve(Response.json(community)));
     vi.stubGlobal('fetch', fetchMock);
     expect(getCommunity()).toEqual(emptyCommunity());
     await refreshCommunity();
-    expect(fetchMock).toHaveBeenCalledWith(`/api/npc-stats/${encodeURIComponent(OWNER)}`, expect.anything());
+    expect(fetchMock).toHaveBeenCalledWith('/api/npc-stats', expect.objectContaining({ headers: expect.objectContaining({ Authorization: `Bearer ${OWNER}` }) }));
     expect(getCommunity()).toEqual(community);
     resetCommunity();
     expect(getCommunity()).toEqual(community);
@@ -78,17 +78,17 @@ describe('refreshCommunity', () => {
   it('keeps the saved copy when the server has nothing, fails, or sends nonsense', async () => {
     localStorage.setItem(StoreName.COMMUNITYSTORE, JSON.stringify(community));
     resetCommunity();
-    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ error: 'Not found.' }, { status: 404 })));
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(Response.json({ error: 'Not found.' }, { status: 404 }))));
     await refreshCommunity();
-    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline'); }));
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('offline'))));
     await refreshCommunity();
-    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ generatedAt: 'soon' })));
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(Response.json({ generatedAt: 'soon' }))));
     await refreshCommunity();
     expect(getCommunity()).toEqual(community);
   });
 
   it('forgets an owner id the server refuses', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ error: 'Unknown owner id.' }, { status: 403 })));
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(Response.json({ error: 'Unknown owner id.' }, { status: 403 }))));
     await refreshCommunity();
     expect(JSON.parse(localStorage.getItem(StoreName.SYNCSTORE)!).ownerId).toBeUndefined();
   });

@@ -8,17 +8,7 @@ import { gameReducer } from "./gameReducer";
 import { emptyStats } from "./profiles";
 import { decideSeatMove, isBot } from "./round";
 
-/** A seeded random number generator (mulberry32): the same seed gives the same history */
-export function seededRandom(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6D2B79F5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+export { seededRandom } from "./random";
 
 export type SimulationOptions = {
   /** rounds to play in all */
@@ -99,13 +89,13 @@ export function simulateHistory(options: SimulationOptions): SimulationResult {
       const length = sessionLength[0] + Math.floor(rng() * (sessionLength[1] - sessionLength[0] + 1));
       let state = gameReducer(createGameState(), { type: GameAction.NewGame, players: seatsFor(chooseLineup(rng), stats) });
       // the first evaluation collects the opening antes
-      state = gameReducer(state, { type: GameAction.EvaluateGame, gameStatus: state.gameStatus });
+      state = gameReducer(state, { type: GameAction.EvaluateGame });
 
       for (let inSession = 0; inSession < length && played < rounds; inSession++) {
         state = gameReducer(state, { type: GameAction.Deal });
         if (state.playerStore.all.filter(isBot).every((player) => player.isSittingOut)) break;
         state = playRound(state, rng);
-        state = gameReducer(state, { type: GameAction.EvaluateGame, gameStatus: state.gameStatus });
+        state = gameReducer(state, { type: GameAction.EvaluateGame });
 
         state.playerStore.all.forEach((player) => {
           stats[player.key] = { ...player.stats };

@@ -1,5 +1,4 @@
 // @vitest-environment node
-import type { Context } from '@netlify/functions';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfigError } from '../lib/mongo';
 import { mintOwnerId } from '../lib/owner';
@@ -24,8 +23,7 @@ const OWNER = mintOwnerId('browser', SECRET);
 const found = { generatedAt: 7, stats: { ogion: { numberOfGamesPlayed: 16 } }, counted: {} };
 
 const call = (ownerId = OWNER) => handler(
-  new Request(`http://localhost/api/npc-stats/${ownerId}`),
-  { params: { ownerId } } as unknown as Context,
+  new Request('http://localhost/api/npc-stats', { headers: { Authorization: `Bearer ${ownerId}` } }),
 );
 
 beforeEach(() => vi.stubEnv('OWNER_ID_SECRET', SECRET));
@@ -37,8 +35,8 @@ afterEach(() => {
 });
 
 describe('npc-stats function', () => {
-  it('is a rate limited GET routed by owner id', () => {
-    expect(config.path).toBe('/api/npc-stats/:ownerId');
+  it('is a rate limited GET with no owner id in its address', () => {
+    expect(config.path).toBe('/api/npc-stats');
     expect(config.method).toBe('GET');
     expect(config.rateLimit).toMatchObject({ aggregateBy: ['ip'] });
   });
@@ -51,8 +49,9 @@ describe('npc-stats function', () => {
 
   it('returns the sums for the asking owner, or 404 before the first run', async () => {
     readNpcStats.mockResolvedValueOnce(found);
-    const response = await call(encodeURIComponent(OWNER));
+    const response = await call();
     expect(response.status).toBe(200);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
     expect(await response.json()).toEqual(found);
     expect(readNpcStats).toHaveBeenCalledWith(expect.anything(), OWNER);
 

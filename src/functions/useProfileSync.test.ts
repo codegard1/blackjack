@@ -1,7 +1,6 @@
 import React from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { IProfileAction } from '../interfaces';
 import { ProfileState } from '../types';
 import { defaultProfileState, profileReducer } from './profiles';
 import { loadSyncState, saveSyncState } from './remote';
@@ -18,7 +17,7 @@ function renderSync(initial: ProfileState, fetch: ReturnType<typeof vi.fn>) {
   return renderHook(() => {
     const [profiles, dispatch] = React.useReducer(profileReducer, initial);
     useProfileSync(profiles, dispatch, { enabled: true });
-    return { profiles, dispatch: dispatch as React.Dispatch<IProfileAction> };
+    return { profiles, dispatch: dispatch };
   });
 }
 
@@ -66,7 +65,8 @@ describe('useProfileSync', () => {
     await flush();
 
     expect(fetch.mock.calls[0]).toEqual(['/api/owner', expect.objectContaining({ method: 'POST' })]);
-    expect(fetch.mock.calls[1][0]).toBe(`/api/profiles/${encodeURIComponent(OWNER)}`);
+    expect(fetch.mock.calls[1][0]).toBe('/api/profiles');
+    expect(fetch.mock.calls[1][1].headers.Authorization).toBe(`Bearer ${OWNER}`);
     expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 5, game: 0 } });
   });
 
@@ -85,7 +85,8 @@ describe('useProfileSync', () => {
 
     expect(result.current.profiles).toEqual(local);
     expect(fetch.mock.calls[1][0]).toBe('/api/owner');
-    expect(fetch.mock.calls[2][0]).toBe(`/api/profiles/${encodeURIComponent(replacement)}`);
+    expect(fetch.mock.calls[2][0]).toBe('/api/profiles');
+    expect(fetch.mock.calls[2][1].headers.Authorization).toBe(`Bearer ${replacement}`);
     expect(fetch.mock.calls[2][1]).toMatchObject({ method: 'PUT' });
     expect(loadSyncState()).toEqual({ ownerId: replacement, syncedAt: { profiles: 30, game: 0 } });
   });

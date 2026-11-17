@@ -8,6 +8,27 @@
   --playing-card-ink: var(--colorNeutralForeground1);
   --playing-card-border: var(--colorNeutralStroke1);
   position: relative;
+  display: block;
+  padding: 0;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--playing-card-ink);
+  font-family: inherit;
+  text-align: left;
+  cursor: default;
+  /* the card is a stage: its faces look like a card, so one can turn over behind the other */
+  user-select: none;
+}
+
+/*
+ * A face of the card: the front with its corners, or the back with its pattern. Both
+ * fill the card, share its corner radius, and hide when turned away from the viewer.
+ */
+.playing-card-face {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -16,12 +37,16 @@
   overflow: hidden;
   box-sizing: border-box;
   border: 1px solid var(--playing-card-border);
-  border-radius: 8px;
+  border-radius: inherit;
   background-color: var(--playing-card-face);
   color: var(--playing-card-ink);
-  font-family: inherit;
-  text-align: left;
-  cursor: default;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  /* the shadow is on the faces, not the card, so it turns with the card instead of staying behind */
+  box-shadow: var(--shadow4);
+  transition:
+    box-shadow 200ms cubic-bezier(0.33, 0, 0.67, 1),
+    border-color 200ms cubic-bezier(0.33, 0, 0.67, 1);
 }
 
 .playing-card.is-red {
@@ -116,7 +141,7 @@
  * the pattern classes draw with them, scaled to the card height. Every back has
  * a light margin and a thin inner line, like a printed card.
  */
-.playing-card.is-back {
+.playing-card-face.is-back {
   --card-back-primary: var(--colorBrandBackground);
   --card-back-secondary: var(--colorBrandBackground2);
   --card-back-unit: calc(var(--playing-card-height, 100px) * 0.12);
@@ -127,7 +152,7 @@
   padding: var(--card-back-margin);
 }
 
-.playing-card.is-back::after {
+.playing-card-face.is-back::after {
   content: '';
   position: absolute;
   inset: var(--card-back-margin);
@@ -136,7 +161,7 @@
   pointer-events: none;
 }
 
-.playing-card.is-pattern-rings {
+.playing-card-face.is-pattern-rings {
   background-image:
     radial-gradient(closest-side, transparent 96%, var(--card-back-secondary) 97%),
     radial-gradient(closest-side, transparent 96%, var(--card-back-secondary) 97%);
@@ -144,13 +169,13 @@
   background-size: calc(var(--card-back-unit) * 4) calc(var(--card-back-unit) * 4);
 }
 
-.playing-card.is-pattern-lattice {
+.playing-card-face.is-pattern-lattice {
   background-image:
     repeating-linear-gradient(45deg, var(--card-back-secondary) 0 1px, transparent 1px var(--card-back-unit)),
     repeating-linear-gradient(-45deg, var(--card-back-secondary) 0 1px, transparent 1px var(--card-back-unit));
 }
 
-.playing-card.is-pattern-stripes {
+.playing-card-face.is-pattern-stripes {
   background-image:
     repeating-linear-gradient(
       135deg,
@@ -159,17 +184,17 @@
     );
 }
 
-.playing-card.is-pattern-checker {
+.playing-card-face.is-pattern-checker {
   background-image:
     conic-gradient(var(--card-back-secondary) 25%, transparent 0 50%, var(--card-back-secondary) 0 75%, transparent 0);
   background-size: calc(var(--card-back-unit) * 1.5) calc(var(--card-back-unit) * 1.5);
 }
 
-.playing-card.is-pattern-solid {
+.playing-card-face.is-pattern-solid {
   background-image: none;
 }
 
-.playing-card.is-pattern-solid::after {
+.playing-card-face.is-pattern-solid::after {
   border-width: 2px;
 }
 
@@ -248,16 +273,16 @@
   height: 100px;
   flex-shrink: 0;
   animation: playing-card-deal 420ms cubic-bezier(0.1, 0.9, 0.2, 1) both;
-  box-shadow: var(--shadow4);
-  transition:
-    transform 200ms cubic-bezier(0.33, 0, 0.67, 1),
-    box-shadow 200ms cubic-bezier(0.33, 0, 0.67, 1),
-    border-color 200ms cubic-bezier(0.33, 0, 0.67, 1);
+  transition: transform 200ms cubic-bezier(0.33, 0, 0.67, 1);
 }
 
 .playing-card:hover,
 .playing-card:focus-visible {
   transform: translateY(-4px);
+}
+
+.playing-card:hover .playing-card-face,
+.playing-card:focus-visible .playing-card-face {
   box-shadow: var(--shadow16);
 }
 
@@ -269,7 +294,35 @@
 .playing-card.is-selected {
   --playing-card-border: var(--colorBrandStroke1);
   transform: translateY(-8px);
+}
+
+.playing-card.is-selected .playing-card-face {
   box-shadow: 0 0 0 2px var(--colorBrandStroke1), var(--shadow16);
+}
+
+/*
+ * The dealer's hole card keeps both faces on an inner layer that turns about its
+ * vertical axis. The back is half a turn round from the front, so it shows once the
+ * layer has turned. The card sets --card-flip-ms from CARD_FLIP_MS (useCardFlip.ts).
+ */
+.playing-card.is-flippable {
+  perspective: calc(var(--playing-card-height, 100px) * 6);
+}
+
+.playing-card-inner {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-style: preserve-3d;
+  transition: transform var(--card-flip-ms, 500ms) cubic-bezier(0.33, 0, 0.67, 1);
+}
+
+.playing-card-inner > .playing-card-face.is-back {
+  transform: rotateY(180deg);
+}
+
+.playing-card.is-flippable.is-face-down .playing-card-inner {
+  transform: rotateY(180deg);
 }
 
 /* a preview in the options panel sits still */
@@ -279,9 +332,15 @@
   transition: none;
 }
 
+/* with reduced motion a card swaps faces at once, with no turn */
 @media (prefers-reduced-motion: reduce) {
   .playing-card {
     animation: none;
+    transition: none;
+  }
+
+  .playing-card-inner,
+  .playing-card-face {
     transition: none;
   }
 }

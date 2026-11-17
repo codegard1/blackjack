@@ -145,19 +145,8 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [
-    hidden,
-    npcFlag,
-    isPlayDisabled,
-    isDoubleDownDisabled,
-    isBtnDisabled,
-    isRoundComplete,
-    isDealDisabled,
-    minimumBet,
-    playerKey,
-    profiles,
-    gameDispatch,
-  ]);
+    // no dependency list: the handlers above are made anew on every render, so the listener is too
+  });
 
   // Once the hand is over the human gets two choices instead of the action toolbar
   if (!hidden && !npcFlag && isRoundComplete) {

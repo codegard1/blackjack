@@ -6,7 +6,7 @@ import { gameReducer } from '../../src/functions/gameReducer';
 import { gameSnapshot } from '../../src/functions/persistence';
 import { GAME_MAX_BODY_BYTES, isGameSnapshot, parseGameBody } from './validateGame';
 
-const dealt = () => gameReducer(gameReducer(createGameState(), { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] }), { type: GameAction.Deal });
+const dealt = () => gameReducer(gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] }), { type: GameAction.Deal });
 const body = (game: unknown) => JSON.stringify({ game });
 
 describe('isGameSnapshot', () => {
@@ -30,7 +30,7 @@ describe('isGameSnapshot', () => {
 describe('parseGameBody', () => {
   it('round-trips an eight-deck shoe and validates and cleans its active rules', () => {
     const state = gameReducer(createGameState(), {
-      type: GameAction.NewGame, playerKey: ['chris', 'dealer'],
+      type: GameAction.NewGame, playerKeys: ['chris', 'dealer'],
       tableRules: { numberOfDecks: '8', dealerSoft17: 'hit', blackjackPayout: '6:5' },
     });
     const snapshot = gameSnapshot(state);

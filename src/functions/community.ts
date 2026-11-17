@@ -2,7 +2,7 @@ import React from 'react';
 import { StoreName } from '../enums';
 import { CommunityStats, emptyTally, PlayerStats, Tally, TALLY_KEYS } from '../types';
 import { historyRounds, withHistory } from './history';
-import { ensureOwnerId, forgetOwnerId } from './remote';
+import { ensureOwnerId, forgetOwnerId, ownerHeaders } from './remote';
 
 /** Where the summed character stats are read (see netlify/functions/npc-stats.ts) */
 export const COMMUNITY_API = '/api/npc-stats';
@@ -96,7 +96,7 @@ export async function refreshCommunity(): Promise<void> {
   const ownerId = await ensureOwnerId();
   if (ownerId === undefined) return;
   try {
-    const response = await fetch(`${COMMUNITY_API}/${encodeURIComponent(ownerId)}`, { headers: { Accept: 'application/json' } });
+    const response = await fetch(COMMUNITY_API, { headers: ownerHeaders(ownerId), cache: 'no-store' });
     if (response.status === REJECTED_OWNER) forgetOwnerId(ownerId);
     if (!response.ok) return;
     const next = toCommunity(await response.json());

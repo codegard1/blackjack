@@ -3,12 +3,12 @@ import { act, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameContext, GameDispatchContext, createGameState } from '../context';
 import { GameAction, GameStatus } from '../enums';
-import { IGameReducerAction } from '../interfaces';
+import { GameReducerAction } from '../interfaces';
 import { Agent, BOT_ACTION_DELAY_MS, DEALER_ACTION_DELAY_MS } from './Agent';
 
 const createAgentTree = (
   gameState: ReturnType<typeof createGameState>,
-  gameDispatch: (action: IGameReducerAction) => void,
+  gameDispatch: (action: GameReducerAction) => void,
   dealerHasControl: boolean,
   isPaused = false,
 ) => (
@@ -41,7 +41,7 @@ describe('dealer autoplay', () => {
     const gameState = createGameState();
     gameState.gameStatus = GameStatus.InProgress;
     gameState.dealerHasControl = true;
-    const gameDispatch = vi.fn<(action: IGameReducerAction) => void>();
+    const gameDispatch = vi.fn<(action: GameReducerAction) => void>();
     const tree = createAgentTree(gameState, gameDispatch, true);
     const { rerender } = render(tree);
 
@@ -60,7 +60,7 @@ describe('dealer autoplay', () => {
     const gameState = createGameState();
     gameState.gameStatus = GameStatus.InProgress;
     gameState.dealerHasControl = true;
-    const gameDispatch = vi.fn<(action: IGameReducerAction) => void>();
+    const gameDispatch = vi.fn<(action: GameReducerAction) => void>();
     const { rerender } = render(createAgentTree(gameState, gameDispatch, true));
 
     gameState.dealerHasControl = false;
@@ -74,7 +74,7 @@ describe('dealer autoplay', () => {
     const gameState = createGameState();
     gameState.gameStatus = GameStatus.InProgress;
     gameState.dealerHasControl = true;
-    const gameDispatch = vi.fn<(action: IGameReducerAction) => void>();
+    const gameDispatch = vi.fn<(action: GameReducerAction) => void>();
     const { rerender } = render(createAgentTree(gameState, gameDispatch, true, true));
 
     act(() => vi.advanceTimersByTime(DEALER_ACTION_DELAY_MS * 2));
@@ -91,7 +91,7 @@ describe('dealer autoplay', () => {
     const gameState = createGameState();
     gameState.gameStatus = GameStatus.InProgress;
     gameState.dealerHasControl = true;
-    const gameDispatch = vi.fn<(action: IGameReducerAction) => void>();
+    const gameDispatch = vi.fn<(action: GameReducerAction) => void>();
     const { rerender } = render(createAgentTree(gameState, gameDispatch, true));
 
     rerender(
@@ -114,7 +114,7 @@ describe('dealer autoplay', () => {
   it("plays a computer character's chosen move after its own delay", () => {
     const gameState = createGameState();
     gameState.gameStatus = GameStatus.InProgress;
-    const gameDispatch = vi.fn<(action: IGameReducerAction) => void>();
+    const gameDispatch = vi.fn<(action: GameReducerAction) => void>();
     render(
       <GameContext.Provider value={gameState}>
         <GameDispatchContext.Provider value={gameDispatch}>
@@ -132,7 +132,7 @@ describe('dealer autoplay', () => {
   it('dispatches a split for the active hand selected by its strategy', () => {
     const gameState = createGameState();
     gameState.gameStatus = GameStatus.InProgress;
-    const gameDispatch = vi.fn<(action: IGameReducerAction) => void>();
+    const gameDispatch = vi.fn<(action: GameReducerAction) => void>();
     render(
       <GameContext.Provider value={gameState}>
         <GameDispatchContext.Provider value={gameDispatch}>

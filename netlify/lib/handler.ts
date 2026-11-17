@@ -1,4 +1,3 @@
-import type { Context } from '@netlify/functions';
 import type { Collection } from 'mongodb';
 import { ConfigError, getDb } from './mongo';
 import { verifyOwnerId } from './owner';
@@ -31,18 +30,19 @@ export const STALE_INDEX = 'expire-stale';
  */
 type StateDocument = { _id: string; updatedAt: number; touchedAt: Date; createdAt: number } & Record<string, unknown>;
 
-const json = (body: unknown, status = 200): Response => Response.json(body, { status });
+/** Answers hold one owner's data, so nothing between the function and the browser may keep them */
+export const json = (body: unknown, status = 200): Response =>
+  Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
+
+const BEARER = /^Bearer +(\S+)$/i;
 
 /**
- * The owner id from the route. The client percent-encodes it and the platform hands
- * the parameter over still encoded, so decode it before checking its shape.
+ * The owner id of a request. It is a credential, so clients send it in the
+ * Authorization header (`Bearer <ownerId>`) and never in the address, which servers
+ * and proxies log.
  */
-export function ownerIdFrom(context: Context): string | undefined {
-  try {
-    return decodeURIComponent(context.params.ownerId ?? '');
-  } catch {
-    return undefined;
-  }
+export function ownerIdFrom(req: Request): string | undefined {
+  return BEARER.exec(req.headers.get('authorization') ?? '')?.[1];
 }
 
 const indexed = new Map<string, Promise<void>>();
@@ -81,6 +81,8 @@ export function resetIndexes(): void {
  * GET  -> 200 { [field]: data, updatedAt } or 404
  * PUT  <- { [field]: data }  -> 200 { updatedAt }
  *
+ * The owner is named by the Authorization header.
+ *
  * Only owner ids the server issued (see owner.ts) are served. The document is
  * upserted whole; the server stamps updatedAt so clients can tell which copy is
  * newer. Rejected requests are noted in the function log without echoing the body.
@@ -91,8 +93,8 @@ export function createStateHandler<T>({ name, collection, field, maxBodyBytes, p
     return json({ error }, status);
   };
 
-  return async (req: Request, context: Context): Promise<Response> => {
-    const ownerId = ownerIdFrom(context);
+  return async (req: Request): Promise<Response> => {
+    const ownerId = ownerIdFrom(req);
     if (!isOwnerId(ownerId)) return reject(400, 'Invalid owner id.', req);
 
     try {
@@ -109,7 +111,8 @@ export function createStateHandler<T>({ name, collection, field, maxBodyBytes, p
 
       if (Number(req.headers.get('content-length') ?? 0) > maxBodyBytes) return reject(413, 'Body too large.', req);
       const text = await req.text();
-      if (text.length > maxBodyBytes) return reject(413, 'Body too large.', req);
+      // the header can be absent or wrong, and a string's length counts characters, so measure the bytes
+      if (Buffer.byteLength(text) > maxBodyBytes) return reject(413, 'Body too large.', req);
       const parsed = parse(text);
       if ('error' in parsed) return reject(400, parsed.error, req);
 

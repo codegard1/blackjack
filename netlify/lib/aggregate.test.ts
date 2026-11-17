@@ -22,18 +22,26 @@ function fakeDb(seed: Record<string, Doc[]> = {}) {
     find: (filter: { _id?: { $in: string[] } } = {}) => {
       const ids = filter._id?.$in;
       const found = [...docs(name).values()].filter((doc) => !ids || ids.includes(doc._id)).map((doc) => structuredClone(doc));
-      return { toArray: async () => found, [Symbol.asyncIterator]: async function* () { yield* found; } };
+      return {
+        toArray: () => Promise.resolve(found),
+        [Symbol.asyncIterator]: () => {
+          const each = found[Symbol.iterator]();
+          return { next: () => Promise.resolve(each.next()) };
+        },
+      };
     },
-    findOne: async ({ _id }: { _id: string }) => structuredClone(docs(name).get(_id) ?? null),
-    replaceOne: async ({ _id }: { _id: string }, replacement: Record<string, unknown>) => {
+    findOne: ({ _id }: { _id: string }) => Promise.resolve(structuredClone(docs(name).get(_id) ?? null)),
+    replaceOne: ({ _id }: { _id: string }, replacement: Record<string, unknown>) => {
       writes += 1;
       docs(name).set(_id, { ...replacement, _id });
+      return Promise.resolve();
     },
-    bulkWrite: async (operations: { replaceOne: { filter: { _id: string }; replacement: Record<string, unknown> } }[]) => {
+    bulkWrite: (operations: { replaceOne: { filter: { _id: string }; replacement: Record<string, unknown> } }[]) => {
       for (const { replaceOne } of operations) {
         writes += 1;
         docs(name).set(replaceOne.filter._id, { ...replaceOne.replacement, _id: replaceOne.filter._id });
       }
+      return Promise.resolve();
     },
   });
 

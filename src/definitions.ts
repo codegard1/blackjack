@@ -1,6 +1,5 @@
 import { PlayerStatus } from "./enums";
 import { IPlayer } from "./interfaces";
-import { PlayerKey } from "./types";
 
 /**
  * Default player object. The key for each player must be unique

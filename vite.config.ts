@@ -1,5 +1,4 @@
 import netlify from '@netlify/vite-plugin';
-import legacy from '@vitejs/plugin-legacy';
 import react from '@vitejs/plugin-react';
 import { loadEnv } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -15,7 +14,6 @@ export default defineConfig(({ command, mode }) => {
   return {
     plugins: [
       react(),
-      legacy({ targets: ['>0.2%', 'not dead', 'not op_mini all'] }),
       VitePWA({
         registerType: 'autoUpdate',
         manifest: false,
@@ -51,7 +49,17 @@ export default defineConfig(({ command, mode }) => {
     },
     test: {
       environment: 'jsdom',
+      pool: 'vmThreads',
       setupFiles: './src/setupTests.ts',
+      coverage: {
+        provider: 'v8',
+        include: ['src/**/*.{ts,tsx}', 'netlify/**/*.ts'],
+        exclude: ['**/*.test.{ts,tsx}', 'src/setupTests.ts', 'src/vite-env.d.ts'],
+        reporter: ['text-summary', 'html'],
+        // a little under the figures when coverage was first measured (93% of statements,
+        // 87% of branches), so a change that leaves a lot untested fails the run
+        thresholds: { statements: 90, branches: 85, functions: 88, lines: 90 },
+      },
     },
   };
 });

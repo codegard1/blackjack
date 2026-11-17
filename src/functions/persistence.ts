@@ -13,6 +13,14 @@ export const GAME_STORE_VERSION = 5;
 /** How many of the newest activity log entries a snapshot sent to the server keeps */
 export const MAX_SYNCED_ACTIVITY = 200;
 
+/**
+ * How many of the newest activity log entries are kept in the browser's storage, and
+ * taken from it. The log is saved after every action, so without a limit each save
+ * gets slower and the storage fills. The live log is not trimmed while the page is
+ * open: the notices are worked out from what was added to it since the last change.
+ */
+export const MAX_SAVED_ACTIVITY = 1000;
+
 function readJson<T>(key: StoreName): T | undefined {
   try {
     const raw = localStorage.getItem(key);
@@ -101,6 +109,7 @@ export function restoreGameState(snapshot: unknown): GameState | undefined {
     return {
       ...createGameState(),
       ...saved,
+      activityLog: saved.activityLog.slice(-MAX_SAVED_ACTIVITY),
       tableRules,
       deck: new PlayingCardDeck(deck, Number(tableRules.numberOfDecks)),
       playerStore: new PlayerStore(players),
@@ -181,7 +190,7 @@ export function saveSettings(settings: SettingsState): void {
 }
 
 export function saveGameState(state: GameState): void {
-  const { deck, players, game } = gameSnapshot(state);
+  const { deck, players, game } = gameSnapshot(state, { maxActivity: MAX_SAVED_ACTIVITY });
   writeJson(StoreName.DECKSTORE, deck);
   writeJson(StoreName.PLAYERSTORE, players);
   writeJson(StoreName.GAMESTORE, game);

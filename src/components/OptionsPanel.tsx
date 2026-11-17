@@ -41,9 +41,8 @@ export const OptionsPanel: React.FC = () => {
 
   // Context
   const { settings, toggleSetting } = useSettingContext();
-  const { gameState, gameDispatch } = useGameContext();
+  const { gameDispatch } = useGameContext();
   const { profiles, profileDispatch } = useProfileContext();
-  const playerStore = gameState.playerStore;
 
   const closeOptionsPanel = () => {
     toggleSetting({ key: "isOptionsPanelVisible", value: false });

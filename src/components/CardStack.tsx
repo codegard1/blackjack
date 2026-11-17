@@ -8,8 +8,7 @@ import { ChevronDown16Regular, ChevronUp16Regular } from '@fluentui/react-icons'
 import { CardContainer } from '.';
 import { useGameContext, useSettingContext } from '../context';
 import { ICardStackProps } from '../interfaces';
-import { GameStatus } from '../enums';
-import { handValue, isDealer } from '../functions';
+import { handValue, isDealer, isHoleCardHidden } from '../functions';
 import { PlayingCard } from '../classes';
 
 
@@ -33,9 +32,9 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
   // Context props
   const { settings } = useSettingContext();
   const { gameState } = useGameContext();
-  const isRoundOver = gameState.gameStatus === GameStatus.RoundOver;
-  // only the dealer's hole card is dealt face down; players' cards are face up
+  // only the dealer's first card, the hole card, is dealt face down; players' cards are face up
   const hasHoleCard = isDealer(player);
+  const isHoleHidden = isHoleCardHidden(player, settings.isDealerHandVisible, gameState.gameStatus);
 
   // State
   const [isDeckVisible, setVisible] = React.useState<boolean>(true);
@@ -52,7 +51,8 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
       id={cardKey}
       index={index}
       isSelectable={isSelectable}
-      isBackFacing={index === 0 && !settings.isDealerHandVisible && !isRoundOver && hasHoleCard}
+      isBackFacing={index === 0 && isHoleHidden}
+      isFlippable={index === 0 && hasHoleCard}
       isDescVisible={settings.isCardDescVisible}
     />
   );
@@ -64,7 +64,7 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
   const handValueString = (handValues.aceAsEleven === handValues.aceAsOne) ?
     `Hand Value: ${handValues.highest}` :
     `Hand Value: ${handValues.aceAsOne} / ${handValues.aceAsEleven}`;
-  const canRevealTotal = !hasHoleCard || settings.isDealerHandVisible || isRoundOver;
+  const canRevealTotal = !isHoleHidden;
   const showHandValue = settings.isHandValueVisible && !hasHoleCard;
 
   return hidden ? null : (

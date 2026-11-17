@@ -1,10 +1,9 @@
 export * from './clearStores';
 export * from './debugLog';
 export * from './evaluateGame';
-export * from './fisherYates';
 export * from './gameReducer';
 export * from './getHandValue';
-export * from './getRandomIndex';
+export * from './random';
 export * from './settingReducer';
 export * from './persistence';
 export * from './profiles';
@@ -19,3 +18,4 @@ export * from './remote';
 export * from './useRemoteSync';
 export * from './useProfileSync';
 export * from './useGameSync';
+export * from './pot';

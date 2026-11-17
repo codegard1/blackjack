@@ -7,7 +7,6 @@ import { IPlayer, IPlayerOptions } from "../interfaces";
 import { GameState, PlayerKey, PlayerRole, TableRules, defaultTableRules } from "../types";
 import { recordActivity } from "./activity";
 import { BotMove, Rng, botWagerCount, decideBotMove } from "./botStrategy";
-import { fisherYates } from "./fisherYates";
 
 /**
  * The turn engine shared by the reducer and settlement. Each seat plays its
@@ -42,6 +41,35 @@ export function playerSeats(state: GameState): IPlayer[] {
 export function seatOrder(state: GameState): PlayerKey[] {
   const dealer = getDealer(state);
   return [...playerSeats(state).map((player) => player.key), ...(dealer ? [dealer.key] : [])];
+}
+
+/**
+ * Where the seats that are not on the stage wait, both lists in the reverse of turn order: the
+ * dealer, who plays last, comes first, and the first to play comes last. Seats still to play wait
+ * above the stage, the next to play last in its list so it is closest to the stage. A seat that
+ * has played sits below the stage, the one that played most recently first, so it is closest to
+ * the stage and the first to play ends at the bottom. When the round is over every seat has played.
+ * A seat in control that the user has not brought to the stage still counts as waiting.
+ * @param turnOrder every seat in turn order, the dealer last
+ * @param onStage the seat on the stage, which waits nowhere
+ * @param inControl the seat whose turn it is, if a hand is in play
+ * @param isRoundOver true once every hand has a result
+ * @param stillWaiting a seat to keep waiting although the round is over, while its card turns over
+ */
+export function seatQueues(
+  turnOrder: PlayerKey[],
+  onStage: PlayerKey | undefined,
+  inControl: PlayerKey | undefined,
+  isRoundOver: boolean,
+  stillWaiting?: PlayerKey,
+): { waiting: PlayerKey[]; played: PlayerKey[] } {
+  const controlIndex = !isRoundOver && inControl ? turnOrder.indexOf(inControl) : -1;
+  const hasPlayed = (key: PlayerKey) => key !== stillWaiting && (isRoundOver || (controlIndex >= 0 && turnOrder.indexOf(key) < controlIndex));
+  const others = turnOrder.filter((key) => key !== onStage);
+  return {
+    waiting: others.filter((key) => !hasPlayed(key)).reverse(),
+    played: others.filter(hasPlayed).reverse(),
+  };
 }
 
 /** True when the seat was dealt into the current round */
@@ -267,7 +295,7 @@ export function finishRound(state: GameState): void {
  * cover it sits the round out; the human always plays, staked or not.
  * Computer players then add wagers according to their aggression.
  */
-export function collectAntes(state: GameState, rng: () => number = Math.random): void {
+export function collectAntes(state: GameState, rng: () => number = () => state.deck.random()): void {
   playerSeats(state).forEach((player) => {
     if (state.playerStore.ante(player.key, state.minimumBet)) {
       state.pot += state.minimumBet;
@@ -300,7 +328,8 @@ export function refillDeck(state: GameState): void {
     state.deck.getHands(player.key).forEach((hand) => hand.cards.forEach((card) => inHands.add(card)));
   });
   const keys = PlayingCardDeck.cardKeys(Number(state.tableRules.numberOfDecks)).filter((key) => !inHands.has(key));
-  state.deck.cards = fisherYates(keys).map((key) => new PlayingCard(key));
+  state.deck.cards = keys.map((key) => new PlayingCard(key));
+  state.deck.shuffle();
   recordActivity(state, '', 'Deck shuffled', 'shuffle');
 }
 

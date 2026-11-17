@@ -1,5 +1,5 @@
 import { GameStatus } from "../enums";
-import { IGameReducerAction, IPlayer } from "../interfaces";
+import { IPlayer } from "../interfaces";
 import { GameState } from "../types";
 import { recordActivity } from "./activity";
 import { collectAntes, isDealer, netFor, roundStake } from "./round";
@@ -96,10 +96,9 @@ function settleRound(state: GameState): void {
  * or resets a game-over status. The supplied state is updated and returned.
  *
  * @param state Current game state to evaluate.
- * @param action Reducer action that requested the evaluation.
  * @returns The updated game state.
  */
-export function evaluateGame(state: GameState, action: IGameReducerAction): GameState {
+export function evaluateGame(state: GameState): GameState {
   switch (state.gameStatus) {
     case GameStatus.InProgress:
       /* First play of a new game: every player antes the minimum */
