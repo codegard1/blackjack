@@ -1,122 +1,99 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
+import { TableRules, deckCounts } from '../types';
 import { recommendMove } from './strategyHint';
+import { CHARTS, ChartKey } from './strategyHint.charts';
 
 /** The dealer's face-up cards across a chart, left to right: 2 to 10, then the ace */
 const DEALER_CARDS = ['Club_2', 'Club_3', 'Club_4', 'Club_5', 'Club_6', 'Club_7', 'Club_8', 'Club_9', 'Club_10', 'Club_14'];
 
-const MOVES = { H: 'hit', S: 'stay', D: 'double', P: 'split' } as const;
-type Letter = keyof typeof MOVES;
+const MOVES: Record<string, string> = { H: 'hit', S: 'stay', D: 'double', P: 'split' };
 
-/** One row of a chart: a hand, and the play against each dealer card, as letters */
-type Row = [name: string, cards: string[], plays: string];
+/** A two-card hand for each row of a chart */
+const HANDS: Record<string, string[]> = {
+  'hard 5': ['Heart_2', 'Spade_3'], 'hard 6': ['Heart_2', 'Spade_4'], 'hard 7': ['Heart_3', 'Spade_4'], 'hard 8': ['Heart_3', 'Spade_5'],
+  'hard 9': ['Heart_4', 'Spade_5'], 'hard 10': ['Heart_4', 'Spade_6'], 'hard 11': ['Heart_5', 'Spade_6'], 'hard 12': ['Heart_10', 'Spade_2'],
+  'hard 13': ['Heart_10', 'Spade_3'], 'hard 14': ['Heart_10', 'Spade_4'], 'hard 15': ['Heart_10', 'Spade_5'], 'hard 16': ['Heart_10', 'Spade_6'],
+  'hard 17': ['Heart_10', 'Spade_7'], 'hard 18': ['Heart_10', 'Spade_8'], 'hard 19': ['Heart_10', 'Spade_9'], 'hard 20': ['Heart_10', 'Spade_13'],
+  'soft 13': ['Heart_14', 'Spade_2'], 'soft 14': ['Heart_14', 'Spade_3'], 'soft 15': ['Heart_14', 'Spade_4'], 'soft 16': ['Heart_14', 'Spade_5'],
+  'soft 17': ['Heart_14', 'Spade_6'], 'soft 18': ['Heart_14', 'Spade_7'], 'soft 19': ['Heart_14', 'Spade_8'], 'soft 20': ['Heart_14', 'Spade_9'],
+  'pair 2': ['Heart_2', 'Spade_2'], 'pair 3': ['Heart_3', 'Spade_3'], 'pair 4': ['Heart_4', 'Spade_4'], 'pair 5': ['Heart_5', 'Spade_5'],
+  'pair 6': ['Heart_6', 'Spade_6'], 'pair 7': ['Heart_7', 'Spade_7'], 'pair 8': ['Heart_8', 'Spade_8'], 'pair 9': ['Heart_9', 'Spade_9'],
+  'pair 10': ['Heart_10', 'Spade_10'], 'pair A': ['Heart_14', 'Spade_14'],
+};
 
-/** Check every cell of a chart */
-function expectChart(rows: Row[], options: { canDouble: boolean; canSplit: boolean; dealerSoft17?: 'stand' | 'hit' }) {
-  for (const [name, cards, plays] of rows) {
-    const letters = plays.split(' ') as Letter[];
-    expect(letters, name).toHaveLength(DEALER_CARDS.length);
-    DEALER_CARDS.forEach((dealerUpCard, column) => {
-      const hint = recommendMove({ cards, dealerUpCard, ...options });
-      expect(hint?.move, `${name} vs ${dealerUpCard}`).toBe(MOVES[letters[column]]);
-    });
+/** The play a chart cell names when a double down, a split, both or neither is allowed */
+function playFor(cell: string, canDouble: boolean, canSplit: boolean): string {
+  let rest = cell.toUpperCase();
+  if (rest.startsWith('P')) {
+    if (canSplit) return MOVES.P;
+    rest = rest.slice(1);
   }
+  if (rest.startsWith('D') && rest.length > 1) return canDouble ? MOVES.D : MOVES[rest[1]];
+  return MOVES[rest[0]];
 }
 
-// Basic strategy for four to eight decks, dealer stands on soft 17, double on any two cards,
-// no double after a split, no surrender. Columns: dealer 2 3 4 5 6 7 8 9 10 A.
-const HARD: Row[] = [
-  ['hard 5', ['Heart_2', 'Spade_3'], 'H H H H H H H H H H'],
-  ['hard 6', ['Heart_2', 'Spade_4'], 'H H H H H H H H H H'],
-  ['hard 7', ['Heart_3', 'Spade_4'], 'H H H H H H H H H H'],
-  ['hard 8', ['Heart_3', 'Spade_5'], 'H H H H H H H H H H'],
-  ['hard 9', ['Heart_4', 'Spade_5'], 'H D D D D H H H H H'],
-  ['hard 10', ['Heart_4', 'Spade_6'], 'D D D D D D D D H H'],
-  ['hard 11', ['Heart_5', 'Spade_6'], 'D D D D D D D D D H'],
-  ['hard 12', ['Heart_10', 'Spade_2'], 'H H S S S H H H H H'],
-  ['hard 13', ['Heart_10', 'Spade_3'], 'S S S S S H H H H H'],
-  ['hard 14', ['Heart_10', 'Spade_4'], 'S S S S S H H H H H'],
-  ['hard 15', ['Heart_10', 'Spade_5'], 'S S S S S H H H H H'],
-  ['hard 16', ['Heart_10', 'Spade_6'], 'S S S S S H H H H H'],
-  ['hard 17', ['Heart_10', 'Spade_7'], 'S S S S S S S S S S'],
-  ['hard 18', ['Heart_10', 'Spade_8'], 'S S S S S S S S S S'],
-  ['hard 19', ['Heart_10', 'Spade_9'], 'S S S S S S S S S S'],
-  ['hard 20', ['Heart_10', 'Spade_13'], 'S S S S S S S S S S'],
-];
-
-const SOFT: Row[] = [
-  ['soft 13', ['Heart_14', 'Spade_2'], 'H H H D D H H H H H'],
-  ['soft 14', ['Heart_14', 'Spade_3'], 'H H H D D H H H H H'],
-  ['soft 15', ['Heart_14', 'Spade_4'], 'H H D D D H H H H H'],
-  ['soft 16', ['Heart_14', 'Spade_5'], 'H H D D D H H H H H'],
-  ['soft 17', ['Heart_14', 'Spade_6'], 'H D D D D H H H H H'],
-  ['soft 18', ['Heart_14', 'Spade_7'], 'S D D D D S S H H H'],
-  ['soft 19', ['Heart_14', 'Spade_8'], 'S S S S S S S S S S'],
-  ['soft 20', ['Heart_14', 'Spade_9'], 'S S S S S S S S S S'],
-];
-
-const PAIRS: Row[] = [
-  ['pair of 2s', ['Heart_2', 'Spade_2'], 'H H P P P P H H H H'],
-  ['pair of 3s', ['Heart_3', 'Spade_3'], 'H H P P P P H H H H'],
-  ['pair of 4s', ['Heart_4', 'Spade_4'], 'H H H H H H H H H H'],
-  ['pair of 5s', ['Heart_5', 'Spade_5'], 'D D D D D D D D H H'],
-  ['pair of 6s', ['Heart_6', 'Spade_6'], 'H P P P P H H H H H'],
-  ['pair of 7s', ['Heart_7', 'Spade_7'], 'P P P P P P H H H H'],
-  ['pair of 8s', ['Heart_8', 'Spade_8'], 'P P P P P P P P P P'],
-  ['pair of 9s', ['Heart_9', 'Spade_9'], 'P P P P P S P P S S'],
-  ['pair of 10s', ['Heart_10', 'Spade_10'], 'S S S S S S S S S S'],
-  ['pair of kings', ['Heart_13', 'Spade_13'], 'S S S S S S S S S S'],
-  ['pair of aces', ['Heart_14', 'Spade_14'], 'P P P P P P P P P P'],
-];
+const TABLES = (Object.keys(CHARTS) as ChartKey[]).map((key) => {
+  const [numberOfDecks, soft17] = key.split('-') as [TableRules['numberOfDecks'], string];
+  return { key, numberOfDecks, dealerSoft17: soft17 === 'H17' ? 'hit' as const : 'stand' as const };
+});
 
 describe('recommendMove', () => {
-  it('plays hard totals by the chart', () => {
-    expectChart(HARD, { canDouble: true, canSplit: false });
+  it('has a chart for every number of decks the table offers and both soft 17 rules', () => {
+    expect(TABLES.map((table) => table.numberOfDecks).sort()).toEqual([...deckCounts, ...deckCounts].sort());
+    for (const chart of Object.values(CHARTS)) expect(Object.keys(chart).sort()).toEqual(Object.keys(HANDS).sort());
   });
 
-  it('plays soft totals by the chart', () => {
-    expectChart(SOFT, { canDouble: true, canSplit: false });
+  describe.each(TABLES)('with $numberOfDecks deck(s) and a dealer who $dealerSoft17s on soft 17', ({ key, numberOfDecks, dealerSoft17 }) => {
+    // every row of the chart, against every dealer card, with each choice of what the hand may do
+    it.each([
+      { canDouble: true, canSplit: true },
+      { canDouble: true, canSplit: false },
+      { canDouble: false, canSplit: true },
+      { canDouble: false, canSplit: false },
+    ])('plays every cell of the chart (double down allowed: $canDouble, split allowed: $canSplit)', ({ canDouble, canSplit }) => {
+      for (const [row, cells] of Object.entries(CHARTS[key])) {
+        const plays = cells.split(' ');
+        expect(plays, row).toHaveLength(DEALER_CARDS.length);
+        DEALER_CARDS.forEach((dealerUpCard, column) => {
+          const hint = recommendMove({ cards: HANDS[row], dealerUpCard, canDouble, canSplit: canSplit && row.startsWith('pair'), dealerSoft17, numberOfDecks });
+          expect(hint?.move, `${row} vs ${dealerUpCard}`).toBe(playFor(plays[column], canDouble, canSplit));
+        });
+      }
+    });
   });
 
-  it('plays pairs by the chart for a table with no double down after a split', () => {
-    expectChart(PAIRS, { canDouble: true, canSplit: true });
+  it('plays a shoe of six decks, with a dealer who stands on soft 17, when it is not told the table', () => {
+    for (const [row, cells] of Object.entries(CHARTS['6-S17'])) {
+      cells.split(' ').forEach((cell, column) => {
+        const hint = recommendMove({ cards: HANDS[row], dealerUpCard: DEALER_CARDS[column], canDouble: true, canSplit: true });
+        expect(hint?.move, `${row} vs ${DEALER_CARDS[column]}`).toBe(playFor(cell, true, true));
+      });
+    }
   });
 
-  it('changes three plays when the dealer hits soft 17', () => {
-    const hits = { canDouble: true, canSplit: false, dealerSoft17: 'hit' as const };
-    expectChart([
-      ['hard 11', ['Heart_5', 'Spade_6'], 'D D D D D D D D D D'],
-      ['soft 18', ['Heart_14', 'Spade_7'], 'D D D D D S S H H H'],
-      ['soft 19', ['Heart_14', 'Spade_8'], 'S S S S D S S S S S'],
-    ], hits);
-    // and nothing else
-    const unchanged = (rows: Row[]) => rows.filter(([name]) => !['hard 11', 'soft 18', 'soft 19'].includes(name));
-    expectChart(unchanged(HARD), hits);
-    expectChart(unchanged(SOFT), hits);
-    expectChart(PAIRS, { ...hits, canSplit: true });
+  it('knows the plays that set one deck apart', () => {
+    const one = (cards: string[], dealerUpCard: string, canSplit = false) =>
+      recommendMove({ cards, dealerUpCard, canDouble: true, canSplit, numberOfDecks: '1' })?.reason;
+    expect(one(['Heart_3', 'Spade_5'], 'Club_6')).toBe('Hard 8 vs dealer 6: double down');
+    expect(one(['Heart_4', 'Spade_5'], 'Club_2')).toBe('Hard 9 vs dealer 2: double down');
+    expect(one(['Heart_5', 'Spade_6'], 'Club_14')).toBe('Hard 11 vs dealer ace: double down');
+    expect(one(['Heart_14', 'Spade_7'], 'Club_14')).toBe('Soft 18 vs dealer ace: stay');
+    expect(one(['Heart_7', 'Spade_7'], 'Club_10', true)).toBe('Pair of 7s vs dealer 10: stay');
+    expect(one(['Heart_2', 'Spade_2'], 'Club_3', true)).toBe('Pair of 2s vs dealer 3: split');
+    // the same hands in a shoe
+    const shoe = (cards: string[], dealerUpCard: string, canSplit = false) =>
+      recommendMove({ cards, dealerUpCard, canDouble: true, canSplit, numberOfDecks: '6' })?.move;
+    expect(shoe(['Heart_3', 'Spade_5'], 'Club_6')).toBe('hit');
+    expect(shoe(['Heart_7', 'Spade_7'], 'Club_10', true)).toBe('hit');
+    expect(shoe(['Heart_2', 'Spade_2'], 'Club_3', true)).toBe('hit');
   });
 
-  it('falls back when doubling down is not allowed: hit, except stay on soft 18 and soft 19', () => {
-    const noDouble = { canDouble: false, canSplit: false };
-    expectChart([
-      ['hard 9', ['Heart_4', 'Spade_5'], 'H H H H H H H H H H'],
-      ['hard 10', ['Heart_4', 'Spade_6'], 'H H H H H H H H H H'],
-      ['hard 11', ['Heart_5', 'Spade_6'], 'H H H H H H H H H H'],
-      ['soft 13', ['Heart_14', 'Spade_2'], 'H H H H H H H H H H'],
-      ['soft 17', ['Heart_14', 'Spade_6'], 'H H H H H H H H H H'],
-      ['soft 18', ['Heart_14', 'Spade_7'], 'S S S S S S S H H H'],
-    ], noDouble);
-    expectChart([['soft 19', ['Heart_14', 'Spade_8'], 'S S S S S S S S S S']], { ...noDouble, dealerSoft17: 'hit' });
-  });
-
-  it('plays a pair as the total it makes when it cannot be split', () => {
-    const noSplit = { canDouble: true, canSplit: false };
-    expectChart([
-      ['pair of 8s as hard 16', ['Heart_8', 'Spade_8'], 'S S S S S H H H H H'],
-      ['pair of aces as soft 12', ['Heart_14', 'Spade_14'], 'H H H D D H H H H H'],
-      ['pair of 7s as hard 14', ['Heart_7', 'Spade_7'], 'S S S S S H H H H H'],
-    ], noSplit);
-    expect(recommendMove({ cards: ['Heart_8', 'Spade_8'], dealerUpCard: 'Club_10', ...noSplit })?.hand).toBe('Hard 16');
+  it('reads a pair as the total it makes when it cannot be split', () => {
+    expect(recommendMove({ cards: ['Heart_8', 'Spade_8'], dealerUpCard: 'Club_10', canDouble: true, canSplit: false }))
+      .toMatchObject({ move: 'hit', hand: 'Hard 16' });
+    expect(recommendMove({ cards: ['Heart_14', 'Spade_14'], dealerUpCard: 'Club_6', canDouble: true, canSplit: false }))
+      .toMatchObject({ move: 'double', hand: 'Soft 12' });
   });
 
   it('plays hands of three or more cards by their total, counting an ace as one when eleven would bust', () => {

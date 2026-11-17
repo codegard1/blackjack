@@ -151,15 +151,15 @@ describe('player controls', () => {
 
 describe('strategy hints', () => {
   /** The human's turn with these cards against a dealer showing `dealerUp`; the hole card is dealt first */
-  const renderHand = (chrisCards: string[], dealerUp: string, options: { hints?: boolean; currentPlayerKey?: string; dealerSoft17?: 'stand' | 'hit' } = {}) => {
-    const { hints = true, currentPlayerKey = 'chris', dealerSoft17 = 'stand' } = options;
+  const renderHand = (chrisCards: string[], dealerUp: string, options: { hints?: boolean; currentPlayerKey?: string; dealerSoft17?: 'stand' | 'hit'; numberOfDecks?: '1' | '2' | '6' | '8' } = {}) => {
+    const { hints = true, currentPlayerKey = 'chris', dealerSoft17 = 'stand', numberOfDecks = '1' } = options;
     const state = gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] });
     state.playerStore.ante('chris', state.minimumBet);
     state.deck.playerHands.chris.cards = chrisCards;
     state.deck.playerHands.dealer.cards = ['Spade_13', dealerUp];
     state.gameStatus = GameStatus.InProgress;
     state.playerStore.currentPlayerKey = currentPlayerKey;
-    state.tableRules = { ...state.tableRules, dealerSoft17 };
+    state.tableRules = { ...state.tableRules, dealerSoft17, numberOfDecks };
     return render(
       <SettingContext.Provider value={{ ...settingDefaults, isStrategyHintVisible: hints }}>
         <GameContext.Provider value={state}>
@@ -189,12 +189,20 @@ describe('strategy hints', () => {
     expect(hintedButtons(container)).toEqual([button]);
   });
 
-  it('follows the table\'s rule for the dealer on soft 17', () => {
-    renderHand(['Heart_5', 'Club_6'], 'Diamond_14');
-    expect(screen.getByRole('status')).toHaveTextContent('Hard 11 vs dealer ace: hit');
+  it('follows the rules of the table in play: the dealer on soft 17, and the number of decks', () => {
+    renderHand(['Heart_14', 'Club_7'], 'Diamond_2', { numberOfDecks: '6' });
+    expect(screen.getByRole('status')).toHaveTextContent('Soft 18 vs dealer 2: stay');
     cleanup();
-    renderHand(['Heart_5', 'Club_6'], 'Diamond_14', { dealerSoft17: 'hit' });
-    expect(screen.getByRole('status')).toHaveTextContent('Hard 11 vs dealer ace: double down');
+    renderHand(['Heart_14', 'Club_7'], 'Diamond_2', { numberOfDecks: '6', dealerSoft17: 'hit' });
+    expect(screen.getByRole('status')).toHaveTextContent('Soft 18 vs dealer 2: double down');
+    cleanup();
+
+    // one deck doubles an 8 against a 6; a shoe hits it
+    renderHand(['Heart_3', 'Club_5'], 'Diamond_6', { numberOfDecks: '1' });
+    expect(screen.getByRole('status')).toHaveTextContent('Hard 8 vs dealer 6: double down');
+    cleanup();
+    renderHand(['Heart_3', 'Club_5'], 'Diamond_6', { numberOfDecks: '8' });
+    expect(screen.getByRole('status')).toHaveTextContent('Hard 8 vs dealer 6: hit');
   });
 
   it('shows nothing when hints are off, before the deal, or when it is not the human\'s turn', () => {
