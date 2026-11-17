@@ -6,13 +6,13 @@ import { GAME_STORE_VERSION, MAX_SAVED_ACTIVITY, gameSnapshot, loadGameState, lo
 import { createGameState, settingDefaults } from '../context';
 import { defaultTableRules } from '../types';
 
-const startedGame = () => gameReducer(createGameState(), { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] });
+const startedGame = () => gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] });
 
 describe('persistence', () => {
   it('restores active rules independently of pending settings, including the shoe size', () => {
     const tableRules = { ...defaultTableRules, numberOfDecks: '8' as const, dealerSoft17: 'hit' as const };
     const state = gameReducer(createGameState(), {
-      type: GameAction.NewGame, playerKey: ['chris', 'dealer'], tableRules,
+      type: GameAction.NewGame, playerKeys: ['chris', 'dealer'], tableRules,
     });
     saveGameState(state);
     saveSettings({ ...settingDefaults, numberOfDecks: '2', blackjackPayout: '6:5' });
@@ -88,7 +88,7 @@ describe('persistence', () => {
   });
 
   it('restores the active hand and both card stacks mid-split', () => {
-    let state = gameReducer(startedGame(), { type: GameAction.EvaluateGame, gameStatus: GameStatus.InProgress });
+    let state = gameReducer(startedGame(), { type: GameAction.EvaluateGame });
     state.deck.cards = ['Spade_9', 'Spade_10', 'Diamond_7', 'Club_10', 'Heart_8', 'Club_8']
       .map((key) => new PlayingCard(key));
     state = gameReducer(state, { type: GameAction.Deal });

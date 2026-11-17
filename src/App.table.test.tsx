@@ -322,6 +322,11 @@ it("shows the dealer's hand as cards among the seats still to play during the hu
 });
 
 it('forgets a pinned seat and an open pot breakdown when the game is reset and started again', () => {
+  // hands that leave the human a turn to take; a natural would end the round on the deal
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
+  });
   const { container } = render(<App />);
   const stageKey = () => container.querySelector('.table-focus')?.getAttribute('data-seat-key');
   const pot = () => screen.getByRole('button', { name: /Pot: \$/ });

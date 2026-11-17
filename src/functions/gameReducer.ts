@@ -3,12 +3,13 @@ import { PlayingCardDeck } from "../classes/PlayingCardDeck";
 import { createGameState } from "../context";
 import { defaultplayersArr } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
-import { IGameReducerAction, IPlayerOptions } from "../interfaces";
+import { GameReducerAction, IPlayerOptions } from "../interfaces";
 import { GameState, PlayerHand, isTableRules, tableRulesFrom } from "../types";
 import { evaluateGame } from "./evaluateGame";
 import { debugLog } from "./debugLog";
 import { recordActivity } from "./activity";
 import { restoreGameState } from "./persistence";
+import { seededRandom } from "./random";
 import {
   advanceTurn, applyRoster, canDoubleDown, canSplit, collectAntes, isDealer, playerSeats, refillDeck, reshuffleIfLow, resolveNaturals,
   resolveShowdown, roundStake, seatOrder, setControl,
@@ -50,30 +51,30 @@ export { canDoubleDown, canSplit } from "./round";
  * @param action action containing the state parameters
  * @returns modified game state
  */
-export function gameReducer(state: GameState, action: IGameReducerAction) {
-  state = { ...state };
+export function gameReducer(state: GameState, action: GameReducerAction): GameState {
+  // Play the action on copies of the deck and the players. Everything below changes them in
+  // place, and the state that was passed in must stay as it was: React may run a reducer twice
+  // for one action, and whatever holds the earlier state (a snapshot, a comparison) relies on it.
+  const deck = state.deck.clone();
+  // The time and the randomness come from the action when it carries them (see stampAction),
+  // so the same action gives the same result. Without them the clock and Math.random are used.
+  if (action.seed !== undefined) deck.randomSource = seededRandom(action.seed);
+  const lastWriteTime = new Date(action.now ?? Date.now()).toISOString();
+  return applyAction({ ...state, deck, playerStore: state.playerStore.clone(), lastWriteTime }, action);
+}
 
-  // Action props
-  const {
-    cardKey,
-    betAmount,
-    deckSide,
-    handIndex,
-    numberOfCards,
-    playerKey,
-    players,
-    type,
-  } = action;
+/**
+ * Apply one action to a state this call owns, changing it in place and returning it.
+ * An action that is made of others (a deal that starts a round, a double down) runs them
+ * here, on the same copies.
+ */
+function applyAction(state: GameState, action: GameReducerAction): GameState {
 
   // Announce
-  debugLog('GameAction.' + type, action);
+  debugLog('GameAction.' + action.type, action);
 
-  // Mandatory state mutations
-  state.lastWriteTime = new Date().toISOString();
-
-
-  // Respond to action dispatch
-  switch (type) {
+  // Respond to action dispatch. Inside each case the action is known to be of that type.
+  switch (action.type) {
 
     // Toggle visibility of the spinner
     case GameAction.SetSpinnerVisible: {
@@ -82,7 +83,8 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     }
 
     case GameAction.Bet: {
-      if (typeof playerKey === 'string' && undefined !== betAmount && state.playerStore.bet(playerKey, betAmount)) {
+      const { playerKey, betAmount } = action;
+      if (state.playerStore.bet(playerKey, betAmount)) {
         state.pot += betAmount;
         if (state.playerStore.currentPlayerKey === playerKey) {
           const hand = state.deck.hand(playerKey, state.activeHandIndex);
@@ -97,21 +99,20 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
      * Initiate a new game from scratch
      */
     case GameAction.NewGame: {
+      const { players, playerKeys } = action;
       if (isTableRules(action.tableRules)) state.tableRules = tableRulesFrom(action.tableRules);
       state.playerStore = new PlayerStore();
-      state.deck = new PlayingCardDeck(undefined, Number(state.tableRules.numberOfDecks));
+      state.deck = new PlayingCardDeck(undefined, Number(state.tableRules.numberOfDecks), state.deck.randomSource);
       state.pot = 0;
       state.winner = undefined;
       state.loser = undefined;
       state.gameStatusFlag = false;
 
       // seats come from the players payload; otherwise the keys name default players
-      const seats: IPlayerOptions[] = players ?? (Array.isArray(playerKey)
-        ? playerKey.flatMap((k) => {
-          const p = defaultplayersArr.find((i) => i.key === k);
-          return p ? [{ bank: p.bank, id: p.id, isNPC: p.isNPC, key: k, title: p.title, disabled: p.disabled }] : [];
-        })
-        : []);
+      const seats: IPlayerOptions[] = players ?? (playerKeys ?? []).flatMap((k) => {
+        const p = defaultplayersArr.find((i) => i.key === k);
+        return p ? [{ bank: p.bank, id: p.id, isNPC: p.isNPC, key: k, title: p.title, disabled: p.disabled }] : [];
+      });
       seats.forEach((seat) => {
         state.playerStore.newPlayer(seat);
         state.deck.newPlayerHand(seat.key);
@@ -132,7 +133,8 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
      * Seat a new roster between hands; ignored while a hand is in play
      */
     case GameAction.SetRoster: {
-      if (players) applyRoster(state, players);
+      const { players } = action;
+      applyRoster(state, players);
       return state;
     }
 
@@ -191,7 +193,8 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     }
 
     case GameAction.Stay: {
-      const stayingPlayerKey = typeof playerKey === 'string' ? playerKey : state.playerStore.currentPlayerKey;
+      const { playerKey, handIndex } = action;
+      const stayingPlayerKey = playerKey ?? state.playerStore.currentPlayerKey;
       const stayingPlayer = stayingPlayerKey ? state.playerStore.player(stayingPlayerKey) : undefined;
       const stayingHandIndex = handIndex ?? state.activeHandIndex;
       const stayingHand = stayingPlayerKey ? state.deck.hand(stayingPlayerKey, stayingHandIndex) : undefined;
@@ -211,42 +214,42 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
 
     // Select a card
     case GameAction.Select: {
-      // If no cardKey was passed then do nothing 
-      if (undefined !== cardKey) state.deck.select(cardKey);
+      const { cardKey } = action;
+      state.deck.select(cardKey);
       return state;
     }
 
     // Unselect a card
     case GameAction.Unselect: {
-      if (undefined !== cardKey) state.deck.unselect(cardKey);
+      const { cardKey } = action;
+      state.deck.unselect(cardKey);
       return state;
     }
 
     // Draw card(s) from the deck
     case GameAction.Draw: {
+      const { playerKey, handIndex, deckSide, numberOfCards } = action;
       const _num = numberOfCards ?? 1;
       // a long round with many seats can run the deck dry; reshuffle what is not in play
       if (_num > 0 && state.deck.length < _num && state.gameStatus === GameStatus.InProgress) refillDeck(state);
-      if (_num > 0 && state.deck.length >= _num) {
-        const _drawn = deckSide === 'top' ? state.deck.draw(_num)
-          : deckSide === 'random' ? state.deck.drawRandom(_num)
-          : state.deck.drawFromBottomOfDeck(_num);
-        const where = deckSide === 'top' ? 'from the top' : deckSide === 'random' ? 'at random' : 'from the bottom';
-        if (undefined !== playerKey && typeof playerKey === 'string') {
-          if (!state.deck.playerHands[playerKey]) state.deck.newPlayerHand(playerKey);
-          const index = handIndex ?? state.activeHandIndex;
-          const hand = state.deck.hand(playerKey, index)!;
-          hand.cards.push(..._drawn);
-          state.deck.updateHandValue(playerKey, index);
-          state.playerStore.hit(playerKey);
-          recordActivity(state, state.playerStore.player(playerKey).title, `drew ${_num} card${_num === 1 ? '' : 's'} ${where}`, 'draw');
-          updatePlayerHandStatus(state, playerKey, index);
-        }
-      } else {
-        throw new Error('There are not enough cards left in the deck to draw');
-      }
+      // Nothing to draw (no cards asked for, or a deck that cannot cover them outside a round):
+      // leave the game as it is. A reducer that throws takes the whole table down with it.
+      if (_num <= 0 || state.deck.length < _num) return state;
 
-      state.lastWriteTime = new Date().toISOString();
+      const _drawn = deckSide === 'top' ? state.deck.draw(_num)
+        : deckSide === 'random' ? state.deck.drawRandom(_num)
+        : state.deck.drawFromBottomOfDeck(_num);
+      const where = deckSide === 'top' ? 'from the top' : deckSide === 'random' ? 'at random' : 'from the bottom';
+      if (playerKey !== undefined) {
+        if (!state.deck.playerHands[playerKey]) state.deck.newPlayerHand(playerKey);
+        const index = handIndex ?? state.activeHandIndex;
+        const hand = state.deck.hand(playerKey, index)!;
+        hand.cards.push(..._drawn);
+        state.deck.updateHandValue(playerKey, index);
+        state.playerStore.hit(playerKey);
+        recordActivity(state, state.playerStore.player(playerKey).title, `drew ${_num} card${_num === 1 ? '' : 's'} ${where}`, 'draw');
+        updatePlayerHandStatus(state, playerKey, index);
+      }
 
       return state;
     }
@@ -261,7 +264,7 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
     case GameAction.Deal: {
       const hasCardsInHands = state.playerStore.all.some((player) => state.deck.getHands(player.key).some((hand) => hand.cards.length));
       if (hasCardsInHands || state.gameStatus >= GameStatus.RoundOver) {
-        state = gameReducer(state, { type: GameAction.NewRound, tableRules: action.tableRules });
+        state = applyAction(state, { type: GameAction.NewRound, tableRules: action.tableRules });
       }
       if (state.playerStore.length === 0) return state;
       const dealtKeys = seatOrder(state).filter((key) => !state.playerStore.player(key).isSittingOut);
@@ -280,7 +283,8 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
      * (unless the card busts them). Only allowed on a two-card hand.
      */
     case GameAction.DoubleDown: {
-      const key = typeof playerKey === 'string' ? playerKey : state.playerStore.currentPlayerKey;
+      const { playerKey, handIndex } = action;
+      const key = playerKey ?? state.playerStore.currentPlayerKey;
       const index = handIndex ?? state.activeHandIndex;
       if (!key || !canDoubleDown(state, key, index)) return state;
 
@@ -291,15 +295,16 @@ export function gameReducer(state: GameState, action: IGameReducerAction) {
       if (hand) hand.stake = (hand.stake ?? stake) + stake;
       recordActivity(state, state.playerStore.player(key).title, `doubled down for $${stake}`, 'double', { amount: -stake });
 
-      state = gameReducer(state, { type: GameAction.Draw, playerKey: key, handIndex: index, deckSide: 'top', numberOfCards: 1 });
+      state = applyAction(state, { type: GameAction.Draw, playerKey: key, handIndex: index, deckSide: 'top', numberOfCards: 1 });
       if (state.gameStatus === GameStatus.InProgress && !state.playerStore.player(key).isBusted) {
-        state = gameReducer(state, { type: GameAction.Stay, playerKey: key, handIndex: index });
+        state = applyAction(state, { type: GameAction.Stay, playerKey: key, handIndex: index });
       }
       return state;
     }
 
     case GameAction.Split: {
-      const key = typeof playerKey === 'string' ? playerKey : state.playerStore.currentPlayerKey;
+      const { playerKey, handIndex } = action;
+      const key = playerKey ?? state.playerStore.currentPlayerKey;
       const index = handIndex ?? state.activeHandIndex;
       if (!key || !canSplit(state, key, index)) return state;
       const player = state.playerStore.player(key);

@@ -18,6 +18,19 @@ export class PlayerStore implements IPlayerStore {
   }
 
   /**
+   * A copy that shares nothing that can change with this store: each player, and each
+   * player's stats, is its own object. The reducer plays each action on a copy, which
+   * leaves the state before it as it was.
+   */
+  public clone(): PlayerStore {
+    const copy = new PlayerStore();
+    copy.players = Object.fromEntries(Object.entries(this.players).map(([key, player]) => [key, { ...player, stats: { ...player.stats } }]));
+    copy.currentPlayerKey = this.currentPlayerKey;
+    copy.lastWriteTime = this.lastWriteTime;
+    return copy;
+  }
+
+  /**
    * Return the internal state of the class 
    */
   public get state(): IPlayerStoreState {

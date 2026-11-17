@@ -6,8 +6,8 @@ import { gameReducer } from './gameReducer';
 import { potBreakdown } from './pot';
 
 const started = (): GameState => {
-  const game = gameReducer(createGameState(), { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] });
-  return gameReducer(game, { type: GameAction.EvaluateGame, gameStatus: game.gameStatus });
+  const game = gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] });
+  return gameReducer(game, { type: GameAction.EvaluateGame });
 };
 const wager = (state: GameState): GameState => gameReducer(state, { type: GameAction.Bet, playerKey: 'chris', betAmount: 25 });
 const total = (state: GameState): number => potBreakdown(state).reduce((sum, share) => sum + share.amount, 0);

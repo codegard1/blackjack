@@ -14,7 +14,7 @@ afterEach(() => {
 const renderControls = (gameStatus: GameStatus, currentPlayerKey: string, chrisCards: string[] = [], isPotBouncing = false) => {
   const state = gameReducer(createGameState(), {
     type: GameAction.NewGame,
-    playerKey: ['chris', 'dealer'],
+    playerKeys: ['chris', 'dealer'],
   });
   state.playerStore.ante('chris', state.minimumBet);
   state.deck.playerHands.chris.cards = chrisCards;
