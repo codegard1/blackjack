@@ -1,6 +1,15 @@
 import { PlayingCardKey, TableRules } from "../types";
-import { BotMove, cardValue } from "./botStrategy";
 import { handValue } from "./getHandValue";
+
+/** A move a seat can make on its turn */
+export type BotMove = 'hit' | 'stay' | 'double' | 'split';
+
+/** Blackjack value of a card for strategy purposes: face cards 10, ace 11 */
+export function cardValue(card: PlayingCardKey): number {
+  const rank = Number(card.split('_')[1]);
+  if (rank === 14) return 11;
+  return Math.min(rank, 10);
+}
 
 /** A recommended move for a hand, and the situation it answers */
 export type StrategyHint = {
@@ -110,6 +119,7 @@ function hardPlay(total: number, up: number, { decks, hitsSoft17 }: Table): Play
  * any two cards, none after a split, one split, no surrender), for the number of decks in
  * the shoe and the dealer's rule on soft 17. It is the play with the best expected result
  * when nothing is known but the player's cards and the dealer's card; it does not count cards.
+ * The computer characters play it too, as often as their discipline allows (see decideBotMove).
  *
  * The plays were worked out by expected value, drawing from the cards left in the shoe, and
  * agree with the published charts. Shoes of four to eight decks share one chart; one and two

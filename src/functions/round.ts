@@ -135,7 +135,8 @@ export function decideSeatMove(state: GameState, key: PlayerKey, rng: Rng = Math
   const dealerUpCard = dealer ? state.deck.playerHands[dealer.key]?.cards[1] : undefined;
   return decideBotMove({
     cards, dealerUpCard, stats, lossStreak: player.lossStreak,
-    canDouble: canDoubleDown(state, key, handIndex), canSplit: canSplit(state, key, handIndex), rng,
+    canDouble: canDoubleDown(state, key, handIndex), canSplit: canSplit(state, key, handIndex),
+    tableRules: state.tableRules, rng,
   });
 }
 
