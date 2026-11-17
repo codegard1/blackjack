@@ -31,7 +31,7 @@ export const STALE_INDEX = 'expire-stale';
 type StateDocument = { _id: string; updatedAt: number; touchedAt: Date; createdAt: number } & Record<string, unknown>;
 
 /** Answers hold one owner's data, so nothing between the function and the browser may keep them */
-const json = (body: unknown, status = 200): Response =>
+export const json = (body: unknown, status = 200): Response =>
   Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 
 const BEARER = /^Bearer +(\S+)$/i;
@@ -41,7 +41,7 @@ const BEARER = /^Bearer +(\S+)$/i;
  * Authorization header (`Bearer <ownerId>`) and never in the address, which servers
  * and proxies log.
  */
-function ownerIdFrom(req: Request): string | undefined {
+export function ownerIdFrom(req: Request): string | undefined {
   return BEARER.exec(req.headers.get('authorization') ?? '')?.[1];
 }
 

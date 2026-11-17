@@ -17,7 +17,7 @@ import {
 
 import { Character, CharacterStatKey, NAME_CREDIT, STAT_LABELS } from '../characters';
 import { formatCount, formatNet } from '../functions/format';
-import { historyRounds, withHistory } from '../functions/history';
+import { characterRecord, roundsElsewhere, useCommunityStats } from '../functions/community';
 import { summarizeStats } from '../functions/profiles';
 import { PlayerStats } from '../types';
 import { CharacterPortrait } from './CharacterPortrait';
@@ -138,9 +138,10 @@ interface ICharacterCardProps {
  */
 export const CharacterCard: React.FC<ICharacterCardProps> = ({ character, stats }) => {
   const styles = useStyles();
-  // the record includes the character's simulated history from before this table
-  const summary = stats ? summarizeStats(withHistory(character.id, stats)) : undefined;
-  const earlierRounds = historyRounds(character.id);
+  // the record includes the character's simulated history and their play at every other table
+  const community = useCommunityStats();
+  const summary = stats ? summarizeStats(characterRecord(character.id, stats, community)) : undefined;
+  const earlierRounds = stats ? roundsElsewhere(character.id, stats, community) : 0;
 
   return (
     <article className={styles.card} aria-label={`${character.name}, ${character.nickname}`}>
@@ -188,7 +189,7 @@ export const CharacterCard: React.FC<ICharacterCardProps> = ({ character, stats 
             ))}
           </dl>
           {earlierRounds > 0 && (
-            <Text size={200} className={styles.credit}>{`Includes ${count(earlierRounds)} rounds played before you joined the table.`}</Text>
+            <Text size={200} className={styles.credit}>{`Includes ${count(earlierRounds)} rounds played away from your table.`}</Text>
           )}
         </section>
       )}

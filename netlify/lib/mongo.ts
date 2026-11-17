@@ -23,6 +23,12 @@ export const PROFILES_COLLECTION = 'profiles';
 /** The collection that holds each owner's game in progress */
 export const GAMES_COLLECTION = 'games';
 
+/** The collection that holds the characters' stats summed across every owner */
+export const NPC_STATS_COLLECTION = 'npcStats';
+
+/** The collection that records what each owner has already added to those sums */
+export const NPC_LEDGER_COLLECTION = 'npcLedger';
+
 let client: MongoClient | undefined;
 
 /** Read the connection settings, or throw a ConfigError naming what is missing */
@@ -38,11 +44,19 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): { uri: string;
  * The one MongoClient for this function instance. It lives at module scope so warm
  * invocations reuse its connections, as MongoDB recommends for serverless functions.
  * The driver connects on first use and the client is never closed.
+ *
+ * A first connection that fails leaves the client holding a closed topology, and the
+ * driver then fails every later operation at once instead of connecting again. So a
+ * client whose topology closes is dropped, and the next call builds a new one.
  */
 export function getClient(): MongoClient {
   if (!client) {
     const { uri } = readConfig();
-    client = new MongoClient(uri, CLIENT_OPTIONS);
+    const created = new MongoClient(uri, CLIENT_OPTIONS);
+    created.on('topologyClosed', () => {
+      if (client === created) client = undefined;
+    });
+    client = created;
   }
   return client;
 }

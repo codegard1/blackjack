@@ -12,6 +12,7 @@ export * from './seatStatus';
 export * from './round';
 export * from './botStrategy';
 export * from './history';
+export * from './community';
 export * from './format';
 export * from './remote';
 export * from './useRemoteSync';

@@ -123,7 +123,7 @@ const REJECTED_OWNER = 403;
  * The owner id is this browser's credential for its data, so it is sent in the
  * Authorization header and not in the address, which servers and proxies log.
  */
-const ownerHeaders = (ownerId: string): Record<string, string> => ({ Accept: 'application/json', Authorization: `Bearer ${ownerId}` });
+export const ownerHeaders = (ownerId: string): Record<string, string> => ({ Accept: 'application/json', Authorization: `Bearer ${ownerId}` });
 
 /**
  * Fetch the owner's copy of one kind of state. Resolves to undefined when the server

@@ -1,6 +1,7 @@
 // @vitest-environment node
+import { MongoServerSelectionError, TopologyClosedEvent } from 'mongodb';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ConfigError, getClient, getDb, readConfig, resetClient } from './mongo';
+import { CLIENT_OPTIONS, ConfigError, getClient, getDb, readConfig, resetClient } from './mongo';
 
 const URI = 'mongodb://localhost:27017';
 
@@ -28,6 +29,38 @@ describe('getClient', () => {
 
     resetClient();
     expect(getClient()).not.toBe(first);
+  });
+
+  it('drops a client whose topology has closed', () => {
+    vi.stubEnv('MONGODB_URI', URI);
+    vi.stubEnv('MONGODB_DB', 'blackjack');
+
+    const first = getClient();
+    first.emit('topologyClosed', new TopologyClosedEvent());
+    const second = getClient();
+    expect(second).not.toBe(first);
+
+    // a stale event from the dropped client leaves its replacement alone
+    first.emit('topologyClosed', new TopologyClosedEvent());
+    expect(getClient()).toBe(second);
+  });
+
+  it('connects again after a first connection that failed', async () => {
+    // nothing listens on this port, so the driver gives up on the first operation
+    vi.stubEnv('MONGODB_URI', 'mongodb://127.0.0.1:9');
+    vi.stubEnv('MONGODB_DB', 'blackjack');
+    const timeout = CLIENT_OPTIONS.serverSelectionTimeoutMS;
+    CLIENT_OPTIONS.serverSelectionTimeoutMS = 200;
+
+    try {
+      const first = getClient();
+      await expect(getDb().command({ ping: 1 })).rejects.toThrow(MongoServerSelectionError);
+      expect(getClient()).not.toBe(first);
+      // a second attempt tries the server again, where the stale client would not
+      await expect(getDb().command({ ping: 1 })).rejects.toThrow(MongoServerSelectionError);
+    } finally {
+      CLIENT_OPTIONS.serverSelectionTimeoutMS = timeout;
+    }
   });
 
   it('throws a ConfigError without a connection string', () => {
