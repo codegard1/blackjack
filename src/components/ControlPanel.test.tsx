@@ -1,7 +1,7 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createGameState, GameContext, GameDispatchContext, PotAnimationContext } from '../context';
+import { createGameState, GameContext, GameDispatchContext, PotAnimationContext, SettingContext, settingDefaults } from '../context';
 import { GameAction, GameStatus } from '../enums';
 import { gameReducer } from '../functions/gameReducer';
 import { ControlPanel } from './ControlPanel';
@@ -146,5 +146,71 @@ describe('player controls', () => {
     renderControls(GameStatus.InProgress, 'dealer');
 
     screen.getAllByRole('button').forEach((button) => expect(button).toBeDisabled());
+  });
+});
+
+describe('strategy hints', () => {
+  /** The human's turn with these cards against a dealer showing `dealerUp`; the hole card is dealt first */
+  const renderHand = (chrisCards: string[], dealerUp: string, options: { hints?: boolean; currentPlayerKey?: string; dealerSoft17?: 'stand' | 'hit' } = {}) => {
+    const { hints = true, currentPlayerKey = 'chris', dealerSoft17 = 'stand' } = options;
+    const state = gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] });
+    state.playerStore.ante('chris', state.minimumBet);
+    state.deck.playerHands.chris.cards = chrisCards;
+    state.deck.playerHands.dealer.cards = ['Spade_13', dealerUp];
+    state.gameStatus = GameStatus.InProgress;
+    state.playerStore.currentPlayerKey = currentPlayerKey;
+    state.tableRules = { ...state.tableRules, dealerSoft17 };
+    return render(
+      <SettingContext.Provider value={{ ...settingDefaults, isStrategyHintVisible: hints }}>
+        <GameContext.Provider value={state}>
+          <ControlPanel playerKey="chris" />
+        </GameContext.Provider>
+      </SettingContext.Provider>,
+    );
+  };
+  const hintedButtons = (container: HTMLElement) => Array.from(container.querySelectorAll('[data-hint]')).map((button) => button.textContent);
+
+  it('names the textbook play and marks its button, reading only the dealer\'s face-up card', () => {
+    // the dealer's hole card is a king: a hint that counted it would see 19, not 9
+    const { container } = renderHand(['Heart_14', 'Club_7'], 'Diamond_9');
+    expect(screen.getByRole('status')).toHaveTextContent('Hint: Soft 18 vs dealer 9: hit');
+    expect(hintedButtons(container)).toEqual(['Hit']);
+  });
+
+  it.each([
+    { cards: ['Heart_10', 'Club_7'], dealerUp: 'Diamond_6', reason: 'Hard 17 vs dealer 6: stay', button: 'Stay' },
+    { cards: ['Heart_5', 'Club_6'], dealerUp: 'Diamond_6', reason: 'Hard 11 vs dealer 6: double down', button: 'Double Down' },
+    { cards: ['Heart_8', 'Club_8'], dealerUp: 'Diamond_10', reason: 'Pair of 8s vs dealer 10: split', button: 'Split' },
+    // three cards cannot be doubled, so a hard 11 is hit
+    { cards: ['Heart_5', 'Club_3', 'Spade_3'], dealerUp: 'Diamond_6', reason: 'Hard 11 vs dealer 6: hit', button: 'Hit' },
+  ])('recommends $button for $reason', ({ cards, dealerUp, reason, button }) => {
+    const { container } = renderHand(cards, dealerUp);
+    expect(screen.getByRole('status')).toHaveTextContent(`Hint: ${reason}`);
+    expect(hintedButtons(container)).toEqual([button]);
+  });
+
+  it('follows the table\'s rule for the dealer on soft 17', () => {
+    renderHand(['Heart_5', 'Club_6'], 'Diamond_14');
+    expect(screen.getByRole('status')).toHaveTextContent('Hard 11 vs dealer ace: hit');
+    cleanup();
+    renderHand(['Heart_5', 'Club_6'], 'Diamond_14', { dealerSoft17: 'hit' });
+    expect(screen.getByRole('status')).toHaveTextContent('Hard 11 vs dealer ace: double down');
+  });
+
+  it('shows nothing when hints are off, before the deal, or when it is not the human\'s turn', () => {
+    const plain = renderHand(['Heart_14', 'Club_7'], 'Diamond_9', { hints: false });
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(hintedButtons(plain.container)).toEqual([]);
+    expect(plain.container.querySelector('.player-hinted')).toBeNull();
+    // the toolbar is what it is without the feature: it stands alone, with Hit as the filled button
+    expect(plain.container.firstElementChild).toBe(screen.getByRole('toolbar'));
+    cleanup();
+
+    renderHand([], 'Diamond_9');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    cleanup();
+
+    renderHand(['Heart_14', 'Club_7'], 'Diamond_9', { currentPlayerKey: 'dealer' });
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });

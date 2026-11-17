@@ -184,3 +184,37 @@ it('opens and closes the in-app blackjack rules from the header', () => {
   fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
   expect(screen.queryByRole('dialog', { name: 'Blackjack rules' })).not.toBeInTheDocument();
 });
+
+it('shows strategy hints once they are switched on in Options, and remembers the choice', () => {
+  // chris holds 16 against the dealer's 6 (the dealer's first card is the hole card)
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
+    this.playerHands.chris.cards = ['Spade_10', 'Diamond_6'];
+    this.playerHands.dealer.cards = ['Club_10', 'Heart_6'];
+  });
+  const hint = () => screen.queryByText('Hint: Hard 16 vs dealer 6: stay');
+  const first = render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  // off by default: no hint, and Hit is the filled button as it always was
+  expect(hint()).not.toBeInTheDocument();
+  expect(first.container.querySelector('[data-hint]')).toBeNull();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  fireEvent.click(screen.getByRole('switch', { name: 'Show strategy hints' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+  expect(hint()).toBeInTheDocument();
+  expect(first.container.querySelector('[data-hint]')).toBe(screen.getByRole('button', { name: 'Stay' }));
+
+  // the hint follows the hand: a four makes 20, which stays
+  vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_4']);
+  fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
+  expect(hint()).not.toBeInTheDocument();
+  expect(screen.getByText('Hint: Hard 20 vs dealer 6: stay')).toBeInTheDocument();
+
+  first.unmount();
+  render(<App />);
+  expect(screen.getByText('Hint: Hard 20 vs dealer 6: stay')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  expect(screen.getByRole('switch', { name: 'Show strategy hints' })).toBeChecked();
+});
