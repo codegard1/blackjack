@@ -157,6 +157,96 @@ export function collectStats(players: IPlayer[]): Record<string, PlayerStats> {
   return Object.fromEntries(players.map((player) => [player.key, { ...player.stats }]));
 }
 
+/**
+ * Sum two lifetime stat records, recomputing the win-loss ratio from the combined
+ * games played and won.
+ */
+export function mergeStats(a: PlayerStats, b: PlayerStats): PlayerStats {
+  const first = { ...emptyStats(), ...a };
+  const second = { ...emptyStats(), ...b };
+  const numberOfGamesPlayed = first.numberOfGamesPlayed + second.numberOfGamesPlayed;
+  const numberOfGamesWon = first.numberOfGamesWon + second.numberOfGamesWon;
+  return {
+    numberOfGamesPlayed,
+    numberOfGamesWon,
+    numberOfGamesLost: first.numberOfGamesLost + second.numberOfGamesLost,
+    numberOfTimesBlackjack: first.numberOfTimesBlackjack + second.numberOfTimesBlackjack,
+    numberOfTimesBusted: first.numberOfTimesBusted + second.numberOfTimesBusted,
+    totalWinnings: first.totalWinnings + second.totalWinnings,
+    netResult: (first.netResult ?? 0) + (second.netResult ?? 0),
+    winLossRatio: numberOfGamesPlayed > 0 ? Math.round((numberOfGamesWon / numberOfGamesPlayed) * 100) : 0,
+  };
+}
+
+/** Whether a profile store has any played hands, added players, or chosen opponents */
+export function hasProfileProgress(state: ProfileState): boolean {
+  const humans = humanProfiles(state.profiles);
+  return state.profiles.some((profile) => (profile.stats.numberOfGamesPlayed ?? 0) > 0)
+    || humans.some((profile) => profile.id !== 'chris' || profile.name !== 'Chris')
+    || state.opponentIds.length > 0;
+}
+
+/**
+ * Combine a Google account's remote profiles with anonymous local progress from this
+ * browser, summing lifetime statistics for matching profiles and keeping any new
+ * human profiles created locally (up to MAX_PROFILES).
+ */
+export function mergeProfileStates(remote: ProfileState, local: ProfileState): ProfileState {
+  const remoteNorm = normalizeProfileState(remote);
+  const localNorm = normalizeProfileState(local);
+  if (!hasProfileProgress(localNorm)) return remoteNorm;
+
+  const localHumans = humanProfiles(localNorm.profiles);
+  const matchedLocalIds = new Set<string>();
+
+  const mergedProfiles: PlayerProfile[] = remoteNorm.profiles.map((remoteProfile) => {
+    if (isCharacterId(remoteProfile.id)) {
+      const localChar = localNorm.profiles.find((p) => p.id === remoteProfile.id);
+      return localChar ? { ...remoteProfile, stats: mergeStats(remoteProfile.stats, localChar.stats) } : remoteProfile;
+    }
+    const localMatch = localHumans.find(
+      (p) => !matchedLocalIds.has(p.id) && (p.id === remoteProfile.id || p.name.toLowerCase() === remoteProfile.name.toLowerCase()),
+    );
+    if (!localMatch) return remoteProfile;
+    matchedLocalIds.add(localMatch.id);
+    return {
+      ...remoteProfile,
+      createdAt: remoteProfile.createdAt > 0 && localMatch.createdAt > 0
+        ? Math.min(remoteProfile.createdAt, localMatch.createdAt)
+        : remoteProfile.createdAt || localMatch.createdAt,
+      stats: mergeStats(remoteProfile.stats, localMatch.stats),
+    };
+  });
+
+  for (const localHuman of localHumans) {
+    if (matchedLocalIds.has(localHuman.id)) continue;
+    if (mergedProfiles.length >= MAX_PROFILES) break;
+    // Skip an untouched default 'Chris' profile when the remote account already has its own humans
+    if (localHuman.id === 'chris' && localHuman.stats.numberOfGamesPlayed === 0 && localNorm.selectedId !== 'chris') continue;
+    mergedProfiles.push({ ...localHuman, stats: { ...emptyStats(), ...localHuman.stats } });
+  }
+
+  const remoteUntouched = !hasProfileProgress(remoteNorm);
+  let selectedId = remoteNorm.selectedId;
+  if (remoteUntouched) {
+    const localSelected = localHumans.find((p) => p.id === localNorm.selectedId);
+    const mergedSelected = localSelected
+      ? mergedProfiles.find((p) => !isCharacterId(p.id) && (p.id === localSelected.id || p.name.toLowerCase() === localSelected.name.toLowerCase()))
+      : undefined;
+    if (mergedSelected) selectedId = mergedSelected.id;
+  }
+
+  const opponentIds = remoteUntouched && localNorm.opponentIds.length > 0
+    ? localNorm.opponentIds
+    : remoteNorm.opponentIds;
+
+  return normalizeProfileState({
+    profiles: mergedProfiles,
+    selectedId,
+    opponentIds,
+  });
+}
+
 export type StatsSummary = {
   rounds: number;
   won: number;

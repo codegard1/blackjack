@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { GameAction } from '../enums';
 import { createGameState } from '../context';
 import { gameReducer } from './gameReducer';
-import { DEALER_PROFILE_ID, defaultProfileState, emptyStats, MAX_PROFILES, normalizeProfileState, profileReducer, seatsFor, summarizeStats, validateProfileName } from './profiles';
+import { DEALER_PROFILE_ID, defaultProfileState, emptyStats, mergeProfileStates, mergeStats, MAX_PROFILES, normalizeProfileState, profileReducer, seatsFor, summarizeStats, validateProfileName } from './profiles';
 import { PlayerStats, ProfileState } from '../types';
 
 describe('validateProfileName', () => {
@@ -150,5 +150,82 @@ describe('summarizeStats', () => {
 
   it('has no win rate before a round has been played', () => {
     expect(summarizeStats(emptyStats()).winRate).toBeUndefined();
+  });
+});
+
+describe('mergeStats and mergeProfileStates', () => {
+  it('sums stat counts and recomputes the win-loss ratio', () => {
+    const first: PlayerStats = {
+      ...emptyStats(),
+      numberOfGamesPlayed: 4,
+      numberOfGamesWon: 3,
+      numberOfGamesLost: 1,
+      numberOfTimesBlackjack: 1,
+      numberOfTimesBusted: 0,
+      totalWinnings: 150,
+      netResult: 100,
+    };
+    const second: PlayerStats = {
+      ...emptyStats(),
+      numberOfGamesPlayed: 6,
+      numberOfGamesWon: 2,
+      numberOfGamesLost: 3,
+      numberOfTimesBlackjack: 0,
+      numberOfTimesBusted: 2,
+      totalWinnings: 100,
+      netResult: -50,
+    };
+
+    expect(mergeStats(first, second)).toEqual({
+      numberOfGamesPlayed: 10,
+      numberOfGamesWon: 5,
+      numberOfGamesLost: 4,
+      numberOfTimesBlackjack: 1,
+      numberOfTimesBusted: 2,
+      totalWinnings: 250,
+      netResult: 50,
+      winLossRatio: 50,
+    });
+  });
+
+  it('combines matching human profiles by name, sums character stats, and adds new local profiles', () => {
+    let remote = profileReducer(defaultProfileState(), {
+      type: 'syncStats',
+      stats: {
+        chris: { ...emptyStats(), numberOfGamesPlayed: 10, numberOfGamesWon: 5, netResult: 50 },
+        [DEALER_PROFILE_ID]: { ...emptyStats(), numberOfGamesPlayed: 10, numberOfGamesWon: 4, netResult: -50 },
+      },
+    });
+    remote = profileReducer(remote, { type: 'toggleOpponent', id: 'ogion' });
+
+    let local = profileReducer(defaultProfileState(), {
+      type: 'syncStats',
+      stats: {
+        chris: { ...emptyStats(), numberOfGamesPlayed: 2, numberOfGamesWon: 1, netResult: 25 },
+        [DEALER_PROFILE_ID]: { ...emptyStats(), numberOfGamesPlayed: 2, numberOfGamesWon: 1, netResult: -25 },
+      },
+    });
+    local = profileReducer(local, { type: 'create', name: 'Alex' });
+
+    const merged = mergeProfileStates(remote, local);
+    const chris = merged.profiles.find((p) => p.id === 'chris');
+    const dealer = merged.profiles.find((p) => p.id === DEALER_PROFILE_ID);
+    const alex = merged.profiles.find((p) => p.name === 'Alex');
+
+    expect(chris?.stats.numberOfGamesPlayed).toBe(12);
+    expect(chris?.stats.numberOfGamesWon).toBe(6);
+    expect(chris?.stats.netResult).toBe(75);
+    expect(dealer?.stats.numberOfGamesPlayed).toBe(12);
+    expect(alex).toBeDefined();
+    expect(merged.selectedId).toBe('chris');
+    expect(merged.opponentIds).toEqual(['ogion']);
+  });
+
+  it('leaves remote profiles untouched when local has no progress', () => {
+    const remote = profileReducer(defaultProfileState(), {
+      type: 'syncStats',
+      stats: { chris: { ...emptyStats(), numberOfGamesPlayed: 5, numberOfGamesWon: 3 } },
+    });
+    expect(mergeProfileStates(remote, defaultProfileState())).toEqual(remote);
   });
 });

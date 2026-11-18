@@ -9,30 +9,67 @@ export const SYNC_API: Record<SyncKind, string> = {
   game: '/api/game',
 };
 
-/** Where a browser asks for its owner id */
+/** Where a browser asks for its owner id or exchanges a Google credential */
 export const OWNER_API = '/api/owner';
 
 /** What the server holds for one owner and kind */
 export type RemoteState<T = unknown> = { data: T; updatedAt: number };
 
+/** Display details for a signed-in Google account */
+export type GoogleUser = {
+  name: string;
+  email?: string;
+  picture?: string;
+};
+
 /**
- * This browser's sync bookkeeping. The owner id names this browser to the server; it
- * is issued and signed by the server, and absent until that has happened. Each
- * syncedAt is the server's updatedAt from the last successful read or write of that
- * kind, so a later remote write can be recognized as newer than what this browser
- * has seen.
+ * This browser's sync bookkeeping. The owner id names this browser or signed-in
+ * Google account to the server; it is issued and signed by the server, and absent
+ * until that has happened. Each syncedAt is the server's updatedAt from the last
+ * successful read or write of that kind, so a later remote write can be recognized
+ * as newer than what this browser has seen.
  */
-export type SyncState = { ownerId?: string; syncedAt: Record<SyncKind, number> };
+export type SyncState = {
+  ownerId?: string;
+  user?: GoogleUser;
+  /** true right after signing in from an anonymous browser, until profiles reconcile */
+  mergeAnonymous?: boolean;
+  syncedAt: Record<SyncKind, number>;
+};
 
 const OWNER_KIND = 'browser';
+const GOOGLE_KIND = 'google';
 
 /** An id the server issued: kind, identifier, a dot and the signature */
-const SIGNED_OWNER_ID = /^[a-z]{2,16}:[A-Za-z0-9-]{8,64}\.[A-Za-z0-9_-]{20,128}$/;
+const SIGNED_OWNER_ID = /^[a-z]{2,16}:[A-Za-z0-9._-]{8,128}\.[A-Za-z0-9_-]{20,128}$/;
 
 const noSync = (): Record<SyncKind, number> => ({ profiles: 0, game: 0 });
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const listeners = new Set<() => void>();
+
+function notifySyncListeners(): void {
+  for (const listener of listeners) listener();
+}
+
+/** Subscribe to changes in the saved sync state (such as signing in or out) */
+export function subscribeSyncState(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function toGoogleUser(value: unknown): GoogleUser | undefined {
+  if (!isObject(value) || typeof value.name !== 'string' || !value.name.trim()) return undefined;
+  return {
+    name: value.name.trim(),
+    ...(typeof value.email === 'string' && value.email ? { email: value.email } : {}),
+    ...(typeof value.picture === 'string' && value.picture ? { picture: value.picture } : {}),
+  };
+}
 
 /**
  * Read a saved sync state. An id from before ids were signed is dropped along with
@@ -49,7 +86,13 @@ function toSyncState(value: unknown): SyncState | undefined {
       if (typeof at === 'number') syncedAt[kind] = at;
     }
   }
-  return { ownerId: value.ownerId, syncedAt };
+  const user = value.ownerId.startsWith(`${GOOGLE_KIND}:`) ? toGoogleUser(value.user) : undefined;
+  return {
+    ownerId: value.ownerId,
+    ...(user ? { user } : {}),
+    ...(value.mergeAnonymous === true ? { mergeAnonymous: true } : {}),
+    syncedAt,
+  };
 }
 
 /** The saved sync state; without an owner id until the server has issued one */
@@ -82,6 +125,9 @@ export function ensureOwnerId(): Promise<string | undefined> {
         const body: unknown = await response.json();
         const issued = isObject(body) ? body.ownerId : undefined;
         if (typeof issued !== 'string' || !SIGNED_OWNER_ID.test(issued) || !issued.startsWith(`${OWNER_KIND}:`)) return undefined;
+        // If the user signed in with Google while the anonymous request was in flight, keep the Google id
+        const latest = loadSyncState();
+        if (latest.ownerId) return latest.ownerId;
         saveSyncState({ ownerId: issued, syncedAt: noSync() });
         return issued;
       } catch {
@@ -105,7 +151,61 @@ export function saveSyncState(state: SyncState): void {
 /** Record the server's timestamp for a kind that is now in step with it */
 export function markSynced(kind: SyncKind, updatedAt: number): void {
   const state = loadSyncState();
-  saveSyncState({ ...state, syncedAt: { ...state.syncedAt, [kind]: updatedAt } });
+  const { mergeAnonymous, ...rest } = state;
+  saveSyncState({
+    ...rest,
+    ...(kind !== 'profiles' && mergeAnonymous ? { mergeAnonymous } : {}),
+    syncedAt: { ...state.syncedAt, [kind]: updatedAt },
+  });
+}
+
+/**
+ * Exchange a Google ID token (`credential`) for a signed `google:<sub>` owner id
+ * and store the signed-in account in sync state.
+ */
+export async function signInWithGoogle(
+  credential: string,
+): Promise<{ ownerId: string; user: GoogleUser } | { error: string }> {
+  try {
+    const response = await fetch(OWNER_API, {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential }),
+    });
+    const body: unknown = await response.json().catch(() => undefined);
+    if (!response.ok) {
+      const message = isObject(body) && typeof body.error === 'string'
+        ? body.error
+        : 'Could not sign in with Google.';
+      return { error: message };
+    }
+    const issued = isObject(body) ? body.ownerId : undefined;
+    const user = isObject(body) ? toGoogleUser(body.user) : undefined;
+    if (typeof issued !== 'string' || !SIGNED_OWNER_ID.test(issued) || !issued.startsWith(`${GOOGLE_KIND}:`) || !user) {
+      return { error: 'Invalid response from authentication server.' };
+    }
+    const previous = loadSyncState();
+    const wasAnonymous = !previous.ownerId || previous.ownerId.startsWith(`${OWNER_KIND}:`);
+    saveSyncState({
+      ownerId: issued,
+      user,
+      ...(wasAnonymous ? { mergeAnonymous: true } : {}),
+      syncedAt: noSync(),
+    });
+    notifySyncListeners();
+    return { ownerId: issued, user };
+  } catch {
+    return { error: 'Could not reach authentication server.' };
+  }
+}
+
+/**
+ * Sign out of the current Google account so this browser starts fresh under a new
+ * anonymous browser owner id.
+ */
+export function signOutGoogle(): void {
+  saveSyncState({ syncedAt: noSync() });
+  notifySyncListeners();
 }
 
 /**

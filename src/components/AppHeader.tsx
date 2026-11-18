@@ -149,7 +149,7 @@ export const AppHeader: React.FC = () => {
                   </dd>
                 </dl>
                 <Text as="p" size={200} className={styles.term} block>
-                  Your game and settings are saved in this browser only.
+                  Your game and settings are saved in this browser, and you can sign in with Google in Players to sync across browsers.
                 </Text>
               </DialogContent>
               <DialogActions>
