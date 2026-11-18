@@ -1,29 +1,50 @@
 import { describe, expect, it } from 'vitest';
 import { BOTS, CHARACTERS, DEALER, getCharacter } from '../characters';
-import { basicSplitStrategy, basicStrategy, botWagerCount, decideBotMove, effectiveStats, standingTotal } from './botStrategy';
+import { botWagerCount, decideBotMove, effectiveStats, standingTotal } from './botStrategy';
 
 const stats = (id: string) => getCharacter(id)!.stats!;
 /** a fixed roll: 0 always passes the discipline check, 0.99 never does */
 const roll = (value: number) => () => value;
 
-describe('basicStrategy', () => {
-  it('stands on hard 17 and on 13 to 16 against a weak dealer card', () => {
-    expect(basicStrategy(['Club_10', 'Heart_7'], 'Spade_10', true)).toBe('stay');
-    expect(basicStrategy(['Club_10', 'Heart_3'], 'Spade_6', true)).toBe('stay');
-    expect(basicStrategy(['Club_10', 'Heart_6'], 'Spade_10', true)).toBe('hit');
+describe('the textbook play', () => {
+  const byTheBook = (cards: string[], dealerUpCard: string | undefined, extra: Partial<Parameters<typeof decideBotMove>[0]> = {}) =>
+    decideBotMove({ cards, dealerUpCard, stats: stats('shevek'), canDouble: true, canSplit: true, rng: roll(0), ...extra });
+
+  it('is the chart the human is given as hints, for the table in play', () => {
+    expect(byTheBook(['Club_10', 'Heart_7'], 'Spade_10')).toBe('stay');
+    expect(byTheBook(['Club_10', 'Heart_3'], 'Spade_6')).toBe('stay');
+    expect(byTheBook(['Club_10', 'Heart_6'], 'Spade_10')).toBe('hit');
+    expect(byTheBook(['Club_14', 'Heart_8'], 'Spade_10')).toBe('stay');
+    expect(byTheBook(['Club_14', 'Heart_6'], 'Spade_10')).toBe('hit');
+    expect(byTheBook(['Club_5', 'Heart_6'], 'Spade_10')).toBe('double');
+    expect(byTheBook(['Club_5', 'Heart_6'], 'Spade_10', { canDouble: false })).toBe('hit');
+
+    // an 8 against a 6 is doubled with one deck and hit in a shoe
+    expect(byTheBook(['Club_3', 'Heart_5'], 'Spade_6', { tableRules: { numberOfDecks: '1', dealerSoft17: 'stand' } })).toBe('double');
+    expect(byTheBook(['Club_3', 'Heart_5'], 'Spade_6', { tableRules: { numberOfDecks: '6', dealerSoft17: 'stand' } })).toBe('hit');
+    // soft 18 against a 2 is doubled only where the dealer hits soft 17
+    expect(byTheBook(['Club_14', 'Heart_7'], 'Spade_2', { tableRules: { numberOfDecks: '6', dealerSoft17: 'stand' } })).toBe('stay');
+    expect(byTheBook(['Club_14', 'Heart_7'], 'Spade_2', { tableRules: { numberOfDecks: '6', dealerSoft17: 'hit' } })).toBe('double');
   });
 
   describe('pair strategy', () => {
-    it('splits matching aces and eights, but not different ten-value ranks', () => {
-      expect(basicSplitStrategy(['Club_14', 'Heart_14'], 'Spade_10')).toBe(true);
-      expect(basicSplitStrategy(['Club_8', 'Heart_8'], 'Spade_10')).toBe(true);
-      expect(basicSplitStrategy(['Club_10', 'Heart_13'], 'Spade_6')).toBe(false);
+    it('splits matching aces and eights, and never tens', () => {
+      expect(byTheBook(['Club_14', 'Heart_14'], 'Spade_10')).toBe('split');
+      expect(byTheBook(['Club_8', 'Heart_8'], 'Spade_10')).toBe('split');
+      expect(byTheBook(['Club_10', 'Heart_10'], 'Spade_6')).toBe('stay');
     });
 
-    it('uses the dealer up-card for conditional pairs', () => {
-      expect(basicSplitStrategy(['Club_9', 'Heart_9'], 'Spade_6')).toBe(true);
-      expect(basicSplitStrategy(['Club_9', 'Heart_9'], 'Spade_7')).toBe(false);
-      expect(basicSplitStrategy(['Club_4', 'Heart_4'], 'Spade_5')).toBe(true);
+    it('uses the dealer up-card for conditional pairs, at a table with no double down after a split', () => {
+      expect(byTheBook(['Club_9', 'Heart_9'], 'Spade_6')).toBe('split');
+      expect(byTheBook(['Club_9', 'Heart_9'], 'Spade_7')).toBe('stay');
+      // fours are not split here: they play as an 8
+      expect(byTheBook(['Club_4', 'Heart_4'], 'Spade_5')).not.toBe('split');
+    });
+
+    it('goes on instinct when the dealer\'s card is not known', () => {
+      // The Shark's nerve stands on this total; the textbook has nothing to say without the dealer's card
+      expect(byTheBook(['Club_10', 'Heart_9'], undefined)).toBe('stay');
+      expect(byTheBook(['Club_2', 'Heart_3'], undefined, { canDouble: false, canSplit: false })).toBe('hit');
     });
 
     it('lets discipline and aggression modulate computer splits', () => {
@@ -42,16 +63,6 @@ describe('basicStrategy', () => {
         canDouble: false, canSplit: true, rng: roll(0.99),
       })).not.toBe('split');
     });
-  });
-
-  it('doubles on 11 when allowed, and hits otherwise', () => {
-    expect(basicStrategy(['Club_5', 'Heart_6'], 'Spade_10', true)).toBe('double');
-    expect(basicStrategy(['Club_5', 'Heart_6'], 'Spade_10', false)).toBe('hit');
-  });
-
-  it('plays soft hands: stands on soft 19, hits soft 17', () => {
-    expect(basicStrategy(['Club_14', 'Heart_8'], 'Spade_10', true)).toBe('stay');
-    expect(basicStrategy(['Club_14', 'Heart_6'], 'Spade_10', true)).toBe('hit');
   });
 });
 
