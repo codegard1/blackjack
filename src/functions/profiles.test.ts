@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { GameAction } from '../enums';
 import { createGameState } from '../context';
 import { gameReducer } from './gameReducer';
-import { DEALER_PROFILE_ID, defaultProfileState, emptyStats, MAX_PROFILES, normalizeProfileState, profileReducer, seatsFor, summarizeStats, validateProfileName } from './profiles';
-import { PlayerStats, ProfileState } from '../types';
+import { botAccountsFor, DEALER_PROFILE_ID, defaultProfileState, emptyStats, MAX_PROFILES, normalizeProfileState, profileReducer, seatsFor, summarizeStats, validateProfileName } from './profiles';
+import { MAX_BALANCE_HISTORY, PlayerStats, ProfileState } from '../types';
 
 describe('validateProfileName', () => {
   const profiles = defaultProfileState().profiles;
@@ -66,6 +66,106 @@ describe('profileReducer', () => {
     expect(state.profiles.find((profile) => profile.id === DEALER_PROFILE_ID)?.stats).toEqual(emptyStats());
   });
 
+  it('syncs botAccounts onto bot profiles with balanceHistory capped at MAX_BALANCE_HISTORY and ignores non-bots', () => {
+    const longHistory = Array.from({ length: MAX_BALANCE_HISTORY + 5 }, (_, index) => index);
+    const state = profileReducer(defaultProfileState(), {
+      type: 'syncStats',
+      stats: {},
+      botAccounts: {
+        ogion: {
+          bank: 320,
+          balanceHistory: longHistory,
+          work: { status: 'working', taskId: 'herding-goats', daysWorked: 2 },
+          taskOverride: 'herding-goats',
+          allowReturn: true,
+        },
+        chris: {
+          bank: 50,
+          balanceHistory: [50],
+        },
+      },
+    });
+
+    const ogion = state.profiles.find((profile) => profile.id === 'ogion');
+    expect(ogion).toMatchObject({
+      bank: 320,
+      work: { status: 'working', taskId: 'herding-goats', daysWorked: 2 },
+      taskOverride: 'herding-goats',
+      allowReturn: true,
+    });
+    expect(ogion?.balanceHistory).toHaveLength(MAX_BALANCE_HISTORY);
+    expect(ogion?.balanceHistory?.at(0)).toBe(5);
+    expect(ogion?.balanceHistory?.at(-1)).toBe(MAX_BALANCE_HISTORY + 4);
+    expect(state.profiles.find((profile) => profile.id === 'chris')?.bank).toBeUndefined();
+  });
+
+  it('configures work overrides and allowReturn for bots, switches active work tasks, and ignores non-bots', () => {
+    let state = defaultProfileState();
+    // Non-bot IDs are ignored
+    expect(profileReducer(state, { type: 'configureWork', id: 'chris', taskOverride: 'smashing-rocks' })).toBe(state);
+    expect(profileReducer(state, { type: 'configureWork', id: DEALER_PROFILE_ID, allowReturn: true })).toBe(state);
+
+    // Setting taskOverride and then toggling allowReturn in separate actions while at the table preserves taskOverride
+    state = profileReducer(state, { type: 'configureWork', id: 'ogion', taskOverride: 'minding-ansible' });
+    expect(state.profiles.find((profile) => profile.id === 'ogion')).toMatchObject({
+      taskOverride: 'minding-ansible',
+      allowReturn: false,
+    });
+    state = profileReducer(state, { type: 'configureWork', id: 'ogion', allowReturn: true });
+    expect(state.profiles.find((profile) => profile.id === 'ogion')).toMatchObject({
+      taskOverride: 'minding-ansible',
+      allowReturn: true,
+    });
+
+    // Put Ogion to work on gobrin-ice (daysWorked: 3, bank: 10)
+    state = profileReducer(state, {
+      type: 'syncStats',
+      stats: {},
+      botAccounts: {
+        ogion: {
+          bank: 10,
+          balanceHistory: [1000, 10],
+          work: { status: 'working', taskId: 'gobrin-ice', daysWorked: 3 },
+          taskOverride: 'gobrin-ice',
+          allowReturn: false,
+        },
+      },
+    });
+
+    // Changing taskOverride while working switches task and resets daysWorked to 0
+    state = profileReducer(state, { type: 'configureWork', id: 'ogion', taskOverride: 'smashing-rocks' });
+    expect(state.profiles.find((profile) => profile.id === 'ogion')).toMatchObject({
+      taskOverride: 'smashing-rocks',
+      work: { status: 'working', taskId: 'smashing-rocks', daysWorked: 0 },
+    });
+
+    // Clearing taskOverride with null reverts to Ogion's own pick (gobrin-ice at $10 bank) and resets daysWorked to 0
+    state = profileReducer(state, { type: 'configureWork', id: 'ogion', taskOverride: null });
+    const revertedOgion = state.profiles.find((profile) => profile.id === 'ogion');
+    expect(revertedOgion?.taskOverride).toBeUndefined();
+    expect(revertedOgion?.work).toEqual({ status: 'working', taskId: 'gobrin-ice', daysWorked: 0 });
+
+    // When a bot is in 'ready' status, enabling allowReturn immediately clears work and taskOverride
+    state = profileReducer(state, {
+      type: 'syncStats',
+      stats: {},
+      botAccounts: {
+        ogion: {
+          bank: 300,
+          balanceHistory: [1000, 10, 300],
+          work: { status: 'ready', taskId: 'gobrin-ice', daysWorked: 7 },
+          taskOverride: 'gobrin-ice',
+          allowReturn: false,
+        },
+      },
+    });
+    state = profileReducer(state, { type: 'configureWork', id: 'ogion', allowReturn: true });
+    const returnedOgion = state.profiles.find((profile) => profile.id === 'ogion');
+    expect(returnedOgion?.allowReturn).toBe(true);
+    expect(returnedOgion?.work).toBeUndefined();
+    expect(returnedOgion?.taskOverride).toBeUndefined();
+  });
+
   it('seats and unseats computer players, up to four, in seating order', () => {
     let state = profileReducer(defaultProfileState(), { type: 'toggleOpponent', id: 'haber' });
     state = profileReducer(state, { type: 'toggleOpponent', id: 'ogion' });
@@ -103,6 +203,85 @@ describe('normalizeProfileState', () => {
     expect(state.selectedId).toBe('alex');
     expect(state.opponentIds).toEqual(['shevek']);
   });
+
+  it('initializes default bot accounts and repairs invalid bot fields during normalization', () => {
+    const defaults = defaultProfileState();
+    for (const botId of ['ogion', 'shevek', 'haber', 'genly-ai']) {
+      expect(defaults.profiles.find((profile) => profile.id === botId)).toMatchObject({
+        bank: 1000,
+        balanceHistory: [1000],
+        allowReturn: false,
+      });
+    }
+    expect(defaults.profiles.find((profile) => profile.id === 'chris')?.bank).toBeUndefined();
+    expect(defaults.profiles.find((profile) => profile.id === DEALER_PROFILE_ID)?.bank).toBeUndefined();
+
+    const maxHistory = Array.from({ length: MAX_BALANCE_HISTORY }, (_, index) => index + 1);
+    const corrupted = {
+      profiles: [
+        { id: 'chris', name: 'Chris', createdAt: 0, stats: emptyStats() },
+        {
+          id: 'ogion',
+          name: 'Ogion',
+          createdAt: 0,
+          stats: emptyStats(),
+          bank: -50,
+          balanceHistory: [],
+          work: { status: 'invalid', taskId: 'bogus', daysWorked: -1 },
+          taskOverride: 'bogus-task',
+          allowReturn: 'yes',
+        },
+        {
+          id: 'shevek',
+          name: 'Shevek',
+          createdAt: 0,
+          stats: emptyStats(),
+          bank: 450,
+          balanceHistory: maxHistory,
+          work: { status: 'working', taskId: 'minding-ansible', daysWorked: 2 },
+          taskOverride: 'minding-ansible',
+          allowReturn: true,
+        },
+        {
+          id: 'haber',
+          name: 'Haber',
+          createdAt: 0,
+          stats: emptyStats(),
+          bank: 120,
+          balanceHistory: Array.from({ length: MAX_BALANCE_HISTORY + 5 }, () => 120),
+        },
+      ],
+      selectedId: 'chris',
+      opponentIds: ['ogion', 'shevek'],
+    } as unknown as ProfileState;
+
+    const normalized = normalizeProfileState(corrupted);
+    const ogion = normalized.profiles.find((profile) => profile.id === 'ogion');
+    expect(ogion).toMatchObject({
+      bank: 1000,
+      balanceHistory: [1000],
+      allowReturn: false,
+    });
+    expect(ogion?.work).toBeUndefined();
+    expect(ogion?.taskOverride).toBeUndefined();
+
+    const shevek = normalized.profiles.find((profile) => profile.id === 'shevek');
+    expect(shevek?.bank).toBe(450);
+    expect(shevek?.balanceHistory).toHaveLength(MAX_BALANCE_HISTORY);
+    expect(shevek?.balanceHistory?.at(0)).toBe(1);
+    expect(shevek?.work).toEqual({ status: 'working', taskId: 'minding-ansible', daysWorked: 2 });
+    expect(shevek?.taskOverride).toBe('minding-ansible');
+    expect(shevek?.allowReturn).toBe(true);
+
+    const haber = normalized.profiles.find((profile) => profile.id === 'haber');
+    expect(haber?.bank).toBe(120);
+    expect(haber?.balanceHistory).toEqual([120]);
+
+    const accounts = botAccountsFor(normalized);
+    expect(accounts.ogion).toEqual({ bank: 1000, balanceHistory: [1000], allowReturn: false });
+    expect(accounts.shevek.bank).toBe(450);
+    expect(accounts.shevek.work).toEqual({ status: 'working', taskId: 'minding-ansible', daysWorked: 2 });
+  });
 });
 
 describe('seatsFor', () => {
@@ -129,6 +308,48 @@ describe('seatsFor', () => {
 
     expect(game.playerStore.player('chris').stats).toEqual(stats);
     expect(game.playerStore.player('dealer').stats).toEqual(emptyStats());
+  });
+
+  it('carries persistent bot banks and away-working or ready flags onto seated bots while human and dealer start at 1000', () => {
+    let state = { ...defaultProfileState(), opponentIds: ['ogion', 'shevek'] };
+    state = profileReducer(state, {
+      type: 'syncStats',
+      stats: {},
+      botAccounts: {
+        ogion: {
+          bank: 180,
+          balanceHistory: [1000, 180],
+          work: { status: 'working', taskId: 'herding-goats', daysWorked: 1 },
+          allowReturn: false,
+        },
+        shevek: {
+          bank: 300,
+          balanceHistory: [1000, 0, 300],
+          work: { status: 'ready', taskId: 'gobrin-ice', daysWorked: 7 },
+          allowReturn: false,
+        },
+      },
+    });
+
+    const [chris, ogion, shevek, dealer] = seatsFor(state);
+    expect(chris).toMatchObject({ key: 'chris', role: 'human', bank: 1000 });
+    expect(ogion).toMatchObject({
+      key: 'ogion',
+      role: 'bot',
+      bank: 180,
+      isSittingOut: true,
+      awayTask: 'herding-goats',
+      isReadyToReturn: false,
+    });
+    expect(shevek).toMatchObject({
+      key: 'shevek',
+      role: 'bot',
+      bank: 300,
+      isSittingOut: true,
+      awayTask: 'gobrin-ice',
+      isReadyToReturn: true,
+    });
+    expect(dealer).toMatchObject({ key: DEALER_PROFILE_ID, role: 'dealer', bank: 1000 });
   });
 });
 

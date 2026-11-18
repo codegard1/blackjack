@@ -1,16 +1,19 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
+import { BOTS } from '../../src/characters';
 import { createGameState } from '../../src/context';
 import { GameAction } from '../../src/enums';
 import { gameReducer } from '../../src/functions/gameReducer';
 import { gameSnapshot } from '../../src/functions/persistence';
-import { GAME_MAX_BODY_BYTES, isGameSnapshot, parseGameBody } from './validateGame';
+import { defaultProfileState, seatsFor } from '../../src/functions/profiles';
+import { BOT_IDS, GAME_MAX_BODY_BYTES, isGameSnapshot, parseGameBody } from './validateGame';
 
 const dealt = () => gameReducer(gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] }), { type: GameAction.Deal });
 const body = (game: unknown) => JSON.stringify({ game });
 
 describe('isGameSnapshot', () => {
   it('accepts the snapshot the game itself produces, before and after a deal', () => {
+    expect([...BOT_IDS]).toEqual(BOTS.map((bot) => bot.id));
     expect(isGameSnapshot(JSON.parse(JSON.stringify(gameSnapshot(createGameState()))))).toBe(true);
     expect(isGameSnapshot(JSON.parse(JSON.stringify(gameSnapshot(dealt()))))).toBe(true);
   });
@@ -69,6 +72,100 @@ describe('parseGameBody', () => {
     expect(isGameSnapshot({ ...snapshot, players: { ...snapshot.players, players: { ...snapshot.players.players, chris: { ...snapshot.players.players.chris, role: 'admin' } } } })).toBe(false);
     expect(isGameSnapshot({ ...snapshot, players: { ...snapshot.players, players: { ...snapshot.players.players, chris: { ...snapshot.players.players.chris, title: 'x'.repeat(41) } } } })).toBe(false);
     expect(isGameSnapshot({ ...snapshot, players: { ...snapshot.players, players: { ...snapshot.players.players, chris: { ...snapshot.players.players.chris, stats: { hacked: 'yes' } } } } })).toBe(false);
+  });
+
+  it('validates botAccounts, seated awayTask and isReadyToReturn, work activity events, and legacy v5 snapshots without botAccounts', () => {
+    const profiles = { ...defaultProfileState(), opponentIds: ['ogion'] };
+    const state = gameReducer(createGameState(), {
+      type: GameAction.NewGame,
+      players: seatsFor(profiles),
+      botAccounts: {
+        ogion: {
+          bank: 300,
+          balanceHistory: [1000, 0, 300],
+          work: { status: 'ready', taskId: 'herding-goats', daysWorked: 3 },
+          taskOverride: 'herding-goats',
+          allowReturn: false,
+        },
+      },
+    });
+    state.activityLog.push({
+      id: 42,
+      timestamp: 1000,
+      name: 'Ogion',
+      description: 'has $300 and wants back in',
+      event: 'work',
+    });
+
+    const snapshot = JSON.parse(JSON.stringify(gameSnapshot(state)));
+    const padded = {
+      ...snapshot,
+      game: {
+        ...snapshot.game,
+        botAccounts: {
+          ...snapshot.game.botAccounts,
+          ogion: {
+            ...snapshot.game.botAccounts.ogion,
+            secretAccountKey: 1,
+            work: { ...snapshot.game.botAccounts.ogion.work, extraWorkKey: 'strip-me' },
+          },
+        },
+      },
+    };
+
+    const parsed = parseGameBody(body(padded));
+    expect(parsed).toEqual({ data: snapshot });
+    expect(JSON.stringify(parsed)).not.toMatch(/secretAccountKey|extraWorkKey/);
+
+    // Legacy v5 snapshot without botAccounts is accepted
+    const { botAccounts, ...v5Game } = snapshot.game;
+    expect(isGameSnapshot({ ...snapshot, game: { ...v5Game, version: 5 } })).toBe(true);
+  });
+
+  it('rejects invalid botAccounts, awayTask, and isReadyToReturn fields', () => {
+    const profiles = { ...defaultProfileState(), opponentIds: ['ogion'] };
+    const state = gameReducer(createGameState(), {
+      type: GameAction.NewGame,
+      players: seatsFor(profiles),
+    });
+    const snapshot = JSON.parse(JSON.stringify(gameSnapshot(state)));
+
+    expect(isGameSnapshot({
+      ...snapshot,
+      players: {
+        ...snapshot.players,
+        players: {
+          ...snapshot.players.players,
+          ogion: { ...snapshot.players.players.ogion, awayTask: 'invalid-task' },
+        },
+      },
+    })).toBe(false);
+
+    expect(isGameSnapshot({
+      ...snapshot,
+      players: {
+        ...snapshot.players,
+        players: {
+          ...snapshot.players.players,
+          ogion: { ...snapshot.players.players.ogion, isReadyToReturn: 'yes' },
+        },
+      },
+    })).toBe(false);
+
+    for (const badBotAccounts of [
+      [],
+      'none',
+      { ...snapshot.game.botAccounts, chris: { bank: 100, balanceHistory: [100] } },
+      { ...snapshot.game.botAccounts, ogion: { bank: -5, balanceHistory: [100] } },
+      { ...snapshot.game.botAccounts, ogion: { bank: 100, balanceHistory: Array.from({ length: 201 }, () => 100) } },
+      { ...snapshot.game.botAccounts, ogion: { bank: 100, balanceHistory: [100], work: { status: 'idle', taskId: 'smashing-rocks', daysWorked: 0 } } },
+      { ...snapshot.game.botAccounts, ogion: { bank: 100, balanceHistory: [100], work: { status: 'working', taskId: 'unknown', daysWorked: 0 } } },
+      { ...snapshot.game.botAccounts, ogion: { bank: 100, balanceHistory: [100], work: { status: 'working', taskId: 'smashing-rocks', daysWorked: 99 } } },
+      { ...snapshot.game.botAccounts, ogion: { bank: 100, balanceHistory: [100], taskOverride: 'unknown' } },
+      { ...snapshot.game.botAccounts, ogion: { bank: 100, balanceHistory: [100], allowReturn: 1 } },
+    ]) {
+      expect(isGameSnapshot({ ...snapshot, game: { ...snapshot.game, botAccounts: badBotAccounts } })).toBe(false);
+    }
   });
 
   it('rejects bodies that are too large, not JSON, or the wrong shape', () => {

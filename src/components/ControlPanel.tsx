@@ -23,7 +23,7 @@ import {
 import { useGameContext, usePlayersDialog, usePotAnimation, useProfileContext, useSettingContext } from "../context";
 import { GameAction, GameStatus } from "../enums";
 import { canDoubleDown, canSplit } from "../functions/gameReducer";
-import { seatsFor } from "../functions/profiles";
+import { botAccountsFor, seatsFor } from "../functions/profiles";
 import { IControlPanelProps } from "../interfaces";
 import { tableRulesFrom } from "../types";
 
@@ -107,7 +107,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
 
   // The hand is over, so a roster change made during play takes effect before the next deal
   const nextHand = () => {
-    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles) });
+    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles), botAccounts: botAccountsFor(profiles) });
     deal();
   };
 

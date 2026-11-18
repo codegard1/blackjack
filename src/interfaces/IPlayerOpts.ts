@@ -1,4 +1,4 @@
-import { PlayerKey, PlayerRole, PlayerStats } from "../types";
+import { PlayerKey, PlayerRole, PlayerStats, WorkTaskId } from "../types";
 
 /**
  * Options for creating a new instance of Player
@@ -14,4 +14,8 @@ export interface IPlayerOptions {
   role?: PlayerRole;
   /** lifetime stats carried into the game; defaults to empty stats */
   stats?: PlayerStats;
+  /** when the character starts the game away working */
+  isSittingOut?: boolean;
+  awayTask?: WorkTaskId;
+  isReadyToReturn?: boolean;
 }

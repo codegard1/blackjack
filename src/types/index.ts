@@ -16,3 +16,5 @@ export * from './PlayerProfile';
 export * from './SeatStatus';
 export * from './Seat';
 export * from './CommunityStats';
+export * from './Work';
+

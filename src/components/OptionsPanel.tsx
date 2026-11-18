@@ -33,7 +33,7 @@ import {
 import { CardBackPreview } from "./CardBackPreview";
 import { useGameContext, useProfileContext, useSettingContext } from "../context";
 import { GameAction } from "../enums";
-import { clearStores, seatsFor } from "../functions";
+import { clearStores, botAccountsFor, seatsFor } from "../functions";
 import { brandPresets, cardBackColorList, cardBackPatternList, cardStyleList, cardStylePresets, themeModeList } from "../theme";
 import { AccentKey, CardBackColor, CardBackPattern, CardStyle, QueueSide, TableRules, ThemeMode, accentKeys, appearanceSettingKeys, blackjackPayouts, deckCounts, tableRulesFrom } from "../types";
 
@@ -65,7 +65,7 @@ export const OptionsPanel: React.FC = () => {
 
   const newDeal = () => {
     // between hands, a roster change made during play takes effect first
-    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles) });
+    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles), botAccounts: botAccountsFor(profiles) });
     gameDispatch({ type: GameAction.Deal, tableRules: tableRulesFrom(settings) });
     closeOptionsPanel();
   }

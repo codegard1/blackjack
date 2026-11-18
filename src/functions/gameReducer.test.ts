@@ -10,6 +10,7 @@ import { gameSnapshot } from './persistence';
 import { defaultProfileState, seatsFor } from './profiles';
 import { canDoubleDown, canSplit, decideSeatMove } from './round';
 import { handValue } from './getHandValue';
+import { seatStatus } from './seatStatus';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const createGameState = (): GameState => ({
@@ -768,6 +769,234 @@ describe('computer players', () => {
       expect(state.activityLog).toHaveLength(logLength);
     });
   });
+
+  describe('away working and character accounts', () => {
+    it('sends a broke character to work and shows their away task in seatStatus', () => {
+      let state = startWithBots(['haber']);
+      state = dealSeats(state, [['Club_10', 'Heart_7'], ['Club_9', 'Heart_8'], ['Diamond_10', 'Spade_7']]);
+      state.playerStore.player('haber').bank = 10;
+
+      state = dealSeats(state, [['Club_10', 'Heart_7'], ['Diamond_10', 'Spade_7']]);
+
+      const haber = state.playerStore.player('haber');
+      expect(haber).toMatchObject({
+        bank: 10,
+        isSittingOut: true,
+        awayTask: 'smashing-rocks',
+        isReadyToReturn: false,
+      });
+      expect(state.botAccounts.haber.work).toEqual({
+        status: 'working',
+        taskId: 'smashing-rocks',
+        daysWorked: 0,
+      });
+      expect(seatStatus(haber, state.gameStatus)).toEqual({
+        text: 'Away: smashing rocks',
+        color: 'subtle',
+        appearance: 'tint',
+      });
+      expect(state.activityLog.some((entry) => entry.name === 'Haber' && entry.description === 'left to work: smashing rocks' && entry.event === 'work')).toBe(true);
+    });
+
+    it('advances work over hands, records balanceHistory on settle and payday, and waits in ready state when allowReturn is false', () => {
+      let state = dealSeats(startWithBots(['genly-ai']), [['Spade_14', 'Heart_13'], ['Club_10', 'Heart_9'], ['Diamond_10', 'Spade_8']]);
+      state = stay(state, 'genly-ai');
+      state = stay(state, 'dealer');
+      state = settle(state);
+
+      // Genly Ai won $25 on Round 1; settleRound records the post-hand balance
+      expect(state.botAccounts['genly-ai'].bank).toBe(1025);
+      expect(state.botAccounts['genly-ai'].balanceHistory).toEqual([1000, 1025]);
+
+      // Genly goes broke before Round 2 and leaves for 2-day dreaming-trials ($150 pay, $100 threshold)
+      state.playerStore.player('genly-ai').bank = 0;
+      state = dealSeats(state, [['Club_10', 'Heart_7'], ['Diamond_10', 'Spade_7']]);
+      expect(state.botAccounts['genly-ai'].work).toEqual({
+        status: 'working',
+        taskId: 'dreaming-trials',
+        daysWorked: 0,
+      });
+
+      // Round 3: 1st hand while away -> daysWorked = 1
+      state = dealSeats(state, [['Club_10', 'Heart_7'], ['Diamond_10', 'Spade_7']]);
+      expect(state.botAccounts['genly-ai'].work).toEqual({
+        status: 'working',
+        taskId: 'dreaming-trials',
+        daysWorked: 1,
+      });
+      expect(seatStatus(state.playerStore.player('genly-ai'), state.gameStatus)).toEqual({
+        text: 'Away: dreaming trials',
+        color: 'subtle',
+        appearance: 'tint',
+      });
+
+      // Round 4: 2nd hand while away -> payday (+$150 >= $100 threshold), waits in ready state
+      state = dealSeats(state, [['Club_10', 'Heart_7'], ['Diamond_10', 'Spade_7']]);
+      expect(state.botAccounts['genly-ai'].bank).toBe(150);
+      expect(state.botAccounts['genly-ai'].balanceHistory.at(-1)).toBe(150);
+      expect(state.botAccounts['genly-ai'].work).toEqual({
+        status: 'ready',
+        taskId: 'dreaming-trials',
+        daysWorked: 2,
+      });
+      const genly = state.playerStore.player('genly-ai');
+      expect(genly).toMatchObject({
+        bank: 150,
+        isSittingOut: true,
+        awayTask: 'dreaming-trials',
+        isReadyToReturn: true,
+      });
+      expect(seatStatus(genly, state.gameStatus)).toEqual({
+        text: 'Ready to return',
+        color: 'informative',
+        appearance: 'tint',
+      });
+      expect(state.activityLog.some((entry) => entry.name === 'Genly Ai' && entry.description === 'finished sitting for effective dreaming trials and earned $150' && entry.event === 'work')).toBe(true);
+      expect(state.activityLog.some((entry) => entry.name === 'Genly Ai' && entry.description === 'has $150 and wants back in' && entry.event === 'work')).toBe(true);
+    });
+
+    it('chains a second task when payday leaves the bank below threshold and supports ConfigureWork taskOverride switching and clearing', () => {
+      let state = startWithBots(['ogion']);
+      // Ignore non-bot keys in ConfigureWork
+      expect(gameReducer(state, { type: GameAction.ConfigureWork, playerKey: 'chris', taskOverride: 'smashing-rocks' }).botAccounts.chris).toBeUndefined();
+
+      state = gameReducer(state, { type: GameAction.ConfigureWork, playerKey: 'ogion', taskOverride: 'smashing-rocks' });
+      expect(state.botAccounts.ogion.taskOverride).toBe('smashing-rocks');
+
+      // Ogion goes broke and starts his overridden 1-day task (smashing-rocks, +$32 vs $300 threshold)
+      state.playerStore.player('ogion').bank = 0;
+      state = gameReducer(state, { type: GameAction.NewRound });
+      expect(state.botAccounts.ogion.work).toEqual({
+        status: 'working',
+        taskId: 'smashing-rocks',
+        daysWorked: 0,
+      });
+
+      // Switch taskOverride while actively working -> resets daysWorked to 0 and logs the switch
+      state = gameReducer(state, { type: GameAction.ConfigureWork, playerKey: 'ogion', taskOverride: 'herding-goats' });
+      expect(state.botAccounts.ogion.work).toEqual({
+        status: 'working',
+        taskId: 'herding-goats',
+        daysWorked: 0,
+      });
+      expect(state.activityLog.at(-1)).toMatchObject({
+        name: 'Ogion',
+        description: 'switched work to herding goats on gont',
+        event: 'work',
+      });
+
+      // Clear taskOverride with null -> reverts to Ogion's own pick (gobrin-ice)
+      state = gameReducer(state, { type: GameAction.ConfigureWork, playerKey: 'ogion', taskOverride: null });
+      expect(state.botAccounts.ogion.taskOverride).toBeUndefined();
+      expect(state.botAccounts.ogion.work).toEqual({
+        status: 'working',
+        taskId: 'gobrin-ice',
+        daysWorked: 0,
+      });
+
+      // Override back to 1-day smashing-rocks and advance 1 round -> earns $32 (< $300), chains into another smashing-rocks
+      state = gameReducer(state, { type: GameAction.ConfigureWork, playerKey: 'ogion', taskOverride: 'smashing-rocks' });
+      state = gameReducer(state, { type: GameAction.NewRound });
+      expect(state.botAccounts.ogion.bank).toBe(32);
+      expect(state.botAccounts.ogion.work).toEqual({
+        status: 'working',
+        taskId: 'smashing-rocks',
+        daysWorked: 0,
+      });
+      expect(state.activityLog.some((entry) => entry.name === 'Ogion' && entry.description === 'started smashing rocks' && entry.event === 'work')).toBe(true);
+    });
+
+    it('returns a ready character immediately between hands when allowReturn is enabled, or automatically on payday with immediate ante', () => {
+      // Case A: enabling allowReturn between hands while ready
+      let state = dealSeats(startWithBots(['haber']), [['Club_10', 'Heart_7'], ['Club_9', 'Heart_8'], ['Diamond_10', 'Spade_7']]);
+      state.playerStore.player('haber').bank = 0;
+      // Round 2: broke Haber leaves to work on 1-day smashing-rocks
+      state = dealSeats(state, [['Spade_14', 'Heart_13'], ['Diamond_10', 'Spade_7']]);
+      // Round 3: Haber finishes 1-day smashing-rocks (+$32 >= $25) and waits in ready state; Chris gets blackjack so round is over
+      state = dealSeats(state, [['Spade_14', 'Heart_13'], ['Diamond_10', 'Spade_7']]);
+      state = settle(state);
+      expect(state.botAccounts.haber.work?.status).toBe('ready');
+
+      state = gameReducer(state, { type: GameAction.ConfigureWork, playerKey: 'haber', allowReturn: true });
+      expect(state.botAccounts.haber.work).toBeUndefined();
+      expect(state.playerStore.player('haber')).toMatchObject({
+        bank: 32,
+        isSittingOut: false,
+        awayTask: undefined,
+        isReadyToReturn: false,
+      });
+      expect(state.activityLog.at(-1)).toMatchObject({
+        name: 'Haber',
+        description: 'returned to the table with $32',
+        event: 'work',
+      });
+
+      // Case B: allowReturn already true before payday -> returns on payday and immediately antes into the new round
+      let autoState = dealSeats(startWithBots(['haber']), [['Club_10', 'Heart_7'], ['Club_9', 'Heart_8'], ['Diamond_10', 'Spade_7']]);
+      autoState = gameReducer(autoState, { type: GameAction.ConfigureWork, playerKey: 'haber', allowReturn: true });
+      autoState.playerStore.player('haber').bank = 0;
+      autoState = dealSeats(autoState, [['Club_10', 'Heart_7'], ['Diamond_10', 'Spade_7']]);
+      expect(autoState.botAccounts.haber.work).toEqual({
+        status: 'working',
+        taskId: 'smashing-rocks',
+        daysWorked: 0,
+      });
+
+      // Next round: Haber finishes smashing-rocks (+$32), automatically returns, and immediately antes $25 (leaving $7)
+      autoState = dealSeats(autoState, [['Club_10', 'Heart_7'], ['Club_9', 'Heart_8'], ['Diamond_10', 'Spade_7']]);
+      expect(autoState.botAccounts.haber.work).toBeUndefined();
+      expect(autoState.playerStore.player('haber').isSittingOut).toBe(false);
+      expect(autoState.playerStore.player('haber').bank).toBe(7);
+      expect(autoState.deck.playerHands.haber.cards).toHaveLength(2);
+      expect(autoState.activityLog.some((entry) => entry.name === 'Haber' && entry.description === 'returned to the table with $32' && entry.event === 'work')).toBe(true);
+    });
+
+    it('advances work each hand for unseated characters and preserves their work state when seated via SetRoster', () => {
+      let state = gameReducer(createGameState(), {
+        type: GameAction.NewGame,
+        playerKeys: ['chris', 'dealer'],
+        botAccounts: {
+          ogion: {
+            bank: 200,
+            balanceHistory: [1000, 200],
+            work: { status: 'working', taskId: 'dreaming-trials', daysWorked: 0 },
+            allowReturn: false,
+          },
+        },
+      });
+      // Round 1 starts on EvaluateGame -> unseated Ogion advances to daysWorked = 1
+      state = gameReducer(state, { type: GameAction.EvaluateGame });
+      expect(state.botAccounts.ogion.work).toEqual({
+        status: 'working',
+        taskId: 'dreaming-trials',
+        daysWorked: 1,
+      });
+
+      // Play and settle Round 1, then start Round 2 -> unseated Ogion finishes dreaming-trials (+$150 -> $350 >= $300)
+      state = dealSeats(state, [['Spade_14', 'Heart_13'], ['Diamond_10', 'Spade_7']]);
+      state = settle(state);
+      state = dealSeats(state, [['Spade_14', 'Heart_13'], ['Diamond_10', 'Spade_7']]);
+      state = settle(state);
+
+      expect(state.botAccounts.ogion.bank).toBe(350);
+      expect(state.botAccounts.ogion.balanceHistory).toEqual([1000, 200, 350]);
+      expect(state.botAccounts.ogion.work).toEqual({
+        status: 'ready',
+        taskId: 'dreaming-trials',
+        daysWorked: 2,
+      });
+
+      // Seat Ogion between hands -> inherits bank and ready-to-return state from botAccounts
+      const seats = seatsFor({ ...defaultProfileState(), opponentIds: ['ogion'] });
+      state = gameReducer(state, { type: GameAction.SetRoster, players: seats });
+      expect(state.playerStore.player('ogion')).toMatchObject({
+        bank: 350,
+        isSittingOut: true,
+        awayTask: 'dreaming-trials',
+        isReadyToReturn: true,
+      });
+    });
+  });
 });
 
 describe('RestoreGame', () => {
@@ -799,6 +1028,7 @@ describe('leaving the previous state alone', () => {
     const next = gameReducer(deepFreeze(state), action);
     expect(JSON.stringify(gameSnapshot(state))).toBe(before);
     expect(next).not.toBe(state);
+    expect(next.botAccounts).not.toBe(state.botAccounts);
     expect(next.deck).not.toBe(state.deck);
     expect(next.playerStore).not.toBe(state.playerStore);
     return next;
@@ -840,6 +1070,7 @@ describe('leaving the previous state alone', () => {
     // between hands: a roster change, the next round, and the rest of the actions the table sends
     state = step(state, { type: GameAction.SetRoster, players: seatsFor({ ...profiles, opponentIds: ['ogion', 'shevek'] }) });
     expect(state.playerStore.activePlayerKeys).toContain('shevek');
+    state = step(state, { type: GameAction.ConfigureWork, playerKey: 'ogion', taskOverride: 'herding-goats', allowReturn: true });
     state = step(state, { type: GameAction.Deal, tableRules: { ...defaultTableRules, numberOfDecks: '2' } });
     expect(state.round).toBe(2);
     state = step(state, { type: GameAction.Shuffle });
@@ -848,6 +1079,38 @@ describe('leaving the previous state alone', () => {
     state = step(state, { type: GameAction.RestoreGame, snapshot: JSON.parse(JSON.stringify(gameSnapshot(state))) });
     state = step(state, { type: GameAction.ResetGame });
     expect(state.gameStatus).toBe(GameStatus.Init);
+  });
+
+  it('advances work, configures overrides, and settles bot balance history without mutating a frozen state', () => {
+    const profiles = { ...defaultProfileState(), opponentIds: ['haber'] };
+    let state = step(createGameState(), {
+      type: GameAction.NewGame,
+      players: seatsFor(profiles),
+      botAccounts: {
+        haber: {
+          bank: 10,
+          balanceHistory: [1000, 10],
+          allowReturn: false,
+        },
+      },
+    });
+    // Round 1 start: broke Haber leaves to work on 1-day smashing-rocks
+    state = step(state, { type: GameAction.EvaluateGame });
+    expect(state.botAccounts.haber.work).toEqual({ status: 'working', taskId: 'smashing-rocks', daysWorked: 0 });
+
+    // ConfigureWork on frozen state: switch override and back
+    state = step(state, { type: GameAction.ConfigureWork, playerKey: 'haber', taskOverride: 'herding-goats' });
+    state = step(state, { type: GameAction.ConfigureWork, playerKey: 'haber', taskOverride: 'smashing-rocks' });
+
+    // Round 2: Haber finishes smashing-rocks (+$32 -> $42) and enters ready state
+    state = step(state, { type: GameAction.NewRound });
+    expect(state.botAccounts.haber.work).toEqual({ status: 'ready', taskId: 'smashing-rocks', daysWorked: 1 });
+    expect(state.botAccounts.haber.balanceHistory).toEqual([1000, 10, 42]);
+
+    // Enable allowReturn on next NewRound -> returns to table and antes
+    state = step(state, { type: GameAction.ConfigureWork, playerKey: 'haber', allowReturn: true });
+    state = step(state, { type: GameAction.NewRound });
+    expect(state.botAccounts.haber.work).toBeUndefined();
   });
 
   it('takes its time and its randomness from the action, so a stamped action always gives the same result', () => {
@@ -932,6 +1195,7 @@ describe('what an action may carry', () => {
     expect(accept({ type: GameAction.Bet, playerKey: 'chris', betAmount: 25 })).toBe(GameAction.Bet);
     expect(accept({ type: GameAction.Stay })).toBe(GameAction.Stay);
     expect(accept({ type: GameAction.Deal, now: 1, seed: 2 })).toBe(GameAction.Deal);
+    expect(accept({ type: GameAction.ConfigureWork, playerKey: 'ogion', taskOverride: 'herding-goats', allowReturn: true })).toBe(GameAction.ConfigureWork);
 
     // @ts-expect-error a wager needs its amount
     accept({ type: GameAction.Bet, playerKey: 'chris' });
@@ -945,5 +1209,7 @@ describe('what an action may carry', () => {
     accept({ type: GameAction.RestoreGame });
     // @ts-expect-error a shuffle takes no card
     accept({ type: GameAction.Shuffle, cardKey: 'Spade_8' });
+    // @ts-expect-error configuring work requires a playerKey
+    accept({ type: GameAction.ConfigureWork, allowReturn: true });
   });
 });
