@@ -21,7 +21,8 @@ export function recordActivity(
     sessionId: event === 'game' ? (lastEntry ? (lastEntry.sessionId ?? 1) + 1 : 1) : (lastEntry?.sessionId ?? 1),
     round: state.round,
     event,
-    timestamp: Date.now(),
+    // the time of the action being played, which the reducer has put on the state
+    timestamp: Date.parse(state.lastWriteTime),
     name,
     description,
     ...(options.amount !== undefined ? { amount: options.amount } : {}),

@@ -33,12 +33,19 @@ describe('parseProfilesBody', () => {
 
   it('rejects bodies that are too large, not JSON, or the wrong shape', () => {
     expect(parseProfilesBody('x'.repeat(MAX_BODY_BYTES + 1))).toEqual({ error: 'Body too large.' });
+    // the limit is in bytes: these characters are two bytes each, so fewer of them are too many
+    expect(parseProfilesBody('é'.repeat(MAX_BODY_BYTES / 2 + 1))).toEqual({ error: 'Body too large.' });
     expect(parseProfilesBody('{not json')).toEqual({ error: 'Body is not valid JSON.' });
     expect(parseProfilesBody('[]')).toEqual({ error: 'Body must be a JSON object.' });
     expect(parseProfilesBody('{}')).toEqual({ error: 'Body must be { profiles: ProfileState }.' });
     expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, selectedId: 7 } }))).toHaveProperty('error');
     expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, profiles: [{ id: 'a', name: '', createdAt: 0, stats }] } }))).toHaveProperty('error');
     expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, profiles: [{ ...profiles.profiles[0], stats: { wins: 'many' } }] } }))).toHaveProperty('error');
+    // counts are whole numbers that are not negative; only netResult may fall below zero
+    for (const bad of [{ numberOfGamesPlayed: -1 }, { numberOfGamesWon: 1.5 }, { netResult: 0.5 }, { winLossRatio: -1 }, { totalWinnings: 2 ** 60 }]) {
+      expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, profiles: [{ ...profiles.profiles[0], stats: bad }] } }))).toHaveProperty('error');
+    }
+    expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, profiles: [{ ...profiles.profiles[0], stats: { netResult: -20, winLossRatio: 0.75 } }] } }))).toHaveProperty('data');
     expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, opponentIds: 'ogion' } }))).toHaveProperty('error');
   });
 });

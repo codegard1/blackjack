@@ -51,11 +51,24 @@ export function parseJsonBody(text: string): { body: Record<string, unknown> } |
   return isObject(body) ? { body } : { error: 'Body must be a JSON object.' };
 }
 
+/** A count of hands or dollars won: a whole number that is not negative */
+const isCount = (value: unknown): boolean => Number.isSafeInteger(value) && (value as number) >= 0;
+
+/**
+ * Stats are whole numbers that are not negative, apart from netResult, which falls
+ * below zero when a player is down, and winLossRatio, which is a fraction.
+ */
+function isStat(key: string, value: unknown): boolean {
+  if (key === 'netResult') return Number.isSafeInteger(value);
+  if (key === 'winLossRatio') return isFiniteNumber(value) && value >= 0;
+  return isCount(value);
+}
+
 export function isStats(value: unknown): value is PlayerStats {
   if (!isObject(value)) return false;
   const entries = Object.entries(value);
   return entries.length <= MAX_STAT_KEYS
-    && entries.every(([key, stat]) => /^[A-Za-z]{1,40}$/.test(key) && isFiniteNumber(stat));
+    && entries.every(([key, stat]) => /^[A-Za-z]{1,40}$/.test(key) && isStat(key, stat));
 }
 
 function isProfile(value: unknown): value is PlayerProfile {
@@ -89,7 +102,7 @@ function pickProfileState(state: ProfileState): ProfileState {
  * Returns the cleaned profiles, or the reason the body was rejected.
  */
 export function parseProfilesBody(text: string): { data: ProfileState } | { error: string } {
-  if (text.length > MAX_BODY_BYTES) return { error: 'Body too large.' };
+  if (Buffer.byteLength(text) > MAX_BODY_BYTES) return { error: 'Body too large.' };
   const parsed = parseJsonBody(text);
   if ('error' in parsed) return parsed;
   if (!isProfileState(parsed.body.profiles)) return { error: 'Body must be { profiles: ProfileState }.' };

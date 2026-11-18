@@ -42,6 +42,7 @@ export function useRemoteSync<T>({
   replace,
   enabled = import.meta.env.MODE !== 'test',
 }: RemoteSyncOptions<T>): void {
+  // the latest value and callbacks, for the timers and requests that outlive a render
   const latest = React.useRef(value);
   latest.current = value;
   const callbacks = React.useRef({ toRemote, preview, merge, replace });

@@ -2,17 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { GameAction, GameStatus, StoreName } from '../enums';
 import { PlayingCard } from '../classes/PlayingCard';
 import { gameReducer } from './gameReducer';
-import { GAME_STORE_VERSION, gameSnapshot, loadGameState, loadSettings, restoreGameState, saveGameState, saveSettings } from './persistence';
+import { GAME_STORE_VERSION, MAX_SAVED_ACTIVITY, gameSnapshot, loadGameState, loadSettings, restoreGameState, saveGameState, saveSettings } from './persistence';
 import { createGameState, settingDefaults } from '../context';
 import { defaultTableRules } from '../types';
 
-const startedGame = () => gameReducer(createGameState(), { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] });
+const startedGame = () => gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] });
 
 describe('persistence', () => {
   it('restores active rules independently of pending settings, including the shoe size', () => {
     const tableRules = { ...defaultTableRules, numberOfDecks: '8' as const, dealerSoft17: 'hit' as const };
     const state = gameReducer(createGameState(), {
-      type: GameAction.NewGame, playerKey: ['chris', 'dealer'], tableRules,
+      type: GameAction.NewGame, playerKeys: ['chris', 'dealer'], tableRules,
     });
     saveGameState(state);
     saveSettings({ ...settingDefaults, numberOfDecks: '2', blackjackPayout: '6:5' });
@@ -25,6 +25,23 @@ describe('persistence', () => {
     const next = gameReducer(restored, { type: GameAction.NewRound, tableRules: loadSettings() });
     expect(next.tableRules).toEqual({ numberOfDecks: '2', dealerSoft17: 'stand', blackjackPayout: '6:5' });
     expect(next.deck.length).toBe(104);
+  });
+
+  it('keeps only the newest activity log entries in storage, and takes no more than that from it', () => {
+    const entries = (count: number) => Array.from({ length: count }, (_, index) => ({ id: index + 1, timestamp: index, name: 'Chris', description: 'stayed' }));
+    const state = { ...startedGame(), activityLog: entries(MAX_SAVED_ACTIVITY + 25) };
+    saveGameState(state);
+    const saved = JSON.parse(localStorage.getItem(StoreName.GAMESTORE)!).activityLog;
+    expect(saved).toHaveLength(MAX_SAVED_ACTIVITY);
+    expect(saved.at(-1).id).toBe(MAX_SAVED_ACTIVITY + 25);
+    // the live log is left alone
+    expect(state.activityLog).toHaveLength(MAX_SAVED_ACTIVITY + 25);
+
+    // a longer log saved by an earlier version is cut down when it is loaded
+    const snapshot = gameSnapshot(state);
+    const restored = restoreGameState(snapshot);
+    expect(restored?.activityLog).toHaveLength(MAX_SAVED_ACTIVITY);
+    expect(restored?.activityLog[0].id).toBe(26);
   });
 
   it('migrates version-4 saves to default rules without losing the hand', () => {
@@ -71,7 +88,7 @@ describe('persistence', () => {
   });
 
   it('restores the active hand and both card stacks mid-split', () => {
-    let state = gameReducer(startedGame(), { type: GameAction.EvaluateGame, gameStatus: GameStatus.InProgress });
+    let state = gameReducer(startedGame(), { type: GameAction.EvaluateGame });
     state.deck.cards = ['Spade_9', 'Spade_10', 'Diamond_7', 'Club_10', 'Heart_8', 'Club_8']
       .map((key) => new PlayingCard(key));
     state = gameReducer(state, { type: GameAction.Deal });

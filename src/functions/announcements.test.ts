@@ -210,7 +210,7 @@ describe('diffAnnouncements', () => {
   });
 
   it('tracks draws and totals on the active split hand', () => {
-    const state = gameReducer(createGameState(), { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] });
+    const state = gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] });
     state.controllingPlayer = 'chris';
     state.activeHandIndex = 1;
     state.deck.playerHands.chris.cards = ['Club_10'];

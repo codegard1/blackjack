@@ -7,7 +7,6 @@ import { IPlayer, IPlayerOptions } from "../interfaces";
 import { GameState, PlayerKey, PlayerRole, TableRules, defaultTableRules } from "../types";
 import { recordActivity } from "./activity";
 import { BotMove, Rng, botWagerCount, decideBotMove } from "./botStrategy";
-import { fisherYates } from "./fisherYates";
 
 /**
  * The turn engine shared by the reducer and settlement. Each seat plays its
@@ -136,7 +135,8 @@ export function decideSeatMove(state: GameState, key: PlayerKey, rng: Rng = Math
   const dealerUpCard = dealer ? state.deck.playerHands[dealer.key]?.cards[1] : undefined;
   return decideBotMove({
     cards, dealerUpCard, stats, lossStreak: player.lossStreak,
-    canDouble: canDoubleDown(state, key, handIndex), canSplit: canSplit(state, key, handIndex), rng,
+    canDouble: canDoubleDown(state, key, handIndex), canSplit: canSplit(state, key, handIndex),
+    tableRules: state.tableRules, rng,
   });
 }
 
@@ -296,7 +296,7 @@ export function finishRound(state: GameState): void {
  * cover it sits the round out; the human always plays, staked or not.
  * Computer players then add wagers according to their aggression.
  */
-export function collectAntes(state: GameState, rng: () => number = Math.random): void {
+export function collectAntes(state: GameState, rng: () => number = () => state.deck.random()): void {
   playerSeats(state).forEach((player) => {
     if (state.playerStore.ante(player.key, state.minimumBet)) {
       state.pot += state.minimumBet;
@@ -329,7 +329,8 @@ export function refillDeck(state: GameState): void {
     state.deck.getHands(player.key).forEach((hand) => hand.cards.forEach((card) => inHands.add(card)));
   });
   const keys = PlayingCardDeck.cardKeys(Number(state.tableRules.numberOfDecks)).filter((key) => !inHands.has(key));
-  state.deck.cards = fisherYates(keys).map((key) => new PlayingCard(key));
+  state.deck.cards = keys.map((key) => new PlayingCard(key));
+  state.deck.shuffle();
   recordActivity(state, '', 'Deck shuffled', 'shuffle');
 }
 

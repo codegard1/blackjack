@@ -1,6 +1,6 @@
 import React from 'react';
 import { GameAction } from '../enums';
-import { IGameReducerAction } from '../interfaces';
+import { GameReducerAction } from '../interfaces';
 import { GameState } from '../types';
 import { gameSnapshot, MAX_SYNCED_ACTIVITY, restoreGameState } from './persistence';
 import { useRemoteSync } from './useRemoteSync';
@@ -14,7 +14,7 @@ export const toRemoteGame = (state: GameState): unknown => gameSnapshot(state, {
  */
 export function useGameSync(
   state: GameState,
-  dispatch: React.Dispatch<IGameReducerAction>,
+  dispatch: React.Dispatch<GameReducerAction>,
   options: { enabled?: boolean } = {},
 ): void {
   useRemoteSync<GameState>({

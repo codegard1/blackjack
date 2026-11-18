@@ -31,7 +31,7 @@ import { BOTS, CHARACTERS, MAX_OPPONENTS, getCharacter } from '../characters';
 import { useGameContext, useProfileContext } from '../context';
 import { GameStatus } from '../enums';
 import { formatCount, formatNet } from '../functions/format';
-import { withHistory } from '../functions/history';
+import { characterRecord, useCommunityStats } from '../functions/community';
 import { DEALER_PROFILE_ID, humanProfiles, summarizeStats, validateProfileName } from '../functions/profiles';
 import { IPlayersDialogProps } from '../interfaces/IPlayersDialogProps';
 import { CharacterDialog } from './CharacterCard';
@@ -107,6 +107,7 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
   // Props
   const { open, onOpenChange } = props;
   const styles = useStyles();
+  const community = useCommunityStats();
 
   // Context
   const { profiles, profileDispatch } = useProfileContext();
@@ -215,8 +216,8 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
                   </TableHeader>
                   <TableBody>
                     {[...humans, ...characters].map((profile) => {
-                      // characters' records include their simulated history; humans' are their own
-                      const summary = summarizeStats(withHistory(profile.id, profile.stats));
+                      // characters' records include their simulated history and other tables' play; humans' are their own
+                      const summary = summarizeStats(characterRecord(profile.id, profile.stats, community));
                       return (
                         <TableRow key={profile.id}>
                           <TableCell>

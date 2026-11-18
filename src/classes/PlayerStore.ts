@@ -18,6 +18,19 @@ export class PlayerStore implements IPlayerStore {
   }
 
   /**
+   * A copy that shares nothing that can change with this store: each player, and each
+   * player's stats, is its own object. The reducer plays each action on a copy, which
+   * leaves the state before it as it was.
+   */
+  public clone(): PlayerStore {
+    const copy = new PlayerStore();
+    copy.players = Object.fromEntries(Object.entries(this.players).map(([key, player]) => [key, { ...player, stats: { ...player.stats } }]));
+    copy.currentPlayerKey = this.currentPlayerKey;
+    copy.lastWriteTime = this.lastWriteTime;
+    return copy;
+  }
+
+  /**
    * Return the internal state of the class 
    */
   public get state(): IPlayerStoreState {
@@ -33,8 +46,8 @@ export class PlayerStore implements IPlayerStore {
    * Construct an array from this.players.key
    */
   public get activePlayerKeys(): PlayerKey[] {
-    let _keys: PlayerKey[] = [];
-    for (let pk in this.players) {
+    const _keys: PlayerKey[] = [];
+    for (const pk in this.players) {
       _keys.push(this.players[pk].key);
     }
     return _keys;
@@ -83,16 +96,15 @@ export class PlayerStore implements IPlayerStore {
    * reset gameplay variables for each player and set the current player key to the first in the list
    */
   public reset(): void {
-    this.activePlayerKeys.forEach(key => this.resetPlayer(key, 'bank'));
+    this.activePlayerKeys.forEach(key => this.resetPlayer(key));
     this.currentPlayerKey = this.length > 0 ? this.activePlayerKeys[0] : undefined;
   }
 
   /**
    * reset properties that are bound to a single round of play
    * @param {string} key
-   * @param  {...string} omit properties to omit when resetting
    */
-  public resetPlayer(key: PlayerKey, omit: string) {
+  public resetPlayer(key: PlayerKey) {
     const p = this.players[key];
     this.players[key] = { ...playerDefaults, key, title: p.title, isNPC: p.isNPC, role: p.role, bank: p.bank, id: p.id, lossStreak: p.lossStreak, stats: { ...p.stats } }
   }
@@ -113,7 +125,7 @@ export class PlayerStore implements IPlayerStore {
    * @param {number} amount 
    */
   public bet(key: PlayerKey, amount: number) {
-    let p = this.player(key);
+    const p = this.player(key);
     if (!this.checkBank(key, amount)) return false
     else {
       p.bank -= amount;
@@ -130,7 +142,7 @@ export class PlayerStore implements IPlayerStore {
    * @param {number} amount 
    */
   public ante(key: PlayerKey, amount: number) {
-    let p = this.player(key);
+    const p = this.player(key);
     if (!this.checkBank(key, amount)) return false
     else {
       p.bank -= amount;
@@ -145,7 +157,7 @@ export class PlayerStore implements IPlayerStore {
  * @param {PlayerKey} key
  */
   public hit(key: PlayerKey) {
-    let p = this.player(key);
+    const p = this.player(key);
     p.lastAction = PlayerAction.Hit;
   }
 
@@ -155,7 +167,6 @@ export class PlayerStore implements IPlayerStore {
    * @param {string} key the key of the player to fetch
    */
   public bust(key: PlayerKey) {
-    let p = this.playerName(key);
     this.player(key).isBusted = true;
     this.finish(key);
   }
@@ -166,7 +177,7 @@ export class PlayerStore implements IPlayerStore {
  * @param {string} key
  */
   public stay(key: PlayerKey) {
-    let p = this.player(key);
+    const p = this.player(key);
     p.isStaying = true;
     p.lastAction = PlayerAction.Stand;
     this.finish(key);
@@ -174,7 +185,7 @@ export class PlayerStore implements IPlayerStore {
 
 
   public stats(key: PlayerKey) {
-    let p = this.player(key);
+    const p = this.player(key);
     return p.stats;
   }
 
@@ -183,7 +194,7 @@ export class PlayerStore implements IPlayerStore {
  * @param {string} key
  */
   public finish(key: PlayerKey) {
-    let p = this.player(key);
+    const p = this.player(key);
     p.isFinished = true;
     this.endTurn(key);
   }
@@ -202,7 +213,7 @@ export class PlayerStore implements IPlayerStore {
  * @param {string} key
  */
   public startTurn(key: PlayerKey) {
-    let p = this.player(key);
+    const p = this.player(key);
     p.turn = true;
     p.isFinished = false;
     p.lastAction = PlayerAction.StartTurn;
@@ -213,7 +224,7 @@ export class PlayerStore implements IPlayerStore {
  * @param {string} key
  */
   public endTurn(key: PlayerKey) {
-    let p = this.player(key);
+    const p = this.player(key);
     p.turn = false;
     p.lastAction = PlayerAction.EndTurn;
   }
@@ -226,7 +237,7 @@ export class PlayerStore implements IPlayerStore {
     const index = this.activePlayerKeys.findIndex(key => key === this.currentPlayerKey);
 
     // increment the index or go back to 0
-    let nextIndex = index + 1 >= (this.length)
+    const nextIndex = index + 1 >= (this.length)
       ? 0
       : index + 1;
     this.currentPlayerKey = this.activePlayerKeys[nextIndex];
@@ -239,7 +250,7 @@ export class PlayerStore implements IPlayerStore {
    * @param {number} amount 
    */
   public payout(key: PlayerKey, amount: number) {
-    let p = this.player(key);
+    const p = this.player(key);
     p.bank += amount;
   }
 
@@ -259,7 +270,7 @@ export class PlayerStore implements IPlayerStore {
   public _evaluatePlayers() {
 
     let anyPlayerisBusted, allPlayersStaying;
-    for (let key in this.players) {
+    for (const key in this.players) {
       anyPlayerisBusted = this.players[key].isBusted;
       allPlayersStaying = this.players[key].isStaying;
     }
@@ -267,7 +278,7 @@ export class PlayerStore implements IPlayerStore {
     const nextGameStatus = anyPlayerisBusted || allPlayersStaying ? 5 : 1;
 
     if (nextGameStatus > 2) {
-      for (let key in this.players) {
+      for (const key in this.players) {
         if (key in this.activePlayerKeys) {
 
           //       StatsStore.update(key, {

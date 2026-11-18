@@ -81,7 +81,7 @@ describe('owner function', () => {
   it('reports a missing secret without issuing anything', async () => {
     vi.stubEnv('OWNER_ID_SECRET', '');
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    const response = await handler();
+    const response = handler();
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({ error: 'Server is not configured.' });
   });

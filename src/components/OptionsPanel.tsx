@@ -41,9 +41,8 @@ export const OptionsPanel: React.FC = () => {
 
   // Context
   const { settings, toggleSetting } = useSettingContext();
-  const { gameState, gameDispatch } = useGameContext();
+  const { gameDispatch } = useGameContext();
   const { profiles, profileDispatch } = useProfileContext();
-  const playerStore = gameState.playerStore;
 
   const closeOptionsPanel = () => {
     toggleSetting({ key: "isOptionsPanelVisible", value: false });
@@ -127,6 +126,7 @@ export const OptionsPanel: React.FC = () => {
           <Switch checked={settings.isSelectedVisible} label="Show Selected" onChange={(_, data) => toggleSetting({ key: 'isSelectedVisible', value: data.checked })} />
           <Switch checked={settings.isDealerHandVisible} label="Show Dealer Hand" onChange={(_, data) => toggleSetting({ key: 'isDealerHandVisible', value: data.checked })} />
           <Switch checked={settings.isHandValueVisible} label="Show Hand Value" onChange={(_, data) => toggleSetting({ key: 'isHandValueVisible', value: data.checked })} />
+          <Switch checked={settings.isStrategyHintVisible} label="Show strategy hints" onChange={(_, data) => toggleSetting({ key: 'isStrategyHintVisible', value: data.checked })} />
           <Switch checked={settings.isActivityLogVisible} label="Open Activity Log by default" onChange={(_, data) => toggleSetting({ key: 'isActivityLogVisible', value: data.checked })} />
           <Field label="Seat queue side" hint="Where seats wait for their turn on a wide table">
             <RadioGroup

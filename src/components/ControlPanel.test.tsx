@@ -1,7 +1,7 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createGameState, GameContext, GameDispatchContext, PotAnimationContext } from '../context';
+import { createGameState, GameContext, GameDispatchContext, PotAnimationContext, SettingContext, settingDefaults } from '../context';
 import { GameAction, GameStatus } from '../enums';
 import { gameReducer } from '../functions/gameReducer';
 import { ControlPanel } from './ControlPanel';
@@ -14,7 +14,7 @@ afterEach(() => {
 const renderControls = (gameStatus: GameStatus, currentPlayerKey: string, chrisCards: string[] = [], isPotBouncing = false) => {
   const state = gameReducer(createGameState(), {
     type: GameAction.NewGame,
-    playerKey: ['chris', 'dealer'],
+    playerKeys: ['chris', 'dealer'],
   });
   state.playerStore.ante('chris', state.minimumBet);
   state.deck.playerHands.chris.cards = chrisCards;
@@ -146,5 +146,79 @@ describe('player controls', () => {
     renderControls(GameStatus.InProgress, 'dealer');
 
     screen.getAllByRole('button').forEach((button) => expect(button).toBeDisabled());
+  });
+});
+
+describe('strategy hints', () => {
+  /** The human's turn with these cards against a dealer showing `dealerUp`; the hole card is dealt first */
+  const renderHand = (chrisCards: string[], dealerUp: string, options: { hints?: boolean; currentPlayerKey?: string; dealerSoft17?: 'stand' | 'hit'; numberOfDecks?: '1' | '2' | '6' | '8' } = {}) => {
+    const { hints = true, currentPlayerKey = 'chris', dealerSoft17 = 'stand', numberOfDecks = '1' } = options;
+    const state = gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] });
+    state.playerStore.ante('chris', state.minimumBet);
+    state.deck.playerHands.chris.cards = chrisCards;
+    state.deck.playerHands.dealer.cards = ['Spade_13', dealerUp];
+    state.gameStatus = GameStatus.InProgress;
+    state.playerStore.currentPlayerKey = currentPlayerKey;
+    state.tableRules = { ...state.tableRules, dealerSoft17, numberOfDecks };
+    return render(
+      <SettingContext.Provider value={{ ...settingDefaults, isStrategyHintVisible: hints }}>
+        <GameContext.Provider value={state}>
+          <ControlPanel playerKey="chris" />
+        </GameContext.Provider>
+      </SettingContext.Provider>,
+    );
+  };
+  const hintedButtons = (container: HTMLElement) => Array.from(container.querySelectorAll('[data-hint]')).map((button) => button.textContent);
+
+  it('names the textbook play and marks its button, reading only the dealer\'s face-up card', () => {
+    // the dealer's hole card is a king: a hint that counted it would see 19, not 9
+    const { container } = renderHand(['Heart_14', 'Club_7'], 'Diamond_9');
+    expect(screen.getByRole('status')).toHaveTextContent('Hint: Soft 18 vs dealer 9: hit');
+    expect(hintedButtons(container)).toEqual(['Hit']);
+  });
+
+  it.each([
+    { cards: ['Heart_10', 'Club_7'], dealerUp: 'Diamond_6', reason: 'Hard 17 vs dealer 6: stay', button: 'Stay' },
+    { cards: ['Heart_5', 'Club_6'], dealerUp: 'Diamond_6', reason: 'Hard 11 vs dealer 6: double down', button: 'Double Down' },
+    { cards: ['Heart_8', 'Club_8'], dealerUp: 'Diamond_10', reason: 'Pair of 8s vs dealer 10: split', button: 'Split' },
+    // three cards cannot be doubled, so a hard 11 is hit
+    { cards: ['Heart_5', 'Club_3', 'Spade_3'], dealerUp: 'Diamond_6', reason: 'Hard 11 vs dealer 6: hit', button: 'Hit' },
+  ])('recommends $button for $reason', ({ cards, dealerUp, reason, button }) => {
+    const { container } = renderHand(cards, dealerUp);
+    expect(screen.getByRole('status')).toHaveTextContent(`Hint: ${reason}`);
+    expect(hintedButtons(container)).toEqual([button]);
+  });
+
+  it('follows the rules of the table in play: the dealer on soft 17, and the number of decks', () => {
+    renderHand(['Heart_14', 'Club_7'], 'Diamond_2', { numberOfDecks: '6' });
+    expect(screen.getByRole('status')).toHaveTextContent('Soft 18 vs dealer 2: stay');
+    cleanup();
+    renderHand(['Heart_14', 'Club_7'], 'Diamond_2', { numberOfDecks: '6', dealerSoft17: 'hit' });
+    expect(screen.getByRole('status')).toHaveTextContent('Soft 18 vs dealer 2: double down');
+    cleanup();
+
+    // one deck doubles an 8 against a 6; a shoe hits it
+    renderHand(['Heart_3', 'Club_5'], 'Diamond_6', { numberOfDecks: '1' });
+    expect(screen.getByRole('status')).toHaveTextContent('Hard 8 vs dealer 6: double down');
+    cleanup();
+    renderHand(['Heart_3', 'Club_5'], 'Diamond_6', { numberOfDecks: '8' });
+    expect(screen.getByRole('status')).toHaveTextContent('Hard 8 vs dealer 6: hit');
+  });
+
+  it('shows nothing when hints are off, before the deal, or when it is not the human\'s turn', () => {
+    const plain = renderHand(['Heart_14', 'Club_7'], 'Diamond_9', { hints: false });
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(hintedButtons(plain.container)).toEqual([]);
+    expect(plain.container.querySelector('.player-hinted')).toBeNull();
+    // the toolbar is what it is without the feature: it stands alone, with Hit as the filled button
+    expect(plain.container.firstElementChild).toBe(screen.getByRole('toolbar'));
+    cleanup();
+
+    renderHand([], 'Diamond_9');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    cleanup();
+
+    renderHand(['Heart_14', 'Club_7'], 'Diamond_9', { currentPlayerKey: 'dealer' });
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });

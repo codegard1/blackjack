@@ -1,7 +1,7 @@
 import { Dispatch, createContext, useContext } from 'react';
 import { PlayerStore, PlayingCardDeck } from '../classes';
 import { GameStatus } from '../enums';
-import { IGameReducerAction } from '../interfaces';
+import { GameReducerAction } from '../interfaces';
 import { GameState, defaultTableRules } from '../types';
 
 export const createGameState = (): GameState => ({
@@ -28,7 +28,7 @@ export const gameDefaults: GameState = createGameState();
 
 
 export const GameContext = createContext<GameState>(gameDefaults);
-export const GameDispatchContext = createContext<Dispatch<IGameReducerAction>>(() => { });
+export const GameDispatchContext = createContext<Dispatch<GameReducerAction>>(() => { });
 
 // Custom hook to consume context
 export const useGameContext = () => {

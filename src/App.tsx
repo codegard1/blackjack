@@ -8,8 +8,9 @@ import { FluentProvider, makeStyles, tokens } from '@fluentui/react-components';
 import './App.css';
 import { AppHeader, OptionsPanel, PlayersDialog, Table } from './components';
 import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
-import { GameAction, GameStatus } from './enums';
-import { collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, useGameSync, useProfileSync } from './functions';
+import { GameAction } from './enums';
+import { collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync } from './functions';
+import { GameReducerAction } from './interfaces';
 import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark, PAGE_GUTTER } from './theme';
 
 // The page behind the table: a striped felt drawn from the brand color, so it follows
@@ -36,7 +37,9 @@ const App = () => {
   const styles = useStyles();
 
   // State from context
-  const [gameState, gameDispatch] = React.useReducer(gameReducer, undefined, loadGameState);
+  const [gameState, dispatchGame] = React.useReducer(gameReducer, undefined, loadGameState);
+  // every action is given its time and a random seed here, so the reducer needs neither the clock nor Math.random
+  const gameDispatch = React.useCallback((action: GameReducerAction) => dispatchGame(stampAction(action)), []);
   const [settings, toggleSetting] = React.useReducer(settingReducer, undefined, loadSettings);
   const [profiles, profileDispatch] = React.useReducer(profileReducer, undefined, loadProfiles);
   // The Players dialog opens from the header and from the end-of-hand controls
@@ -55,6 +58,8 @@ const App = () => {
   // and keep the profiles and the game in step with the server, when there is one
   useProfileSync(profiles, profileDispatch);
   useGameSync(gameState, gameDispatch);
+  // and pick up what every other table has played with the characters
+  useCommunitySync();
 
   // Evaluate game whenever the status changes, or a new round reaches the same
   // status (a natural can end a round in the same action that starts it).
@@ -65,8 +70,8 @@ const App = () => {
   React.useEffect(() => {
     if (lastEvaluatedStatus.current === statusKey) return;
     lastEvaluatedStatus.current = statusKey;
-    gameDispatch({ type: GameAction.EvaluateGame, gameStatus: gameState.gameStatus });
-  }, [statusKey, gameState.gameStatus])
+    gameDispatch({ type: GameAction.EvaluateGame });
+  }, [statusKey, gameState.gameStatus, gameDispatch]);
 
   // When a round settles, carry each player's updated stats back to their profile.
   // Only the transition counts, so a restored settled round is not added twice.
@@ -88,7 +93,7 @@ const App = () => {
     if (lastRosterKey.current === rosterKey) return;
     lastRosterKey.current = rosterKey;
     if (betweenHands) gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles) });
-  }, [rosterKey, betweenHands, profiles]);
+  }, [rosterKey, betweenHands, profiles, gameDispatch]);
 
   return (
     <FluentProvider theme={theme} style={{ colorScheme: isDarkMode(themeMode) ? 'dark' : 'light' }}>

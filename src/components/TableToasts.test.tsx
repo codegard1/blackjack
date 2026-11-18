@@ -24,8 +24,8 @@ afterEach(() => {
  * Chris has 11, the dealer 17, and a 2 is next in the deck. The state a hook starts from.
  */
 const startedGame = (): GameState => {
-  const started = gameReducer(createGameState(), { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] });
-  const anted = gameReducer(started, { type: GameAction.EvaluateGame, gameStatus: started.gameStatus });
+  const started = gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] });
+  const anted = gameReducer(started, { type: GameAction.EvaluateGame });
   anted.deck.cards = ['Heart_2', 'Club_10', 'Diamond_7', 'Heart_6', 'Spade_5'].map((key) => new PlayingCard(key));
   return gameReducer(anted, { type: GameAction.Deal });
 };
@@ -437,7 +437,7 @@ describe('activity log pacing', () => {
     const cleared = gameReducer(first, { type: GameAction.ResetGame, clearActivityLog: true });
     rerender({ state: cleared });
     expect(result.current.activityLog).toEqual([]);
-    rerender({ state: gameReducer(cleared, { type: GameAction.NewGame, playerKey: ['chris', 'dealer'] }) });
+    rerender({ state: gameReducer(cleared, { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] }) });
 
     // the old toast's moment ending must not release entries that were recorded after the clear
     advance(TOAST_REVEAL_MS);

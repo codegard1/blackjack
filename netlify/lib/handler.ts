@@ -31,7 +31,7 @@ export const STALE_INDEX = 'expire-stale';
 type StateDocument = { _id: string; updatedAt: number; touchedAt: Date; createdAt: number } & Record<string, unknown>;
 
 /** Answers hold one owner's data, so nothing between the function and the browser may keep them */
-const json = (body: unknown, status = 200): Response =>
+export const json = (body: unknown, status = 200): Response =>
   Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 
 const BEARER = /^Bearer +(\S+)$/i;
@@ -41,7 +41,7 @@ const BEARER = /^Bearer +(\S+)$/i;
  * Authorization header (`Bearer <ownerId>`) and never in the address, which servers
  * and proxies log.
  */
-function ownerIdFrom(req: Request): string | undefined {
+export function ownerIdFrom(req: Request): string | undefined {
   return BEARER.exec(req.headers.get('authorization') ?? '')?.[1];
 }
 
@@ -111,7 +111,8 @@ export function createStateHandler<T>({ name, collection, field, maxBodyBytes, p
 
       if (Number(req.headers.get('content-length') ?? 0) > maxBodyBytes) return reject(413, 'Body too large.', req);
       const text = await req.text();
-      if (text.length > maxBodyBytes) return reject(413, 'Body too large.', req);
+      // the header can be absent or wrong, and a string's length counts characters, so measure the bytes
+      if (Buffer.byteLength(text) > maxBodyBytes) return reject(413, 'Body too large.', req);
       const parsed = parse(text);
       if ('error' in parsed) return reject(400, parsed.error, req);
 
