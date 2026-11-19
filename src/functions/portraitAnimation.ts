@@ -33,6 +33,7 @@ export type LoadedPortraitAnimations = {
  */
 export const PORTRAIT_ANIMATION_LOADERS: Readonly<Record<string, () => Promise<PortraitAnimationSet>>> = {
   haber: () => import('../assets/portraits/haber-animations').then((module) => module.HABER_ANIMATIONS),
+  dealer: () => import('../assets/portraits/faxe-animations').then((module) => module.FAXE_ANIMATIONS),
 };
 
 const loadedCache = new Map<string, Promise<LoadedPortraitAnimations>>();

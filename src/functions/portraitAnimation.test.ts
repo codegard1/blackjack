@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { FAXE_ANIMATIONS } from '../assets/portraits/faxe-animations';
 import { HABER_ANIMATIONS } from '../assets/portraits/haber-animations';
 import {
   PortraitAnimationSet,
@@ -14,8 +15,8 @@ import {
   parsePaletteRgb,
 } from './portraitAnimation';
 
-function parseHaberSvgRgb(): Uint8Array {
-  const svg = readFileSync(resolve('src', 'assets', 'portraits', 'haber.svg'), 'utf8');
+function parseSvgRgb(svgFileName: string): Uint8Array {
+  const svg = readFileSync(resolve('src', 'assets', 'portraits', svgFileName), 'utf8');
   const rgba = new Uint8Array(24 * 24 * 3);
   const rectRe = /<rect\s+([^>]+?)\/>/g;
   const attrRe = /(\w+)="([^"]+)"/g;
@@ -48,34 +49,12 @@ function parseHaberSvgRgb(): Uint8Array {
   return rgba;
 }
 
-describe('HABER_ANIMATIONS asset', () => {
-  const paletteRgb = parsePaletteRgb(HABER_ANIMATIONS.palette);
-  const base = decodeBaseFrame(HABER_ANIMATIONS);
-
-  it('matches every pixel of haber.svg in its decoded base frame', () => {
-    expect(HABER_ANIMATIONS.size).toBe(24);
-    expect(HABER_ANIMATIONS.palette.every((hex) => /^#[0-9a-f]{6}$/i.test(hex))).toBe(true);
-
-    const decodedRgba = new Uint8ClampedArray(24 * 24 * 4);
-    blitFrame(base, paletteRgb, decodedRgba);
-    const expectedRgb = parseHaberSvgRgb();
-
-    for (let i = 0; i < 24 * 24; i++) {
-      expect([decodedRgba[i * 4], decodedRgba[i * 4 + 1], decodedRgba[i * 4 + 2], decodedRgba[i * 4 + 3]]).toEqual([
-        expectedRgb[i * 3],
-        expectedRgb[i * 3 + 1],
-        expectedRgb[i * 3 + 2],
-        255,
-      ]);
-    }
-  });
-
-  it('provides 24 distinct animations covering all requested actions', () => {
-    expect(HABER_ANIMATIONS.clips).toHaveLength(24);
-    const ids = HABER_ANIMATIONS.clips.map((clip) => clip.id);
-    expect(new Set(ids).size).toBe(24);
-
-    const expectedIds = [
+const CHARACTER_SETS = [
+  {
+    name: 'Haber',
+    svgFile: 'haber.svg',
+    set: HABER_ANIMATIONS,
+    expectedIds: [
       'wink',
       'tooth-flare',
       'brow-wipe',
@@ -89,27 +68,69 @@ describe('HABER_ANIMATIONS asset', () => {
       'nod',
       'fall-asleep',
       'chair-fall',
-    ];
+    ],
+  },
+  {
+    name: 'Faxe',
+    svgFile: 'faxe.svg',
+    set: FAXE_ANIMATIONS,
+    expectedIds: [
+      'hair-toss',
+      'examine-nails',
+      'adjust-headdress',
+      'wink',
+      'whistle',
+    ],
+  },
+] as const;
+
+describe.each(CHARACTER_SETS)('$name portrait animation asset', ({ svgFile, set, expectedIds }) => {
+  const paletteRgb = parsePaletteRgb(set.palette);
+  const base = decodeBaseFrame(set);
+
+  it(`matches every pixel of ${svgFile} in its decoded base frame`, () => {
+    expect(set.size).toBe(24);
+    expect(set.palette.every((hex) => /^#[0-9a-f]{6}$/i.test(hex))).toBe(true);
+
+    const decodedRgba = new Uint8ClampedArray(24 * 24 * 4);
+    blitFrame(base, paletteRgb, decodedRgba);
+    const expectedRgb = parseSvgRgb(svgFile);
+
+    for (let i = 0; i < 24 * 24; i++) {
+      expect([decodedRgba[i * 4], decodedRgba[i * 4 + 1], decodedRgba[i * 4 + 2], decodedRgba[i * 4 + 3]]).toEqual([
+        expectedRgb[i * 3],
+        expectedRgb[i * 3 + 1],
+        expectedRgb[i * 3 + 2],
+        255,
+      ]);
+    }
+  });
+
+  it('provides 24 distinct animations covering all requested actions', () => {
+    expect(set.clips).toHaveLength(24);
+    const ids = set.clips.map((clip) => clip.id);
+    expect(new Set(ids).size).toBe(24);
+
     for (const expectedId of expectedIds) {
       expect(ids).toContain(expectedId);
     }
   });
 
-  it.each(HABER_ANIMATIONS.clips.map((clip, index) => [clip.id, index] as const))(
+  it.each(set.clips.map((clip, index) => [clip.id, index] as const))(
     '%s starts and ends on the exact base frame, stays in bounds, and animates cleanly',
     (_id, index) => {
-      const clip = decodeClip(HABER_ANIMATIONS, base, index);
+      const clip = decodeClip(set, base, index);
       expect(clip.frames.length).toBeGreaterThanOrEqual(3);
 
       for (const frame of clip.frames) {
         expect(frame.pixels).toHaveLength(576);
         expect(frame.durationMs).toBeGreaterThan(0);
         for (const colorIdx of frame.pixels) {
-          expect(colorIdx).toBeLessThan(HABER_ANIMATIONS.palette.length);
+          expect(colorIdx).toBeLessThan(set.palette.length);
         }
       }
 
-      // Start and end frames must both match Haber's resting portrait pixel-for-pixel
+      // Start and end frames must both match the resting portrait pixel-for-pixel
       expect(clip.frames[0].pixels).toEqual(base);
       expect(clip.frames[clip.frames.length - 1].pixels).toEqual(clip.frames[0].pixels);
 
@@ -186,20 +207,23 @@ describe('portraitAnimation runtime helpers', () => {
 
   it('reports animated characters and caches loaded animation sets', async () => {
     expect(hasPortraitAnimations('haber')).toBe(true);
+    expect(hasPortraitAnimations('dealer')).toBe(true);
     expect(hasPortraitAnimations('ogion')).toBe(false);
     expect(hasPortraitAnimations(undefined)).toBe(false);
 
     expect(await loadPortraitAnimations('ogion')).toBeUndefined();
 
-    const p1 = loadPortraitAnimations('haber');
-    const p2 = loadPortraitAnimations('haber');
-    expect(p1).toBe(p2);
+    for (const id of ['haber', 'dealer'] as const) {
+      const p1 = loadPortraitAnimations(id);
+      const p2 = loadPortraitAnimations(id);
+      expect(p1).toBe(p2);
 
-    const loaded = await p1;
-    expect(loaded).toBeDefined();
-    expect(loaded!.clipCount).toBe(24);
-    const c1 = loaded!.getClip(0);
-    const c2 = loaded!.getClip(0);
-    expect(c1).toBe(c2);
+      const loaded = await p1;
+      expect(loaded).toBeDefined();
+      expect(loaded!.clipCount).toBe(24);
+      const c1 = loaded!.getClip(0);
+      const c2 = loaded!.getClip(0);
+      expect(c1).toBe(c2);
+    }
   });
 });

@@ -1,6 +1,7 @@
 import React from 'react';
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { FAXE_ANIMATIONS } from '../assets/portraits/faxe-animations';
 import { HABER_ANIMATIONS } from '../assets/portraits/haber-animations';
 import { CharacterPortrait } from './CharacterPortrait';
 import { PORTRAIT_GAP_DELAY_MS, PORTRAIT_INITIAL_DELAY_MS } from './usePortraitAnimation';
@@ -87,13 +88,51 @@ describe('CharacterPortrait', () => {
     expect(ogion.querySelector('canvas')).toBeNull();
   });
 
-  it('keeps the accessible portrait img and canvas overlay for Haber', () => {
-    const { container } = render(<CharacterPortrait id="haber" name="Haber" size="lg" />);
+  it('keeps the accessible portrait img and canvas overlay for Haber and Faxe', () => {
+    const { container: haber } = render(<CharacterPortrait id="haber" name="Haber" size="lg" />);
     expect(screen.getByRole('img', { name: /big man with a red-brown beard/ })).toBeInTheDocument();
-    const canvas = container.querySelector('canvas');
-    expect(canvas).toHaveAttribute('aria-hidden', 'true');
-    expect(canvas).toHaveAttribute('width', '24');
-    expect(canvas).toHaveAttribute('height', '24');
+    const haberCanvas = haber.querySelector('canvas');
+    expect(haberCanvas).toHaveAttribute('aria-hidden', 'true');
+    expect(haberCanvas).toHaveAttribute('width', '24');
+    expect(haberCanvas).toHaveAttribute('height', '24');
+
+    const { container: dealer } = render(<CharacterPortrait id="dealer" name="Faxe" size="md" />);
+    expect(screen.getByRole('img', { name: /long black hair, a gold circlet/ })).toBeInTheDocument();
+    const dealerCanvas = dealer.querySelector('canvas');
+    expect(dealerCanvas).toHaveAttribute('aria-hidden', 'true');
+    expect(dealerCanvas).toHaveAttribute('width', '24');
+    expect(dealerCanvas).toHaveAttribute('height', '24');
+  });
+
+  it('plays Faxe dealer animations with identical start and end frames', async () => {
+    vi.useFakeTimers();
+    installMatchMediaMock(false);
+    const { frames, putImageData } = mockCanvas2dContext();
+
+    const { container } = render(<CharacterPortrait id="dealer" name="Faxe" decorative />);
+    const canvas = container.querySelector('canvas')!;
+    const validIds = new Set(FAXE_ANIMATIONS.clips.map((clip) => clip.id));
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    advanceUntilActive(canvas, PORTRAIT_INITIAL_DELAY_MS.max);
+    const playedId = canvas.dataset.animation;
+    expect(playedId).toBeDefined();
+    expect(validIds.has(playedId!)).toBe(true);
+    expect(putImageData).toHaveBeenCalled();
+
+    for (let elapsed = 0; elapsed < 5000 && canvas.dataset.animation !== undefined; elapsed += 20) {
+      act(() => {
+        vi.advanceTimersByTime(20);
+      });
+    }
+
+    expect(canvas.dataset.animation).toBeUndefined();
+    expect(canvas.style.opacity).toBe('0');
+    expect(frames.length).toBeGreaterThanOrEqual(3);
+    expect(frames[frames.length - 1]).toEqual(frames[0]);
   });
 
   it('skips animations when prefers-reduced-motion is enabled', () => {
