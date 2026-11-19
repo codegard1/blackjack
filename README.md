@@ -40,7 +40,7 @@ Run `npm test` for the test suite (`npm run test:coverage` also measures coverag
 #### Characters
 * Choose up to four computer players in the Players dialog: Ogion (The Rock), Shevek (The Shark), Haber (The Maniac) and Genly Ai (The Tourist). Faxe (The House) deals
 * Each character has a pixel-art portrait, a tagline, a backstory card, and four stats (nerve, aggression, discipline, tilt) that drive how they hit, double down and bet; tilt makes them bet bigger and take more risks during a losing streak
-* Portraits are built from text pixel maps in `scripts/build-portraits.mjs`; run `npm run portraits` after editing one
+* Portraits are built from text pixel maps in `scripts/build-portraits.mjs`; run `npm run portraits` after editing one. Haber's idle portrait animations are compiled into `src/assets/portraits/haber-animations.ts` with `npm run animations` (`scripts/build-haber-animations.mjs`)
 * Each character's record starts with a long play history from `src/data/characterHistory.json`, added to whatever they play at your table. `npm run simulate-history` regenerates it by playing real games between the characters in quick succession (10,000 rounds in under a second; options: `-- --rounds 20000 --seed 7 --out path`). The same seed gives the same history; simulations always use the default table rules, regardless of saved settings
 * Character names are borrowed, with admiration, from the novels of Ursula K. Le Guin; the characters themselves are new
 

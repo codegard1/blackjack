@@ -3,6 +3,8 @@ import React from 'react';
 import { Avatar, makeStyles, mergeClasses, tokens } from '@fluentui/react-components';
 
 import { getCharacter } from '../characters';
+import { hasPortraitAnimations } from '../functions/portraitAnimation';
+import { usePortraitAnimation } from './usePortraitAnimation';
 
 /** Portraits are 24x24 pixel art, so every size is a whole multiple to keep pixels square */
 export const PORTRAIT_SIZES = { sm: 24, md: 48, lg: 144 } as const;
@@ -18,6 +20,26 @@ const useStyles = makeStyles({
   large: {
     borderRadius: tokens.borderRadiusXLarge,
     boxShadow: tokens.shadow8,
+  },
+  animatedFrame: {
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  baseImage: {
+    display: 'block',
+    width: '100%',
+    height: '100%',
+    imageRendering: 'pixelated',
+  },
+  canvasOverlay: {
+    position: 'absolute',
+    inset: 0,
+    width: '100%',
+    height: '100%',
+    display: 'block',
+    imageRendering: 'pixelated',
+    pointerEvents: 'none',
+    opacity: 0,
   },
 });
 
@@ -39,18 +61,46 @@ export const CharacterPortrait: React.FC<ICharacterPortraitProps> = ({ id, name,
   const styles = useStyles();
   const character = getCharacter(id);
   const px = PORTRAIT_SIZES[size];
+  const animated = hasPortraitAnimations(character?.id);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  usePortraitAnimation(animated ? character?.id : undefined, canvasRef);
 
   if (!character) {
     return <Avatar name={name} color="brand" size={px === 144 ? 128 : px === 48 ? 48 : 24} aria-hidden={decorative || undefined} className={className} />;
   }
 
+  if (!animated) {
+    return (
+      <img
+        src={character.portrait}
+        width={px}
+        height={px}
+        alt={decorative ? '' : character.portraitAlt}
+        className={mergeClasses(styles.portrait, size === 'lg' && styles.large, className)}
+      />
+    );
+  }
+
   return (
-    <img
-      src={character.portrait}
-      width={px}
-      height={px}
-      alt={decorative ? '' : character.portraitAlt}
-      className={mergeClasses(styles.portrait, size === 'lg' && styles.large, className)}
-    />
+    <span
+      className={mergeClasses(styles.portrait, styles.animatedFrame, size === 'lg' && styles.large, className)}
+      style={{ width: px, height: px }}
+    >
+      <img
+        src={character.portrait}
+        width={px}
+        height={px}
+        alt={decorative ? '' : character.portraitAlt}
+        className={styles.baseImage}
+      />
+      <canvas
+        ref={canvasRef}
+        width={24}
+        height={24}
+        aria-hidden="true"
+        className={styles.canvasOverlay}
+      />
+    </span>
   );
 };

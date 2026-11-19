@@ -24,6 +24,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\" \"netlify/**/*.ts\"",
     "portraits": "node scripts/build-portraits.mjs",
+    "animations": "node scripts/build-haber-animations.mjs",
     "simulate-history": "node scripts/simulate-history.mjs",
     "strategy-chart": "node scripts/basic-strategy.mjs",
     "aggregate-stats": "node scripts/aggregate-stats.mjs"
