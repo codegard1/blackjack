@@ -77,6 +77,7 @@ const useStyles = makeStyles({
     display: 'flex',
     flexDirection: 'column',
     gap: tokens.spacingVerticalXS,
+    minWidth: 0,
     padding: tokens.spacingVerticalS,
     border: `1px solid ${tokens.colorNeutralStroke2}`,
     borderRadius: tokens.borderRadiusLarge,
@@ -89,6 +90,7 @@ const useStyles = makeStyles({
     display: 'flex',
     alignItems: 'center',
     gap: tokens.spacingHorizontalS,
+    minWidth: 0,
   },
   rosterText: {
     display: 'flex',
@@ -105,6 +107,7 @@ const useStyles = makeStyles({
     display: 'flex',
     flexDirection: 'column',
     gap: tokens.spacingVerticalXXS,
+    minWidth: 0,
     paddingInlineStart: tokens.spacingHorizontalS,
     paddingTop: tokens.spacingVerticalXXS,
     borderTop: `1px solid ${tokens.colorNeutralStroke3}`,
@@ -117,6 +120,20 @@ const useStyles = makeStyles({
     flexWrap: 'wrap',
     alignItems: 'center',
     gap: tokens.spacingHorizontalS,
+    minWidth: 0,
+  },
+  taskSelect: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  taskSelectInput: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
 });
 
@@ -237,6 +254,8 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
                         <div className={styles.rosterControls}>
                           <Select
                             size="small"
+                            className={styles.taskSelect}
+                            select={{ className: styles.taskSelectInput }}
                             aria-label={`${bot.name}'s work task`}
                             value={selectedTask}
                             onChange={(_, data) => {
