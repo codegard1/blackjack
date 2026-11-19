@@ -15,6 +15,7 @@ export const settingDefaults: SettingsState = {
   isHandValueVisible: false,
   isOptionsPanelVisible: false,
   isSelectedVisible: false,
+  isStrategyHintVisible: false,
   themeMode: 'light',
   accent: 'blue',
   cardStyle: 'classic',

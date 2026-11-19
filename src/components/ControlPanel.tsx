@@ -3,6 +3,7 @@ import React from "react";
 
 import {
   Button,
+  Text,
   Toolbar,
   ToolbarButton,
   ToolbarDivider,
@@ -22,8 +23,11 @@ import {
 // Local Resources
 import { useGameContext, usePlayersDialog, usePotAnimation, useProfileContext, useSettingContext } from "../context";
 import { GameAction, GameStatus } from "../enums";
+import { BotMove } from "../functions/botStrategy";
 import { canDoubleDown, canSplit } from "../functions/gameReducer";
 import { botAccountsFor, seatsFor } from "../functions/profiles";
+import { getDealer } from "../functions/round";
+import { recommendMove } from "../functions/strategyHint";
 import { IControlPanelProps } from "../interfaces";
 import { tableRulesFrom } from "../types";
 
@@ -42,6 +46,22 @@ const useStyles = makeStyles({
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: tokens.spacingHorizontalM,
+  },
+  // with a hint, the line that explains it sits over the toolbar, inside the dock
+  hinted: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: tokens.spacingVerticalXXS,
+    minWidth: 0,
+    maxWidth: '100%',
+  },
+  hint: {
+    maxWidth: '100%',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    color: tokens.colorBrandForeground1,
   },
   button: {
     transitionProperty: 'transform, background-color, color',
@@ -91,6 +111,27 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const isDoubleDownDisabled = !canDoubleDown(gameState, playerKey, gameState.activeHandIndex);
   const isSplitDisabled = !canSplit(gameState, playerKey, gameState.activeHandIndex);
   const wagerLabel = `Wager $${minimumBet}`;
+
+  // The textbook play for the hand in control, when hints are switched on and there is a move
+  // to make. It reads the dealer's face-up card only: the hole card is dealt first.
+  const dealer = getDealer(gameState);
+  const hint = settings.isStrategyHintVisible && !npcFlag && !isPlayDisabled
+    ? recommendMove({
+      cards: gameState.deck.hand(playerKey, gameState.activeHandIndex)?.cards ?? [],
+      dealerUpCard: dealer ? gameState.deck.hand(dealer.key)?.cards[1] : undefined,
+      canDouble: !isDoubleDownDisabled,
+      canSplit: !isSplitDisabled,
+      dealerSoft17: gameState.tableRules.dealerSoft17,
+      numberOfDecks: gameState.tableRules.numberOfDecks,
+    })
+    : undefined;
+  // The filled button is the one to press: the hinted move, or Hit when there is no hint
+  const emphasis = (move: BotMove): 'primary' | 'subtle' | undefined => {
+    if (hint) return hint.move === move ? 'primary' : 'subtle';
+    if (move !== 'hit') return undefined;
+    return isPlayDisabled ? 'subtle' : 'primary';
+  };
+  const hinted = (move: BotMove) => (hint?.move === move ? { 'data-hint': 'true' } : {});
   // While the pot animates, enabled controls wait; they stay focusable so keyboard focus is kept
   const isWaiting = usePotAnimation();
   const waitUnless = (isDisabled: boolean) => isWaiting && !isDisabled;
@@ -158,28 +199,28 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
     );
   }
 
-  return hidden ? null : (
+  const toolbar = (
       <Toolbar aria-label={`${player.title}'s actions`} className={`player-controlpanel ${styles.toolbar}`}>
         <Tooltip content="Draw one card from the top of the deck (H)" relationship="label">
-          <ToolbarButton ref={hitButton} className={styles.button} appearance={isPlayDisabled ? 'subtle' : 'primary'} icon={<Add20Regular />} disabled={isPlayDisabled} disabledFocusable={waitUnless(isPlayDisabled)} onClick={_hit}>
+          <ToolbarButton ref={hitButton} className={styles.button} appearance={emphasis('hit')} {...hinted('hit')} icon={<Add20Regular />} disabled={isPlayDisabled} disabledFocusable={waitUnless(isPlayDisabled)} onClick={_hit}>
             <Label>Hit</Label>
           </ToolbarButton>
         </Tooltip>
         <Tooltip content="Stand on your current hand (S)" relationship="description">
-          <ToolbarButton className={styles.button} aria-label="Stay" icon={<ArrowForward20Regular />} disabled={isPlayDisabled} disabledFocusable={waitUnless(isPlayDisabled)} onClick={() => gameDispatch({ type: GameAction.Stay, playerKey })}>
+          <ToolbarButton className={styles.button} aria-label="Stay" appearance={emphasis('stay')} {...hinted('stay')} icon={<ArrowForward20Regular />} disabled={isPlayDisabled} disabledFocusable={waitUnless(isPlayDisabled)} onClick={() => gameDispatch({ type: GameAction.Stay, playerKey })}>
             <Label>Stay</Label>
           </ToolbarButton>
         </Tooltip>
         {!npcFlag && (
           <Tooltip content="Double your stake, take exactly one more card, then stand (D)" relationship="description">
-            <ToolbarButton className={styles.button} aria-label="Double Down" icon={<ArrowUpload20Regular />} disabled={isDoubleDownDisabled} disabledFocusable={waitUnless(isDoubleDownDisabled)} onClick={() => gameDispatch({ type: GameAction.DoubleDown, playerKey })}>
+            <ToolbarButton className={styles.button} aria-label="Double Down" appearance={emphasis('double')} {...hinted('double')} icon={<ArrowUpload20Regular />} disabled={isDoubleDownDisabled} disabledFocusable={waitUnless(isDoubleDownDisabled)} onClick={() => gameDispatch({ type: GameAction.DoubleDown, playerKey })}>
               <Label>Double Down</Label>
             </ToolbarButton>
           </Tooltip>
         )}
         {!npcFlag && (
           <Tooltip content="Split a pair into two hands with an equal wager" relationship="description">
-            <ToolbarButton className={styles.button} aria-label="Split" icon={<ArrowSwap20Regular />} disabled={isSplitDisabled} disabledFocusable={waitUnless(isSplitDisabled)} onClick={() => gameDispatch({ type: GameAction.Split, playerKey, handIndex: gameState.activeHandIndex })}>
+            <ToolbarButton className={styles.button} aria-label="Split" appearance={emphasis('split')} {...hinted('split')} icon={<ArrowSwap20Regular />} disabled={isSplitDisabled} disabledFocusable={waitUnless(isSplitDisabled)} onClick={() => gameDispatch({ type: GameAction.Split, playerKey, handIndex: gameState.activeHandIndex })}>
               <Label>Split</Label>
             </ToolbarButton>
           </Tooltip>
@@ -201,4 +242,13 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
         )}
       </Toolbar>
   );
+
+  if (hidden) return null;
+  // without a hint the toolbar stands alone, exactly as it does when hints are switched off
+  return hint ? (
+    <div className={`player-hinted ${styles.hinted}`}>
+      <Text size={200} weight="semibold" role="status" className={`strategy-hint ${styles.hint}`}>Hint: {hint.reason}</Text>
+      {toolbar}
+    </div>
+  ) : toolbar;
 }

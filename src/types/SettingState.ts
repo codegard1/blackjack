@@ -36,6 +36,8 @@ export type SettingsState = TableRules & {
   isHandValueVisible: boolean;
   isOptionsPanelVisible: boolean;
   isSelectedVisible: boolean;
+  /** point out the textbook play on the human's turn */
+  isStrategyHintVisible: boolean;
   themeMode: ThemeMode;
   accent: AccentKey;
   cardStyle: CardStyle;
