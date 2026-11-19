@@ -298,7 +298,12 @@ export function finishRound(state: GameState): void {
  */
 export function collectAntes(state: GameState, rng: () => number = () => state.deck.random()): void {
   playerSeats(state).forEach((player) => {
+    if (player.isSittingOut && !isBot(player)) {
+      recordActivity(state, player.title, 'sat out', 'ante');
+      return;
+    }
     if (state.playerStore.ante(player.key, state.minimumBet)) {
+      player.isSittingOut = false;
       state.pot += state.minimumBet;
       recordActivity(state, player.title, `anted $${state.minimumBet}`, 'ante', { amount: -state.minimumBet });
     } else if (isBot(player)) {

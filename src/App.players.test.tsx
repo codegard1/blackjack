@@ -153,6 +153,63 @@ it('seats chosen computer players, who play their turns before the dealer', () =
   expect(container.querySelector('[data-focus]')).toBeNull();
 });
 
+it('allows the human player to sit out between hands while computer players play a single hand, then rejoin', () => {
+  vi.spyOn(Math, 'random').mockReturnValue(0.99);
+  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck, _count?: number, playerKeys?: string[]) {
+    const keys = playerKeys ?? Object.keys(this.playerHands);
+    if (keys.includes('chris')) this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+    if (keys.includes('ogion')) this.playerHands.ogion.cards = ['Club_10', 'Heart_8'];
+    if (keys.includes('dealer')) this.playerHands.dealer.cards = ['Club_9', 'Heart_8'];
+  });
+  const { container } = render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  const dialog = screen.getByRole('dialog', { name: 'Players' });
+  fireEvent.click(within(dialog).getByRole('checkbox', { name: /Ogion/ }));
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+
+  vi.useFakeTimers();
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+
+  // Chris stays on 17
+  fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
+
+  // Wait for round to finish and settle
+  const sitOutBtn = () => screen.queryByRole('button', { name: 'Sit out' });
+  for (let waited = 0; waited < 60_000 && !(sitOutBtn() && !sitOutBtn()?.hasAttribute('aria-disabled')); waited += 100) {
+    act(() => vi.advanceTimersByTime(100));
+  }
+  expect(sitOutBtn()).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Next hand' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Change players' })).toBeInTheDocument();
+
+  // Chris sits out
+  fireEvent.click(screen.getByRole('button', { name: 'Sit out' }));
+
+  // Chris is marked as sitting out
+  expect(within(container.querySelector('[data-seat-key="chris"]') as HTMLElement).getByText('Sitting out')).toBeInTheDocument();
+
+  // Ogion plays
+  const rejoinBtn = () => screen.queryByRole('button', { name: 'Rejoin table' });
+  for (let waited = 0; waited < 60_000 && !(rejoinBtn() && !rejoinBtn()?.hasAttribute('aria-disabled')); waited += 100) {
+    act(() => vi.advanceTimersByTime(100));
+  }
+  expect(rejoinBtn()).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Sit out another hand' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Change players' })).toBeInTheDocument();
+
+  // Ensure computer players do NOT play another hand by themselves
+  act(() => vi.advanceTimersByTime(10000));
+  expect(rejoinBtn()).toBeInTheDocument();
+
+  // Chris rejoins the table
+  fireEvent.click(screen.getByRole('button', { name: 'Rejoin table' }));
+
+  // Now Chris is dealt cards again and has controls to Stay
+  expect(screen.getByRole('button', { name: 'Stay' })).toBeInTheDocument();
+});
+
 it('queues seats on the left by default, or on the right from the Seat queue side setting', () => {
   const { container } = render(<App />);
   expect(container.querySelector('.table-layout')).not.toHaveClass('is-queue-right');

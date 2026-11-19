@@ -34,6 +34,8 @@ type ActionPayloads = {
   /** Resume a saved game; a snapshot that is not valid leaves the game as it is */
   [GameAction.RestoreGame]: { snapshot: unknown };
   [GameAction.Select]: { cardKey: PlayingCardKey };
+  /** Toggle or set sitting out status for a player (defaults to the human player) */
+  [GameAction.SitOut]: { playerKey?: PlayerKey; isSittingOut?: boolean };
   /** Change who sits at the table, in seating order; ignored while a hand is in play */
   [GameAction.SetRoster]: { players: IPlayerOptions[] };
   [GameAction.SetSpinnerVisible]: object;
