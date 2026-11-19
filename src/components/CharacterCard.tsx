@@ -18,6 +18,7 @@ import {
 import { Character, CharacterStatKey, NAME_CREDIT, STAT_LABELS, isBotId } from '../characters';
 import { formatCount, formatNet } from '../functions/format';
 import { characterRecord, roundsElsewhere, useCommunityStats } from '../functions/community';
+import { withBalanceHistory } from '../functions/history';
 import { summarizeStats } from '../functions/profiles';
 import { describeCharacterWork, returnThreshold } from '../functions/work';
 import { BotAccountState, PlayerStats } from '../types';
@@ -185,7 +186,7 @@ export const CharacterCard: React.FC<ICharacterCardProps> = ({ character, stats,
           <Text as="h4" id={`${character.id}-balance`} weight="semibold">Bank and work</Text>
           <Text>{describeCharacterWork(character.id, account, minimumBet, isSeated)}</Text>
           <BalanceChart
-            values={account.balanceHistory}
+            values={withBalanceHistory(character.id, account.balanceHistory)}
             label={character.name}
             referenceValue={threshold}
             referenceLabel="Return threshold"

@@ -5,7 +5,7 @@ import { PlayingCardDeck } from './classes/PlayingCardDeck';
 import App from './App';
 import { defaultProfileState, saveProfiles } from './functions';
 import { formatNet } from './functions/format';
-import { CHARACTER_HISTORY } from './functions/history';
+import { CHARACTER_HISTORY, withBalanceHistory } from './functions/history';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -226,14 +226,15 @@ it('shows character work status in the Players dialog and renders the balance ch
   expect(within(card).getByRole('heading', { name: 'Bank and work' })).toBeInTheDocument();
   expect(within(card).getByText('At the table · $420 (returns at $300)')).toBeInTheDocument();
 
+  const expectedHistory = withBalanceHistory('ogion', [1000, 420]);
   const chart = within(card).getByRole('img', {
-    name: 'Ogion balance over time: started at $1000, now $420, high $1000, low $420',
+    name: `Ogion balance over time: started at $${expectedHistory[0]}, now $420, high $${Math.max(...expectedHistory)}, low $${Math.min(...expectedHistory)}`,
   });
   expect(chart.tagName.toLowerCase()).toBe('svg');
   expect(chart.querySelector('polyline')).not.toBeNull();
   expect(chart.querySelector('polygon')).not.toBeNull();
   expect(chart.querySelector('line')).not.toBeNull();
-  expect(within(card).getByText('Start: $1000')).toBeInTheDocument();
+  expect(within(card).getByText(`Start: $${expectedHistory[0]}`)).toBeInTheDocument();
   expect(within(card).getByText('Return threshold: $300')).toBeInTheDocument();
   expect(within(card).getByText('Now: $420')).toBeInTheDocument();
 });
