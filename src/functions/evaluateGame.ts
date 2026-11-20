@@ -2,7 +2,8 @@ import { GameStatus } from "../enums";
 import { IPlayer } from "../interfaces";
 import { GameState } from "../types";
 import { recordActivity } from "./activity";
-import { collectAntes, isDealer, netFor, roundStake } from "./round";
+import { collectAntes, ensureBotAccount, isBot, isDealer, netFor, roundStake } from "./round";
+import { appendBalance } from "./work";
 
 export { roundStake } from "./round";
 
@@ -38,8 +39,10 @@ function settleRound(state: GameState): void {
   const { playerStore } = state;
 
   playerStore.all.filter((player) => !isDealer(player)).forEach((player) => {
+    let playedRound = false;
     state.deck.getHands(player.key).forEach((hand, index) => {
       if (!hand.result) return;
+      playedRound = true;
       const stake = hand.stake ?? roundStake(state, player.key);
       const net = hand.net ?? netFor(hand.result, stake, state.tableRules.blackjackPayout);
       hand.net = net;
@@ -67,6 +70,12 @@ function settleRound(state: GameState): void {
         winLossRatio: 0,
       });
     });
+
+    if (isBot(player) && playedRound) {
+      const account = ensureBotAccount(state, player.key);
+      account.bank = player.bank;
+      account.balanceHistory = appendBalance(account.balanceHistory, player.bank);
+    }
   });
 
   const dealer = playerStore.all.find(isDealer);

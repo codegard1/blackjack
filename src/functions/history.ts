@@ -1,5 +1,5 @@
 import historyFile from "../data/characterHistory.json";
-import { PlayerStats } from "../types";
+import { MAX_BALANCE_HISTORY, PlayerStats } from "../types";
 
 export type CharacterHistory = {
   seed: number;
@@ -7,6 +7,8 @@ export type CharacterHistory = {
   sessions: number;
   /** each character's stats from the simulated rounds, keyed by character id */
   stats: Record<string, PlayerStats>;
+  /** recent simulated bankroll snapshots for each computer character */
+  balanceHistory?: Record<string, number[]>;
 };
 
 /**
@@ -37,4 +39,14 @@ export function withHistory(id: string, stats: PlayerStats): PlayerStats {
   const lost = combined.numberOfGamesLost;
   combined.winLossRatio = (won > 0 ? won : 1) / (lost > 0 ? lost : 1);
   return combined;
+}
+
+/**
+ * A character's bankroll history: their simulated history followed by what they have
+ * played at this table, capped at MAX_BALANCE_HISTORY points.
+ */
+export function withBalanceHistory(id: string, localHistory: number[]): number[] {
+  const history = CHARACTER_HISTORY.balanceHistory?.[id];
+  if (!history || history.length === 0) return localHistory;
+  return [...history, ...localHistory].slice(-MAX_BALANCE_HISTORY);
 }

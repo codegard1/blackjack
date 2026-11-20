@@ -1,6 +1,6 @@
 import { IPlayerOptions } from "./IPlayerOpts";
 import { GameAction } from "../enums";
-import { PlayerKey, PlayingCardKey, TableRules } from "../types";
+import { BotAccountState, PlayerKey, PlayingCardKey, TableRules, WorkTaskId } from "../types";
 
 /** What every action may carry; `stampAction` adds both where actions are dispatched */
 type ActionStamp = {
@@ -20,6 +20,8 @@ type SeatMove = {
 type ActionPayloads = {
   /** Add a wager to the pot from a player's bank */
   [GameAction.Bet]: { playerKey: PlayerKey; betAmount: number };
+  /** Override a character's work task or toggle whether they return when ready */
+  [GameAction.ConfigureWork]: { playerKey: PlayerKey; taskOverride?: WorkTaskId | null; allowReturn?: boolean };
   /** Deal two cards to every seat, starting the next round first if the last one is over */
   [GameAction.Deal]: { tableRules?: TableRules };
   [GameAction.DoubleDown]: SeatMove;
@@ -28,7 +30,7 @@ type ActionPayloads = {
   /** Run the bookkeeping the current status calls for: the opening antes, or a finished round's payouts */
   [GameAction.EvaluateGame]: object;
   /** Seat a new game: the seats in `players`, or else the default players named in `playerKeys` */
-  [GameAction.NewGame]: { players?: IPlayerOptions[]; playerKeys?: PlayerKey[]; tableRules?: TableRules };
+  [GameAction.NewGame]: { players?: IPlayerOptions[]; playerKeys?: PlayerKey[]; tableRules?: TableRules; botAccounts?: Record<string, BotAccountState> };
   [GameAction.NewRound]: { tableRules?: TableRules };
   [GameAction.ResetGame]: { clearActivityLog?: boolean };
   /** Resume a saved game; a snapshot that is not valid leaves the game as it is */
@@ -37,7 +39,7 @@ type ActionPayloads = {
   /** Toggle or set sitting out status for a player (defaults to the human player) */
   [GameAction.SitOut]: { playerKey?: PlayerKey; isSittingOut?: boolean };
   /** Change who sits at the table, in seating order; ignored while a hand is in play */
-  [GameAction.SetRoster]: { players: IPlayerOptions[] };
+  [GameAction.SetRoster]: { players: IPlayerOptions[]; botAccounts?: Record<string, BotAccountState> };
   [GameAction.SetSpinnerVisible]: object;
   [GameAction.Shuffle]: object;
   [GameAction.Split]: SeatMove;

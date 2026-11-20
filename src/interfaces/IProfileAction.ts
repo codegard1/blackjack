@@ -1,4 +1,4 @@
-import { PlayerStats, ProfileState } from "../types";
+import { BotAccountState, PlayerStats, ProfileState, WorkTaskId } from "../types";
 
 /**
  * Actions for the profile store
@@ -10,8 +10,10 @@ export type IProfileAction =
   | { type: 'select'; id: string }
   /** seat or unseat a computer character for the next game */
   | { type: 'toggleOpponent'; id: string }
-  /** replace each profile's stats with the given values, keyed by profile id */
-  | { type: 'syncStats'; stats: Record<string, PlayerStats> }
+  /** replace each profile's stats (and optional character accounts) with the given values */
+  | { type: 'syncStats'; stats: Record<string, PlayerStats>; botAccounts?: Record<string, BotAccountState> }
+  /** override or clear a computer character's work task, or toggle whether they return when ready */
+  | { type: 'configureWork'; id: string; taskOverride?: WorkTaskId | null; allowReturn?: boolean }
   /** replace the whole store with a copy from the server, repaired like a saved one */
   | { type: 'replace'; state: ProfileState }
   /** back to the default profiles */

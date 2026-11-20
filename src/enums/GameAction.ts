@@ -1,5 +1,6 @@
 export enum GameAction {
   Bet = 'Bet',
+  ConfigureWork = 'ConfigureWork',
   Deal = 'Deal',
   DoubleDown = 'DoubleDown',
   Draw = 'Draw',

@@ -60,7 +60,7 @@ export class PlayerStore implements IPlayerStore {
    */
   public newPlayer(options: IPlayerOptions): void {
     // Create new player record
-    const { key, title, isNPC, id, bank, disabled, stats, isSittingOut } = options;
+    const { key, title, isNPC, id, bank, disabled, stats, isSittingOut, awayTask, isReadyToReturn } = options;
     const role = options.role ?? (isNPC ? 'dealer' : 'human');
     const _newPlayer: IPlayer = {
       ...playerDefaults,
@@ -73,6 +73,8 @@ export class PlayerStore implements IPlayerStore {
       disabled: disabled ? disabled : false,
       stats: { ...playerDefaults.stats, ...stats },
       ...(isSittingOut !== undefined ? { isSittingOut } : {}),
+      ...(awayTask !== undefined ? { awayTask } : {}),
+      ...(isReadyToReturn !== undefined ? { isReadyToReturn } : {}),
     };
     // Add the new Player to the players collection
     if (!(key in this.players)) this.players[key] = _newPlayer;
