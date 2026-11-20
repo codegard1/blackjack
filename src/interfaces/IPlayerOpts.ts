@@ -14,4 +14,6 @@ export interface IPlayerOptions {
   role?: PlayerRole;
   /** lifetime stats carried into the game; defaults to empty stats */
   stats?: PlayerStats;
+  /** whether the player is sitting out */
+  isSittingOut?: boolean;
 }

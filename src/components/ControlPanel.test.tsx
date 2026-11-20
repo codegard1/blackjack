@@ -66,6 +66,117 @@ describe('player controls', () => {
     });
   });
 
+  it('offers the option to sit out between hands when computer players are available', () => {
+    // Without computer players, Sit out is disabled
+    renderControls(GameStatus.RoundOver, 'chris');
+    const disabledSitOut = screen.getByRole('button', { name: 'Sit out' });
+    expect(disabledSitOut).toBeDisabled();
+    cleanup();
+
+    // With a computer player seated with funds, Sit out is enabled
+    const state = gameReducer(createGameState(), {
+      type: GameAction.NewGame,
+      players: [
+        { key: 'chris', title: 'Chris', isNPC: false, id: 1, bank: 1000, role: 'human' },
+        { key: 'ogion', title: 'Ogion', isNPC: true, id: 2, bank: 1000, role: 'bot' },
+        { key: 'dealer', title: 'Dealer', isNPC: true, id: 0, bank: 1000, role: 'dealer' },
+      ],
+    });
+    state.gameStatus = GameStatus.RoundOver;
+    const dispatch = vi.fn();
+    render(
+      <GameContext.Provider value={state}>
+        <GameDispatchContext.Provider value={dispatch}>
+          <ControlPanel playerKey="chris" />
+        </GameDispatchContext.Provider>
+      </GameContext.Provider>,
+    );
+
+    const sitOutBtn = screen.getByRole('button', { name: 'Sit out' });
+    expect(sitOutBtn).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Next hand' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Change players' })).toBeEnabled();
+
+    fireEvent.click(sitOutBtn);
+    expect(dispatch).toHaveBeenCalledWith({ type: GameAction.SitOut, playerKey: 'chris', isSittingOut: true });
+    expect(dispatch).toHaveBeenCalledWith({
+      type: GameAction.Deal,
+      tableRules: { numberOfDecks: '1', dealerSoft17: 'stand', blackjackPayout: '3:2' },
+    });
+  });
+
+  it('offers to rejoin the table or sit out another hand when currently sitting out', () => {
+    const state = gameReducer(createGameState(), {
+      type: GameAction.NewGame,
+      players: [
+        { key: 'chris', title: 'Chris', isNPC: false, id: 1, bank: 1000, role: 'human', isSittingOut: true },
+        { key: 'ogion', title: 'Ogion', isNPC: true, id: 2, bank: 1000, role: 'bot' },
+        { key: 'dealer', title: 'Dealer', isNPC: true, id: 0, bank: 1000, role: 'dealer' },
+      ],
+    });
+    state.gameStatus = GameStatus.RoundOver;
+    const dispatch = vi.fn();
+    render(
+      <GameContext.Provider value={state}>
+        <GameDispatchContext.Provider value={dispatch}>
+          <ControlPanel playerKey="chris" />
+        </GameDispatchContext.Provider>
+      </GameContext.Provider>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Rejoin table' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Sit out another hand' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Change players' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Next hand' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sit out' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Rejoin table' }));
+    expect(dispatch).toHaveBeenCalledWith({ type: GameAction.SitOut, playerKey: 'chris', isSittingOut: false });
+    expect(dispatch).toHaveBeenCalledWith({
+      type: GameAction.Deal,
+      tableRules: { numberOfDecks: '1', dealerSoft17: 'stand', blackjackPayout: '3:2' },
+    });
+  });
+
+  it('triggers sit out with the O key shortcut and rejoin table with Enter or N key', () => {
+    const state = gameReducer(createGameState(), {
+      type: GameAction.NewGame,
+      players: [
+        { key: 'chris', title: 'Chris', isNPC: false, id: 1, bank: 1000, role: 'human' },
+        { key: 'ogion', title: 'Ogion', isNPC: true, id: 2, bank: 1000, role: 'bot' },
+        { key: 'dealer', title: 'Dealer', isNPC: true, id: 0, bank: 1000, role: 'dealer' },
+      ],
+    });
+    state.gameStatus = GameStatus.RoundOver;
+    let dispatch = vi.fn();
+    const { rerender } = render(
+      <GameContext.Provider value={state}>
+        <GameDispatchContext.Provider value={dispatch}>
+          <ControlPanel playerKey="chris" />
+        </GameDispatchContext.Provider>
+      </GameContext.Provider>,
+    );
+
+    // Press O to sit out
+    fireEvent.keyDown(window, { key: 'o' });
+    expect(dispatch).toHaveBeenCalledWith({ type: GameAction.SitOut, playerKey: 'chris', isSittingOut: true });
+
+    // Now state is sitting out
+    state.playerStore.player('chris').isSittingOut = true;
+    dispatch = vi.fn();
+    rerender(
+      <GameContext.Provider value={state}>
+        <GameDispatchContext.Provider value={dispatch}>
+          <ControlPanel playerKey="chris" />
+        </GameDispatchContext.Provider>
+      </GameContext.Provider>,
+    );
+
+    // Press Enter to rejoin table
+    fireEvent.keyDown(window, { key: 'Enter' });
+    expect(dispatch).toHaveBeenCalledWith({ type: GameAction.SitOut, playerKey: 'chris', isSittingOut: false });
+  });
+
   it('enables gameplay on the human turn', () => {
     renderControls(GameStatus.InProgress, 'chris', ['Club_10', 'Heart_6']);
 
