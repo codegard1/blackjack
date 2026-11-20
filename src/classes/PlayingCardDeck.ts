@@ -2,6 +2,7 @@
     https://github.com/codegard1/node-shuffle.git */
 
 import { PlayingCard } from "./PlayingCard";
+import { buildCardKeys } from "../functions/cards";
 import { handValue } from "../functions/getHandValue";
 import { IPlayingCardDeck } from "../interfaces";
 import { DeckState, PlayerHand, PlayerHandList, PlayerKey, PlayingCardKey } from "../types";
@@ -21,28 +22,7 @@ export class PlayingCardDeck implements IPlayingCardDeck {
    * @returns 
    */
   static cardKeys(numberOfDecks = 1): PlayingCardKey[] {
-    // Initialize an array to hold our output value
-    const keys: PlayingCardKey[] = [];
-
-    // For each suit defined in the PlayingCard class
-    for (const key in PlayingCard.cardSuits) {
-
-      // Get the suit name
-      const suitName = PlayingCard.cardSuits[key];
-
-      // Generate 13 cards starting at 2
-      for (let index = 2; index < 15; index++) {
-
-        // Compose the Card key from the Suit name, the Card name, and the Card sort 
-        // Add the card key to our output array
-        keys.push([suitName.single, index].join('_'));
-
-      }
-    }
-
-    // Keep legacy keys for the first deck; a copy suffix identifies later decks.
-    return Array.from({ length: numberOfDecks }, (_, index) =>
-      index === 0 ? keys.slice() : keys.map((key) => `${key}_${index + 1}`)).flat();
+    return buildCardKeys(numberOfDecks);
   }
 
   /**

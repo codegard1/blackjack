@@ -1,6 +1,6 @@
 import { GameStatus } from "../enums";
-import { PlayingCard } from "../classes";
 import { Announcement, GameSnapshot, GameState, PlayerSnapshot, WagerSnapshot } from "../types";
+import { formatCardName } from "./cards";
 import { roleOf } from "./round";
 import { isRoundOver } from "./seatStatus";
 
@@ -35,7 +35,7 @@ export function snapshotGame(state: GameState): GameSnapshot {
         isNPC: player.isNPC,
         role: roleOf(player) ?? 'human',
         cardCount: hand?.cards.length ?? 0,
-        cards: (hand?.cards ?? []).map((card) => new PlayingCard(card).toString()),
+        cards: (hand?.cards ?? []).map((card) => formatCardName(card)),
         total: hand ? state.deck.getHandValue(player.key, handIndex).highest : 0,
         isBusted: !!player.isBusted,
         isStaying: !!player.isStaying,
