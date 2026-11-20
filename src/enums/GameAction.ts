@@ -10,6 +10,7 @@ export enum GameAction {
   ResetGame = 'ResetGame',
   RestoreGame = 'RestoreGame',
   Select = 'Select',
+  SitOut = 'SitOut',
   Split = 'Split',
   SetRoster = 'SetRoster',
   SetSpinnerVisible = 'SetSpinnerVisible',

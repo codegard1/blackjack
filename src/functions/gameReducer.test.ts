@@ -1184,6 +1184,59 @@ describe('leaving the previous state alone', () => {
     expect(twice.playerStore.players).toEqual(once.playerStore.players);
     expect(state.deck.hand('chris')?.cards).toEqual(['Spade_10', 'Heart_6']);
   });
+
+  it('allows the human player to sit out a round, letting computer players play by themselves', () => {
+    let state = startWithBots(['ogion']);
+    // Hand 1: Chris and Ogion both play
+    state = dealSeats(state, [['Club_10', 'Heart_7'], ['Club_9', 'Heart_8'], ['Diamond_10', 'Spade_7']]);
+    expect(state.playerStore.player('chris').isSittingOut).toBeFalsy();
+    state = stay(state, 'chris');
+    state = stay(state, 'ogion');
+    state = stay(state, 'dealer');
+    expect(state.gameStatus).toBe(GameStatus.RoundOver);
+    state = gameReducer(state, { type: GameAction.EvaluateGame });
+    const chrisBankAfterRound1 = state.playerStore.player('chris').bank;
+
+    // Chris sits out Hand 2
+    state = gameReducer(state, { type: GameAction.SitOut, playerKey: 'chris', isSittingOut: true });
+    expect(state.playerStore.player('chris').isSittingOut).toBe(true);
+
+    // Deal Hand 2: only Ogion and Dealer receive cards
+    state = dealSeats(state, [['Club_10', 'Heart_8'], ['Diamond_10', 'Spade_8']]);
+    expect(state.round).toBe(2);
+    expect(state.playerStore.player('chris').isSittingOut).toBe(true);
+    expect(state.deck.playerHands.chris.cards).toEqual([]);
+    expect(state.deck.playerHands.ogion.cards).toHaveLength(2);
+    expect(state.deck.playerHands.dealer.cards).toHaveLength(2);
+
+    // Activity log recorded that Chris sat out
+    expect(state.activityLog.some((e) => e.name === 'Chris' && e.description === 'sat out')).toBe(true);
+    // Chris did not ante
+    expect(state.playerStore.player('chris').bank).toBe(chrisBankAfterRound1);
+
+    // First seat in control is Ogion, not Chris
+    expect(state.controllingPlayer).toBe('ogion');
+    state = stay(state, 'ogion');
+    expect(state.controllingPlayer).toBe('dealer');
+    state = stay(state, 'dealer');
+    expect(state.gameStatus).toBe(GameStatus.RoundOver);
+
+    // Settle hand 2
+    state = gameReducer(state, { type: GameAction.EvaluateGame });
+    expect(state.playerStore.player('chris').bank).toBe(chrisBankAfterRound1);
+    expect(state.playerStore.player('chris').result).toBeUndefined();
+
+    // Chris rejoins the table for Hand 3
+    state = gameReducer(state, { type: GameAction.SitOut, playerKey: 'chris', isSittingOut: false });
+    expect(state.playerStore.player('chris').isSittingOut).toBe(false);
+
+    state = dealSeats(state, [['Club_10', 'Heart_7'], ['Club_9', 'Heart_8'], ['Diamond_10', 'Spade_7']]);
+    expect(state.round).toBe(3);
+    expect(state.playerStore.player('chris').isSittingOut).toBe(false);
+    expect(state.deck.playerHands.chris.cards).toHaveLength(2);
+    expect(state.controllingPlayer).toBe('chris');
+    expect(state.playerStore.player('chris').bank).toBe(chrisBankAfterRound1 - state.minimumBet);
+  });
 });
 
 describe('what an action may carry', () => {

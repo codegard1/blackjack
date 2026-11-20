@@ -14,7 +14,7 @@ export interface IPlayerOptions {
   role?: PlayerRole;
   /** lifetime stats carried into the game; defaults to empty stats */
   stats?: PlayerStats;
-  /** when the character starts the game away working */
+  /** whether the player is sitting out (e.g. away working) */
   isSittingOut?: boolean;
   awayTask?: WorkTaskId;
   isReadyToReturn?: boolean;

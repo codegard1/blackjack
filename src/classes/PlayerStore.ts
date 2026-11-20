@@ -119,7 +119,18 @@ export class PlayerStore implements IPlayerStore {
    */
   public resetPlayer(key: PlayerKey) {
     const p = this.players[key];
-    this.players[key] = { ...playerDefaults, key, title: p.title, isNPC: p.isNPC, role: p.role, bank: p.bank, id: p.id, lossStreak: p.lossStreak, stats: { ...p.stats } }
+    this.players[key] = {
+      ...playerDefaults,
+      key,
+      title: p.title,
+      isNPC: p.isNPC,
+      role: p.role,
+      bank: p.bank,
+      id: p.id,
+      lossStreak: p.lossStreak,
+      stats: { ...p.stats },
+      ...(p.isSittingOut ? { isSittingOut: true } : {}),
+    };
   }
 
   /**

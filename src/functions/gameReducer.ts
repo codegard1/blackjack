@@ -42,7 +42,7 @@ function updatePlayerHandStatus(state: GameState, playerKey: string, handIndex: 
 
 /** The first seat to act in a round: the first player who has not sat out */
 function firstSeat(state: GameState): string | undefined {
-  return playerSeats(state).find((player) => !player.isSittingOut)?.key ?? state.playerStore.activePlayerKeys[0];
+  return playerSeats(state).find((player) => !player.isSittingOut)?.key;
 }
 
 export { canDoubleDown, canSplit } from "./round";
@@ -248,6 +248,16 @@ function applyAction(state: GameState, action: GameReducerAction): GameState {
     case GameAction.Select: {
       const { cardKey } = action;
       state.deck.select(cardKey);
+      return state;
+    }
+
+    case GameAction.SitOut: {
+      const human = state.playerStore.all.find((p) => !p.isNPC && !isDealer(p));
+      const key = action.playerKey ?? human?.key ?? state.playerStore.currentPlayerKey;
+      if (!key) return state;
+      const player = state.playerStore.player(key);
+      if (!player) return state;
+      player.isSittingOut = action.isSittingOut !== undefined ? action.isSittingOut : true;
       return state;
     }
 

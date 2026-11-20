@@ -388,7 +388,12 @@ export function collectAntes(state: GameState, rng: () => number = () => state.d
       }
     }
 
+    if (player.isSittingOut && !isBot(player)) {
+      recordActivity(state, player.title, 'sat out', 'ante');
+      return;
+    }
     if (state.playerStore.ante(player.key, state.minimumBet)) {
+      player.isSittingOut = false;
       state.pot += state.minimumBet;
       if (isBot(player)) ensureBotAccount(state, player.key).bank = player.bank;
       recordActivity(state, player.title, `anted $${state.minimumBet}`, 'ante', { amount: -state.minimumBet });
