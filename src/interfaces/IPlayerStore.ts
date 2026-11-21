@@ -1,5 +1,4 @@
-import { IPlayer, IPlayerOptions } from '.';
-import { PlayerCollection, PlayerKey, PlayerStats, } from '../types';
+import { PlayerCollection, PlayerKey } from '../types';
 
 export interface IPlayerStoreState {
   players: PlayerCollection;
@@ -7,33 +6,3 @@ export interface IPlayerStoreState {
   currentPlayerKey?: PlayerKey;
   lastWriteTime: string;
 }
-
-/**
- * Class that tracks and manipulates Player objects
- */
-export interface IPlayerStore extends IPlayerStoreState {
-  all: IPlayer[];
-  allPlayersFinish: () => void;
-  ante: (key: PlayerKey, amount: number) => void;
-  bet: (key: PlayerKey, amount: number) => void;
-  bust: (key: PlayerKey) => void;
-  currentPlayer?: IPlayer;
-  endTurn: (key: PlayerKey) => void;
-  finish: (key: PlayerKey) => void;
-  hit: (key: PlayerKey) => void;
-  isCurrentPlayerNPC: null | boolean;
-  length: number;
-  newPlayer: (options: IPlayerOptions) => void;
-  nextPlayer: () => void;
-  payout: (key: PlayerKey, amount: number) => void;
-  player: (key: PlayerKey) => IPlayer;
-  playerName: (key: PlayerKey) => string;
-  reset: () => void;
-  resetPlayer: (key: PlayerKey) => void;
-  startTurn: (key: PlayerKey) => void;
-  state: IPlayerStoreState;
-  stats: (key: PlayerKey) => PlayerStats;
-  stay: (key: PlayerKey) => void;
-}
-
-

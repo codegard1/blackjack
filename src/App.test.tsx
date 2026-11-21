@@ -1,9 +1,23 @@
 import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PlayingCardDeck } from './classes/PlayingCardDeck';
+import { dealCards, drawCards, emptyHand } from './functions/deck';
+import { handValue } from './functions/getHandValue';
+import { DeckState } from './types';
 import App from './App';
 import { TOAST_GAP_MS, TOAST_REVEAL_MS } from './components/TableToasts';
+
+vi.mock('./functions/deck', { spy: true });
+
+const rigDeal = (hands: Record<string, string[]>) =>
+  (deck: DeckState, _count?: number, keys?: readonly string[]): DeckState => {
+    const playerHands = { ...deck.playerHands };
+    for (const [key, cards] of Object.entries(hands)) {
+      if (keys && !keys.includes(key)) continue;
+      playerHands[key] = { ...(playerHands[key] ?? emptyHand()), cards: [...cards], handValue: handValue(cards) };
+    }
+    return { ...deck, playerHands };
+  };
 
 afterEach(() => {
   vi.useRealTimers();
@@ -18,22 +32,16 @@ it.each([
   { humanCards: ['Spade_10', 'Diamond_7'], dealerCards: ['Club_11', 'Heart_14'], hit: false, humanStatus: '💔 Loser', dealerStatus: 'Dealer · ✨ Blackjack', humanLog: 'lost $25', dealerLog: 'took $25' },
   { humanCards: ['Spade_10', 'Diamond_10'], dealerCards: ['Club_10', 'Heart_7'], hit: true, humanStatus: '💥 Busted', dealerStatus: 'Dealer · 🏆 Winner', humanLog: 'busted, lost $25', dealerLog: 'took $25' },
 ])('shows the result on the seats and in the activity log: $humanLog', ({ humanCards, dealerCards, hit, humanStatus, dealerStatus, humanLog, dealerLog }) => {
-  vi.spyOn(PlayingCardDeck.prototype, 'deal')
-    .mockImplementationOnce(function (this: PlayingCardDeck) {
-      this.playerHands.chris.cards = humanCards;
-      this.playerHands.dealer.cards = dealerCards;
-    })
-    .mockImplementation(function (this: PlayingCardDeck) {
-      this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
-      this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-    });
+  vi.mocked(dealCards)
+    .mockImplementationOnce(rigDeal({ chris: humanCards, dealer: dealerCards }))
+    .mockImplementation(rigDeal({ chris: ['Spade_10', 'Diamond_7'], dealer: ['Club_10', 'Heart_7'] }));
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   vi.useFakeTimers();
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
   if (hit) {
-    vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
+    vi.mocked(drawCards).mockImplementation((deck) => ({ deck, drawn: ['Heart_5'] }));
     fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
   }
 
@@ -54,12 +62,12 @@ it.each([
 });
 
 it('replaces the controls with Next hand and Change players when the hand ends', () => {
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_7'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
 
-  vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
+  vi.mocked(drawCards).mockImplementation((deck) => ({ deck, drawn: ['Heart_5'] }));
   vi.useFakeTimers();
   render(<App />);
 
@@ -95,13 +103,13 @@ it('replaces the controls with Next hand and Change players when the hand ends',
 
 it('shows both split hands and marks the hand in control', () => {
   vi.spyOn(Math, 'random').mockReturnValue(0.99);
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Club_8', 'Heart_8'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
-  vi.spyOn(PlayingCardDeck.prototype, 'draw')
-    .mockReturnValueOnce(['Spade_2'])
-    .mockReturnValueOnce(['Diamond_3']);
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Club_8', 'Heart_8'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
+  vi.mocked(drawCards)
+    .mockImplementationOnce((deck) => ({ deck, drawn: ['Spade_2'] }))
+    .mockImplementationOnce((deck) => ({ deck, drawn: ['Diamond_3'] }));
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
@@ -119,11 +127,11 @@ it('shows both split hands and marks the hand in control', () => {
 
 describe('changing the roster', () => {
   const mockBustableHand = () => {
-    vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-      this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
-      this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-    });
-    vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
+    vi.mocked(dealCards).mockImplementation(rigDeal({
+      chris: ['Spade_10', 'Diamond_7'],
+      dealer: ['Club_10', 'Heart_7'],
+    }));
+    vi.mocked(drawCards).mockImplementation((deck) => ({ deck, drawn: ['Heart_5'] }));
   };
   const toggleOgion = () => {
     fireEvent.click(screen.getByRole('button', { name: 'Players' }));
@@ -193,10 +201,10 @@ it('starts a new game with the selected player and the dealer', () => {
 
 it('always shows card ranks and opens the activity log drawer by default from the setting', () => {
   vi.useFakeTimers();
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_7'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
@@ -259,10 +267,10 @@ it('clears in-memory game state and returns to player selection', () => {
 });
 
 it('resumes a saved game after a reload', () => {
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_7'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
   const first = render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));

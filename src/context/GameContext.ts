@@ -1,6 +1,7 @@
 import { Dispatch, createContext, useContext } from 'react';
-import { PlayerStore, PlayingCardDeck } from '../classes';
 import { GameStatus } from '../enums';
+import { createDeck } from '../functions/deck';
+import { createPlayerStore } from '../functions/playerStore';
 import { defaultBotAccounts } from '../functions/work';
 import { GameReducerAction } from '../interfaces';
 import { GameState, defaultTableRules } from '../types';
@@ -10,7 +11,7 @@ export const createGameState = (): GameState => ({
   activityLog: [],
   botAccounts: defaultBotAccounts(),
   gameStatus: GameStatus.Init,
-  deck: new PlayingCardDeck(),
+  deck: createDeck(),
   gameStatusFlag: false,
   isSpinnerVisible: false,
   loser: undefined,
@@ -23,7 +24,7 @@ export const createGameState = (): GameState => ({
   turnCount: 0,
   lastWriteTime: new Date().toISOString(),
   controllingPlayer: undefined,
-  playerStore: new PlayerStore(),
+  playerStore: createPlayerStore(),
 });
 
 export const gameDefaults: GameState = createGameState();
