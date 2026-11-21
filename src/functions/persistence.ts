@@ -1,14 +1,30 @@
+import { isBotId } from "../characters";
 import { createGameState } from "../context/GameContext";
 import { settingDefaults } from "../context/SettingContext";
 import { StoreName } from "../enums";
 import { IPlayerStoreState } from "../interfaces";
-import { DeckState, GameState, ProfileState, SavedGame, SavedGameSnapshot, SettingKey, SettingsState, defaultTableRules, isTableRules, settingOptions, tableRulesFrom } from "../types";
+import {
+  DeckState,
+  GameState,
+  ProfileState,
+  SavedGame,
+  SavedGameSnapshot,
+  SettingKey,
+  SettingsState,
+  cloneBotAccounts,
+  defaultTableRules,
+  isBotAccountState,
+  isTableRules,
+  settingOptions,
+  tableRulesFrom,
+} from "../types";
 import { restoreDeckState } from "./deck";
-import { createPlayerStore, playerStoreSnapshot } from "./playerStore";
+import { allPlayers, createPlayerStore, playerStoreSnapshot } from "./playerStore";
 import { defaultProfileState, normalizeProfileState } from "./profiles";
+import { defaultBotAccount, defaultBotAccounts } from "./work";
 
 /** Bump when the shape of the saved game snapshot changes. */
-export const GAME_STORE_VERSION = 5;
+export const GAME_STORE_VERSION = 6;
 
 /** How many of the newest activity log entries a snapshot sent to the server keeps */
 export const MAX_SYNCED_ACTIVITY = 200;
@@ -53,10 +69,17 @@ function isPlayerState(value: unknown): value is IPlayerStoreState {
   return isObject(value) && isObject(value.players);
 }
 
+function isSavedBotAccounts(value: unknown): boolean {
+  return value === undefined || (
+    isObject(value) && Object.entries(value).every(([id, account]) => isBotId(id) && isBotAccountState(account))
+  );
+}
+
 function isSavedGame(value: unknown): value is SavedGame {
   return isObject(value)
-    && (value.version === GAME_STORE_VERSION || value.version === 4)
+    && (value.version === GAME_STORE_VERSION || value.version === 5 || value.version === 4)
     && (value.version === 4 || isTableRules(value.tableRules))
+    && isSavedBotAccounts(value.botAccounts)
     && typeof value.gameStatus === 'number'
     && typeof value.activeHandIndex === 'number'
     && typeof value.pot === 'number'
@@ -79,6 +102,7 @@ export function gameSnapshot(state: GameState, { maxActivity }: { maxActivity?: 
       version: GAME_STORE_VERSION,
       activityLog,
       activeHandIndex: state.activeHandIndex,
+      botAccounts: cloneBotAccounts(state.botAccounts),
       controllingPlayer: state.controllingPlayer,
       dealerHasControl: state.dealerHasControl,
       gameStatus: state.gameStatus,
@@ -104,15 +128,24 @@ export function restoreGameState(snapshot: unknown): GameState | undefined {
   if (!isDeckState(deck) || !isPlayerState(players) || !isSavedGame(game)) return undefined;
 
   try {
-    const { version, ...saved } = game;
+    const { version, botAccounts: savedAccounts, ...saved } = game;
     const tableRules = version === 4 ? { ...defaultTableRules } : tableRulesFrom(saved.tableRules);
+    const playerStore = createPlayerStore(players);
+    const botAccounts = { ...defaultBotAccounts(), ...cloneBotAccounts(savedAccounts) };
+    // For snapshots saved before botAccounts existed, keep each seated bot's bank in step
+    allPlayers(playerStore).forEach((player) => {
+      if (isBotId(player.key) && !savedAccounts?.[player.key]) {
+        botAccounts[player.key] = defaultBotAccount(player.bank);
+      }
+    });
     return {
       ...createGameState(),
       ...saved,
       activityLog: saved.activityLog.slice(-MAX_SAVED_ACTIVITY),
+      botAccounts,
       tableRules,
       deck: restoreDeckState(deck),
-      playerStore: createPlayerStore(players),
+      playerStore,
     };
   } catch {
     return undefined;

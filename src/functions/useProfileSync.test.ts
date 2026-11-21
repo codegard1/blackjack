@@ -2,12 +2,13 @@ import React from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ProfileState } from '../types';
-import { defaultProfileState, profileReducer } from './profiles';
-import { loadSyncState, saveSyncState } from './remote';
+import { defaultProfileState, emptyStats, profileReducer } from './profiles';
+import { loadSyncState, saveSyncState, signInWithGoogle } from './remote';
 import { SYNC_DEBOUNCE_MS, useProfileSync } from './useProfileSync';
 
 /** an id of the shape the server issues; the client only checks the shape */
 const OWNER = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c.c2lnbmVkLWJ5LXRoZS1zZXJ2ZXItZm9yLXRlc3RzLTAx';
+const GOOGLE_OWNER = 'google:107691503500061507151.c2lnbmVkLWJ5LXRoZS1zZXJ2ZXItZm9yLXRlc3RzLTAx';
 const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 const flush = () => act(async () => { await Promise.resolve(); await Promise.resolve(); });
 
@@ -158,5 +159,53 @@ describe('useProfileSync', () => {
     expect(fetch).toHaveBeenCalledTimes(3);
     expect(fetch.mock.calls[2][1]).toMatchObject({ method: 'PUT', keepalive: true });
     expect(result.current.profiles.profiles.some((profile) => profile.name === 'Alex')).toBe(true);
+  });
+
+  it('merges anonymous local stats into existing Google account profiles and pushes the combined result on sign-in', async () => {
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 5, game: 0 } });
+    const local = profileReducer(defaultProfileState(), {
+      type: 'syncStats',
+      stats: { chris: { ...emptyStats(), numberOfGamesPlayed: 3, numberOfGamesWon: 2, netResult: 40 } },
+    });
+    const remote = profileReducer(defaultProfileState(), {
+      type: 'syncStats',
+      stats: { chris: { ...emptyStats(), numberOfGamesPlayed: 7, numberOfGamesWon: 4, netResult: 60 } },
+    });
+    const user = { name: 'Chris Odegard', email: 'chris@example.com' };
+
+    const fetch = vi.fn()
+      // 1. Initial anonymous GET /api/profiles
+      .mockResolvedValueOnce(jsonResponse({ profiles: local, updatedAt: 10 }))
+      // 2. POST /api/owner for Google sign-in
+      .mockResolvedValueOnce(jsonResponse({ ownerId: GOOGLE_OWNER, user }, 200))
+      // 3. GET /api/profiles for Google ownerId
+      .mockResolvedValueOnce(jsonResponse({ profiles: remote, updatedAt: 50 }))
+      // 4. PUT /api/profiles with merged profiles
+      .mockResolvedValueOnce(jsonResponse({ updatedAt: 55 }));
+
+    const { result } = renderSync(local, fetch);
+    await flush();
+
+    await act(async () => {
+      await signInWithGoogle('google.jwt.token');
+    });
+    await flush();
+    await flush();
+
+    const chris = result.current.profiles.profiles.find((p) => p.id === 'chris');
+    expect(chris?.stats.numberOfGamesPlayed).toBe(10);
+    expect(chris?.stats.numberOfGamesWon).toBe(6);
+    expect(chris?.stats.netResult).toBe(100);
+    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(fetch.mock.calls[3][0]).toBe('/api/profiles');
+    expect(fetch.mock.calls[3][1]).toMatchObject({
+      method: 'PUT',
+      headers: expect.objectContaining({ Authorization: `Bearer ${GOOGLE_OWNER}` }),
+    });
+    expect(loadSyncState()).toEqual({
+      ownerId: GOOGLE_OWNER,
+      user,
+      syncedAt: { profiles: 55, game: 0 },
+    });
   });
 });

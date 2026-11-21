@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { GameAction, GameStatus, StoreName } from '../enums';
 import { getPlayerHands } from './deck';
 import { gameReducer } from './gameReducer';
-import { GAME_STORE_VERSION, MAX_SAVED_ACTIVITY, gameSnapshot, loadGameState, loadSettings, restoreGameState, saveGameState, saveSettings } from './persistence';
-import { activePlayerKeys, playerCount } from './playerStore';
+import { GAME_STORE_VERSION, MAX_SAVED_ACTIVITY, gameSnapshot, loadGameState, loadProfiles, loadSettings, restoreGameState, saveGameState, saveProfiles, saveSettings } from './persistence';
+import { activePlayerKeys, getPlayer, playerCount, updatePlayer } from './playerStore';
+import { defaultProfileState, profileReducer, seatsFor } from './profiles';
 import { createGameState, settingDefaults } from '../context';
 import { defaultTableRules } from '../types';
 
@@ -55,6 +56,137 @@ describe('persistence', () => {
     expect(restored?.deck.playerHands).toEqual(snapshot.deck.playerHands);
     expect(restored?.round).toBe(snapshot.game.round);
     expect(restored && gameSnapshot(restored).game.version).toBe(GAME_STORE_VERSION);
+  });
+
+  it('round-trips v6 botAccounts, seated awayTask and isReadyToReturn flags, and work activity log entries', () => {
+    expect(GAME_STORE_VERSION).toBe(6);
+    const profiles = { ...defaultProfileState(), opponentIds: ['ogion'] };
+    const state = gameReducer(createGameState(), {
+      type: GameAction.NewGame,
+      players: seatsFor(profiles),
+      botAccounts: {
+        ogion: {
+          bank: 120,
+          balanceHistory: [1000, 0, 120],
+          work: { status: 'working', taskId: 'herding-goats', daysWorked: 2 },
+          taskOverride: 'herding-goats',
+          allowReturn: true,
+        },
+      },
+    });
+    const withLog = {
+      ...state,
+      activityLog: [
+        ...state.activityLog,
+        {
+          id: 99,
+          timestamp: 1000,
+          name: 'Ogion',
+          description: 'left to work: herding goats on gont',
+          event: 'work' as const,
+        },
+      ],
+    };
+
+    saveGameState(withLog);
+    const restored = loadGameState();
+
+    expect(restored.botAccounts.ogion).toEqual({
+      bank: 120,
+      balanceHistory: [1000, 0, 120],
+      work: { status: 'working', taskId: 'herding-goats', daysWorked: 2 },
+      taskOverride: 'herding-goats',
+      allowReturn: true,
+    });
+    expect(getPlayer(restored.playerStore, 'ogion')).toMatchObject({
+      bank: 120,
+      isSittingOut: true,
+      awayTask: 'herding-goats',
+      isReadyToReturn: false,
+    });
+    expect(restored.activityLog.at(-1)).toMatchObject({
+      name: 'Ogion',
+      description: 'left to work: herding goats on gont',
+      event: 'work',
+    });
+  });
+
+  it('migrates v4 and v5 snapshots without botAccounts by initializing botAccounts from seated bot banks, and rejects invalid botAccounts', () => {
+    const profiles = { ...defaultProfileState(), opponentIds: ['ogion'] };
+    let state = gameReducer(createGameState(), {
+      type: GameAction.NewGame,
+      players: seatsFor(profiles),
+    });
+    state = { ...state, playerStore: updatePlayer(state.playerStore, 'ogion', (p) => ({ ...p, bank: 425 })) };
+    const snapshot = gameSnapshot(state);
+    const { botAccounts, ...v5Game } = snapshot.game;
+
+    const restoredV5 = restoreGameState({ ...snapshot, game: { ...v5Game, version: 5 } });
+    expect(restoredV5?.botAccounts.ogion).toEqual({
+      bank: 425,
+      balanceHistory: [425],
+      allowReturn: false,
+    });
+    expect(restoredV5?.botAccounts.shevek).toEqual({
+      bank: 1000,
+      balanceHistory: [1000],
+      allowReturn: false,
+    });
+
+    const { tableRules, ...v4Game } = v5Game;
+    const restoredV4 = restoreGameState({ ...snapshot, game: { ...v4Game, version: 4 } });
+    expect(restoredV4?.tableRules).toEqual(defaultTableRules);
+    expect(restoredV4?.botAccounts.ogion).toEqual({
+      bank: 425,
+      balanceHistory: [425],
+      allowReturn: false,
+    });
+
+    // Reject invalid botAccounts (unknown bot id or negative bank)
+    expect(restoreGameState({
+      ...snapshot,
+      game: {
+        ...snapshot.game,
+        botAccounts: { chris: { bank: 100, balanceHistory: [100] } },
+      },
+    })).toBeUndefined();
+    expect(restoreGameState({
+      ...snapshot,
+      game: {
+        ...snapshot.game,
+        botAccounts: { ogion: { bank: -10, balanceHistory: [100] } },
+      },
+    })).toBeUndefined();
+  });
+
+  it('round-trips profile state including bot work and bank fields and falls back on malformed profile storage', () => {
+    let profiles = defaultProfileState();
+    profiles = profileReducer(profiles, {
+      type: 'syncStats',
+      stats: {},
+      botAccounts: {
+        ogion: {
+          bank: 240,
+          balanceHistory: [1000, 500, 240],
+          work: { status: 'working', taskId: 'minding-ansible', daysWorked: 3 },
+          taskOverride: 'minding-ansible',
+          allowReturn: true,
+        },
+      },
+    });
+    saveProfiles(profiles);
+
+    const loaded = loadProfiles();
+    expect(loaded.profiles.find((profile) => profile.id === 'ogion')).toMatchObject({
+      bank: 240,
+      balanceHistory: [1000, 500, 240],
+      work: { status: 'working', taskId: 'minding-ansible', daysWorked: 3 },
+      taskOverride: 'minding-ansible',
+      allowReturn: true,
+    });
+
+    localStorage.setItem(StoreName.PROFILESTORE, '{malformed');
+    expect(loadProfiles()).toEqual(defaultProfileState());
   });
 
   it('rejects invalid active table rules and ignores invalid saved settings', () => {

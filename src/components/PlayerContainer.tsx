@@ -206,7 +206,15 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
           ? <Button appearance="subtle" aria-label={`About ${player.title}`} icon={<Info24Regular />} onClick={() => setCharacterOpen(true)} />
           : <StatusDisplay player={player} />}
       />
-      <CharacterDialog character={character} stats={player.stats} open={isCharacterOpen} onOpenChange={setCharacterOpen} />
+      <CharacterDialog
+        character={character}
+        stats={player.stats}
+        account={gameState.botAccounts?.[playerKey]}
+        minimumBet={gameState.minimumBet}
+        isSeated
+        open={isCharacterOpen}
+        onOpenChange={setCharacterOpen}
+      />
 
       <div className={styles.body}>
         <div id={id} className="player-hand">

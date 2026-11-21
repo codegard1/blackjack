@@ -14,6 +14,8 @@ import {
   Input,
   Radio,
   RadioGroup,
+  Select,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -29,13 +31,16 @@ import {
 // Local Resources
 import { BOTS, CHARACTERS, MAX_OPPONENTS, getCharacter } from '../characters';
 import { useGameContext, useProfileContext } from '../context';
-import { GameStatus } from '../enums';
+import { GameAction, GameStatus } from '../enums';
 import { formatCount, formatNet } from '../functions/format';
 import { characterRecord, useCommunityStats } from '../functions/community';
-import { DEALER_PROFILE_ID, humanProfiles, summarizeStats, validateProfileName } from '../functions/profiles';
+import { DEALER_PROFILE_ID, botAccountsFor, humanProfiles, summarizeStats, validateProfileName } from '../functions/profiles';
+import { WORK_TASKS, chooseTask, describeCharacterWork, returnThreshold } from '../functions/work';
 import { IPlayersDialogProps } from '../interfaces/IPlayersDialogProps';
+import { isWorkTaskId } from '../types';
 import { CharacterDialog } from './CharacterCard';
 import { CharacterPortrait } from './CharacterPortrait';
+import { GoogleAccountSection } from './GoogleAccountSection';
 
 const useStyles = makeStyles({
   surface: {
@@ -71,8 +76,9 @@ const useStyles = makeStyles({
   },
   rosterItem: {
     display: 'flex',
-    alignItems: 'center',
-    gap: tokens.spacingHorizontalS,
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalXS,
+    minWidth: 0,
     padding: tokens.spacingVerticalS,
     border: `1px solid ${tokens.colorNeutralStroke2}`,
     borderRadius: tokens.borderRadiusLarge,
@@ -80,6 +86,12 @@ const useStyles = makeStyles({
   rosterItemSeated: {
     border: `1px solid ${tokens.colorBrandStroke1}`,
     backgroundColor: tokens.colorBrandBackground2,
+  },
+  rosterHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalS,
+    minWidth: 0,
   },
   rosterText: {
     display: 'flex',
@@ -91,6 +103,38 @@ const useStyles = makeStyles({
     paddingInlineStart: tokens.spacingHorizontalS,
     fontStyle: 'italic',
     color: tokens.colorNeutralForeground3,
+  },
+  rosterWork: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalXXS,
+    minWidth: 0,
+    paddingInlineStart: tokens.spacingHorizontalS,
+    paddingTop: tokens.spacingVerticalXXS,
+    borderTop: `1px solid ${tokens.colorNeutralStroke3}`,
+  },
+  rosterStatus: {
+    color: tokens.colorNeutralForeground2,
+  },
+  rosterControls: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalS,
+    minWidth: 0,
+  },
+  taskSelect: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  taskSelectInput: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
 });
 
@@ -110,7 +154,7 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
 
   // Context
   const { profiles, profileDispatch } = useProfileContext();
-  const { gameState } = useGameContext();
+  const { gameState, gameDispatch } = useGameContext();
 
   // State
   const [name, setName] = React.useState('');
@@ -123,6 +167,8 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
   const characters = CHARACTERS.flatMap((character) => profiles.profiles.filter((profile) => profile.id === character.id));
   // changes made while a hand is being played wait until it ends
   const isHandInPlay = gameState.gameStatus === GameStatus.InProgress || gameState.gameStatus === GameStatus.NextTurn;
+  const profileBotAccounts = botAccountsFor(profiles);
+  const activeBotAccounts = gameState.gameStatus === GameStatus.Init ? profileBotAccounts : gameState.botAccounts;
 
   const createPlayer = (event: React.FormEvent) => {
     event.preventDefault();
@@ -142,6 +188,8 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
         <DialogBody>
           <DialogTitle>Players</DialogTitle>
           <DialogContent className={styles.content}>
+
+            <GoogleAccountSection />
 
             <section aria-labelledby="players-select-heading">
               <Text as="h3" id="players-select-heading" weight="semibold">Playing as</Text>
@@ -183,19 +231,63 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
               <ul className={styles.roster}>
                 {BOTS.map((bot) => {
                   const isSeated = profiles.opponentIds.includes(bot.id);
+                  const account = activeBotAccounts[bot.id] ?? profileBotAccounts[bot.id];
+                  const threshold = returnThreshold(bot.stats, gameState.minimumBet);
+                  const ownPick = chooseTask(bot.stats, account.bank, threshold);
+                  const selectedTask = account.taskOverride ?? account.work?.taskId ?? ownPick;
+                  const statusSummary = describeCharacterWork(bot.id, account, gameState.minimumBet, isSeated);
+
                   return (
                     <li key={bot.id} className={mergeClasses(styles.rosterItem, isSeated && styles.rosterItemSeated)}>
-                      <CharacterPortrait id={bot.id} name={bot.name} size="md" decorative />
-                      <div className={styles.rosterText}>
-                        <Checkbox
-                          checked={isSeated}
-                          disabled={!isSeated && profiles.opponentIds.length >= MAX_OPPONENTS}
-                          label={`${bot.name}, ${bot.nickname}`}
-                          onChange={() => profileDispatch({ type: 'toggleOpponent', id: bot.id })}
-                        />
-                        <Text size={200} className={styles.rosterTagline}>&ldquo;{bot.tagline}&rdquo;</Text>
+                      <div className={styles.rosterHeader}>
+                        <CharacterPortrait id={bot.id} name={bot.name} size="md" decorative />
+                        <div className={styles.rosterText}>
+                          <Checkbox
+                            checked={isSeated}
+                            disabled={!isSeated && profiles.opponentIds.length >= MAX_OPPONENTS}
+                            label={`${bot.name}, ${bot.nickname}`}
+                            onChange={() => profileDispatch({ type: 'toggleOpponent', id: bot.id })}
+                          />
+                          <Text size={200} className={styles.rosterTagline}>&ldquo;{bot.tagline}&rdquo;</Text>
+                        </div>
+                        <Button appearance="subtle" size="small" onClick={() => setCharacterId(bot.id)}>{`About ${bot.name}`}</Button>
                       </div>
-                      <Button appearance="subtle" size="small" onClick={() => setCharacterId(bot.id)}>{`About ${bot.name}`}</Button>
+                      <div className={styles.rosterWork}>
+                        <Text size={200} className={styles.rosterStatus}>{statusSummary}</Text>
+                        <div className={styles.rosterControls}>
+                          <Select
+                            size="small"
+                            className={styles.taskSelect}
+                            select={{ className: styles.taskSelectInput }}
+                            aria-label={`${bot.name}'s work task`}
+                            value={selectedTask}
+                            onChange={(_, data) => {
+                              if (!isWorkTaskId(data.value)) return;
+                              const nextOverride = data.value === ownPick ? null : data.value;
+                              profileDispatch({ type: 'configureWork', id: bot.id, taskOverride: nextOverride });
+                              if (gameState.gameStatus !== GameStatus.Init) {
+                                gameDispatch({ type: GameAction.ConfigureWork, playerKey: bot.id, taskOverride: nextOverride });
+                              }
+                            }}
+                          >
+                            {WORK_TASKS.map((task) => (
+                              <option key={task.id} value={task.id}>
+                                {`${task.label} ($${task.pay}, ${task.days === 1 ? '1 day' : `${task.days} days`})${task.id === ownPick ? " (character's pick)" : ''}`}
+                              </option>
+                            ))}
+                          </Select>
+                          <Switch
+                            label="Let back when ready"
+                            checked={!!account.allowReturn}
+                            onChange={(_, data) => {
+                              profileDispatch({ type: 'configureWork', id: bot.id, allowReturn: data.checked });
+                              if (gameState.gameStatus !== GameStatus.Init) {
+                                gameDispatch({ type: GameAction.ConfigureWork, playerKey: bot.id, allowReturn: data.checked });
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
                     </li>
                   );
                 })}
@@ -247,6 +339,9 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
         <CharacterDialog
           character={getCharacter(characterId)}
           stats={profiles.profiles.find((profile) => profile.id === characterId)?.stats}
+          account={characterId ? (activeBotAccounts[characterId] ?? profileBotAccounts[characterId]) : undefined}
+          minimumBet={gameState.minimumBet}
+          isSeated={characterId ? profiles.opponentIds.includes(characterId) : false}
           open={!!characterId}
           onOpenChange={(isOpen) => { if (!isOpen) setCharacterId(undefined); }}
         />
@@ -254,3 +349,4 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
     </Dialog>
   );
 }
+

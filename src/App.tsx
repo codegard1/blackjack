@@ -8,8 +8,8 @@ import { FluentProvider, makeStyles, tokens } from '@fluentui/react-components';
 import './App.css';
 import { AppHeader, OptionsPanel, PlayersDialog, Table } from './components';
 import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
-import { GameAction } from './enums';
-import { allPlayers, collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync } from './functions';
+import { GameAction, GameStatus } from './enums';
+import { allPlayers, botAccountsFor, collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync } from './functions';
 import { GameReducerAction } from './interfaces';
 import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark, PAGE_GUTTER } from './theme';
 
@@ -73,14 +73,24 @@ const App = () => {
     gameDispatch({ type: GameAction.EvaluateGame });
   }, [statusKey, gameState.gameStatus, gameDispatch]);
 
-  // When a round settles, carry each player's updated stats back to their profile.
-  // Only the transition counts, so a restored settled round is not added twice.
+  // When a round settles (or starts and advances away work), carry each player's updated
+  // stats and character accounts back to their profile. Only transitions count, so a
+  // restored round is not added twice.
   const wasSettled = React.useRef(gameState.gameStatusFlag);
+  const lastSyncedRound = React.useRef(`${gameState.round}:${gameState.turnCount}`);
   React.useEffect(() => {
     const wasSettledBefore = wasSettled.current;
     wasSettled.current = gameState.gameStatusFlag;
-    if (!wasSettledBefore && gameState.gameStatusFlag) {
-      profileDispatch({ type: 'syncStats', stats: collectStats(allPlayers(gameState.playerStore)) });
+    const roundKey = `${gameState.round}:${gameState.turnCount}`;
+    const roundStarted = lastSyncedRound.current !== roundKey && gameState.gameStatus !== GameStatus.Init && gameState.turnCount > 0;
+    lastSyncedRound.current = roundKey;
+
+    if ((!wasSettledBefore && gameState.gameStatusFlag) || roundStarted) {
+      profileDispatch({
+        type: 'syncStats',
+        stats: collectStats(allPlayers(gameState.playerStore)),
+        botAccounts: gameState.botAccounts,
+      });
     }
   }, [gameState]);
 
@@ -92,7 +102,9 @@ const App = () => {
   React.useEffect(() => {
     if (lastRosterKey.current === rosterKey) return;
     lastRosterKey.current = rosterKey;
-    if (betweenHands) gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles) });
+    if (betweenHands) {
+      gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles), botAccounts: botAccountsFor(profiles) });
+    }
   }, [rosterKey, betweenHands, profiles, gameDispatch]);
 
   return (

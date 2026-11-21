@@ -1,5 +1,6 @@
+import { BOTS } from "../characters";
 import { GameStatus } from "../enums";
-import { Announcement, GameSnapshot, GameState, PlayerSnapshot, WagerSnapshot } from "../types";
+import { Announcement, GameSnapshot, GameState, PlayerSnapshot, WagerSnapshot, WorkNoticeSnapshot } from "../types";
 import { formatCardName } from "./cards";
 import { getPlayerHand, getPlayerHandValue } from "./deck";
 import { allPlayers } from "./playerStore";
@@ -8,6 +9,12 @@ import { isRoundOver } from "./seatStatus";
 
 /** True for the log entries where a player added to the pot after the antes */
 const isWagerEvent = (event: string | undefined): boolean => event === 'bet' || event === 'double' || event === 'split';
+
+/** True for work log entries that also get a toast over the table */
+const isWorkNoticeDescription = (description: string): boolean =>
+  description.startsWith('left to work:')
+  || description.endsWith('wants back in')
+  || description.startsWith('returned to the table');
 
 /**
  * Capture the parts of the game state that announcements are derived from
@@ -25,6 +32,11 @@ export function snapshotGame(state: GameState): GameSnapshot {
     wagers: state.activityLog.flatMap((entry): WagerSnapshot[] => (
       isWagerEvent(entry.event) && (entry.amount ?? 0) < 0
         ? [{ id: entry.id, name: entry.name, description: entry.description, amount: -(entry.amount ?? 0) }]
+        : []
+    )),
+    workNotices: state.activityLog.flatMap((entry): WorkNoticeSnapshot[] => (
+      entry.event === 'work' && isWorkNoticeDescription(entry.description)
+        ? [{ id: entry.id, name: entry.name, description: entry.description }]
         : []
     )),
     controllingPlayer: state.controllingPlayer,
@@ -129,6 +141,25 @@ export function diffAnnouncements(prev: GameSnapshot, next: GameSnapshot, reveal
     ? next.totalPotContributions
     : next.totalPotContributions - prev.totalPotContributions;
   const newRound = next.round !== prev.round;
+
+  const prevWorkNotices = prev.workNotices ?? [];
+  const nextWorkNotices = next.workNotices ?? [];
+  const lastWorkId = prevWorkNotices.at(-1)?.id ?? 0;
+  const newWorkNotices = logRestarted || (nextWorkNotices.at(-1)?.id ?? 0) < lastWorkId
+    ? nextWorkNotices
+    : nextWorkNotices.filter((notice) => notice.id > lastWorkId);
+  for (const notice of newWorkNotices) {
+    const botKey = BOTS.find((bot) => bot.name === notice.name)?.id
+      ?? next.players.find((player) => player.title === notice.name)?.key;
+    const tone = notice.description.startsWith('returned') ? 'success'
+      : notice.description.endsWith('wants back in') ? 'info'
+      : 'neutral';
+    announcements.push({
+      title: `${notice.name} ${notice.description}`,
+      tone,
+      playerKey: botKey,
+    });
+  }
 
   // Each wager gets a toast in its player's name; whatever else went into the pot is the antes, one toast for all
   const lastWagerId = prev.wagers.at(-1)?.id ?? 0;

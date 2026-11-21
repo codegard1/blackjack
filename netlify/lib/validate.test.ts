@@ -48,4 +48,74 @@ describe('parseProfilesBody', () => {
     expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, profiles: [{ ...profiles.profiles[0], stats: { netResult: -20, winLossRatio: 0.75 } }] } }))).toHaveProperty('data');
     expect(parseProfilesBody(JSON.stringify({ profiles: { ...profiles, opponentIds: 'ogion' } }))).toHaveProperty('error');
   });
+
+  it('preserves valid bot profile work and bank fields and strips unknown nested keys inside work', () => {
+    const botProfile = {
+      id: 'ogion',
+      name: 'Ogion',
+      createdAt: 0,
+      stats,
+      bank: 250,
+      balanceHistory: [1000, 500, 250],
+      work: { status: 'working', taskId: 'herding-goats', daysWorked: 2, extraWorkKey: 'strip-me' },
+      taskOverride: 'minding-ansible',
+      allowReturn: true,
+    };
+    const result = parseProfilesBody(JSON.stringify({
+      profiles: {
+        ...profiles,
+        profiles: [profiles.profiles[0], botProfile],
+      },
+    }));
+
+    expect(result).toEqual({
+      data: {
+        ...profiles,
+        profiles: [
+          profiles.profiles[0],
+          {
+            id: 'ogion',
+            name: 'Ogion',
+            createdAt: 0,
+            stats,
+            bank: 250,
+            balanceHistory: [1000, 500, 250],
+            work: { status: 'working', taskId: 'herding-goats', daysWorked: 2 },
+            taskOverride: 'minding-ansible',
+            allowReturn: true,
+          },
+        ],
+      },
+    });
+  });
+
+  it('rejects invalid bot profile bank, balanceHistory, work, taskOverride, and allowReturn fields', () => {
+    const withBotField = (overrides: Record<string, unknown>) => JSON.stringify({
+      profiles: {
+        ...profiles,
+        profiles: [{ ...profiles.profiles[0], id: 'ogion', name: 'Ogion', ...overrides }],
+      },
+    });
+
+    for (const badBank of [-1, '1000', null]) {
+      expect(parseProfilesBody(withBotField({ bank: badBank }))).toHaveProperty('error');
+    }
+
+    for (const badHistory of [[-1], ['100'], Array.from({ length: 201 }, () => 100)]) {
+      expect(parseProfilesBody(withBotField({ balanceHistory: badHistory }))).toHaveProperty('error');
+    }
+
+    for (const badWork of [
+      { status: 'sleeping', taskId: 'smashing-rocks', daysWorked: 0 },
+      { status: 'working', taskId: 'bogus-task', daysWorked: 0 },
+      { status: 'working', taskId: 'smashing-rocks', daysWorked: -1 },
+      { status: 'working', taskId: 'smashing-rocks', daysWorked: 31 },
+      { status: 'working', taskId: 'smashing-rocks', daysWorked: 1.5 },
+    ]) {
+      expect(parseProfilesBody(withBotField({ work: badWork }))).toHaveProperty('error');
+    }
+
+    expect(parseProfilesBody(withBotField({ taskOverride: 'not-a-task' }))).toHaveProperty('error');
+    expect(parseProfilesBody(withBotField({ allowReturn: 'yes' }))).toHaveProperty('error');
+  });
 });

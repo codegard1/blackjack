@@ -1,4 +1,5 @@
 import type { PlayerProfile, PlayerStats, ProfileState } from '../../src/types';
+import { isBalanceHistory, isCharacterWorkState, isWorkTaskId } from '../../src/types/Work';
 
 /** The document stored for each owner: the profiles plus when they were last written */
 export type ProfileDocument = {
@@ -76,7 +77,12 @@ function isProfile(value: unknown): value is PlayerProfile {
     && isText(value.id, 64)
     && isText(value.name, 40)
     && isFiniteNumber(value.createdAt)
-    && isStats(value.stats);
+    && isStats(value.stats)
+    && (value.bank === undefined || (isFiniteNumber(value.bank) && value.bank >= 0))
+    && (value.balanceHistory === undefined || isBalanceHistory(value.balanceHistory))
+    && (value.work === undefined || isCharacterWorkState(value.work))
+    && (value.taskOverride === undefined || isWorkTaskId(value.taskOverride))
+    && (value.allowReturn === undefined || typeof value.allowReturn === 'boolean');
 }
 
 export function isProfileState(value: unknown): value is ProfileState {
@@ -91,7 +97,17 @@ export function isProfileState(value: unknown): value is ProfileState {
 /** Keep only the fields the document stores, so unknown keys never reach the database */
 function pickProfileState(state: ProfileState): ProfileState {
   return {
-    profiles: state.profiles.map(({ id, name, createdAt, stats }) => ({ id, name, createdAt, stats: { ...stats } })),
+    profiles: state.profiles.map(({ id, name, createdAt, stats, bank, balanceHistory, work, taskOverride, allowReturn }) => ({
+      id,
+      name,
+      createdAt,
+      stats: { ...stats },
+      ...(bank !== undefined ? { bank } : {}),
+      ...(balanceHistory !== undefined ? { balanceHistory: [...balanceHistory] } : {}),
+      ...(work !== undefined ? { work: { status: work.status, taskId: work.taskId, daysWorked: work.daysWorked } } : {}),
+      ...(taskOverride !== undefined ? { taskOverride } : {}),
+      ...(allowReturn !== undefined ? { allowReturn } : {}),
+    })),
     selectedId: state.selectedId,
     opponentIds: [...state.opponentIds],
   };

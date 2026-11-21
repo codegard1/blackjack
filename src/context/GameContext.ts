@@ -2,12 +2,14 @@ import { Dispatch, createContext, useContext } from 'react';
 import { GameStatus } from '../enums';
 import { createDeck } from '../functions/deck';
 import { createPlayerStore } from '../functions/playerStore';
+import { defaultBotAccounts } from '../functions/work';
 import { GameReducerAction } from '../interfaces';
 import { GameState, defaultTableRules } from '../types';
 
 export const createGameState = (): GameState => ({
   activeHandIndex: 0,
   activityLog: [],
+  botAccounts: defaultBotAccounts(),
   gameStatus: GameStatus.Init,
   deck: createDeck(),
   gameStatusFlag: false,

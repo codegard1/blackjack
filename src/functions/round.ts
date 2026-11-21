@@ -1,7 +1,8 @@
-import { getCharacter } from "../characters";
+import { STARTING_BANK } from "../definitions";
+import { BOTS, getCharacter, isBotId } from "../characters";
 import { GameStatus } from "../enums";
 import { IPlayer, IPlayerOptions } from "../interfaces";
-import { GameState, PlayerKey, PlayerRole, TableRules, defaultTableRules } from "../types";
+import { BotAccountState, GameState, PlayerKey, PlayerRole, TableRules, WorkTaskId, cloneBotAccount, defaultTableRules } from "../types";
 import { recordActivity } from "./activity";
 import { BotMove, Rng, botWagerCount, decideBotMove } from "./botStrategy";
 import {
@@ -10,6 +11,7 @@ import {
 import {
   allPlayers, antePlayer, betPlayer, endPlayerTurn, getPlayer, replaceRoster, setCurrentPlayer, startPlayerTurn, updatePlayer,
 } from "./playerStore";
+import { appendBalance, chooseTask, defaultBotAccount, defaultBotAccounts, getWorkTask, returnThreshold } from "./work";
 
 /**
  * The turn engine shared by the reducer and settlement. Each seat plays its
@@ -320,13 +322,104 @@ export function finishRound(state: GameState): void {
   state.dealerHasControl = false;
 }
 
+/** Ensure a computer character has an entry in state.botAccounts */
+export function ensureBotAccount(state: GameState, key: PlayerKey): BotAccountState {
+  if (!state.botAccounts) state.botAccounts = defaultBotAccounts();
+  if (!state.botAccounts[key]) {
+    const seatedBank = getPlayer(state.playerStore, key)?.bank ?? STARTING_BANK;
+    state.botAccounts[key] = defaultBotAccount(seatedBank);
+  }
+  return state.botAccounts[key];
+}
+
+/** Copy a computer character's bank and away-working flags onto their seat at the table, if seated */
+export function syncSeatWithAccount(state: GameState, key: PlayerKey): void {
+  const player = getPlayer(state.playerStore, key);
+  const account = state.botAccounts?.[key];
+  if (!player || !isBot(player) || !account) return;
+  state.playerStore = updatePlayer(state.playerStore, key, (p) => ({
+    ...p,
+    bank: account.bank,
+    isSittingOut: !!account.work,
+    awayTask: account.work?.taskId,
+    isReadyToReturn: account.work?.status === 'ready',
+  }));
+}
+
 /**
- * Every seat but the dealer antes the minimum. A computer player who cannot
- * cover it sits the round out; the human always plays, staked or not.
- * Computer players then add wagers according to their aggression.
+ * Advance every away character's work by one day (24 hours = one hand).
+ * Runs for all computer characters, whether or not they are currently in the roster.
+ */
+export function advanceWork(state: GameState): void {
+  for (const bot of BOTS) {
+    const account = ensureBotAccount(state, bot.id);
+    if (!account.work) continue;
+
+    if (account.work.status === 'ready') {
+      if (account.allowReturn) {
+        account.work = undefined;
+        account.taskOverride = undefined;
+        syncSeatWithAccount(state, bot.id);
+        recordActivity(state, bot.name, `returned to the table with $${account.bank}`, 'work');
+      } else {
+        syncSeatWithAccount(state, bot.id);
+      }
+      continue;
+    }
+
+    account.work.daysWorked += 1;
+    const task = getWorkTask(account.work.taskId);
+    if (account.work.daysWorked < task.days) {
+      syncSeatWithAccount(state, bot.id);
+      continue;
+    }
+
+    // Payday: the task is finished
+    account.bank += task.pay;
+    account.balanceHistory = appendBalance(account.balanceHistory, account.bank);
+    recordActivity(state, bot.name, `finished ${task.label.toLowerCase()} and earned $${task.pay}`, 'work', { amount: task.pay });
+
+    const threshold = returnThreshold(bot.stats, state.minimumBet);
+    if (account.bank >= threshold) {
+      if (account.allowReturn) {
+        account.work = undefined;
+        account.taskOverride = undefined;
+        recordActivity(state, bot.name, `returned to the table with $${account.bank}`, 'work');
+      } else {
+        account.work = { status: 'ready', taskId: task.id, daysWorked: task.days };
+        recordActivity(state, bot.name, `has $${account.bank} and wants back in`, 'work');
+      }
+    } else {
+      const nextTaskId = account.taskOverride ?? chooseTask(bot.stats, account.bank, threshold);
+      const nextTask = getWorkTask(nextTaskId);
+      account.work = { status: 'working', taskId: nextTaskId, daysWorked: 0 };
+      recordActivity(state, bot.name, `started ${nextTask.label.toLowerCase()}`, 'work');
+    }
+
+    syncSeatWithAccount(state, bot.id);
+  }
+}
+
+/**
+ * Every seat but the dealer antes the minimum. Away characters advance their work
+ * by a day first. A computer player at the table who cannot cover the ante leaves
+ * to work; the human always plays, staked or not. Computer players then add wagers
+ * according to their aggression.
  */
 export function collectAntes(state: GameState, rng: () => number = () => Math.random()): void {
+  advanceWork(state);
+
   playerSeats(state).forEach((player) => {
+    if (isBot(player)) {
+      const account = ensureBotAccount(state, player.key);
+      // Keep the account bank aligned if the seat's bank was set directly
+      account.bank = player.bank;
+      if (account.work) {
+        syncSeatWithAccount(state, player.key);
+        return;
+      }
+    }
+
     if (player.isSittingOut && !isBot(player)) {
       recordActivity(state, player.title, 'sat out', 'ante');
       return;
@@ -335,10 +428,18 @@ export function collectAntes(state: GameState, rng: () => number = () => Math.ra
     if (paid) {
       state.playerStore = updatePlayer(store, player.key, (p) => ({ ...p, isSittingOut: false }));
       state.pot += state.minimumBet;
+      if (isBot(player)) ensureBotAccount(state, player.key).bank = getPlayer(state.playerStore, player.key)!.bank;
       recordActivity(state, player.title, `anted $${state.minimumBet}`, 'ante', { amount: -state.minimumBet });
     } else if (isBot(player)) {
-      state.playerStore = updatePlayer(state.playerStore, player.key, (p) => ({ ...p, isSittingOut: true }));
-      recordActivity(state, player.title, 'sat out: not enough money to ante', 'ante');
+      const account = ensureBotAccount(state, player.key);
+      account.bank = player.bank;
+      const stats = getCharacter(player.key)?.stats;
+      const threshold = returnThreshold(stats, state.minimumBet);
+      const taskId = account.taskOverride ?? chooseTask(stats, account.bank, threshold);
+      const task = getWorkTask(taskId);
+      account.work = { status: 'working', taskId, daysWorked: 0 };
+      syncSeatWithAccount(state, player.key);
+      recordActivity(state, player.title, `left to work: ${task.label.toLowerCase()}`, 'work');
     }
   });
 
@@ -351,9 +452,49 @@ export function collectAntes(state: GameState, rng: () => number = () => Math.ra
       if (!paid) break;
       state.playerStore = store;
       state.pot += state.minimumBet;
+      ensureBotAccount(state, player.key).bank = getPlayer(state.playerStore, player.key)!.bank;
       recordActivity(state, player.title, `wagered $${state.minimumBet}`, 'bet', { amount: -state.minimumBet });
     }
   });
+}
+
+/**
+ * Override a computer character's work task or toggle whether they return when ready.
+ * If the character is already ready to return and the table is between hands (or before
+ * a game starts), enabling allowReturn brings them back at once.
+ */
+export function configureCharacterWork(
+  state: GameState,
+  playerKey: PlayerKey,
+  options: { taskOverride?: WorkTaskId | null; allowReturn?: boolean },
+): void {
+  if (!isBotId(playerKey)) return;
+  const account = ensureBotAccount(state, playerKey);
+  const character = getCharacter(playerKey);
+
+  if (options.taskOverride !== undefined) {
+    account.taskOverride = options.taskOverride === null ? undefined : options.taskOverride;
+    if (account.work?.status === 'working') {
+      const threshold = returnThreshold(character?.stats, state.minimumBet);
+      const chosen = account.taskOverride ?? chooseTask(character?.stats, account.bank, threshold);
+      if (chosen !== account.work.taskId) {
+        account.work = { status: 'working', taskId: chosen, daysWorked: 0 };
+        const task = getWorkTask(chosen);
+        recordActivity(state, character?.name ?? playerKey, `switched work to ${task.label.toLowerCase()}`, 'work');
+      }
+    }
+  }
+
+  if (options.allowReturn !== undefined) {
+    account.allowReturn = options.allowReturn;
+    if (account.allowReturn && account.work?.status === 'ready' && (state.gameStatus === GameStatus.Init || isBetweenHands(state))) {
+      account.work = undefined;
+      account.taskOverride = undefined;
+      recordActivity(state, character?.name ?? playerKey, `returned to the table with $${account.bank}`, 'work');
+    }
+  }
+
+  syncSeatWithAccount(state, playerKey);
 }
 
 /**
@@ -388,14 +529,31 @@ export const rosterSignature = (seats: { key: PlayerKey }[]): string => seats.ma
 /**
  * Change who sits at the table, but only between hands; while a hand is in play the
  * new roster is ignored. Seats that stay keep their bank and stats, seats that leave
- * are removed, and new seats join with a fresh bank. Seating follows the roster order.
+ * are removed, and new seats join with their persistent bank (for computer characters)
+ * or a fresh bank. Seating follows the roster order.
  */
-export function applyRoster(state: GameState, seats: IPlayerOptions[]): void {
+export function applyRoster(state: GameState, seats: IPlayerOptions[], botAccounts?: Record<string, BotAccountState>): void {
   if (!isBetweenHands(state) || seats.length === 0) return;
+  if (botAccounts) {
+    for (const [id, incoming] of Object.entries(botAccounts)) {
+      if (!state.botAccounts[id]) state.botAccounts[id] = cloneBotAccount(incoming);
+    }
+  }
   if (rosterSignature(seats) === rosterSignature(allPlayers(state.playerStore))) return;
 
   const previous = state.playerStore.players;
-  const store = replaceRoster(state.playerStore, seats);
+  const enrichedSeats = seats.map((seat) => {
+    if (previous[seat.key]) return seat;
+    const account = isBotId(seat.key) ? state.botAccounts[seat.key] : undefined;
+    return account ? {
+      ...seat,
+      bank: account.bank,
+      isSittingOut: !!account.work,
+      awayTask: account.work?.taskId,
+      isReadyToReturn: account.work?.status === 'ready',
+    } : seat;
+  });
+  const store = replaceRoster(state.playerStore, enrichedSeats);
 
   const joined = seats.filter((seat) => !previous[seat.key]).map((seat) => seat.title);
   const left = Object.values(previous).filter((player) => !store.players[player.key]).map((player) => player.title);
@@ -409,3 +567,4 @@ export function applyRoster(state: GameState, seats: IPlayerOptions[]): void {
   const changes = [joined.length ? `${joined.join(', ')} joined` : '', left.length ? `${left.join(', ')} left` : ''].filter(Boolean);
   recordActivity(state, '', `Players changed: ${changes.join('; ') || 'seating order'}`, 'round');
 }
+

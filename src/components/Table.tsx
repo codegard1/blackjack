@@ -24,7 +24,7 @@ import { decideSeatMove, isDealer, isHuman, seatOrder, seatQueues } from "../fun
 import { potBreakdown } from "../functions/pot";
 import { getPlayerHand } from "../functions/deck";
 import { allPlayers } from "../functions/playerStore";
-import { seatsFor } from "../functions/profiles";
+import { botAccountsFor, seatsFor } from "../functions/profiles";
 import { IPlayer } from "../interfaces";
 import { PlayerHandValue, tableRulesFrom } from "../types";
 
@@ -154,7 +154,12 @@ export const Table: React.FC = () => {
     );
   };
 
-  const startGame = () => gameDispatch({ type: GameAction.NewGame, players: seats, tableRules: tableRulesFrom(settings) });
+  const startGame = () => gameDispatch({
+    type: GameAction.NewGame,
+    players: seats,
+    botAccounts: botAccountsFor(profiles),
+    tableRules: tableRulesFrom(settings),
+  });
 
   // Toasts announce each change; its activity log entries follow once its toasts have had their moment.
   // Computer play waits while a toast is queued, so the moves keep pace with the notices. At the end of

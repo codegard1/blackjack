@@ -27,7 +27,7 @@ export function createPlayerStore(initial?: IPlayerStoreState): IPlayerStoreStat
 
 /** Build a fresh seat record from options with default round flags and cloned stats */
 export function createPlayer(options: IPlayerOptions): IPlayer {
-  const { key, title, isNPC, id, bank, disabled, stats, isSittingOut } = options;
+  const { key, title, isNPC, id, bank, disabled, stats, isSittingOut, awayTask, isReadyToReturn } = options;
   const role = options.role ?? (isNPC ? 'dealer' : 'human');
   return {
     ...playerDefaults,
@@ -40,6 +40,8 @@ export function createPlayer(options: IPlayerOptions): IPlayer {
     disabled: disabled ? disabled : false,
     stats: { ...playerDefaults.stats, ...stats },
     ...(isSittingOut !== undefined ? { isSittingOut } : {}),
+    ...(awayTask !== undefined ? { awayTask } : {}),
+    ...(isReadyToReturn !== undefined ? { isReadyToReturn } : {}),
   };
 }
 

@@ -27,7 +27,7 @@ import { BotMove } from "../functions/botStrategy";
 import { canDoubleDown, canSplit } from "../functions/gameReducer";
 import { getPlayerHand } from "../functions/deck";
 import { allPlayers } from "../functions/playerStore";
-import { seatsFor } from "../functions/profiles";
+import { botAccountsFor, seatsFor } from "../functions/profiles";
 import { getDealer, isBot } from "../functions/round";
 import { recommendMove } from "../functions/strategyHint";
 import { IControlPanelProps } from "../interfaces";
@@ -150,25 +150,25 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
 
   const isSittingOut = !!player?.isSittingOut;
   const hasAvailableBots = allPlayers(gameState.playerStore).some(
-    (p) => isBot(p) && p.bank >= minimumBet
+    (p) => isBot(p) && !p.isSittingOut && p.bank >= minimumBet
   );
   const canSitOut = hasAvailableBots;
 
   // The hand is over, so a roster change made during play takes effect before the next deal
   const nextHand = () => {
-    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles) });
+    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles), botAccounts: botAccountsFor(profiles) });
     gameDispatch({ type: GameAction.SitOut, playerKey, isSittingOut: false });
     deal();
   };
 
   const sitOut = () => {
-    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles) });
+    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles), botAccounts: botAccountsFor(profiles) });
     gameDispatch({ type: GameAction.SitOut, playerKey, isSittingOut: true });
     deal();
   };
 
   const rejoinTable = () => {
-    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles) });
+    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles), botAccounts: botAccountsFor(profiles) });
     gameDispatch({ type: GameAction.SitOut, playerKey, isSittingOut: false });
     deal();
   };

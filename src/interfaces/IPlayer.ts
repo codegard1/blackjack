@@ -1,5 +1,5 @@
 import { PlayerAction, PlayerStatus } from '../enums';
-import { PlayerStats, RoundResult } from '../types';
+import { PlayerStats, RoundResult, WorkTaskId } from '../types';
 import { IPlayerOptions } from './IPlayerOpts';
 
 export interface IPlayer extends IPlayerOptions {
@@ -12,8 +12,12 @@ export interface IPlayer extends IPlayerOptions {
   isBusted?: boolean;
   isBlackjack?: boolean;
   isStaying?: boolean;
-  /** could not cover the ante, so has no hand this round */
+  /** could not cover the ante or is away working, so has no hand this round */
   isSittingOut?: boolean;
+  /** task the character is away working on, if any */
+  awayTask?: WorkTaskId;
+  /** true when an away character has reached their return threshold and awaits permission */
+  isReadyToReturn?: boolean;
   key: string;
   lastAction?: PlayerAction;
   lastAnte?: number;

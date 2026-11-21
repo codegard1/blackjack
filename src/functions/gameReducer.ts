@@ -1,8 +1,9 @@
+import { isBotId } from "../characters";
 import { createGameState } from "../context";
 import { defaultplayersArr } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
 import { GameReducerAction, IPlayerOptions } from "../interfaces";
-import { GameState, isTableRules, tableRulesFrom } from "../types";
+import { GameState, cloneBotAccounts, isTableRules, tableRulesFrom } from "../types";
 import { evaluateGame } from "./evaluateGame";
 import { debugLog } from "./debugLog";
 import { recordActivity } from "./activity";
@@ -16,9 +17,10 @@ import {
 } from "./playerStore";
 import { seededRandom } from "./random";
 import {
-  advanceTurn, applyRoster, canDoubleDown, canSplit, collectAntes, isDealer, playerSeats, refillDeck, reshuffleIfLow, resolveNaturals,
-  resolveShowdown, roundStake, seatOrder, setControl,
+  advanceTurn, applyRoster, canDoubleDown, canSplit, collectAntes, configureCharacterWork, ensureBotAccount, isBot, isDealer, playerSeats, refillDeck, reshuffleIfLow, resolveNaturals,
+  resolveShowdown, roundStake, seatOrder, setControl, syncSeatWithAccount,
 } from "./round";
+import { defaultBotAccount, defaultBotAccounts } from "./work";
 
 /**
  * After a player draws, check for a bust. A busted player loses and the turn
@@ -65,7 +67,11 @@ export function gameReducer(state: GameState, action: GameReducerAction): GameSt
   // so the same action gives the same result. Without them the clock and Math.random are used.
   const rng = action.seed !== undefined ? seededRandom(action.seed) : () => Math.random();
   const lastWriteTime = new Date(action.now ?? Date.now()).toISOString();
-  return applyAction({ ...state, lastWriteTime }, action, rng);
+  return applyAction({
+    ...state,
+    botAccounts: cloneBotAccounts(state.botAccounts),
+    lastWriteTime,
+  }, action, rng);
 }
 
 /**
@@ -93,6 +99,8 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
       if (paid) {
         state.playerStore = store;
         state.pot += betAmount;
+        const player = getPlayer(state.playerStore, playerKey)!;
+        if (isBot(player)) ensureBotAccount(state, playerKey).bank = player.bank;
         if (state.playerStore.currentPlayerKey === playerKey) {
           const hand = getPlayerHand(state.deck, playerKey, state.activeHandIndex);
           if (hand?.cards.length) {
@@ -102,8 +110,16 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
             }));
           }
         }
-        recordActivity(state, getPlayer(state.playerStore, playerKey)!.title, `wagered $${betAmount}`, 'bet', { amount: -betAmount });
+        recordActivity(state, player.title, `wagered $${betAmount}`, 'bet', { amount: -betAmount });
       }
+      return state;
+    }
+
+    case GameAction.ConfigureWork: {
+      configureCharacterWork(state, action.playerKey, {
+        taskOverride: action.taskOverride,
+        allowReturn: action.allowReturn,
+      });
       return state;
     }
 
@@ -111,9 +127,14 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
      * Initiate a new game from scratch
      */
     case GameAction.NewGame: {
-      const { players, playerKeys } = action;
+      const { players, playerKeys, botAccounts } = action;
       if (isTableRules(action.tableRules)) state.tableRules = tableRulesFrom(action.tableRules);
       state.playerStore = createPlayerStore();
+      state.botAccounts = {
+        ...defaultBotAccounts(),
+        ...cloneBotAccounts(state.botAccounts),
+        ...cloneBotAccounts(botAccounts),
+      };
       state.pot = 0;
       state.winner = undefined;
       state.loser = undefined;
@@ -126,6 +147,15 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
       });
       seats.forEach((seat) => {
         state.playerStore = addPlayer(state.playerStore, seat);
+        if (isBotId(seat.key) && !botAccounts?.[seat.key]) {
+          state.botAccounts[seat.key] = {
+            ...defaultBotAccount(seat.bank),
+            ...(seat.awayTask ? {
+              work: { status: seat.isReadyToReturn ? 'ready' : 'working', taskId: seat.awayTask, daysWorked: 0 },
+            } : {}),
+          };
+        }
+        if (isBotId(seat.key)) syncSeatWithAccount(state, seat.key);
       });
       state.deck = syncDeckHands(
         createDeck(Number(state.tableRules.numberOfDecks), rng),
@@ -147,8 +177,8 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
      * Seat a new roster between hands; ignored while a hand is in play
      */
     case GameAction.SetRoster: {
-      const { players } = action;
-      applyRoster(state, players);
+      const { players, botAccounts } = action;
+      applyRoster(state, players, botAccounts);
       return state;
     }
 
@@ -315,10 +345,12 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
       const stake = roundStake(state, key);
       state.playerStore = betPlayer(state.playerStore, key, stake).store;
       state.pot += stake;
+      const player = getPlayer(state.playerStore, key)!;
+      if (isBot(player)) ensureBotAccount(state, key).bank = player.bank;
       if (getPlayerHand(state.deck, key, index)) {
         state.deck = updateHand(state.deck, key, index, (h) => ({ ...h, stake: (h.stake ?? stake) + stake }));
       }
-      recordActivity(state, getPlayer(state.playerStore, key)!.title, `doubled down for $${stake}`, 'double', { amount: -stake });
+      recordActivity(state, player.title, `doubled down for $${stake}`, 'double', { amount: -stake });
 
       state = applyAction(state, { type: GameAction.Draw, playerKey: key, handIndex: index, deckSide: 'top', numberOfCards: 1 }, rng);
       if (state.gameStatus === GameStatus.InProgress && !getPlayer(state.playerStore, key)?.isBusted) {
@@ -339,7 +371,9 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
       if (!betResult.paid) return state;
       state.playerStore = betResult.store;
       state.pot += stake;
-      recordActivity(state, player.title, `split for $${stake}`, 'split', { amount: -stake });
+      const updatedPlayer = getPlayer(state.playerStore, key)!;
+      if (isBot(updatedPlayer)) ensureBotAccount(state, key).bank = updatedPlayer.bank;
+      recordActivity(state, updatedPlayer.title, `split for $${stake}`, 'split', { amount: -stake });
 
       const { deck: splitDeck, isSplitAces } = splitPlayerHand(state.deck, key, index, stake);
       state.deck = splitDeck;

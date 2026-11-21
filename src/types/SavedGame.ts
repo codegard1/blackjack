@@ -6,7 +6,7 @@ import type { GameState } from './GameState';
 export type SavedGame = Pick<GameState,
   'activityLog' | 'activeHandIndex' | 'controllingPlayer' | 'dealerHasControl' | 'gameStatus' | 'gameStatusFlag' |
   'loser' | 'minimumBet' | 'pot' | 'round' | 'tableRules' | 'turnCount' | 'winner'
-> & { version: number };
+> & { version: number; botAccounts?: GameState['botAccounts'] };
 
 /**
  * Everything needed to resume a game: the deck, the players at the table, and the
