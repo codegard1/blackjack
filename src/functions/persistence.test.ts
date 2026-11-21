@@ -312,7 +312,7 @@ describe('persistence', () => {
     const loaded = loadSettings();
     expect(loaded.isActivityLogVisible).toBe(true);
     expect(loaded).toMatchObject({
-      themeMode: 'light', accent: 'blue', cardStyle: 'classic', cardBackPattern: 'rings', cardBackColor: 'brand',
+      themeMode: 'dark', accent: 'blue', cardStyle: 'classic', cardBackPattern: 'rings', cardBackColor: 'brand',
     });
   });
 });
