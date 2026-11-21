@@ -16,7 +16,7 @@ export const settingDefaults: SettingsState = {
   isOptionsPanelVisible: false,
   isSelectedVisible: false,
   isStrategyHintVisible: false,
-  themeMode: 'light',
+  themeMode: 'dark',
   accent: 'blue',
   cardStyle: 'classic',
   cardBackPattern: 'rings',

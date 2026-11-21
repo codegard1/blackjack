@@ -23,6 +23,7 @@ import { CharacterPortrait } from "./CharacterPortrait";
 import { IPlayerContainerProps } from "../interfaces";
 import { GameStatus } from "../enums";
 import { isRoundOver, isSeatWinner, seatStatus } from "../functions/seatStatus";
+import { getPlayerHands } from "../functions/deck";
 
 // Styles
 import "./PlayerContainer.css";
@@ -149,16 +150,16 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   const { gameState } = useGameContext();
 
   // computed values
-  const playerState = gameState.playerStore.state;
+  const playerState = gameState.playerStore;
   const player = playerState.players[playerKey];
-  const hands = gameState.deck.getHands(playerKey);
+  const hands = getPlayerHands(gameState.deck, playerKey);
 
   const { gameStatus } = gameState;
   const isWinner = isSeatWinner(player, gameStatus);
   const isActive = !!player.turn && !isRoundOver(gameStatus);
 
   // the human's seat explains the wager until the first cards are dealt
-  const isRoundDealt = Object.values(gameState.deck.state.playerHands).some((hand) => hand.cards.length > 0);
+  const isRoundDealt = Object.values(gameState.deck.playerHands).some((hand) => hand.cards.length > 0);
   const isAwaitingDeal = !player.isNPC && !isRoundDealt && gameStatus < GameStatus.RoundOver
     && playerState.currentPlayerKey === playerKey;
 
