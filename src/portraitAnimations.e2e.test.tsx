@@ -8,6 +8,7 @@ import { CharacterPortrait, PORTRAIT_SIZES } from './components/CharacterPortrai
 import { SeatChip } from './components/SeatChip';
 import { TableToasts } from './components/TableToasts';
 import { PORTRAIT_GAP_DELAY_MS, PORTRAIT_INITIAL_DELAY_MS } from './components/usePortraitAnimation';
+import { SettingContext, settingDefaults } from './context/SettingContext';
 import { playerDefaults } from './definitions';
 import {
   LoadedPortraitAnimations,
@@ -817,6 +818,16 @@ describe('Tier 2 — Boundary & Corner Cases', () => {
         vi.advanceTimersByTime(PORTRAIT_GAP_DELAY_MS.max + 5000);
       });
       expect(putImageData).toHaveBeenCalledTimes(callsAtUnmount);
+    });
+
+    it('disables animations and unmounts canvas overlay when isAnimationsEnabled is false', () => {
+      const { container } = render(
+        <SettingContext.Provider value={{ ...settingDefaults, isAnimationsEnabled: false }}>
+          <CharacterPortrait id="dealer" name="Faxe" />
+        </SettingContext.Provider>,
+      );
+      expect(container.querySelector('img')).toBeInTheDocument();
+      expect(container.querySelector('canvas')).toBeNull();
     });
   });
 });

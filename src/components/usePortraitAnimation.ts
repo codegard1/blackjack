@@ -10,7 +10,7 @@ import {
 } from '../functions/portraitAnimation';
 
 export const PORTRAIT_INITIAL_DELAY_MS = { min: 1500, max: 4500 } as const;
-export const PORTRAIT_GAP_DELAY_MS = { min: 3500, max: 9000 } as const;
+export const PORTRAIT_GAP_DELAY_MS = { min: 10000, max: 25000 } as const;
 
 /**
  * Plays discrete, loopable pixel animations onto an overlaid `<canvas>` at semi-random intervals.

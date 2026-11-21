@@ -3,6 +3,7 @@ import React from 'react';
 import { Avatar, makeStyles, mergeClasses, tokens } from '@fluentui/react-components';
 
 import { getCharacter } from '../characters';
+import { SettingContext } from '../context/SettingContext';
 import { hasPortraitAnimations } from '../functions/portraitAnimation';
 import { usePortraitAnimation } from './usePortraitAnimation';
 
@@ -52,16 +53,27 @@ interface ICharacterPortraitProps {
   /** decorative portraits sit next to the name, so they need no alt text */
   decorative?: boolean;
   className?: string;
+  /** explicitly enable or disable portrait animations; defaults to settings.isAnimationsEnabled */
+  animated?: boolean;
 }
 
 /**
  * A computer character's pixel portrait, or a human player's initials
  */
-export const CharacterPortrait: React.FC<ICharacterPortraitProps> = ({ id, name, size = 'md', decorative = false, className }) => {
+export const CharacterPortrait: React.FC<ICharacterPortraitProps> = ({
+  id,
+  name,
+  size = 'md',
+  decorative = false,
+  className,
+  animated: animatedProp,
+}) => {
   const styles = useStyles();
   const character = getCharacter(id);
   const px = PORTRAIT_SIZES[size];
-  const animated = hasPortraitAnimations(character?.id);
+  const settings = React.useContext(SettingContext);
+  const animationsEnabled = animatedProp ?? settings?.isAnimationsEnabled ?? true;
+  const animated = animationsEnabled && hasPortraitAnimations(character?.id);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
   usePortraitAnimation(animated ? character?.id : undefined, canvasRef);

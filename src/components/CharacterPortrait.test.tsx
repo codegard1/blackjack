@@ -3,6 +3,7 @@ import { act, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FAXE_ANIMATIONS } from '../assets/portraits/faxe-animations';
 import { HABER_ANIMATIONS } from '../assets/portraits/haber-animations';
+import { SettingContext, settingDefaults } from '../context/SettingContext';
 import * as portraitAnimation from '../functions/portraitAnimation';
 import { CharacterPortrait } from './CharacterPortrait';
 import { PORTRAIT_GAP_DELAY_MS, PORTRAIT_INITIAL_DELAY_MS } from './usePortraitAnimation';
@@ -107,6 +108,29 @@ describe('CharacterPortrait', () => {
       expect(canvas).toHaveAttribute('width', '24');
       expect(canvas).toHaveAttribute('height', '24');
     }
+  });
+
+  it('disables animations and removes canvas when isAnimationsEnabled is false or animated prop is false', () => {
+    const { container: disabledBySetting } = render(
+      <SettingContext.Provider value={{ ...settingDefaults, isAnimationsEnabled: false }}>
+        <CharacterPortrait id="haber" name="Haber" />
+      </SettingContext.Provider>,
+    );
+    expect(disabledBySetting.querySelector('img')).toBeInTheDocument();
+    expect(disabledBySetting.querySelector('canvas')).toBeNull();
+
+    const { container: disabledByProp } = render(
+      <CharacterPortrait id="haber" name="Haber" animated={false} />,
+    );
+    expect(disabledByProp.querySelector('img')).toBeInTheDocument();
+    expect(disabledByProp.querySelector('canvas')).toBeNull();
+
+    const { container: enabledByProp } = render(
+      <SettingContext.Provider value={{ ...settingDefaults, isAnimationsEnabled: false }}>
+        <CharacterPortrait id="haber" name="Haber" animated={true} />
+      </SettingContext.Provider>,
+    );
+    expect(enabledByProp.querySelector('canvas')).toBeInTheDocument();
   });
 
   it('plays Faxe dealer animations with identical start and end frames', async () => {

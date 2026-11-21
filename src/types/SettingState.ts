@@ -29,6 +29,8 @@ export type QueueSide = typeof queueSides[number];
  */
 export type SettingsState = TableRules & {
   isActivityLogVisible: boolean;
+  /** play discrete idle pixel animations over character portraits */
+  isAnimationsEnabled: boolean;
   isCardDescVisible: boolean;
   isDealerHandVisible: boolean;
   isDeckVisible: boolean;

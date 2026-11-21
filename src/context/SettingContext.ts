@@ -8,6 +8,7 @@ import { SettingsState, defaultTableRules } from '../types';
 export const settingDefaults: SettingsState = {
   ...defaultTableRules,
   isActivityLogVisible: false,
+  isAnimationsEnabled: true,
   isCardDescVisible: false,
   isDealerHandVisible: false,
   isDeckVisible: false,
