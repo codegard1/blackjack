@@ -8,8 +8,7 @@ import { ChevronDown16Regular, ChevronUp16Regular } from '@fluentui/react-icons'
 import { CardContainer } from '.';
 import { useGameContext, useSettingContext } from '../context';
 import { ICardStackProps } from '../interfaces';
-import { handValue, isDealer, isHoleCardHidden } from '../functions';
-import { PlayingCard } from '../classes';
+import { handValue, isDealer, isHoleCardHidden, parseCard } from '../functions';
 
 
 /**
@@ -46,7 +45,7 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
   // Create CardContainers to display cards
   const cardElements = cards.map((cardKey, index) =>
     <CardContainer
-      {...new PlayingCard(cardKey)}
+      {...parseCard(cardKey)}
       key={`cardContainer-${cardKey}-${index}`}
       id={cardKey}
       index={index}

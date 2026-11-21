@@ -1,7 +1,7 @@
 import React from 'react';
 import { IProfileAction } from '../interfaces';
 import { ProfileState } from '../types';
-import { profileReducer } from './profiles';
+import { mergeProfileStates, profileReducer } from './profiles';
 import { useRemoteSync } from './useRemoteSync';
 
 export { SYNC_DEBOUNCE_MS } from './useRemoteSync';
@@ -20,6 +20,7 @@ export function useProfileSync(
     value: profiles,
     // the reducer repairs what it is given; preview exactly what it will produce
     preview: (remote) => (isProfileState(remote) ? profileReducer(profiles, { type: 'replace', state: remote }) : undefined),
+    merge: (remote, local) => (isProfileState(remote) ? mergeProfileStates(remote, local) : undefined),
     replace: (remote) => dispatch({ type: 'replace', state: remote as ProfileState }),
     ...options,
   });

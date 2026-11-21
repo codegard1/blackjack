@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { GameAction } from '../enums';
 import { createGameState } from '../context';
 import { gameReducer } from './gameReducer';
-import { botAccountsFor, DEALER_PROFILE_ID, defaultProfileState, emptyStats, MAX_PROFILES, normalizeProfileState, profileReducer, seatsFor, summarizeStats, validateProfileName } from './profiles';
+import { botAccountsFor, DEALER_PROFILE_ID, defaultProfileState, emptyStats, mergeProfileStates, mergeStats, MAX_PROFILES, normalizeProfileState, profileReducer, seatsFor, summarizeStats, validateProfileName } from './profiles';
 import { MAX_BALANCE_HISTORY, PlayerStats, ProfileState } from '../types';
 
 describe('validateProfileName', () => {
@@ -306,8 +306,8 @@ describe('seatsFor', () => {
 
     const game = gameReducer(createGameState(), { type: GameAction.NewGame, players: seatsFor(state) });
 
-    expect(game.playerStore.player('chris').stats).toEqual(stats);
-    expect(game.playerStore.player('dealer').stats).toEqual(emptyStats());
+    expect(game.playerStore.players.chris.stats).toEqual(stats);
+    expect(game.playerStore.players.dealer.stats).toEqual(emptyStats());
   });
 
   it('carries persistent bot banks and away-working or ready flags onto seated bots while human and dealer start at 1000', () => {
@@ -371,5 +371,170 @@ describe('summarizeStats', () => {
 
   it('has no win rate before a round has been played', () => {
     expect(summarizeStats(emptyStats()).winRate).toBeUndefined();
+  });
+});
+
+describe('mergeStats and mergeProfileStates', () => {
+  it('sums stat counts and recomputes the win-loss ratio', () => {
+    const first: PlayerStats = {
+      ...emptyStats(),
+      numberOfGamesPlayed: 4,
+      numberOfGamesWon: 3,
+      numberOfGamesLost: 1,
+      numberOfTimesBlackjack: 1,
+      numberOfTimesBusted: 0,
+      totalWinnings: 150,
+      netResult: 100,
+    };
+    const second: PlayerStats = {
+      ...emptyStats(),
+      numberOfGamesPlayed: 6,
+      numberOfGamesWon: 2,
+      numberOfGamesLost: 3,
+      numberOfTimesBlackjack: 0,
+      numberOfTimesBusted: 2,
+      totalWinnings: 100,
+      netResult: -50,
+    };
+
+    expect(mergeStats(first, second)).toEqual({
+      numberOfGamesPlayed: 10,
+      numberOfGamesWon: 5,
+      numberOfGamesLost: 4,
+      numberOfTimesBlackjack: 1,
+      numberOfTimesBusted: 2,
+      totalWinnings: 250,
+      netResult: 50,
+      winLossRatio: 50,
+    });
+  });
+
+  it('combines matching human profiles by name, sums character stats, and adds new local profiles', () => {
+    let remote = profileReducer(defaultProfileState(), {
+      type: 'syncStats',
+      stats: {
+        chris: { ...emptyStats(), numberOfGamesPlayed: 10, numberOfGamesWon: 5, netResult: 50 },
+        [DEALER_PROFILE_ID]: { ...emptyStats(), numberOfGamesPlayed: 10, numberOfGamesWon: 4, netResult: -50 },
+      },
+    });
+    remote = profileReducer(remote, { type: 'toggleOpponent', id: 'ogion' });
+
+    let local = profileReducer(defaultProfileState(), {
+      type: 'syncStats',
+      stats: {
+        chris: { ...emptyStats(), numberOfGamesPlayed: 2, numberOfGamesWon: 1, netResult: 25 },
+        [DEALER_PROFILE_ID]: { ...emptyStats(), numberOfGamesPlayed: 2, numberOfGamesWon: 1, netResult: -25 },
+      },
+    });
+    local = profileReducer(local, { type: 'create', name: 'Alex' });
+
+    const merged = mergeProfileStates(remote, local);
+    const chris = merged.profiles.find((p) => p.id === 'chris');
+    const dealer = merged.profiles.find((p) => p.id === DEALER_PROFILE_ID);
+    const alex = merged.profiles.find((p) => p.name === 'Alex');
+
+    expect(chris?.stats.numberOfGamesPlayed).toBe(12);
+    expect(chris?.stats.numberOfGamesWon).toBe(6);
+    expect(chris?.stats.netResult).toBe(75);
+    expect(dealer?.stats.numberOfGamesPlayed).toBe(12);
+    expect(alex).toBeDefined();
+    expect(merged.selectedId).toBe('chris');
+    expect(merged.opponentIds).toEqual(['ogion']);
+  });
+
+  it('leaves remote profiles untouched when local has no progress', () => {
+    const remote = profileReducer(defaultProfileState(), {
+      type: 'syncStats',
+      stats: { chris: { ...emptyStats(), numberOfGamesPlayed: 5, numberOfGamesWon: 3 } },
+    });
+    expect(mergeProfileStates(remote, defaultProfileState())).toEqual(remote);
+  });
+
+  it('preserves local bot account state alongside stats when remote is untouched', () => {
+    const remote = defaultProfileState();
+    let local = profileReducer(defaultProfileState(), {
+      type: 'syncStats',
+      stats: { ogion: { ...emptyStats(), numberOfGamesPlayed: 2, numberOfGamesWon: 1, netResult: -950 } },
+      botAccounts: {
+        ogion: {
+          bank: 50,
+          balanceHistory: [1000, 50],
+          work: { status: 'working', taskId: 'herding-goats', daysWorked: 1 },
+          taskOverride: 'smashing-rocks',
+          allowReturn: true,
+        },
+      },
+    });
+    local = profileReducer(local, { type: 'configureWork', id: 'shevek', allowReturn: true });
+
+    const merged = mergeProfileStates(remote, local);
+    const ogion = merged.profiles.find((p) => p.id === 'ogion');
+    const shevek = merged.profiles.find((p) => p.id === 'shevek');
+
+    expect(ogion).toMatchObject({
+      bank: 50,
+      balanceHistory: [1000, 50],
+      work: { status: 'working', taskId: 'herding-goats', daysWorked: 1 },
+      taskOverride: 'smashing-rocks',
+      allowReturn: true,
+    });
+    expect(ogion?.stats.numberOfGamesPlayed).toBe(2);
+    expect(ogion?.stats.numberOfGamesWon).toBe(1);
+    expect(ogion?.stats.netResult).toBe(-950);
+    expect(shevek?.allowReturn).toBe(true);
+
+    // Even when only bot account settings changed locally without any played hands, merging preserves them
+    const botConfigOnly = profileReducer(defaultProfileState(), {
+      type: 'configureWork',
+      id: 'haber',
+      taskOverride: 'divlab-posting',
+      allowReturn: true,
+    });
+    const mergedBotOnly = mergeProfileStates(remote, botConfigOnly);
+    expect(mergedBotOnly.profiles.find((p) => p.id === 'haber')).toMatchObject({
+      taskOverride: 'divlab-posting',
+      allowReturn: true,
+    });
+  });
+
+  it('keeps remote bot account state while summing character stats when remote already has progress', () => {
+    const remote = profileReducer(defaultProfileState(), {
+      type: 'syncStats',
+      stats: { ogion: { ...emptyStats(), numberOfGamesPlayed: 5, numberOfGamesWon: 3, netResult: 200 } },
+      botAccounts: {
+        ogion: {
+          bank: 1200,
+          balanceHistory: [1000, 1200],
+          allowReturn: false,
+        },
+      },
+    });
+    const local = profileReducer(defaultProfileState(), {
+      type: 'syncStats',
+      stats: { ogion: { ...emptyStats(), numberOfGamesPlayed: 2, numberOfGamesWon: 1, netResult: -950 } },
+      botAccounts: {
+        ogion: {
+          bank: 50,
+          balanceHistory: [1000, 50],
+          work: { status: 'working', taskId: 'herding-goats', daysWorked: 1 },
+          taskOverride: 'smashing-rocks',
+          allowReturn: true,
+        },
+      },
+    });
+
+    const merged = mergeProfileStates(remote, local);
+    const ogion = merged.profiles.find((p) => p.id === 'ogion');
+
+    expect(ogion).toMatchObject({
+      bank: 1200,
+      balanceHistory: [1000, 1200],
+      allowReturn: false,
+    });
+    expect(ogion?.work).toBeUndefined();
+    expect(ogion?.taskOverride).toBeUndefined();
+    expect(ogion?.stats.numberOfGamesPlayed).toBe(7);
+    expect(ogion?.stats.numberOfGamesWon).toBe(4);
+    expect(ogion?.stats.netResult).toBe(-750);
   });
 });

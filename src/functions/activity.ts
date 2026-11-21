@@ -6,7 +6,8 @@ export type ActivityOptions = {
 };
 
 /**
- * Append an entry to the activity log. Each entry is tagged with the current hand (round).
+ * Append an entry to the activity log, returning the updated game state.
+ * Each entry is tagged with the current hand (round).
  */
 export function recordActivity(
   state: GameState,
@@ -14,9 +15,9 @@ export function recordActivity(
   description: string,
   event: ActivityLogEntry['event'],
   options: ActivityOptions = {},
-): void {
+): GameState {
   const lastEntry = state.activityLog[state.activityLog.length - 1];
-  state.activityLog = [...state.activityLog, {
+  const entry: ActivityLogEntry = {
     id: (lastEntry?.id ?? 0) + 1,
     sessionId: event === 'game' ? (lastEntry ? (lastEntry.sessionId ?? 1) + 1 : 1) : (lastEntry?.sessionId ?? 1),
     round: state.round,
@@ -26,5 +27,9 @@ export function recordActivity(
     name,
     description,
     ...(options.amount !== undefined ? { amount: options.amount } : {}),
-  }];
+  };
+  return {
+    ...state,
+    activityLog: [...state.activityLog, entry],
+  };
 }

@@ -13,7 +13,7 @@ describe('settingReducer', () => {
     settings = settingReducer(settings, { key: 'accent', value: 'teal' });
     settings = settingReducer(settings, { key: 'cardBackPattern', value: 'lattice' });
     expect(settings).toMatchObject({ isDeckVisible: true, themeMode: 'dark', accent: 'teal', cardBackPattern: 'lattice' });
-    expect(settingDefaults.themeMode).toBe('light');
+    expect(settingDefaults.themeMode).toBe('dark');
   });
 
   it('ignores keys that are not settings', () => {
@@ -25,7 +25,7 @@ describe('settingReducer', () => {
     const changed: SettingsState = { ...settingDefaults, isDeckVisible: true, themeMode: 'dark', cardStyle: 'bold' };
 
     const appearanceOnly = settingReducer(changed, { key: 'reset', keys: ['themeMode', 'cardStyle'] });
-    expect(appearanceOnly).toMatchObject({ isDeckVisible: true, themeMode: 'light', cardStyle: 'classic' });
+    expect(appearanceOnly).toMatchObject({ isDeckVisible: true, themeMode: 'dark', cardStyle: 'classic' });
 
     expect(settingReducer(changed, { key: 'reset' })).toEqual(settingDefaults);
   });

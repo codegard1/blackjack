@@ -40,6 +40,7 @@ import { IPlayersDialogProps } from '../interfaces/IPlayersDialogProps';
 import { isWorkTaskId } from '../types';
 import { CharacterDialog } from './CharacterCard';
 import { CharacterPortrait } from './CharacterPortrait';
+import { GoogleAccountSection } from './GoogleAccountSection';
 
 const useStyles = makeStyles({
   surface: {
@@ -187,6 +188,8 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
         <DialogBody>
           <DialogTitle>Players</DialogTitle>
           <DialogContent className={styles.content}>
+
+            <GoogleAccountSection />
 
             <section aria-labelledby="players-select-heading">
               <Text as="h3" id="players-select-heading" weight="semibold">Playing as</Text>

@@ -1,5 +1,3 @@
-import { PlayerStore } from "../classes/PlayerStore";
-import { PlayingCardDeck } from "../classes/PlayingCardDeck";
 import { isBotId } from "../characters";
 import { createGameState } from "../context/GameContext";
 import { settingDefaults } from "../context/SettingContext";
@@ -20,6 +18,8 @@ import {
   settingOptions,
   tableRulesFrom,
 } from "../types";
+import { restoreDeckState } from "./deck";
+import { allPlayers, createPlayerStore, playerStoreSnapshot } from "./playerStore";
 import { defaultProfileState, normalizeProfileState } from "./profiles";
 import { defaultBotAccount, defaultBotAccounts } from "./work";
 
@@ -96,8 +96,8 @@ export function gameSnapshot(state: GameState, { maxActivity }: { maxActivity?: 
     ? state.activityLog.slice(-maxActivity)
     : state.activityLog;
   return {
-    deck: state.deck.state,
-    players: state.playerStore.state,
+    deck: state.deck,
+    players: playerStoreSnapshot(state.playerStore),
     game: {
       version: GAME_STORE_VERSION,
       activityLog,
@@ -130,10 +130,10 @@ export function restoreGameState(snapshot: unknown): GameState | undefined {
   try {
     const { version, botAccounts: savedAccounts, ...saved } = game;
     const tableRules = version === 4 ? { ...defaultTableRules } : tableRulesFrom(saved.tableRules);
-    const playerStore = new PlayerStore(players);
+    const playerStore = createPlayerStore(players);
     const botAccounts = { ...defaultBotAccounts(), ...cloneBotAccounts(savedAccounts) };
     // For snapshots saved before botAccounts existed, keep each seated bot's bank in step
-    playerStore.all.forEach((player) => {
+    allPlayers(playerStore).forEach((player) => {
       if (isBotId(player.key) && !savedAccounts?.[player.key]) {
         botAccounts[player.key] = defaultBotAccount(player.bank);
       }
@@ -144,7 +144,7 @@ export function restoreGameState(snapshot: unknown): GameState | undefined {
       activityLog: saved.activityLog.slice(-MAX_SAVED_ACTIVITY),
       botAccounts,
       tableRules,
-      deck: new PlayingCardDeck(deck, Number(tableRules.numberOfDecks)),
+      deck: restoreDeckState(deck),
       playerStore,
     };
   } catch {
