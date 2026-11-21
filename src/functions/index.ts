@@ -1,6 +1,7 @@
 export * from './cards';
 export * from './clearStores';
 export * from './debugLog';
+export * from './deck';
 export * from './evaluateGame';
 export * from './gameReducer';
 export * from './getHandValue';
