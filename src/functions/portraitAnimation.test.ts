@@ -2,7 +2,10 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { FAXE_ANIMATIONS } from '../assets/portraits/faxe-animations';
+import { GENLY_AI_ANIMATIONS } from '../assets/portraits/genly-ai-animations';
 import { HABER_ANIMATIONS } from '../assets/portraits/haber-animations';
+import { OGION_ANIMATIONS } from '../assets/portraits/ogion-animations';
+import { SHEVEK_ANIMATIONS } from '../assets/portraits/shevek-animations';
 import {
   PortraitAnimationSet,
   blitFrame,
@@ -80,6 +83,42 @@ const CHARACTER_SETS = [
       'adjust-headdress',
       'wink',
       'whistle',
+    ],
+  },
+  {
+    name: 'Ogion',
+    svgFile: 'ogion.svg',
+    set: OGION_ANIMATIONS,
+    expectedIds: [
+      'blink-open',
+      'beard-stroke',
+      'tea-sip',
+      'pipe-puff',
+      'horizon-scan',
+    ],
+  },
+  {
+    name: 'Shevek',
+    svgFile: 'shevek.svg',
+    set: SHEVEK_ANIMATIONS,
+    expectedIds: [
+      'quick-blink',
+      'pencil-twirl',
+      'coffee-sip',
+      'air-math',
+      'variance-shrug',
+    ],
+  },
+  {
+    name: 'Genly Ai',
+    svgFile: 'genly-ai.svg',
+    set: GENLY_AI_ANIMATIONS,
+    expectedIds: [
+      'camera-snap',
+      'camera-wipe',
+      'parka-shiver',
+      'conference-badge',
+      'polite-nod',
     ],
   },
 ] as const;
@@ -206,14 +245,15 @@ describe('portraitAnimation runtime helpers', () => {
   });
 
   it('reports animated characters and caches loaded animation sets', async () => {
-    expect(hasPortraitAnimations('haber')).toBe(true);
-    expect(hasPortraitAnimations('dealer')).toBe(true);
-    expect(hasPortraitAnimations('ogion')).toBe(false);
+    for (const id of ['haber', 'dealer', 'ogion', 'shevek', 'genly-ai'] as const) {
+      expect(hasPortraitAnimations(id)).toBe(true);
+    }
+    expect(hasPortraitAnimations('unknown-bot')).toBe(false);
     expect(hasPortraitAnimations(undefined)).toBe(false);
 
-    expect(await loadPortraitAnimations('ogion')).toBeUndefined();
+    expect(await loadPortraitAnimations('unknown-bot')).toBeUndefined();
 
-    for (const id of ['haber', 'dealer'] as const) {
+    for (const id of ['haber', 'dealer', 'ogion', 'shevek', 'genly-ai'] as const) {
       const p1 = loadPortraitAnimations(id);
       const p2 = loadPortraitAnimations(id);
       expect(p1).toBe(p2);

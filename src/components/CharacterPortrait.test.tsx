@@ -3,6 +3,7 @@ import { act, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FAXE_ANIMATIONS } from '../assets/portraits/faxe-animations';
 import { HABER_ANIMATIONS } from '../assets/portraits/haber-animations';
+import * as portraitAnimation from '../functions/portraitAnimation';
 import { CharacterPortrait } from './CharacterPortrait';
 import { PORTRAIT_GAP_DELAY_MS, PORTRAIT_INITIAL_DELAY_MS } from './usePortraitAnimation';
 
@@ -83,25 +84,29 @@ describe('CharacterPortrait', () => {
     expect(human.querySelector('.fui-Avatar')).toHaveTextContent('C');
     expect(human.querySelector('canvas')).toBeNull();
 
+    vi.spyOn(portraitAnimation, 'hasPortraitAnimations').mockReturnValueOnce(false);
     const { container: ogion } = render(<CharacterPortrait id="ogion" name="Ogion" />);
     expect(ogion.querySelector('img')).toBeInTheDocument();
     expect(ogion.querySelector('canvas')).toBeNull();
   });
 
-  it('keeps the accessible portrait img and canvas overlay for Haber and Faxe', () => {
-    const { container: haber } = render(<CharacterPortrait id="haber" name="Haber" size="lg" />);
-    expect(screen.getByRole('img', { name: /big man with a red-brown beard/ })).toBeInTheDocument();
-    const haberCanvas = haber.querySelector('canvas');
-    expect(haberCanvas).toHaveAttribute('aria-hidden', 'true');
-    expect(haberCanvas).toHaveAttribute('width', '24');
-    expect(haberCanvas).toHaveAttribute('height', '24');
+  it('keeps the accessible portrait img and canvas overlay for all animated characters', () => {
+    const characters = [
+      { id: 'haber', name: 'Haber', alt: /big man with a red-brown beard/, size: 'lg' as const },
+      { id: 'dealer', name: 'Faxe', alt: /long black hair, a gold circlet/, size: 'md' as const },
+      { id: 'ogion', name: 'Ogion', alt: /old man with a bald crown/, size: 'md' as const },
+      { id: 'shevek', name: 'Shevek', alt: /lean man with untidy dark hair/, size: 'md' as const },
+      { id: 'genly-ai', name: 'Genly Ai', alt: /dark skin, raised eyebrows/, size: 'md' as const },
+    ];
 
-    const { container: dealer } = render(<CharacterPortrait id="dealer" name="Faxe" size="md" />);
-    expect(screen.getByRole('img', { name: /long black hair, a gold circlet/ })).toBeInTheDocument();
-    const dealerCanvas = dealer.querySelector('canvas');
-    expect(dealerCanvas).toHaveAttribute('aria-hidden', 'true');
-    expect(dealerCanvas).toHaveAttribute('width', '24');
-    expect(dealerCanvas).toHaveAttribute('height', '24');
+    for (const char of characters) {
+      const { container } = render(<CharacterPortrait id={char.id} name={char.name} size={char.size} />);
+      expect(screen.getByRole('img', { name: char.alt })).toBeInTheDocument();
+      const canvas = container.querySelector('canvas');
+      expect(canvas).toHaveAttribute('aria-hidden', 'true');
+      expect(canvas).toHaveAttribute('width', '24');
+      expect(canvas).toHaveAttribute('height', '24');
+    }
   });
 
   it('plays Faxe dealer animations with identical start and end frames', async () => {

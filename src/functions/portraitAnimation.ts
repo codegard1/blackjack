@@ -34,6 +34,9 @@ export type LoadedPortraitAnimations = {
 export const PORTRAIT_ANIMATION_LOADERS: Readonly<Record<string, () => Promise<PortraitAnimationSet>>> = {
   haber: () => import('../assets/portraits/haber-animations').then((module) => module.HABER_ANIMATIONS),
   dealer: () => import('../assets/portraits/faxe-animations').then((module) => module.FAXE_ANIMATIONS),
+  ogion: () => import('../assets/portraits/ogion-animations').then((module) => module.OGION_ANIMATIONS),
+  shevek: () => import('../assets/portraits/shevek-animations').then((module) => module.SHEVEK_ANIMATIONS),
+  'genly-ai': () => import('../assets/portraits/genly-ai-animations').then((module) => module.GENLY_AI_ANIMATIONS),
 };
 
 const loadedCache = new Map<string, Promise<LoadedPortraitAnimations>>();
