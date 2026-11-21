@@ -128,13 +128,14 @@ export const GoogleAccountSection: React.FC<GoogleAccountSectionProps> = ({ clie
       if (cancelled || !api || !buttonRef.current) return;
       api.initialize({
         client_id: activeClientId,
-        callback: async (response) => {
+        callback: (response) => {
           if (!response.credential) return;
           setError(undefined);
-          const result = await signInWithGoogle(response.credential);
-          if (!cancelled && 'error' in result) {
-            setError(result.error);
-          }
+          void signInWithGoogle(response.credential).then((result) => {
+            if (!cancelled && 'error' in result) {
+              setError(result.error);
+            }
+          });
         },
       });
       buttonRef.current.innerHTML = '';

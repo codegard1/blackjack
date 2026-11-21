@@ -68,6 +68,7 @@ describe('GoogleAccountSection in PlayersDialog', () => {
     const signInButton = await within(dialog).findByRole('button', { name: 'Sign in with Google' });
     await act(async () => {
       fireEvent.click(signInButton);
+      await Promise.resolve();
     });
 
     expect(within(dialog).getByText('Chris Odegard')).toBeInTheDocument();
@@ -111,6 +112,7 @@ describe('GoogleAccountSection in PlayersDialog', () => {
     const signInButton = await within(dialog).findByRole('button', { name: 'Sign in with Google' });
     await act(async () => {
       fireEvent.click(signInButton);
+      await Promise.resolve();
     });
 
     expect(within(dialog).getByRole('alert')).toHaveTextContent('Invalid Google credential.');

@@ -50,7 +50,7 @@ async function fetchGoogleKeys(): Promise<Map<string, JsonWebKey>> {
   if (isObject(body) && Array.isArray(body.keys)) {
     for (const entry of body.keys) {
       if (isObject(entry) && typeof entry.kid === 'string' && entry.kty === 'RSA') {
-        keys.set(entry.kid, entry as JsonWebKey);
+        keys.set(entry.kid, entry);
       }
     }
   }

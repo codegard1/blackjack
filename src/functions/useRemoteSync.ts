@@ -44,9 +44,11 @@ export function useRemoteSync<T>({
 }: RemoteSyncOptions<T>): void {
   // the latest value and callbacks, for the timers and requests that outlive a render
   const latest = React.useRef(value);
-  latest.current = value;
   const callbacks = React.useRef({ toRemote, preview, merge, replace });
-  callbacks.current = { toRemote, preview, merge, replace };
+  React.useLayoutEffect(() => {
+    latest.current = value;
+    callbacks.current = { toRemote, preview, merge, replace };
+  });
   /** JSON of the last remote form known to match the server, so echoes are not sent back */
   const synced = React.useRef<string | undefined>(undefined);
   const ready = React.useRef(false);
@@ -82,7 +84,7 @@ export function useRemoteSync<T>({
     window.clearTimeout(timer.current);
     timer.current = undefined;
 
-    (async () => {
+    void (async () => {
       const ownerId = await ensureOwnerId();
       if (cancelled || ownerId === undefined) return;
       const { syncedAt, mergeAnonymous } = loadSyncState();
