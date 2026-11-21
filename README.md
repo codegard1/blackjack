@@ -29,7 +29,7 @@ Run `npm test` for the test suite (`npm run test:coverage` also measures coverag
 * Table rules in Options select 1, 2, 6 or 8 decks (default 1), dealer behavior on soft 17 (default stand), and blackjack payout (default 3:2, or 6:5). Changes are saved immediately but apply only when the next hand starts, including through Next hand or the Options panel's Deal. The in-app guide shows the active hand's rules
 * Shoes reshuffle between hands when fewer than six cards per seat per deck remain; changing the deck count starts a fresh shoe. An exhausted shoe refills without cards currently held in any hand
 * Number cards count as shown, face cards count as 10, and aces count as 1 or 11
-* Each round starts with a minimum ante from every player (the dealer does not ante); you can add minimum-bet increments before dealing or during your turn
+* Each round starts with a minimum ante from every player (the dealer does not ante); you can add minimum-bet increments before dealing or during your turn. A computer player who cannot cover the ante leaves the table to work and earn a fresh bankroll
 * You play first, then each computer player, then the dealer; a bust loses that hand without ending the round
 * Each hand is compared with the dealer's: the higher total wins even money from the dealer's bank, and equal totals push
 * A natural blackjack is 21 with two cards and pays the selected rate, rounded down to whole dollars. A dealer natural ends the round at once; player naturals push and every other hand loses
@@ -39,7 +39,8 @@ Run `npm test` for the test suite (`npm run test:coverage` also measures coverag
 
 #### Characters
 * Choose up to four computer players in the Players dialog: Ogion (The Rock), Shevek (The Shark), Haber (The Maniac) and Genly Ai (The Tourist). Faxe (The House) deals
-* Each character has a pixel-art portrait, a tagline, a backstory card, and four stats (nerve, aggression, discipline, tilt) that drive how they hit, double down and bet; tilt makes them bet bigger and take more risks during a losing streak
+* Each character has a pixel-art portrait, a tagline, a backstory card, a running balance chart, and four stats (nerve, aggression, discipline, tilt) that drive how they hit, double down, bet, and choose work; tilt makes them bet bigger and take more risks during a losing streak
+* Computer characters keep their bankroll and balance history from game to game. When a character cannot cover the minimum ante, they leave the table to work a job drawn from Ursula K. Le Guin's worlds (tending the goats on Gont, lecturing at Iao, running dream sessions, and five others). Every hand played at the table counts as one day (24 hours) of work for all away characters, seated or not. Once a character reaches the bankroll threshold suited to their discipline and aggression, a toast announces that they want back in; from the Players dialog you can override a character's job or toggle Let back when ready
 * Portraits are built from text pixel maps in `scripts/build-portraits.mjs`; run `npm run portraits` after editing one. Haber's and Faxe's idle portrait animations are compiled into `src/assets/portraits/` with `npm run animations`
 * Each character's record starts with a long play history from `src/data/characterHistory.json`, added to whatever they play at your table. `npm run simulate-history` regenerates it by playing real games between the characters in quick succession (10,000 rounds in under a second; options: `-- --rounds 20000 --seed 7 --out path`). The same seed gives the same history; simulations always use the default table rules, regardless of saved settings
 * Character names are borrowed, with admiration, from the novels of Ursula K. Le Guin; the characters themselves are new

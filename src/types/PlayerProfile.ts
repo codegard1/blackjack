@@ -1,4 +1,5 @@
 import { PlayerStats } from "./PlayerStats";
+import { CharacterWorkState, WorkTaskId } from "./Work";
 
 /**
  * A named identity at the table. Lifetime stats accumulate across games.
@@ -10,6 +11,12 @@ export type PlayerProfile = {
   name: string;
   createdAt: number;
   stats: PlayerStats;
+  /** computer characters keep their bank, balance history and away-working state across games */
+  bank?: number;
+  balanceHistory?: number[];
+  work?: CharacterWorkState;
+  taskOverride?: WorkTaskId;
+  allowReturn?: boolean;
 };
 
 /** All profiles, the human profile that plays the next game, and the computer players who join it */

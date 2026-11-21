@@ -1,5 +1,6 @@
 export enum GameAction {
   Bet = 'Bet',
+  ConfigureWork = 'ConfigureWork',
   Deal = 'Deal',
   DoubleDown = 'DoubleDown',
   Draw = 'Draw',
@@ -9,6 +10,7 @@ export enum GameAction {
   ResetGame = 'ResetGame',
   RestoreGame = 'RestoreGame',
   Select = 'Select',
+  SitOut = 'SitOut',
   Split = 'Split',
   SetRoster = 'SetRoster',
   SetSpinnerVisible = 'SetSpinnerVisible',

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BOTS, DEALER } from '../characters';
-import { CHARACTER_HISTORY, historyRounds, withHistory } from './history';
+import { CHARACTER_HISTORY, historyRounds, withBalanceHistory, withHistory } from './history';
 import { emptyStats } from './profiles';
 import { seededRandom, simulateHistory } from './simulate';
 import { settingDefaults } from '../context/SettingContext';
@@ -72,5 +72,16 @@ describe('character history', () => {
       numberOfGamesLost: history.numberOfGamesLost,
     });
     expect(withHistory('chris', here)).toBe(here);
+  });
+
+  it('pre-populates balanceHistory for every computer character and appends local balances', () => {
+    for (const bot of BOTS) {
+      const prePopulated = CHARACTER_HISTORY.balanceHistory?.[bot.id] ?? [];
+      expect(prePopulated.length).toBeGreaterThan(1);
+      const combined = withBalanceHistory(bot.id, [1000, 1025]);
+      expect(combined.length).toBe(prePopulated.length + 2);
+      expect(combined.slice(-2)).toEqual([1000, 1025]);
+    }
+    expect(withBalanceHistory('chris', [1000])).toEqual([1000]);
   });
 });

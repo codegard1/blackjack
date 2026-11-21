@@ -32,6 +32,7 @@ const eventIcons = {
   loss: { icon: <ArrowDown20Regular />, label: 'Round lost' },
   push: { icon: <ArrowSwap20Regular />, label: 'Push' },
   shuffle: { icon: <ArrowShuffle20Regular />, label: 'Deck shuffled' },
+  work: { icon: <Money20Regular />, label: 'Work' },
 };
 
 const columns: { key: SortColumn; label: string }[] = [

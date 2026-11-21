@@ -70,6 +70,7 @@ try {
     rounds: result.rounds,
     sessions: result.sessions,
     stats: result.stats,
+    balanceHistory: result.balanceHistory,
   };
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, JSON.stringify(history, null, 2) + '\n');

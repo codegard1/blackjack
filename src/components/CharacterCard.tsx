@@ -15,11 +15,14 @@ import {
   tokens,
 } from '@fluentui/react-components';
 
-import { Character, CharacterStatKey, NAME_CREDIT, STAT_LABELS } from '../characters';
+import { Character, CharacterStatKey, NAME_CREDIT, STAT_LABELS, isBotId } from '../characters';
 import { formatCount, formatNet } from '../functions/format';
 import { characterRecord, roundsElsewhere, useCommunityStats } from '../functions/community';
+import { withBalanceHistory } from '../functions/history';
 import { summarizeStats } from '../functions/profiles';
-import { PlayerStats } from '../types';
+import { describeCharacterWork, returnThreshold } from '../functions/work';
+import { BotAccountState, PlayerStats } from '../types';
+import { BalanceChart } from './BalanceChart';
 import { CharacterPortrait } from './CharacterPortrait';
 
 const STAT_MAX = 10;
@@ -131,17 +134,23 @@ interface ICharacterCardProps {
   character: Character;
   /** lifetime stats from the character's profile, or the live seat */
   stats?: PlayerStats;
+  /** the character's bank, balance history and away-working state */
+  account?: BotAccountState;
+  minimumBet?: number;
+  isSeated?: boolean;
 }
 
 /**
- * A character's card: portrait, nickname, type, tagline, backstory, how they play, and their record
+ * A character's card: portrait, nickname, type, tagline, backstory, how they play, status/balance chart, and their record
  */
-export const CharacterCard: React.FC<ICharacterCardProps> = ({ character, stats }) => {
+export const CharacterCard: React.FC<ICharacterCardProps> = ({ character, stats, account, minimumBet = 25, isSeated = false }) => {
   const styles = useStyles();
   // the record includes the character's simulated history and their play at every other table
   const community = useCommunityStats();
   const summary = stats ? summarizeStats(characterRecord(character.id, stats, community)) : undefined;
   const earlierRounds = stats ? roundsElsewhere(character.id, stats, community) : 0;
+  const isBotCharacter = isBotId(character.id);
+  const threshold = character.stats ? returnThreshold(character.stats, minimumBet) : undefined;
 
   return (
     <article className={styles.card} aria-label={`${character.name}, ${character.nickname}`}>
@@ -171,6 +180,19 @@ export const CharacterCard: React.FC<ICharacterCardProps> = ({ character, stats 
           <Text>Plays by house rules: draws below 17 and stands on 17 or more.</Text>
         )}
       </section>
+
+      {isBotCharacter && account && (
+        <section className={styles.section} aria-labelledby={`${character.id}-balance`}>
+          <Text as="h4" id={`${character.id}-balance`} weight="semibold">Bank and work</Text>
+          <Text>{describeCharacterWork(character.id, account, minimumBet, isSeated)}</Text>
+          <BalanceChart
+            values={withBalanceHistory(character.id, account.balanceHistory)}
+            label={character.name}
+            referenceValue={threshold}
+            referenceLabel="Return threshold"
+          />
+        </section>
+      )}
 
       {summary && (
         <section className={styles.section} aria-labelledby={`${character.id}-record`}>
@@ -202,12 +224,15 @@ export const CharacterCard: React.FC<ICharacterCardProps> = ({ character, stats 
 interface ICharacterDialogProps {
   character: Character | undefined;
   stats?: PlayerStats;
+  account?: BotAccountState;
+  minimumBet?: number;
+  isSeated?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 /** A character's card in a dialog */
-export const CharacterDialog: React.FC<ICharacterDialogProps> = ({ character, stats, open, onOpenChange }) => {
+export const CharacterDialog: React.FC<ICharacterDialogProps> = ({ character, stats, account, minimumBet, isSeated, open, onOpenChange }) => {
   const styles = useStyles();
   if (!character) return null;
   return (
@@ -216,7 +241,7 @@ export const CharacterDialog: React.FC<ICharacterDialogProps> = ({ character, st
         <DialogBody>
           <DialogTitle>{`${character.name}, ${character.nickname}`}</DialogTitle>
           <DialogContent>
-            <CharacterCard character={character} stats={stats} />
+            <CharacterCard character={character} stats={stats} account={account} minimumBet={minimumBet} isSeated={isSeated} />
           </DialogContent>
           <DialogActions>
             <Button appearance="primary" onClick={() => onOpenChange(false)}>Close</Button>

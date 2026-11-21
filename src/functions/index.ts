@@ -20,4 +20,6 @@ export * from './useRemoteSync';
 export * from './useProfileSync';
 export * from './useGameSync';
 export * from './pot';
+export * from './work';
 export * from './portraitAnimation';
+
