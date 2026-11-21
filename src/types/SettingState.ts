@@ -33,11 +33,8 @@ export type SettingsState = TableRules & {
   isAnimationsEnabled: boolean;
   isCardDescVisible: boolean;
   isDealerHandVisible: boolean;
-  isDeckVisible: boolean;
-  isDrawnVisible: boolean;
   isHandValueVisible: boolean;
   isOptionsPanelVisible: boolean;
-  isSelectedVisible: boolean;
   /** point out the textbook play on the human's turn */
   isStrategyHintVisible: boolean;
   themeMode: ThemeMode;
