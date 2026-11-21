@@ -4,6 +4,19 @@ import { loadEnv } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
 
+const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(Number);
+if ((nodeMajor < 24 || (nodeMajor === 24 && nodeMinor < 15)) || nodeMajor === 25) {
+  console.error(
+    `\n❌ Unsupported Node.js version ${process.version}.\n` +
+    `   This project requires Node.js 26 (specified in .nvmrc) or 24.15+.\n` +
+    `   Please switch your active Node version:\n` +
+    `     nvm use\n` +
+    `   or:\n` +
+    `     nvm use 26\n`
+  );
+  process.exit(1);
+}
+
 export default defineConfig(({ command, mode }) => {
   // The Netlify plugin runs the functions in netlify/functions inside the dev server.
   // They read MONGODB_URI and MONGODB_DB from process.env, so load those from a local
