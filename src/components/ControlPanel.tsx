@@ -25,6 +25,7 @@ import { useGameContext, usePlayersDialog, usePotAnimation, useProfileContext, u
 import { GameAction, GameStatus } from "../enums";
 import { BotMove } from "../functions/botStrategy";
 import { canDoubleDown, canSplit } from "../functions/gameReducer";
+import { allPlayers } from "../functions/playerStore";
 import { seatsFor } from "../functions/profiles";
 import { getDealer, isBot } from "../functions/round";
 import { recommendMove } from "../functions/strategyHint";
@@ -96,7 +97,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const { profiles } = useProfileContext();
   const { settings } = useSettingContext();
   const { gameStatus, minimumBet } = gameState;
-  const playerStore = gameState.playerStore.state;
+  const playerStore = gameState.playerStore;
 
   // Computed properties
   const currentPlayerKey = playerStore.currentPlayerKey;
@@ -147,7 +148,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   };
 
   const isSittingOut = !!player?.isSittingOut;
-  const hasAvailableBots = gameState.playerStore.all.some(
+  const hasAvailableBots = allPlayers(gameState.playerStore).some(
     (p) => isBot(p) && p.bank >= minimumBet
   );
   const canSitOut = hasAvailableBots;

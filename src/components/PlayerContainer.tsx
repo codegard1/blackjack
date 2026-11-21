@@ -149,7 +149,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
   const { gameState } = useGameContext();
 
   // computed values
-  const playerState = gameState.playerStore.state;
+  const playerState = gameState.playerStore;
   const player = playerState.players[playerKey];
   const hands = gameState.deck.getHands(playerKey);
 

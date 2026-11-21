@@ -1,6 +1,7 @@
 import { GameStatus } from "../enums";
 import { Announcement, GameSnapshot, GameState, PlayerSnapshot, WagerSnapshot } from "../types";
 import { formatCardName } from "./cards";
+import { allPlayers } from "./playerStore";
 import { roleOf } from "./round";
 import { isRoundOver } from "./seatStatus";
 
@@ -26,7 +27,7 @@ export function snapshotGame(state: GameState): GameSnapshot {
         : []
     )),
     controllingPlayer: state.controllingPlayer,
-    players: state.playerStore.all.map((player): PlayerSnapshot => {
+    players: allPlayers(state.playerStore).map((player): PlayerSnapshot => {
       const handIndex = state.controllingPlayer === player.key ? state.activeHandIndex : 0;
       const hand = state.deck.hand(player.key, handIndex);
       return {

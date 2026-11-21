@@ -1,4 +1,3 @@
-import { PlayerStore } from "../classes/PlayerStore";
 import { PlayingCard } from "../classes/PlayingCard";
 import { PlayingCardDeck } from "../classes/PlayingCardDeck";
 import { getCharacter } from "../characters";
@@ -7,6 +6,9 @@ import { IPlayer, IPlayerOptions } from "../interfaces";
 import { GameState, PlayerKey, PlayerRole, TableRules, defaultTableRules } from "../types";
 import { recordActivity } from "./activity";
 import { BotMove, Rng, botWagerCount, decideBotMove } from "./botStrategy";
+import {
+  allPlayers, antePlayer, betPlayer, endPlayerTurn, getPlayer, replaceRoster, setCurrentPlayer, startPlayerTurn, updatePlayer,
+} from "./playerStore";
 
 /**
  * The turn engine shared by the reducer and settlement. Each seat plays its
@@ -25,16 +27,16 @@ export const isBot = (player: IPlayer | undefined): boolean => roleOf(player) ==
 export const isHuman = (player: IPlayer | undefined): boolean => roleOf(player) === 'human';
 
 export function getDealer(state: GameState): IPlayer | undefined {
-  return state.playerStore.all.find(isDealer);
+  return allPlayers(state.playerStore).find(isDealer);
 }
 
 export function getHuman(state: GameState): IPlayer | undefined {
-  return state.playerStore.all.find(isHuman);
+  return allPlayers(state.playerStore).find(isHuman);
 }
 
 /** Seats that play against the dealer, in turn order */
 export function playerSeats(state: GameState): IPlayer[] {
-  return state.playerStore.all.filter((player) => !isDealer(player));
+  return allPlayers(state.playerStore).filter((player) => !isDealer(player));
 }
 
 /** Every seat in turn order, the dealer last */
@@ -79,7 +81,7 @@ export function hasHand(state: GameState, player: IPlayer): boolean {
 
 /** Amount a player has put on the table this round (ante plus wagers). */
 export function roundStake(state: GameState, key: PlayerKey): number {
-  const player = state.playerStore.player(key);
+  const player = getPlayer(state.playerStore, key);
   return (player?.lastAnte ?? 0) + (player?.totalBet ?? 0);
 }
 
@@ -89,7 +91,7 @@ export function roundStake(state: GameState, key: PlayerKey): number {
  * cover their stake.
  */
 export function canDoubleDown(state: GameState, playerKey: PlayerKey, handIndex = state.activeHandIndex): boolean {
-  const player = state.playerStore.player(playerKey);
+  const player = getPlayer(state.playerStore, playerKey);
   const stake = roundStake(state, playerKey);
   const hand = state.deck.hand(playerKey, handIndex);
   return !!player
@@ -104,7 +106,7 @@ export function canDoubleDown(state: GameState, playerKey: PlayerKey, handIndex 
 
 /** A split is allowed once, on a same-rank pair, when the player can match the stake. */
 export function canSplit(state: GameState, playerKey: PlayerKey, handIndex = state.activeHandIndex): boolean {
-  const player = state.playerStore.player(playerKey);
+  const player = getPlayer(state.playerStore, playerKey);
   const hand = state.deck.hand(playerKey, handIndex);
   if (!player || isDealer(player) || state.gameStatus !== GameStatus.InProgress
     || state.playerStore.currentPlayerKey !== playerKey || handIndex !== state.activeHandIndex
@@ -120,7 +122,7 @@ export function canSplit(state: GameState, playerKey: PlayerKey, handIndex = sta
  * dealer's face-up card.
  */
 export function decideSeatMove(state: GameState, key: PlayerKey, rng: Rng = Math.random, handIndex = state.activeHandIndex): BotMove {
-  const player = state.playerStore.player(key);
+  const player = getPlayer(state.playerStore, key);
   const cards = state.deck.hand(key, handIndex)?.cards ?? [];
   const stats = isBot(player) ? getCharacter(key)?.stats : undefined;
   if (!stats) {
@@ -134,7 +136,7 @@ export function decideSeatMove(state: GameState, key: PlayerKey, rng: Rng = Math
   // the dealer's first card is the hole card; the second is face up
   const dealerUpCard = dealer ? state.deck.playerHands[dealer.key]?.cards[1] : undefined;
   return decideBotMove({
-    cards, dealerUpCard, stats, lossStreak: player.lossStreak,
+    cards, dealerUpCard, stats, lossStreak: player?.lossStreak,
     canDouble: canDoubleDown(state, key, handIndex), canSplit: canSplit(state, key, handIndex),
     tableRules: state.tableRules, rng,
   });
@@ -143,11 +145,12 @@ export function decideSeatMove(state: GameState, key: PlayerKey, rng: Rng = Math
 /** Hand control to a seat */
 export function setControl(state: GameState, key: PlayerKey): void {
   const previous = state.controllingPlayer;
-  if (previous && previous !== key && state.playerStore.player(previous)) state.playerStore.endTurn(previous);
+  if (previous && previous !== key && getPlayer(state.playerStore, previous)) {
+    state.playerStore = endPlayerTurn(state.playerStore, previous);
+  }
   state.controllingPlayer = key;
-  state.dealerHasControl = isDealer(state.playerStore.player(key));
-  state.playerStore.currentPlayerKey = key;
-  state.playerStore.startTurn(key);
+  state.dealerHasControl = isDealer(getPlayer(state.playerStore, key));
+  state.playerStore = startPlayerTurn(setCurrentPlayer(state.playerStore, key), key);
 }
 
 /** A seat that still has to play its hand */
@@ -165,7 +168,7 @@ function playableHandIndex(state: GameState, player: IPlayer, fromIndex = 0): nu
 export function advanceTurn(state: GameState, fromKey?: PlayerKey, fromHandIndex = state.activeHandIndex): void {
   const seats = playerSeats(state);
   if (fromKey !== undefined) {
-    const sameSeat = state.playerStore.player(fromKey);
+    const sameSeat = getPlayer(state.playerStore, fromKey);
     const nextHandIndex = sameSeat ? playableHandIndex(state, sameSeat, fromHandIndex + 1) : -1;
     if (sameSeat && nextHandIndex >= 0) {
       state.activeHandIndex = nextHandIndex;
@@ -200,14 +203,18 @@ export function advanceTurn(state: GameState, fromKey?: PlayerKey, fromHandIndex
  * natural wins the table's blackjack payout and that seat skips its turn.
  */
 export function resolveNaturals(state: GameState): void {
-  state.playerStore.all.forEach((player) => {
+  allPlayers(state.playerStore).forEach((player) => {
     const hand = state.deck.hand(player.key);
-    player.isBlackjack = hasHand(state, player) && hand?.cards.length === 2 && state.deck.getHandValue(player.key).highest === 21;
+    const isBlackjack = hasHand(state, player) && hand?.cards.length === 2 && state.deck.getHandValue(player.key).highest === 21;
+    state.playerStore = updatePlayer(state.playerStore, player.key, (p) => ({
+      ...p,
+      isBlackjack,
+      ...(hand && isBlackjack ? { result: 'blackjack' as const } : {}),
+    }));
     if (hand) {
       hand.stake = isDealer(player) ? 0 : roundStake(state, player.key);
-      hand.isBlackjack = !!player.isBlackjack;
+      hand.isBlackjack = isBlackjack;
       hand.result = hand.isBlackjack ? 'blackjack' : undefined;
-      if (hand.isBlackjack) player.result = 'blackjack';
     }
   });
 
@@ -267,25 +274,38 @@ export function finishRound(state: GameState): void {
   playerSeats(state).forEach((player) => {
     const hands = state.deck.getHands(player.key).filter((hand) => hand.result);
     if (hands.length === 0) return;
-    player.net = hands.reduce((total, hand) => total + netFor(hand.result, hand.stake ?? roundStake(state, player.key), state.tableRules.blackjackPayout), 0);
+    const net = hands.reduce((total, hand) => total + netFor(hand.result, hand.stake ?? roundStake(state, player.key), state.tableRules.blackjackPayout), 0);
     const results = hands.map((hand) => hand.result);
-    player.result = results.every((result) => result === results[0])
+    const result = results.every((item) => item === results[0])
       ? results[0]
-      : player.net > 0 ? 'win' : player.net < 0 ? 'loss' : 'push';
-    player.isBusted = hands.every((hand) => hand.isBusted);
-    player.isStaying = true;
-    player.isBlackjack = hands.some((hand) => hand.isBlackjack);
-    dealerNet -= player.net;
-    if (player.net < 0) player.lossStreak = (player.lossStreak ?? 0) + 1;
-    else if (player.net > 0) player.lossStreak = 0;
+      : net > 0 ? 'win' : net < 0 ? 'loss' : 'push';
+    const isBusted = hands.every((hand) => hand.isBusted);
+    const isBlackjack = hands.some((hand) => hand.isBlackjack);
+    const lossStreak = net < 0 ? (player.lossStreak ?? 0) + 1 : net > 0 ? 0 : player.lossStreak;
+    dealerNet -= net;
+    state.playerStore = updatePlayer(state.playerStore, player.key, (p) => ({
+      ...p,
+      net,
+      result,
+      isBusted,
+      isStaying: true,
+      isBlackjack,
+      ...(lossStreak !== undefined ? { lossStreak } : {}),
+    }));
   });
 
   if (dealer) {
-    dealer.net = dealerNet;
-    dealer.result = dealerNet > 0 ? 'win' : dealerNet < 0 ? 'loss' : 'push';
+    const dealerResult = dealerNet > 0 ? 'win' : dealerNet < 0 ? 'loss' : 'push';
+    state.playerStore = updatePlayer(state.playerStore, dealer.key, (p) => ({
+      ...p,
+      net: dealerNet,
+      result: dealerResult,
+    }));
   }
 
-  state.playerStore.all.forEach((player) => { if (player.turn) state.playerStore.endTurn(player.key); });
+  allPlayers(state.playerStore).forEach((player) => {
+    if (player.turn) state.playerStore = endPlayerTurn(state.playerStore, player.key);
+  });
   state.gameStatus = GameStatus.RoundOver;
   state.controllingPlayer = undefined;
   state.dealerHasControl = false;
@@ -302,12 +322,13 @@ export function collectAntes(state: GameState, rng: () => number = () => state.d
       recordActivity(state, player.title, 'sat out', 'ante');
       return;
     }
-    if (state.playerStore.ante(player.key, state.minimumBet)) {
-      player.isSittingOut = false;
+    const { store, paid } = antePlayer(state.playerStore, player.key, state.minimumBet);
+    if (paid) {
+      state.playerStore = updatePlayer(store, player.key, (p) => ({ ...p, isSittingOut: false }));
       state.pot += state.minimumBet;
       recordActivity(state, player.title, `anted $${state.minimumBet}`, 'ante', { amount: -state.minimumBet });
     } else if (isBot(player)) {
-      player.isSittingOut = true;
+      state.playerStore = updatePlayer(state.playerStore, player.key, (p) => ({ ...p, isSittingOut: true }));
       recordActivity(state, player.title, 'sat out: not enough money to ante', 'ante');
     }
   });
@@ -317,7 +338,9 @@ export function collectAntes(state: GameState, rng: () => number = () => state.d
     if (!stats) return;
     const count = botWagerCount(stats, player.lossStreak, rng);
     for (let i = 0; i < count; i++) {
-      if (!state.playerStore.bet(player.key, state.minimumBet)) break;
+      const { store, paid } = betPlayer(state.playerStore, player.key, state.minimumBet);
+      if (!paid) break;
+      state.playerStore = store;
       state.pot += state.minimumBet;
       recordActivity(state, player.title, `wagered $${state.minimumBet}`, 'bet', { amount: -state.minimumBet });
     }
@@ -330,7 +353,7 @@ export function collectAntes(state: GameState, rng: () => number = () => state.d
  */
 export function refillDeck(state: GameState): void {
   const inHands = new Set(Object.values(state.deck.playerHands).flatMap((hand) => hand.cards));
-  state.playerStore.all.forEach((player) => {
+  allPlayers(state.playerStore).forEach((player) => {
     state.deck.getHands(player.key).forEach((hand) => hand.cards.forEach((card) => inHands.add(card)));
   });
   const keys = PlayingCardDeck.cardKeys(Number(state.tableRules.numberOfDecks)).filter((key) => !inHands.has(key));
@@ -344,10 +367,10 @@ const CARDS_PER_SEAT = 6;
 
 /** Rebuild and shuffle the deck between rounds when it is running low */
 export function reshuffleIfLow(state: GameState): void {
-  const seats = state.playerStore.all.length;
+  const seats = allPlayers(state.playerStore).length;
   if (state.deck.length >= seats * CARDS_PER_SEAT * Number(state.tableRules.numberOfDecks)) return;
   state.deck.reset();
-  state.playerStore.all.forEach((player) => state.deck.newPlayerHand(player.key));
+  allPlayers(state.playerStore).forEach((player) => state.deck.newPlayerHand(player.key));
   recordActivity(state, '', 'Deck shuffled', 'shuffle');
 }
 
@@ -366,18 +389,10 @@ export const rosterSignature = (seats: { key: PlayerKey }[]): string => seats.ma
  */
 export function applyRoster(state: GameState, seats: IPlayerOptions[]): void {
   if (!isBetweenHands(state) || seats.length === 0) return;
-  if (rosterSignature(seats) === rosterSignature(state.playerStore.all)) return;
+  if (rosterSignature(seats) === rosterSignature(allPlayers(state.playerStore))) return;
 
   const previous = state.playerStore.players;
-  const store = new PlayerStore();
-  seats.forEach((seat) => {
-    if (previous[seat.key]) store.players[seat.key] = previous[seat.key];
-    else store.newPlayer(seat);
-  });
-  store.currentPlayerKey = state.playerStore.currentPlayerKey && store.players[state.playerStore.currentPlayerKey]
-    ? state.playerStore.currentPlayerKey
-    : undefined;
-  store.lastWriteTime = state.playerStore.lastWriteTime;
+  const store = replaceRoster(state.playerStore, seats);
 
   const joined = seats.filter((seat) => !previous[seat.key]).map((seat) => seat.title);
   const left = Object.values(previous).filter((player) => !store.players[player.key]).map((player) => player.title);

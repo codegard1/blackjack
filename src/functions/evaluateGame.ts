@@ -2,6 +2,7 @@ import { GameStatus } from "../enums";
 import { IPlayer } from "../interfaces";
 import { GameState } from "../types";
 import { recordActivity } from "./activity";
+import { advancePlayer, allPlayers, payoutPlayer, updatePlayerStats } from "./playerStore";
 import { collectAntes, isDealer, netFor, roundStake } from "./round";
 
 export { roundStake } from "./round";
@@ -35,16 +36,15 @@ function activityEvent(player: IPlayer): 'win' | 'loss' | 'push' {
  */
 function settleRound(state: GameState): void {
   if (state.gameStatusFlag) return;
-  const { playerStore } = state;
 
-  playerStore.all.filter((player) => !isDealer(player)).forEach((player) => {
+  allPlayers(state.playerStore).filter((player) => !isDealer(player)).forEach((player) => {
     state.deck.getHands(player.key).forEach((hand, index) => {
       if (!hand.result) return;
       const stake = hand.stake ?? roundStake(state, player.key);
       const net = hand.net ?? netFor(hand.result, stake, state.tableRules.blackjackPayout);
       hand.net = net;
       const amount = Math.max(0, stake + net);
-      if (amount !== 0) playerStore.payout(player.key, amount);
+      if (amount !== 0) state.playerStore = payoutPlayer(state.playerStore, player.key, amount);
       const handPlayer = {
         ...player,
         result: hand.result,
@@ -56,7 +56,7 @@ function settleRound(state: GameState): void {
       recordActivity(state, label, describeResult(handPlayer), activityEvent(handPlayer), { amount });
 
       const won = hand.result === 'win' || hand.result === 'blackjack';
-      playerStore.updateStats(player.key, {
+      state.playerStore = updatePlayerStats(state.playerStore, player.key, {
         numberOfGamesLost: hand.result === 'loss' ? 1 : 0,
         numberOfGamesPlayed: 1,
         numberOfGamesWon: won ? 1 : 0,
@@ -69,12 +69,12 @@ function settleRound(state: GameState): void {
     });
   });
 
-  const dealer = playerStore.all.find(isDealer);
+  const dealer = allPlayers(state.playerStore).find(isDealer);
   if (dealer?.result) {
     const net = dealer.net ?? 0;
-    if (net !== 0) playerStore.payout(dealer.key, net);
+    if (net !== 0) state.playerStore = payoutPlayer(state.playerStore, dealer.key, net);
     recordActivity(state, dealer.title, describeResult(dealer), activityEvent(dealer), { amount: net });
-    playerStore.updateStats(dealer.key, {
+    state.playerStore = updatePlayerStats(state.playerStore, dealer.key, {
       numberOfGamesLost: dealer.result === 'loss' ? 1 : 0,
       numberOfGamesPlayed: 1,
       numberOfGamesWon: dealer.result === 'win' ? 1 : 0,
@@ -111,7 +111,7 @@ export function evaluateGame(state: GameState): GameState {
 
     case GameStatus.NextTurn:
       if (!state.gameStatusFlag) {
-        state.playerStore.nextPlayer();
+        state.playerStore = advancePlayer(state.playerStore);
         state.gameStatus = GameStatus.InProgress;
       }
       break;

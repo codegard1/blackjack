@@ -9,7 +9,7 @@ import './App.css';
 import { AppHeader, OptionsPanel, PlayersDialog, Table } from './components';
 import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
 import { GameAction } from './enums';
-import { collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync } from './functions';
+import { allPlayers, collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync } from './functions';
 import { GameReducerAction } from './interfaces';
 import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark, PAGE_GUTTER } from './theme';
 
@@ -80,7 +80,7 @@ const App = () => {
     const wasSettledBefore = wasSettled.current;
     wasSettled.current = gameState.gameStatusFlag;
     if (!wasSettledBefore && gameState.gameStatusFlag) {
-      profileDispatch({ type: 'syncStats', stats: collectStats(gameState.playerStore.all) });
+      profileDispatch({ type: 'syncStats', stats: collectStats(allPlayers(gameState.playerStore)) });
     }
   }, [gameState]);
 

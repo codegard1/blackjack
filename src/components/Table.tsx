@@ -22,6 +22,7 @@ import { GameAction, GameStatus } from "../enums";
 import { seatTag, isHoleCardHidden, isRoundOver } from "../functions/seatStatus";
 import { decideSeatMove, isDealer, isHuman, seatOrder, seatQueues } from "../functions/round";
 import { potBreakdown } from "../functions/pot";
+import { allPlayers } from "../functions/playerStore";
 import { seatsFor } from "../functions/profiles";
 import { IPlayer } from "../interfaces";
 import { PlayerHandValue, tableRulesFrom } from "../types";
@@ -80,7 +81,7 @@ export const Table: React.FC = () => {
   const { profiles } = useProfileContext();
   const styles = useStyles();
   const { deck, gameStatus, pot, playerStore, round } = gameState;
-  const players = playerStore.all;
+  const players = allPlayers(playerStore);
   const human = players.find(isHuman);
   const roundOver = isRoundOver(gameStatus);
   const isStarted = gameStatus !== GameStatus.Init && players.length > 0;

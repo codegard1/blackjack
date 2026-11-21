@@ -3,6 +3,7 @@ import { GameAction, GameStatus, StoreName } from '../enums';
 import { PlayingCard } from '../classes/PlayingCard';
 import { gameReducer } from './gameReducer';
 import { GAME_STORE_VERSION, MAX_SAVED_ACTIVITY, gameSnapshot, loadGameState, loadSettings, restoreGameState, saveGameState, saveSettings } from './persistence';
+import { activePlayerKeys, playerCount } from './playerStore';
 import { createGameState, settingDefaults } from '../context';
 import { defaultTableRules } from '../types';
 
@@ -68,7 +69,7 @@ describe('persistence', () => {
   it('returns a fresh game when nothing is saved', () => {
     const state = loadGameState();
     expect(state.gameStatus).toBe(GameStatus.Init);
-    expect(state.playerStore.length).toBe(0);
+    expect(playerCount(state.playerStore)).toBe(0);
   });
 
   it('round-trips a game in progress', () => {
@@ -80,8 +81,8 @@ describe('persistence', () => {
     expect(restored.pot).toBe(dealt.pot);
     expect(restored.round).toBe(dealt.round);
     expect(restored.controllingPlayer).toBe(dealt.controllingPlayer);
-    expect(restored.playerStore.activePlayerKeys).toEqual(['chris', 'dealer']);
-    expect(restored.playerStore.player('chris').bank).toBe(dealt.playerStore.player('chris').bank);
+    expect(activePlayerKeys(restored.playerStore)).toEqual(['chris', 'dealer']);
+    expect(restored.playerStore.players.chris.bank).toBe(dealt.playerStore.players.chris.bank);
     expect(restored.deck.playerHands.chris.cards).toEqual(dealt.deck.playerHands.chris.cards);
     expect(restored.deck.length).toBe(dealt.deck.length);
     expect(restored.activityLog).toEqual(dealt.activityLog);
@@ -111,11 +112,11 @@ describe('persistence', () => {
   it('falls back to a fresh game when saved data is malformed', () => {
     saveGameState(startedGame());
     localStorage.setItem(StoreName.DECKSTORE, '{not json');
-    expect(loadGameState().playerStore.length).toBe(0);
+    expect(playerCount(loadGameState().playerStore)).toBe(0);
 
     saveGameState(startedGame());
     localStorage.setItem(StoreName.GAMESTORE, JSON.stringify({ version: 0 }));
-    expect(loadGameState().playerStore.length).toBe(0);
+    expect(playerCount(loadGameState().playerStore)).toBe(0);
   });
 
   it('restores a game from its snapshot and refuses an incomplete one', () => {
@@ -125,7 +126,7 @@ describe('persistence', () => {
 
     const restored = restoreGameState(JSON.parse(JSON.stringify(snapshot)));
     expect(restored?.gameStatus).toBe(dealt.gameStatus);
-    expect(restored?.playerStore.player('chris').bank).toBe(dealt.playerStore.player('chris').bank);
+    expect(restored?.playerStore.players.chris.bank).toBe(dealt.playerStore.players.chris.bank);
     expect(restored?.deck.playerHands.chris.cards).toEqual(dealt.deck.playerHands.chris.cards);
     expect(restored?.isSpinnerVisible).toBe(false);
     expect(restored && gameSnapshot(restored)).toEqual(snapshot);

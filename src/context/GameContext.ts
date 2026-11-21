@@ -1,6 +1,7 @@
 import { Dispatch, createContext, useContext } from 'react';
-import { PlayerStore, PlayingCardDeck } from '../classes';
+import { PlayingCardDeck } from '../classes';
 import { GameStatus } from '../enums';
+import { createPlayerStore } from '../functions/playerStore';
 import { GameReducerAction } from '../interfaces';
 import { GameState, defaultTableRules } from '../types';
 
@@ -21,7 +22,7 @@ export const createGameState = (): GameState => ({
   turnCount: 0,
   lastWriteTime: new Date().toISOString(),
   controllingPlayer: undefined,
-  playerStore: new PlayerStore(),
+  playerStore: createPlayerStore(),
 });
 
 export const gameDefaults: GameState = createGameState();

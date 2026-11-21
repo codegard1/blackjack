@@ -1,5 +1,6 @@
-import { PlayerStore, PlayingCardDeck } from "../classes";
+import { PlayingCardDeck } from "../classes";
 import { GameStatus } from "../enums";
+import { IPlayerStoreState } from "../interfaces";
 import { PlayerKey, TableRules } from "./";
 
 export type GameState = {
@@ -14,7 +15,7 @@ export type GameState = {
   lastWriteTime: string;
   loser?: PlayerKey;
   minimumBet: number;
-  playerStore: PlayerStore;
+  playerStore: IPlayerStoreState;
   pot: number;
   round: number;
   tableRules: TableRules;
