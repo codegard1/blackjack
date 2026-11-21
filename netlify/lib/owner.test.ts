@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigError } from './mongo';
-import { mintOwnerId, readOwnerSecret, verifyOwnerId } from './owner';
+import { GOOGLE_OWNER_KIND, mintOwnerId, readOwnerSecret, verifyOwnerId } from './owner';
 
 const SECRET = 'correct-horse-battery-staple-2026';
 
@@ -13,6 +13,15 @@ describe('owner ids', () => {
     expect(id).toMatch(/^browser:[0-9a-f-]{36}\.[A-Za-z0-9_-]{43}$/);
     expect(verifyOwnerId(id, SECRET)).toBe(true);
     expect(mintOwnerId('browser', SECRET)).not.toBe(id);
+  });
+
+  it('mints deterministic signed ids for a given account subject', () => {
+    const sub = '107691503500061507151';
+    const first = mintOwnerId(GOOGLE_OWNER_KIND, SECRET, sub);
+    const second = mintOwnerId(GOOGLE_OWNER_KIND, SECRET, sub);
+    expect(first).toBe(second);
+    expect(first).toMatch(/^google:107691503500061507151\.[A-Za-z0-9_-]{43}$/);
+    expect(verifyOwnerId(first, SECRET)).toBe(true);
   });
 
   it('refuses ids that were tampered with, made up, or signed with another secret', () => {

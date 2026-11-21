@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { StoreName } from '../enums';
 import { defaultProfileState } from './profiles';
-import { ensureOwnerId, fetchRemote, loadSyncState, markSynced, OWNER_API, pushRemote, saveSyncState, SYNC_API } from './remote';
+import { ensureOwnerId, fetchRemote, loadSyncState, markSynced, OWNER_API, pushRemote, saveSyncState, signInWithGoogle, signOutGoogle, subscribeSyncState, SYNC_API } from './remote';
 
 const OWNER = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c.c2lnbmVkLWJ5LXRoZS1zZXJ2ZXItZm9yLXRlc3RzLTAx';
+const GOOGLE_OWNER = 'google:107691503500061507151.c2lnbmVkLWJ5LXRoZS1zZXJ2ZXItZm9yLXRlc3RzLTAx';
 const UNSIGNED = 'browser:3b2e6c1e-4f55-4a9e-9c1a-1d2e3f4a5b6c';
 const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
@@ -133,6 +134,42 @@ describe('forgetting a rejected owner id', () => {
     saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5 } });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'Database unavailable.' }, 503)));
     await fetchRemote('profiles', OWNER);
+    expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5 } });
+  });
+});
+
+describe('signInWithGoogle and signOutGoogle', () => {
+  it('exchanges a Google credential for a signed google owner id, flags anonymous merge, and notifies listeners', async () => {
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 12, game: 8 } });
+    const listener = vi.fn();
+    const unsubscribe = subscribeSyncState(listener);
+    const user = { name: 'Chris Odegard', email: 'chris@example.com', picture: 'https://lh3.googleusercontent.com/a/avatar' };
+    const fetch = vi.fn().mockResolvedValue(jsonResponse({ ownerId: GOOGLE_OWNER, user }, 200));
+    vi.stubGlobal('fetch', fetch);
+
+    const result = await signInWithGoogle('google.jwt.token');
+    expect(result).toEqual({ ownerId: GOOGLE_OWNER, user });
+    expect(loadSyncState()).toEqual({
+      ownerId: GOOGLE_OWNER,
+      user,
+      mergeAnonymous: true,
+      syncedAt: { profiles: 0, game: 0 },
+    });
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    // Signing out clears the Google account and notifies listeners
+    signOutGoogle();
+    expect(loadSyncState()).toEqual({ syncedAt: { profiles: 0, game: 0 } });
+    expect(listener).toHaveBeenCalledTimes(2);
+    unsubscribe();
+  });
+
+  it('returns an error message without altering sync state when Google sign-in fails', async () => {
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5 } });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'Invalid Google credential.' }, 401)));
+
+    const result = await signInWithGoogle('bad.jwt.token');
+    expect(result).toEqual({ error: 'Invalid Google credential.' });
     expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5 } });
   });
 });

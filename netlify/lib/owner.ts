@@ -4,6 +4,9 @@ import { ConfigError } from './mongo';
 /** The kind of owner id handed to an anonymous browser */
 export const BROWSER_OWNER_KIND = 'browser';
 
+/** The kind of owner id handed to a signed-in Google account */
+export const GOOGLE_OWNER_KIND = 'google';
+
 /** As the README and .env.example ask: `openssl rand -base64 32` gives 44 characters */
 const MIN_SECRET_LENGTH = 32;
 
@@ -18,12 +21,13 @@ export function readOwnerSecret(env: NodeJS.ProcessEnv = process.env): string {
 const sign = (payload: string, secret: string): string => createHmac('sha256', secret).update(payload).digest('base64url');
 
 /**
- * Issue an owner id: a kind, a random identifier, and a signature over both, as
- * `kind:identifier.signature`. Only ids the server issued verify, so a client cannot
- * invent ids and fill the database under them.
+ * Issue an owner id: a kind, an identifier (a random UUID by default, or a verified
+ * account subject), and a signature over both, as `kind:identifier.signature`. Only
+ * ids the server issued verify, so a client cannot invent ids and fill the database
+ * under them. For a given kind and identifier, the signed id is deterministic.
  */
-export function mintOwnerId(kind = BROWSER_OWNER_KIND, secret = readOwnerSecret()): string {
-  const payload = `${kind}:${randomUUID()}`;
+export function mintOwnerId(kind = BROWSER_OWNER_KIND, secret = readOwnerSecret(), id: string = randomUUID()): string {
+  const payload = `${kind}:${id}`;
   return `${payload}.${sign(payload, secret)}`;
 }
 

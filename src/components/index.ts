@@ -17,4 +17,4 @@ export * from './TableToasts';
 export * from './CharacterPortrait';
 export * from './CharacterCard';
 export * from './BalanceChart';
-
+export * from './GoogleAccountSection';
