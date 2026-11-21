@@ -17,8 +17,8 @@ import {
 } from "./playerStore";
 import { seededRandom } from "./random";
 import {
-  advanceTurn, applyRoster, canDoubleDown, canSplit, collectAntes, configureCharacterWork, ensureBotAccount, isBot, isDealer, playerSeats, refillDeck, reshuffleIfLow, resolveNaturals,
-  resolveShowdown, roundStake, seatOrder, setControl, syncSeatWithAccount,
+  advanceTurn, applyRoster, canDoubleDown, canSplit, collectAntes, configureCharacterWork, isBot, isDealer, playerSeats, refillDeck, reshuffleIfLow, resolveNaturals,
+  resolveShowdown, roundStake, seatOrder, setControl, syncSeatWithAccount, updateBotAccount,
 } from "./round";
 import { defaultBotAccount, defaultBotAccounts } from "./work";
 
@@ -26,27 +26,29 @@ import { defaultBotAccount, defaultBotAccounts } from "./work";
  * After a player draws, check for a bust. A busted player loses and the turn
  * moves on; a busted dealer ends the round, and every hand still in play wins.
  */
-function updatePlayerHandStatus(state: GameState, playerKey: string, handIndex: number): void {
+function updatePlayerHandStatus(state: GameState, playerKey: string, handIndex: number): GameState {
   const player = getPlayer(state.playerStore, playerKey);
   const hand = getPlayerHand(state.deck, playerKey, handIndex);
-  if (!player || !hand) return;
+  if (!player || !hand) return state;
 
   const isHandBusted = getPlayerHandValue(state.deck, playerKey, handIndex).highest > 21;
-  state.deck = updateHand(state.deck, playerKey, handIndex, (h) => ({ ...h, isBusted: isHandBusted }));
-  const isBusted = getPlayerHands(state.deck, playerKey).every((item) => item.isBusted);
-  state.playerStore = updatePlayer(state.playerStore, playerKey, (p) => ({ ...p, isBusted }));
-  if (!isHandBusted || state.gameStatus !== GameStatus.InProgress) return;
+  let deck = updateHand(state.deck, playerKey, handIndex, (h) => ({ ...h, isBusted: isHandBusted }));
+  const isBusted = getPlayerHands(deck, playerKey).every((item) => item.isBusted);
+  let playerStore = updatePlayer(state.playerStore, playerKey, (p) => ({ ...p, isBusted }));
+  let next: GameState = { ...state, deck, playerStore };
+  if (!isHandBusted || next.gameStatus !== GameStatus.InProgress) return next;
 
   if (isDealer(player)) {
-    resolveShowdown(state);
-  } else {
-    state.deck = updateHand(state.deck, playerKey, handIndex, (h) => ({ ...h, result: 'loss' }));
-    const hands = getPlayerHands(state.deck, playerKey);
-    if (hands.every((item) => item.result)) {
-      state.playerStore = updatePlayer(state.playerStore, playerKey, (p) => ({ ...p, result: hands[0].result }));
-    }
-    advanceTurn(state, playerKey, handIndex);
+    return resolveShowdown(next);
   }
+
+  deck = updateHand(next.deck, playerKey, handIndex, (h) => ({ ...h, result: 'loss' }));
+  const hands = getPlayerHands(deck, playerKey);
+  if (hands.every((item) => item.result)) {
+    playerStore = updatePlayer(next.playerStore, playerKey, (p) => ({ ...p, result: hands[0].result }));
+  }
+  next = { ...next, deck, playerStore };
+  return advanceTurn(next, playerKey, handIndex);
 }
 
 /** The first seat to act in a round: the first player who has not sat out */
@@ -67,17 +69,13 @@ export function gameReducer(state: GameState, action: GameReducerAction): GameSt
   // so the same action gives the same result. Without them the clock and Math.random are used.
   const rng = action.seed !== undefined ? seededRandom(action.seed) : () => Math.random();
   const lastWriteTime = new Date(action.now ?? Date.now()).toISOString();
-  return applyAction({
-    ...state,
-    botAccounts: cloneBotAccounts(state.botAccounts),
-    lastWriteTime,
-  }, action, rng);
+  return applyAction({ ...state, lastWriteTime }, action, rng);
 }
 
 /**
- * Apply one action to a state this call owns, changing it in place and returning it.
- * An action that is made of others (a deal that starts a round, a double down) runs them
- * here, on the same copies.
+ * Apply one action purely, returning a new state with untouched slices shared by reference.
+ * Compound actions (such as a deal starting a round, or double down) compose smaller
+ * transitions via `applyAction`.
  */
 function applyAction(state: GameState, action: GameReducerAction, rng: () => number): GameState {
 
@@ -89,38 +87,44 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
 
     // Toggle visibility of the spinner
     case GameAction.SetSpinnerVisible: {
-      state.isSpinnerVisible = !state.isSpinnerVisible;
-      return state;
+      return { ...state, isSpinnerVisible: !state.isSpinnerVisible };
     }
 
     case GameAction.Bet: {
       const { playerKey, betAmount } = action;
       const { store, paid } = betPlayer(state.playerStore, playerKey, betAmount);
-      if (paid) {
-        state.playerStore = store;
-        state.pot += betAmount;
-        const player = getPlayer(state.playerStore, playerKey)!;
-        if (isBot(player)) ensureBotAccount(state, playerKey).bank = player.bank;
-        if (state.playerStore.currentPlayerKey === playerKey) {
-          const hand = getPlayerHand(state.deck, playerKey, state.activeHandIndex);
-          if (hand?.cards.length) {
-            state.deck = updateHand(state.deck, playerKey, state.activeHandIndex, (h) => ({
-              ...h,
-              stake: (h.stake ?? 0) + betAmount,
-            }));
-          }
+      if (!paid) return state;
+
+      const player = getPlayer(store, playerKey)!;
+      let deck = state.deck;
+      if (store.currentPlayerKey === playerKey) {
+        const hand = getPlayerHand(deck, playerKey, state.activeHandIndex);
+        if (hand?.cards.length) {
+          deck = updateHand(deck, playerKey, state.activeHandIndex, (h) => ({
+            ...h,
+            stake: (h.stake ?? 0) + betAmount,
+          }));
         }
-        recordActivity(state, player.title, `wagered $${betAmount}`, 'bet', { amount: -betAmount });
       }
-      return state;
+      let next: GameState = {
+        ...state,
+        playerStore: store,
+        deck,
+        pot: state.pot + betAmount,
+      };
+      if (isBot(player)) {
+        next = updateBotAccount(next, playerKey, (acc) => (
+          acc.bank === player.bank ? acc : { ...acc, bank: player.bank }
+        ));
+      }
+      return recordActivity(next, player.title, `wagered $${betAmount}`, 'bet', { amount: -betAmount });
     }
 
     case GameAction.ConfigureWork: {
-      configureCharacterWork(state, action.playerKey, {
+      return configureCharacterWork(state, action.playerKey, {
         taskOverride: action.taskOverride,
         allowReturn: action.allowReturn,
       });
-      return state;
     }
 
     /**
@@ -128,49 +132,58 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
      */
     case GameAction.NewGame: {
       const { players, playerKeys, botAccounts } = action;
-      if (isTableRules(action.tableRules)) state.tableRules = tableRulesFrom(action.tableRules);
-      state.playerStore = createPlayerStore();
-      state.botAccounts = {
+      const tableRules = isTableRules(action.tableRules) ? tableRulesFrom(action.tableRules) : state.tableRules;
+      const baseAccounts = {
         ...defaultBotAccounts(),
         ...cloneBotAccounts(state.botAccounts),
         ...cloneBotAccounts(botAccounts),
       };
-      state.pot = 0;
-      state.winner = undefined;
-      state.loser = undefined;
-      state.gameStatusFlag = false;
 
       // seats come from the players payload; otherwise the keys name default players
       const seats: IPlayerOptions[] = players ?? (playerKeys ?? []).flatMap((k) => {
         const p = defaultplayersArr.find((i) => i.key === k);
         return p ? [{ bank: p.bank, id: p.id, isNPC: p.isNPC, key: k, title: p.title, disabled: p.disabled }] : [];
       });
-      seats.forEach((seat) => {
-        state.playerStore = addPlayer(state.playerStore, seat);
+      let playerStore = createPlayerStore();
+      const nextAccounts = { ...baseAccounts };
+      for (const seat of seats) {
+        playerStore = addPlayer(playerStore, seat);
         if (isBotId(seat.key) && !botAccounts?.[seat.key]) {
-          state.botAccounts[seat.key] = {
+          nextAccounts[seat.key] = {
             ...defaultBotAccount(seat.bank),
             ...(seat.awayTask ? {
               work: { status: seat.isReadyToReturn ? 'ready' : 'working', taskId: seat.awayTask, daysWorked: 0 },
             } : {}),
           };
         }
-        if (isBotId(seat.key)) syncSeatWithAccount(state, seat.key);
-      });
-      state.deck = syncDeckHands(
-        createDeck(Number(state.tableRules.numberOfDecks), rng),
+      }
+      const deck = syncDeckHands(
+        createDeck(Number(tableRules.numberOfDecks), rng),
         seats.map((seat) => seat.key),
       );
-      state.controllingPlayer = undefined;
-      state.activeHandIndex = 0;
-      state.dealerHasControl = false;
-      const first = firstSeat(state);
-      if (first) setControl(state, first);
-      state.gameStatus = GameStatus.InProgress;
-      state.round = 1;
-      state.turnCount = 0;
-      recordActivity(state, '', 'Game started', 'game');
-      return state;
+      let next: GameState = {
+        ...state,
+        tableRules,
+        playerStore,
+        botAccounts: nextAccounts,
+        pot: 0,
+        winner: undefined,
+        loser: undefined,
+        gameStatusFlag: false,
+        deck,
+        controllingPlayer: undefined,
+        activeHandIndex: 0,
+        dealerHasControl: false,
+        gameStatus: GameStatus.InProgress,
+        round: 1,
+        turnCount: 0,
+      };
+      for (const seat of seats) {
+        if (isBotId(seat.key)) next = syncSeatWithAccount(next, seat.key);
+      }
+      const first = firstSeat(next);
+      if (first) next = setControl(next, first);
+      return recordActivity(next, '', 'Game started', 'game');
     }
 
     /**
@@ -178,8 +191,7 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
      */
     case GameAction.SetRoster: {
       const { players, botAccounts } = action;
-      applyRoster(state, players, botAccounts);
-      return state;
+      return applyRoster(state, players, botAccounts);
     }
 
     /**
@@ -208,34 +220,40 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
      * Start a new round of a continuous game
      */
     case GameAction.NewRound: {
+      let next = state;
       if (isTableRules(action.tableRules)) {
-        const decksChanged = state.tableRules.numberOfDecks !== action.tableRules.numberOfDecks;
-        state.tableRules = tableRulesFrom(action.tableRules);
+        const tableRules = tableRulesFrom(action.tableRules);
+        const decksChanged = next.tableRules.numberOfDecks !== action.tableRules.numberOfDecks;
+        next = { ...next, tableRules };
         if (decksChanged) {
-          state.deck = syncDeckHands(
-            createDeck(Number(state.tableRules.numberOfDecks), rng),
-            allPlayers(state.playerStore).map((player) => player.key),
-          );
-          recordActivity(state, '', 'Deck shuffled', 'shuffle');
+          next = recordActivity({
+            ...next,
+            deck: syncDeckHands(
+              createDeck(Number(tableRules.numberOfDecks), rng),
+              allPlayers(next.playerStore).map((player) => player.key),
+            ),
+          }, '', 'Deck shuffled', 'shuffle');
         }
       }
-      state.deck = clearAllHands(state.deck);
-      state.playerStore = resetPlayers(state.playerStore);
-      state.controllingPlayer = undefined;
-      state.activeHandIndex = 0;
-      state.dealerHasControl = false;
-      state.gameStatus = GameStatus.InProgress;
-      state.gameStatusFlag = false;
-      state.pot = 0;
-      state.round += 1;
-      state.turnCount = 1;
-      recordActivity(state, '', `Round ${state.round} started`, 'round');
-      reshuffleIfLow(state, rng);
+      next = {
+        ...next,
+        deck: clearAllHands(next.deck),
+        playerStore: resetPlayers(next.playerStore),
+        controllingPlayer: undefined,
+        activeHandIndex: 0,
+        dealerHasControl: false,
+        gameStatus: GameStatus.InProgress,
+        gameStatusFlag: false,
+        pot: 0,
+        round: next.round + 1,
+        turnCount: 1,
+      };
+      next = recordActivity(next, '', `Round ${next.round} started`, 'round');
+      next = reshuffleIfLow(next, rng);
       // antes come after the round starts, so they belong to the new hand
-      collectAntes(state, rng);
-      const first = firstSeat(state);
-      if (first) setControl(state, first);
-      return state;
+      next = collectAntes(next, rng);
+      const first = firstSeat(next);
+      return first ? setControl(next, first) : next;
     }
 
     case GameAction.Stay: {
@@ -244,26 +262,22 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
       const stayingPlayer = stayingPlayerKey ? getPlayer(state.playerStore, stayingPlayerKey) : undefined;
       const stayingHandIndex = handIndex ?? state.activeHandIndex;
       const stayingHand = stayingPlayerKey ? getPlayerHand(state.deck, stayingPlayerKey, stayingHandIndex) : undefined;
-      if (stayingPlayerKey && stayingPlayer && stayingHand) {
-        recordActivity(state, stayingPlayer.title, 'stayed', 'stay');
-        state.deck = updateHand(state.deck, stayingPlayerKey, stayingHandIndex, (h) => ({ ...h, isStaying: true }));
-        const hands = getPlayerHands(state.deck, stayingPlayerKey);
-        const isStaying = hands.every((hand) => hand.isStaying || hand.result);
-        state.playerStore = updatePlayer(state.playerStore, stayingPlayerKey, (p) => ({ ...p, isStaying }));
-        if (isDealer(stayingPlayer)) {
-          resolveShowdown(state);
-        } else {
-          advanceTurn(state, stayingPlayerKey, stayingHandIndex);
-        }
-      }
-      return state;
+      if (!stayingPlayerKey || !stayingPlayer || !stayingHand) return state;
+
+      let next = recordActivity(state, stayingPlayer.title, 'stayed', 'stay');
+      const deck = updateHand(next.deck, stayingPlayerKey, stayingHandIndex, (h) => ({ ...h, isStaying: true }));
+      const hands = getPlayerHands(deck, stayingPlayerKey);
+      const isStaying = hands.every((hand) => hand.isStaying || hand.result);
+      const playerStore = updatePlayer(next.playerStore, stayingPlayerKey, (p) => ({ ...p, isStaying }));
+      next = { ...next, deck, playerStore };
+      return isDealer(stayingPlayer)
+        ? resolveShowdown(next)
+        : advanceTurn(next, stayingPlayerKey, stayingHandIndex);
     }
 
     // Select a card
     case GameAction.Select: {
-      const { cardKey } = action;
-      state.deck = selectCard(state.deck, cardKey);
-      return state;
+      return { ...state, deck: selectCard(state.deck, action.cardKey) };
     }
 
     case GameAction.SitOut: {
@@ -273,63 +287,72 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
       const player = getPlayer(state.playerStore, key);
       if (!player) return state;
       const isSittingOut = action.isSittingOut !== undefined ? action.isSittingOut : true;
-      state.playerStore = updatePlayer(state.playerStore, key, (p) => ({ ...p, isSittingOut }));
-      return state;
+      return {
+        ...state,
+        playerStore: updatePlayer(state.playerStore, key, (p) => ({ ...p, isSittingOut })),
+      };
     }
 
     // Unselect a card
     case GameAction.Unselect: {
-      const { cardKey } = action;
-      state.deck = unselectCard(state.deck, cardKey);
-      return state;
+      return { ...state, deck: unselectCard(state.deck, action.cardKey) };
     }
 
     // Draw card(s) from the deck
     case GameAction.Draw: {
       const { playerKey, handIndex, deckSide, numberOfCards } = action;
       const _num = numberOfCards ?? 1;
+      let next = state;
       // a long round with many seats can run the deck dry; reshuffle what is not in play
-      if (_num > 0 && state.deck.cardKeys.length < _num && state.gameStatus === GameStatus.InProgress) refillDeck(state, rng);
+      if (_num > 0 && next.deck.cardKeys.length < _num && next.gameStatus === GameStatus.InProgress) {
+        next = refillDeck(next, rng);
+      }
       // Nothing to draw (no cards asked for, or a deck that cannot cover them outside a round):
       // leave the game as it is. A reducer that throws takes the whole table down with it.
-      if (_num <= 0 || state.deck.cardKeys.length < _num) return state;
+      if (_num <= 0 || next.deck.cardKeys.length < _num) return next;
 
       const side = deckSide === 'top' ? 'top' : deckSide === 'random' ? 'random' : 'bottom';
-      const { deck: nextDeck, drawn } = drawCards(state.deck, _num, side, rng);
-      state.deck = nextDeck;
+      const { deck: nextDeck, drawn } = drawCards(next.deck, _num, side, rng);
+      next = { ...next, deck: nextDeck };
       const where = deckSide === 'top' ? 'from the top' : deckSide === 'random' ? 'at random' : 'from the bottom';
       if (playerKey !== undefined) {
-        const index = handIndex ?? state.activeHandIndex;
-        state.deck = appendCardsToHand(state.deck, playerKey, drawn, index);
-        state.playerStore = hitPlayer(state.playerStore, playerKey);
-        recordActivity(state, getPlayer(state.playerStore, playerKey)!.title, `drew ${_num} card${_num === 1 ? '' : 's'} ${where}`, 'draw');
-        updatePlayerHandStatus(state, playerKey, index);
+        const index = handIndex ?? next.activeHandIndex;
+        next = {
+          ...next,
+          deck: appendCardsToHand(next.deck, playerKey, drawn, index),
+          playerStore: hitPlayer(next.playerStore, playerKey),
+        };
+        next = recordActivity(next, getPlayer(next.playerStore, playerKey)!.title, `drew ${_num} card${_num === 1 ? '' : 's'} ${where}`, 'draw');
+        next = updatePlayerHandStatus(next, playerKey, index);
       }
 
-      return state;
+      return next;
     }
 
     // Shuffle the remaining card in the deck
     case GameAction.Shuffle: {
-      state.deck = shuffleDeck(state.deck, Number(state.tableRules.numberOfDecks), rng);
-      recordActivity(state, '', 'Deck shuffled', 'shuffle');
-      return state;
+      return recordActivity({
+        ...state,
+        deck: shuffleDeck(state.deck, Number(state.tableRules.numberOfDecks), rng),
+      }, '', 'Deck shuffled', 'shuffle');
     }
 
     case GameAction.Deal: {
       const hasCardsInHands = allPlayers(state.playerStore).some((player) => getPlayerHands(state.deck, player.key).some((hand) => hand.cards.length));
-      if (hasCardsInHands || state.gameStatus >= GameStatus.RoundOver) {
-        state = applyAction(state, { type: GameAction.NewRound, tableRules: action.tableRules }, rng);
+      let next = hasCardsInHands || state.gameStatus >= GameStatus.RoundOver
+        ? applyAction(state, { type: GameAction.NewRound, tableRules: action.tableRules }, rng)
+        : state;
+      if (playerCount(next.playerStore) === 0) return next;
+      const dealtKeys = seatOrder(next).filter((key) => !getPlayer(next.playerStore, key)?.isSittingOut);
+      next = {
+        ...next,
+        activeHandIndex: 0,
+        deck: dealCards(next.deck, 2, dealtKeys),
+      };
+      for (const key of dealtKeys) {
+        next = recordActivity(next, getPlayer(next.playerStore, key)!.title, 'was dealt two cards', 'deal');
       }
-      if (playerCount(state.playerStore) === 0) return state;
-      const dealtKeys = seatOrder(state).filter((key) => !getPlayer(state.playerStore, key)?.isSittingOut);
-      state.activeHandIndex = 0;
-      state.deck = dealCards(state.deck, 2, dealtKeys);
-      dealtKeys.forEach((key) => {
-        recordActivity(state, getPlayer(state.playerStore, key)!.title, 'was dealt two cards', 'deal');
-      });
-      resolveNaturals(state);
-      return state;
+      return resolveNaturals(next);
     }
 
     /**
@@ -343,20 +366,29 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
       if (!key || !canDoubleDown(state, key, index)) return state;
 
       const stake = roundStake(state, key);
-      state.playerStore = betPlayer(state.playerStore, key, stake).store;
-      state.pot += stake;
-      const player = getPlayer(state.playerStore, key)!;
-      if (isBot(player)) ensureBotAccount(state, key).bank = player.bank;
-      if (getPlayerHand(state.deck, key, index)) {
-        state.deck = updateHand(state.deck, key, index, (h) => ({ ...h, stake: (h.stake ?? stake) + stake }));
+      const playerStore = betPlayer(state.playerStore, key, stake).store;
+      const player = getPlayer(playerStore, key)!;
+      const deck = getPlayerHand(state.deck, key, index)
+        ? updateHand(state.deck, key, index, (h) => ({ ...h, stake: (h.stake ?? stake) + stake }))
+        : state.deck;
+      let next: GameState = {
+        ...state,
+        playerStore,
+        deck,
+        pot: state.pot + stake,
+      };
+      if (isBot(player)) {
+        next = updateBotAccount(next, key, (acc) => (
+          acc.bank === player.bank ? acc : { ...acc, bank: player.bank }
+        ));
       }
-      recordActivity(state, player.title, `doubled down for $${stake}`, 'double', { amount: -stake });
+      next = recordActivity(next, player.title, `doubled down for $${stake}`, 'double', { amount: -stake });
 
-      state = applyAction(state, { type: GameAction.Draw, playerKey: key, handIndex: index, deckSide: 'top', numberOfCards: 1 }, rng);
-      if (state.gameStatus === GameStatus.InProgress && !getPlayer(state.playerStore, key)?.isBusted) {
-        state = applyAction(state, { type: GameAction.Stay, playerKey: key, handIndex: index }, rng);
+      next = applyAction(next, { type: GameAction.Draw, playerKey: key, handIndex: index, deckSide: 'top', numberOfCards: 1 }, rng);
+      if (next.gameStatus === GameStatus.InProgress && !getPlayer(next.playerStore, key)?.isBusted) {
+        next = applyAction(next, { type: GameAction.Stay, playerKey: key, handIndex: index }, rng);
       }
-      return state;
+      return next;
     }
 
     case GameAction.Split: {
@@ -369,31 +401,42 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
       const stake = roundStake(state, key);
       const betResult = betPlayer(state.playerStore, key, stake);
       if (!betResult.paid) return state;
-      state.playerStore = betResult.store;
-      state.pot += stake;
-      const updatedPlayer = getPlayer(state.playerStore, key)!;
-      if (isBot(updatedPlayer)) ensureBotAccount(state, key).bank = updatedPlayer.bank;
-      recordActivity(state, updatedPlayer.title, `split for $${stake}`, 'split', { amount: -stake });
 
-      const { deck: splitDeck, isSplitAces } = splitPlayerHand(state.deck, key, index, stake);
-      state.deck = splitDeck;
+      const updatedPlayer = getPlayer(betResult.store, key)!;
+      let next: GameState = {
+        ...state,
+        playerStore: betResult.store,
+        pot: state.pot + stake,
+      };
+      if (isBot(updatedPlayer)) {
+        next = updateBotAccount(next, key, (acc) => (
+          acc.bank === updatedPlayer.bank ? acc : { ...acc, bank: updatedPlayer.bank }
+        ));
+      }
+      next = recordActivity(next, updatedPlayer.title, `split for $${stake}`, 'split', { amount: -stake });
 
-      if (state.deck.cardKeys.length < 2) refillDeck(state, rng);
+      const { deck: splitDeck, isSplitAces } = splitPlayerHand(next.deck, key, index, stake);
+      next = { ...next, deck: splitDeck };
+
+      if (next.deck.cardKeys.length < 2) next = refillDeck(next, rng);
       for (const offset of [0, 1]) {
         const currentIndex = index + offset;
-        const { deck: drawnDeck, drawn } = drawCards(state.deck, 1, 'top', rng);
-        state.deck = appendCardsToHand(drawnDeck, key, drawn, currentIndex);
-        state.playerStore = hitPlayer(state.playerStore, key);
-        recordActivity(state, player.title, `drew 1 card to split hand ${currentIndex + 1}`, 'draw');
+        const { deck: drawnDeck, drawn } = drawCards(next.deck, 1, 'top', rng);
+        next = {
+          ...next,
+          deck: appendCardsToHand(drawnDeck, key, drawn, currentIndex),
+          playerStore: hitPlayer(next.playerStore, key),
+        };
+        next = recordActivity(next, updatedPlayer.title, `drew 1 card to split hand ${currentIndex + 1}`, 'draw');
       }
 
       if (isSplitAces) {
-        state.deck = updateHand(state.deck, key, index, (h) => ({ ...h, isStaying: true }));
-        state.deck = updateHand(state.deck, key, index + 1, (h) => ({ ...h, isStaying: true }));
-        state.playerStore = updatePlayer(state.playerStore, key, (p) => ({ ...p, isStaying: true }));
-        advanceTurn(state, key, index);
+        let deck = updateHand(next.deck, key, index, (h) => ({ ...h, isStaying: true }));
+        deck = updateHand(deck, key, index + 1, (h) => ({ ...h, isStaying: true }));
+        const playerStore = updatePlayer(next.playerStore, key, (p) => ({ ...p, isStaying: true }));
+        next = advanceTurn({ ...next, deck, playerStore }, key, index);
       }
-      return state;
+      return next;
     }
 
     default: {

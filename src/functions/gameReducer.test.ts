@@ -2,17 +2,19 @@ import { gameDefaults } from '../context';
 import { GameAction, GameStatus } from '../enums';
 import { GameReducerAction } from '../interfaces';
 import { GameState, TableRules, defaultTableRules } from '../types';
+import { recordActivity } from './activity';
 import { buildCardKeys } from './cards';
 import {
   createDeck, getPlayerHand, getPlayerHands, getPlayerHandValue, updateHand, updateHandValue,
 } from './deck';
+import { evaluateGame } from './evaluateGame';
 import { gameReducer } from './gameReducer';
 import { gameSnapshot } from './persistence';
 import {
   activePlayerKeys, allPlayers, createPlayerStore, getPlayer, playerCount, setCurrentPlayer, updatePlayer,
 } from './playerStore';
 import { defaultProfileState, seatsFor } from './profiles';
-import { canDoubleDown, canSplit, decideSeatMove } from './round';
+import { applyRoster, canDoubleDown, canSplit, configureCharacterWork, decideSeatMove, reshuffleIfLow, setControl } from './round';
 import { handValue } from './getHandValue';
 import { seatStatus } from './seatStatus';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -1051,6 +1053,7 @@ describe('leaving the previous state alone', () => {
     expect(state.playerStore.players.ogion).toBe(anted.playerStore.players.ogion);
     expect(state.playerStore.players.dealer).toBe(anted.playerStore.players.dealer);
     expect(state.deck).toBe(anted.deck);
+    expect(state.botAccounts).toBe(anted.botAccounts);
 
     // chris gets a pair of eights, ogion 9 and 2, the dealer 10 and 7; then the cards the round will draw
     state = rig(state, 'Spade_8', 'Heart_8', 'Club_9', 'Diamond_2', 'Club_10', 'Heart_7', 'Club_3', 'Diamond_4', 'Club_5', 'Heart_6', 'Spade_10', 'Diamond_10', 'Club_2', 'Heart_2');
@@ -1075,20 +1078,93 @@ describe('leaving the previous state alone', () => {
     // between hands: a roster change, the next round, and the rest of the actions the table sends
     state = step(state, { type: GameAction.SetRoster, players: seatsFor({ ...profiles, opponentIds: ['ogion', 'shevek'] }) });
     expect(activePlayerKeys(state.playerStore)).toContain('shevek');
+    const beforeWork = state;
     state = step(state, { type: GameAction.ConfigureWork, playerKey: 'ogion', taskOverride: 'herding-goats', allowReturn: true });
+    expect(state.deck).toBe(beforeWork.deck);
+    expect(state.botAccounts.shevek).toBe(beforeWork.botAccounts.shevek);
+
+    const beforeSpinner = state;
+    state = step(state, { type: GameAction.SetSpinnerVisible });
+    expect(state.deck).toBe(beforeSpinner.deck);
+    expect(state.playerStore).toBe(beforeSpinner.playerStore);
+    expect(state.botAccounts).toBe(beforeSpinner.botAccounts);
+    expect(state.activityLog).toBe(beforeSpinner.activityLog);
+    expect(state.tableRules).toBe(beforeSpinner.tableRules);
+
+    const beforeSitOut = state;
+    state = step(state, { type: GameAction.SitOut, playerKey: 'chris', isSittingOut: true });
+    expect(state.deck).toBe(beforeSitOut.deck);
+    expect(state.botAccounts).toBe(beforeSitOut.botAccounts);
+    expect(state.activityLog).toBe(beforeSitOut.activityLog);
+    state = step(state, { type: GameAction.SitOut, playerKey: 'chris', isSittingOut: false });
+
     state = step(state, { type: GameAction.Deal, tableRules: { ...defaultTableRules, numberOfDecks: '2' } });
     expect(state.round).toBe(2);
     const beforeDeckOnly = state;
     state = step(state, { type: GameAction.Shuffle });
     expect(state.deck).not.toBe(beforeDeckOnly.deck);
     expect(state.playerStore).toBe(beforeDeckOnly.playerStore);
+    expect(state.botAccounts).toBe(beforeDeckOnly.botAccounts);
+    const beforeSelect = state;
     state = step(state, { type: GameAction.Select, cardKey: 'Spade_8' });
-    expect(state.playerStore).toBe(beforeDeckOnly.playerStore);
+    expect(state.playerStore).toBe(beforeSelect.playerStore);
+    expect(state.botAccounts).toBe(beforeSelect.botAccounts);
+    expect(state.activityLog).toBe(beforeSelect.activityLog);
+    const beforeUnselect = state;
     state = step(state, { type: GameAction.Unselect, cardKey: 'Spade_8' });
-    expect(state.playerStore).toBe(beforeDeckOnly.playerStore);
+    expect(state.playerStore).toBe(beforeUnselect.playerStore);
+    expect(state.botAccounts).toBe(beforeUnselect.botAccounts);
+    expect(state.activityLog).toBe(beforeUnselect.activityLog);
     state = step(state, { type: GameAction.RestoreGame, snapshot: JSON.parse(JSON.stringify(gameSnapshot(state))) });
     state = step(state, { type: GameAction.ResetGame });
     expect(state.gameStatus).toBe(GameStatus.Init);
+  });
+
+  it('keeps turn-engine and activity helpers pure on frozen state and preserves identity on no-op guards', () => {
+    const base = deepFreeze(gameReducer(createGameState(), {
+      type: GameAction.NewGame,
+      players: seatsFor({ ...defaultProfileState(), opponentIds: ['ogion'] }),
+      seed: 42,
+    }));
+
+    // recordActivity leaves input untouched and appends one entry
+    const logged = recordActivity(base, 'Chris', 'tested pure log', 'round');
+    expect(logged).not.toBe(base);
+    expect(logged.activityLog).toHaveLength(base.activityLog.length + 1);
+    expect(base.activityLog).toHaveLength(1);
+
+    // evaluateGame starts turnCount 0, and is an exact identity no-op when already in turn 1
+    const evaluated = deepFreeze(evaluateGame(base));
+    expect(evaluated.turnCount).toBe(1);
+    expect(evaluateGame(evaluated)).toBe(evaluated);
+
+    // setControl switches seat without mutating frozen store
+    const controlled = setControl(evaluated, 'ogion');
+    expect(controlled.controllingPlayer).toBe('ogion');
+    expect(evaluated.controllingPlayer).toBe('chris');
+
+    // reshuffleIfLow preserves reference identity when deck is healthy, and reshuffles when low
+    expect(reshuffleIfLow(evaluated)).toBe(evaluated);
+    const lowDeck = deepFreeze({ ...evaluated, deck: { ...evaluated.deck, cardKeys: ['Spade_2'] } });
+    const reshuffled = reshuffleIfLow(lowDeck);
+    expect(reshuffled).not.toBe(lowDeck);
+    expect(reshuffled.deck.cardKeys.length).toBeGreaterThan(10);
+
+    // configureCharacterWork preserves identity on non-bot keys
+    expect(configureCharacterWork(evaluated, 'chris', { allowReturn: true })).toBe(evaluated);
+
+    // applyRoster preserves identity mid-hand and between hands when roster is unchanged
+    expect(applyRoster(evaluated, seatsFor({ ...defaultProfileState(), opponentIds: ['ogion', 'shevek'] }))).toBe(evaluated);
+    const settled = deepFreeze(gameReducer(
+      gameReducer(rig(evaluated, 'Spade_14', 'Heart_13', 'Club_9', 'Diamond_8', 'Club_14', 'Heart_13'), { type: GameAction.Deal }),
+      { type: GameAction.EvaluateGame },
+    ));
+    expect(settled.gameStatus).toBe(GameStatus.RoundOver);
+    expect(evaluateGame(settled)).toBe(settled);
+    expect(applyRoster(settled, seatsFor({ ...defaultProfileState(), opponentIds: ['ogion'] }))).toBe(settled);
+    const updatedRoster = applyRoster(settled, seatsFor({ ...defaultProfileState(), opponentIds: ['ogion', 'shevek'] }));
+    expect(updatedRoster).not.toBe(settled);
+    expect(activePlayerKeys(updatedRoster.playerStore)).toContain('shevek');
   });
 
   it('advances work, configures overrides, and settles bot balance history without mutating a frozen state', () => {

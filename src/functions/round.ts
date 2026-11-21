@@ -146,14 +146,19 @@ export function decideSeatMove(state: GameState, key: PlayerKey, rng: Rng = Math
 }
 
 /** Hand control to a seat */
-export function setControl(state: GameState, key: PlayerKey): void {
+export function setControl(state: GameState, key: PlayerKey): GameState {
+  let playerStore = state.playerStore;
   const previous = state.controllingPlayer;
-  if (previous && previous !== key && getPlayer(state.playerStore, previous)) {
-    state.playerStore = endPlayerTurn(state.playerStore, previous);
+  if (previous && previous !== key && getPlayer(playerStore, previous)) {
+    playerStore = endPlayerTurn(playerStore, previous);
   }
-  state.controllingPlayer = key;
-  state.dealerHasControl = isDealer(getPlayer(state.playerStore, key));
-  state.playerStore = startPlayerTurn(setCurrentPlayer(state.playerStore, key), key);
+  playerStore = startPlayerTurn(setCurrentPlayer(playerStore, key), key);
+  return {
+    ...state,
+    controllingPlayer: key,
+    dealerHasControl: isDealer(getPlayer(playerStore, key)),
+    playerStore,
+  };
 }
 
 /** A seat that still has to play its hand */
@@ -168,36 +173,30 @@ function playableHandIndex(state: GameState, player: IPlayer, fromIndex = 0): nu
  * plays if any hand is still waiting on the dealer's total; otherwise the
  * round ends without the dealer drawing.
  */
-export function advanceTurn(state: GameState, fromKey?: PlayerKey, fromHandIndex = state.activeHandIndex): void {
+export function advanceTurn(state: GameState, fromKey?: PlayerKey, fromHandIndex = state.activeHandIndex): GameState {
   const seats = playerSeats(state);
   if (fromKey !== undefined) {
     const sameSeat = getPlayer(state.playerStore, fromKey);
     const nextHandIndex = sameSeat ? playableHandIndex(state, sameSeat, fromHandIndex + 1) : -1;
     if (sameSeat && nextHandIndex >= 0) {
-      state.activeHandIndex = nextHandIndex;
-      setControl(state, fromKey);
-      return;
+      return setControl({ ...state, activeHandIndex: nextHandIndex }, fromKey);
     }
   }
 
   const start = fromKey === undefined ? 0 : seats.findIndex((player) => player.key === fromKey) + 1;
-  for (const next of seats.slice(start)) {
-    const handIndex = playableHandIndex(state, next);
+  for (const nextSeat of seats.slice(start)) {
+    const handIndex = playableHandIndex(state, nextSeat);
     if (handIndex >= 0) {
-      state.activeHandIndex = handIndex;
-      setControl(state, next.key);
-      return;
+      return setControl({ ...state, activeHandIndex: handIndex }, nextSeat.key);
     }
   }
 
   const dealer = getDealer(state);
   const waitingOnDealer = seats.some((player) => getPlayerHands(state.deck, player.key).some((hand) => hand.cards.length && !hand.result));
   if (dealer && waitingOnDealer) {
-    state.activeHandIndex = playableHandIndex(state, dealer);
-    setControl(state, dealer.key);
-  } else {
-    resolveShowdown(state);
+    return setControl({ ...state, activeHandIndex: playableHandIndex(state, dealer) }, dealer.key);
   }
+  return resolveShowdown(state);
 }
 
 /**
@@ -205,63 +204,69 @@ export function advanceTurn(state: GameState, fromKey?: PlayerKey, fromHandIndex
  * once: player naturals push and every other hand loses. Otherwise a player
  * natural wins the table's blackjack payout and that seat skips its turn.
  */
-export function resolveNaturals(state: GameState): void {
-  allPlayers(state.playerStore).forEach((player) => {
-    const hand = getPlayerHand(state.deck, player.key);
-    const isBlackjack = hasHand(state, player) && hand?.cards.length === 2 && getPlayerHandValue(state.deck, player.key).highest === 21;
-    state.playerStore = updatePlayer(state.playerStore, player.key, (p) => ({
+export function resolveNaturals(state: GameState): GameState {
+  let playerStore = state.playerStore;
+  let deck = state.deck;
+
+  for (const player of allPlayers(playerStore)) {
+    const hand = getPlayerHand(deck, player.key);
+    const isBlackjack = hasHand(state, player) && hand?.cards.length === 2 && getPlayerHandValue(deck, player.key).highest === 21;
+    playerStore = updatePlayer(playerStore, player.key, (p) => ({
       ...p,
       isBlackjack,
       ...(hand && isBlackjack ? { result: 'blackjack' as const } : {}),
     }));
     if (hand) {
       const stake = isDealer(player) ? 0 : roundStake(state, player.key);
-      state.deck = updateHand(state.deck, player.key, 0, (h) => ({
+      deck = updateHand(deck, player.key, 0, (h) => ({
         ...h,
         stake,
         isBlackjack,
         result: isBlackjack ? 'blackjack' : undefined,
       }));
     }
-  });
+  }
 
-  const seats = playerSeats(state).filter((player) => hasHand(state, player));
-  const dealer = getDealer(state);
-
+  let next: GameState = { ...state, playerStore, deck };
+  const dealer = getDealer(next);
   if (dealer?.isBlackjack) {
-    seats.forEach((player) => {
-      getPlayerHands(state.deck, player.key).forEach((_hand, handIndex) => {
-        state.deck = updateHand(state.deck, player.key, handIndex, (h) => ({
+    const seats = playerSeats(next).filter((player) => hasHand(next, player));
+    for (const player of seats) {
+      const count = getPlayerHands(next.deck, player.key).length;
+      for (let handIndex = 0; handIndex < count; handIndex++) {
+        deck = updateHand(deck, player.key, handIndex, (h) => ({
           ...h,
           result: h.isBlackjack ? 'push' : 'loss',
         }));
-      });
-    });
-    finishRound(state);
-    return;
+      }
+    }
+    next = { ...next, deck };
+    return finishRound(next);
   }
 
-  advanceTurn(state);
+  return advanceTurn(next);
 }
 
 /**
  * Compare every hand still in play with the dealer's, then end the round.
  * Hands that already have a result (busts and naturals) keep it.
  */
-export function resolveShowdown(state: GameState): void {
+export function resolveShowdown(state: GameState): GameState {
   const dealer = getDealer(state);
   const dealerTotal = dealer ? getPlayerHandValue(state.deck, dealer.key).highest : 0;
   const dealerBusted = !dealer || dealerTotal > 21;
 
-  playerSeats(state).filter((player) => hasHand(state, player)).forEach((player) => {
-    getPlayerHands(state.deck, player.key).forEach((hand, handIndex) => {
+  let deck = state.deck;
+  for (const player of playerSeats(state).filter((p) => hasHand(state, p))) {
+    const hands = getPlayerHands(deck, player.key);
+    hands.forEach((hand, handIndex) => {
       if (!hand.cards.length || hand.result) return;
-      const total = getPlayerHandValue(state.deck, player.key, handIndex).highest;
+      const total = getPlayerHandValue(deck, player.key, handIndex).highest;
       const result = dealerBusted || total > dealerTotal ? 'win' : total === dealerTotal ? 'push' : 'loss';
-      state.deck = updateHand(state.deck, player.key, handIndex, (h) => ({ ...h, result }));
+      deck = updateHand(deck, player.key, handIndex, (h) => ({ ...h, result }));
     });
-  });
-  finishRound(state);
+  }
+  return finishRound({ ...state, deck });
 }
 
 /** Bank change for a hand with the given result and stake, stake included */
@@ -278,13 +283,14 @@ export function netFor(result: IPlayer['result'], stake: number, payout: TableRu
  * Work out what each hand is worth and end the round. The dealer's result is
  * the house's net: up, down or even. Money moves when the round is settled.
  */
-export function finishRound(state: GameState): void {
+export function finishRound(state: GameState): GameState {
   const dealer = getDealer(state);
+  let playerStore = state.playerStore;
   let dealerNet = 0;
 
-  playerSeats(state).forEach((player) => {
+  for (const player of playerSeats(state)) {
     const hands = getPlayerHands(state.deck, player.key).filter((hand) => hand.result);
-    if (hands.length === 0) return;
+    if (hands.length === 0) continue;
     const net = hands.reduce((total, hand) => total + netFor(hand.result, hand.stake ?? roundStake(state, player.key), state.tableRules.blackjackPayout), 0);
     const results = hands.map((hand) => hand.result);
     const result = results.every((item) => item === results[0])
@@ -294,7 +300,7 @@ export function finishRound(state: GameState): void {
     const isBlackjack = hands.some((hand) => hand.isBlackjack);
     const lossStreak = net < 0 ? (player.lossStreak ?? 0) + 1 : net > 0 ? 0 : player.lossStreak;
     dealerNet -= net;
-    state.playerStore = updatePlayer(state.playerStore, player.key, (p) => ({
+    playerStore = updatePlayer(playerStore, player.key, (p) => ({
       ...p,
       net,
       result,
@@ -303,101 +309,173 @@ export function finishRound(state: GameState): void {
       isBlackjack,
       ...(lossStreak !== undefined ? { lossStreak } : {}),
     }));
-  });
+  }
 
   if (dealer) {
     const dealerResult = dealerNet > 0 ? 'win' : dealerNet < 0 ? 'loss' : 'push';
-    state.playerStore = updatePlayer(state.playerStore, dealer.key, (p) => ({
+    playerStore = updatePlayer(playerStore, dealer.key, (p) => ({
       ...p,
       net: dealerNet,
       result: dealerResult,
     }));
   }
 
-  allPlayers(state.playerStore).forEach((player) => {
-    if (player.turn) state.playerStore = endPlayerTurn(state.playerStore, player.key);
-  });
-  state.gameStatus = GameStatus.RoundOver;
-  state.controllingPlayer = undefined;
-  state.dealerHasControl = false;
+  for (const player of allPlayers(playerStore)) {
+    if (player.turn) playerStore = endPlayerTurn(playerStore, player.key);
+  }
+
+  return {
+    ...state,
+    playerStore,
+    gameStatus: GameStatus.RoundOver,
+    controllingPlayer: undefined,
+    dealerHasControl: false,
+  };
 }
 
-/** Ensure a computer character has an entry in state.botAccounts */
-export function ensureBotAccount(state: GameState, key: PlayerKey): BotAccountState {
-  if (!state.botAccounts) state.botAccounts = defaultBotAccounts();
-  if (!state.botAccounts[key]) {
-    const seatedBank = getPlayer(state.playerStore, key)?.bank ?? STARTING_BANK;
-    state.botAccounts[key] = defaultBotAccount(seatedBank);
-  }
-  return state.botAccounts[key];
+/** Read a computer character's account, falling back to a default anchored at their seated bank */
+export function getBotAccount(state: GameState, key: PlayerKey): BotAccountState {
+  const existing = state.botAccounts?.[key];
+  if (existing) return existing;
+  const seatedBank = getPlayer(state.playerStore, key)?.bank ?? STARTING_BANK;
+  return defaultBotAccount(seatedBank);
+}
+
+/** Update a computer character's account immutably, preserving unchanged slices */
+export function updateBotAccount(
+  state: GameState,
+  key: PlayerKey,
+  updater: (account: BotAccountState) => BotAccountState,
+): GameState {
+  const existing = state.botAccounts?.[key];
+  const base = existing ?? getBotAccount(state, key);
+  const next = updater(base);
+  if (existing && next === existing) return state;
+  return {
+    ...state,
+    botAccounts: {
+      ...(state.botAccounts ?? defaultBotAccounts()),
+      [key]: next,
+    },
+  };
+}
+
+function clearBotWork(account: BotAccountState): BotAccountState {
+  return {
+    bank: account.bank,
+    balanceHistory: account.balanceHistory,
+    ...(account.allowReturn !== undefined ? { allowReturn: account.allowReturn } : {}),
+  };
+}
+
+function withTaskOverride(account: BotAccountState, taskOverride: WorkTaskId | undefined): BotAccountState {
+  return {
+    bank: account.bank,
+    balanceHistory: account.balanceHistory,
+    ...(account.work ? { work: account.work } : {}),
+    ...(taskOverride !== undefined ? { taskOverride } : {}),
+    ...(account.allowReturn !== undefined ? { allowReturn: account.allowReturn } : {}),
+  };
 }
 
 /** Copy a computer character's bank and away-working flags onto their seat at the table, if seated */
-export function syncSeatWithAccount(state: GameState, key: PlayerKey): void {
+export function syncSeatWithAccount(state: GameState, key: PlayerKey): GameState {
   const player = getPlayer(state.playerStore, key);
   const account = state.botAccounts?.[key];
-  if (!player || !isBot(player) || !account) return;
-  state.playerStore = updatePlayer(state.playerStore, key, (p) => ({
-    ...p,
-    bank: account.bank,
-    isSittingOut: !!account.work,
-    awayTask: account.work?.taskId,
-    isReadyToReturn: account.work?.status === 'ready',
-  }));
+  if (!player || !isBot(player) || !account) return state;
+
+  const isSittingOut = !!account.work;
+  const awayTask = account.work?.taskId;
+  const isReadyToReturn = account.work?.status === 'ready';
+  if (
+    player.bank === account.bank
+    && player.isSittingOut === isSittingOut
+    && player.awayTask === awayTask
+    && player.isReadyToReturn === isReadyToReturn
+  ) {
+    return state;
+  }
+
+  return {
+    ...state,
+    playerStore: updatePlayer(state.playerStore, key, (p) => ({
+      ...p,
+      bank: account.bank,
+      isSittingOut,
+      awayTask,
+      isReadyToReturn,
+    })),
+  };
 }
 
 /**
  * Advance every away character's work by one day (24 hours = one hand).
  * Runs for all computer characters, whether or not they are currently in the roster.
  */
-export function advanceWork(state: GameState): void {
+export function advanceWork(state: GameState): GameState {
+  let next = state;
   for (const bot of BOTS) {
-    const account = ensureBotAccount(state, bot.id);
+    next = updateBotAccount(next, bot.id, (acc) => acc);
+    const account = next.botAccounts[bot.id];
     if (!account.work) continue;
 
     if (account.work.status === 'ready') {
       if (account.allowReturn) {
-        account.work = undefined;
-        account.taskOverride = undefined;
-        syncSeatWithAccount(state, bot.id);
-        recordActivity(state, bot.name, `returned to the table with $${account.bank}`, 'work');
+        const bank = account.bank;
+        next = updateBotAccount(next, bot.id, clearBotWork);
+        next = syncSeatWithAccount(next, bot.id);
+        next = recordActivity(next, bot.name, `returned to the table with $${bank}`, 'work');
       } else {
-        syncSeatWithAccount(state, bot.id);
+        next = syncSeatWithAccount(next, bot.id);
       }
       continue;
     }
 
-    account.work.daysWorked += 1;
     const task = getWorkTask(account.work.taskId);
-    if (account.work.daysWorked < task.days) {
-      syncSeatWithAccount(state, bot.id);
+    const daysWorked = account.work.daysWorked + 1;
+    if (daysWorked < task.days) {
+      next = updateBotAccount(next, bot.id, (acc) => ({
+        ...acc,
+        work: { status: 'working', taskId: task.id, daysWorked },
+      }));
+      next = syncSeatWithAccount(next, bot.id);
       continue;
     }
 
     // Payday: the task is finished
-    account.bank += task.pay;
-    account.balanceHistory = appendBalance(account.balanceHistory, account.bank);
-    recordActivity(state, bot.name, `finished ${task.label.toLowerCase()} and earned $${task.pay}`, 'work', { amount: task.pay });
+    const paidBank = account.bank + task.pay;
+    next = updateBotAccount(next, bot.id, (acc) => ({
+      ...acc,
+      bank: paidBank,
+      balanceHistory: appendBalance(acc.balanceHistory, paidBank),
+    }));
+    next = recordActivity(next, bot.name, `finished ${task.label.toLowerCase()} and earned $${task.pay}`, 'work', { amount: task.pay });
 
-    const threshold = returnThreshold(bot.stats, state.minimumBet);
-    if (account.bank >= threshold) {
+    const threshold = returnThreshold(bot.stats, next.minimumBet);
+    if (paidBank >= threshold) {
       if (account.allowReturn) {
-        account.work = undefined;
-        account.taskOverride = undefined;
-        recordActivity(state, bot.name, `returned to the table with $${account.bank}`, 'work');
+        next = updateBotAccount(next, bot.id, clearBotWork);
+        next = recordActivity(next, bot.name, `returned to the table with $${paidBank}`, 'work');
       } else {
-        account.work = { status: 'ready', taskId: task.id, daysWorked: task.days };
-        recordActivity(state, bot.name, `has $${account.bank} and wants back in`, 'work');
+        next = updateBotAccount(next, bot.id, (acc) => ({
+          ...acc,
+          work: { status: 'ready', taskId: task.id, daysWorked: task.days },
+        }));
+        next = recordActivity(next, bot.name, `has $${paidBank} and wants back in`, 'work');
       }
     } else {
-      const nextTaskId = account.taskOverride ?? chooseTask(bot.stats, account.bank, threshold);
+      const nextTaskId = account.taskOverride ?? chooseTask(bot.stats, paidBank, threshold);
       const nextTask = getWorkTask(nextTaskId);
-      account.work = { status: 'working', taskId: nextTaskId, daysWorked: 0 };
-      recordActivity(state, bot.name, `started ${nextTask.label.toLowerCase()}`, 'work');
+      next = updateBotAccount(next, bot.id, (acc) => ({
+        ...acc,
+        work: { status: 'working', taskId: nextTaskId, daysWorked: 0 },
+      }));
+      next = recordActivity(next, bot.name, `started ${nextTask.label.toLowerCase()}`, 'work');
     }
 
-    syncSeatWithAccount(state, bot.id);
+    next = syncSeatWithAccount(next, bot.id);
   }
+  return next;
 }
 
 /**
@@ -406,56 +484,81 @@ export function advanceWork(state: GameState): void {
  * to work; the human always plays, staked or not. Computer players then add wagers
  * according to their aggression.
  */
-export function collectAntes(state: GameState, rng: () => number = () => Math.random()): void {
-  advanceWork(state);
+export function collectAntes(state: GameState, rng: () => number = () => Math.random()): GameState {
+  let next = advanceWork(state);
 
-  playerSeats(state).forEach((player) => {
+  for (const player of playerSeats(next)) {
     if (isBot(player)) {
-      const account = ensureBotAccount(state, player.key);
+      const currentBank = player.bank;
       // Keep the account bank aligned if the seat's bank was set directly
-      account.bank = player.bank;
+      next = updateBotAccount(next, player.key, (acc) => (
+        acc.bank === currentBank ? acc : { ...acc, bank: currentBank }
+      ));
+      const account = next.botAccounts[player.key];
       if (account.work) {
-        syncSeatWithAccount(state, player.key);
-        return;
+        next = syncSeatWithAccount(next, player.key);
+        continue;
       }
     }
 
     if (player.isSittingOut && !isBot(player)) {
-      recordActivity(state, player.title, 'sat out', 'ante');
-      return;
+      next = recordActivity(next, player.title, 'sat out', 'ante');
+      continue;
     }
-    const { store, paid } = antePlayer(state.playerStore, player.key, state.minimumBet);
-    if (paid) {
-      state.playerStore = updatePlayer(store, player.key, (p) => ({ ...p, isSittingOut: false }));
-      state.pot += state.minimumBet;
-      if (isBot(player)) ensureBotAccount(state, player.key).bank = getPlayer(state.playerStore, player.key)!.bank;
-      recordActivity(state, player.title, `anted $${state.minimumBet}`, 'ante', { amount: -state.minimumBet });
-    } else if (isBot(player)) {
-      const account = ensureBotAccount(state, player.key);
-      account.bank = player.bank;
-      const stats = getCharacter(player.key)?.stats;
-      const threshold = returnThreshold(stats, state.minimumBet);
-      const taskId = account.taskOverride ?? chooseTask(stats, account.bank, threshold);
-      const task = getWorkTask(taskId);
-      account.work = { status: 'working', taskId, daysWorked: 0 };
-      syncSeatWithAccount(state, player.key);
-      recordActivity(state, player.title, `left to work: ${task.label.toLowerCase()}`, 'work');
-    }
-  });
 
-  playerSeats(state).filter((player) => isBot(player) && !player.isSittingOut).forEach((player) => {
+    const { store, paid } = antePlayer(next.playerStore, player.key, next.minimumBet);
+    if (paid) {
+      const playerStore = updatePlayer(store, player.key, (p) => ({ ...p, isSittingOut: false }));
+      next = {
+        ...next,
+        playerStore,
+        pot: next.pot + next.minimumBet,
+      };
+      if (isBot(player)) {
+        const updatedBank = getPlayer(next.playerStore, player.key)!.bank;
+        next = updateBotAccount(next, player.key, (acc) => (
+          acc.bank === updatedBank ? acc : { ...acc, bank: updatedBank }
+        ));
+      }
+      next = recordActivity(next, player.title, `anted $${next.minimumBet}`, 'ante', { amount: -next.minimumBet });
+    } else if (isBot(player)) {
+      const currentBank = player.bank;
+      const existingAccount = next.botAccounts[player.key];
+      const stats = getCharacter(player.key)?.stats;
+      const threshold = returnThreshold(stats, next.minimumBet);
+      const taskId = existingAccount.taskOverride ?? chooseTask(stats, currentBank, threshold);
+      const task = getWorkTask(taskId);
+      next = updateBotAccount(next, player.key, (acc) => ({
+        ...acc,
+        bank: currentBank,
+        work: { status: 'working', taskId, daysWorked: 0 },
+      }));
+      next = syncSeatWithAccount(next, player.key);
+      next = recordActivity(next, player.title, `left to work: ${task.label.toLowerCase()}`, 'work');
+    }
+  }
+
+  for (const player of playerSeats(next).filter((p) => isBot(p) && !p.isSittingOut)) {
     const stats = getCharacter(player.key)?.stats;
-    if (!stats) return;
+    if (!stats) continue;
     const count = botWagerCount(stats, player.lossStreak, rng);
     for (let i = 0; i < count; i++) {
-      const { store, paid } = betPlayer(state.playerStore, player.key, state.minimumBet);
+      const { store, paid } = betPlayer(next.playerStore, player.key, next.minimumBet);
       if (!paid) break;
-      state.playerStore = store;
-      state.pot += state.minimumBet;
-      ensureBotAccount(state, player.key).bank = getPlayer(state.playerStore, player.key)!.bank;
-      recordActivity(state, player.title, `wagered $${state.minimumBet}`, 'bet', { amount: -state.minimumBet });
+      const updatedBank = getPlayer(store, player.key)!.bank;
+      next = {
+        ...next,
+        playerStore: store,
+        pot: next.pot + next.minimumBet,
+      };
+      next = updateBotAccount(next, player.key, (acc) => (
+        acc.bank === updatedBank ? acc : { ...acc, bank: updatedBank }
+      ));
+      next = recordActivity(next, player.title, `wagered $${next.minimumBet}`, 'bet', { amount: -next.minimumBet });
     }
-  });
+  }
+
+  return next;
 }
 
 /**
@@ -467,55 +570,66 @@ export function configureCharacterWork(
   state: GameState,
   playerKey: PlayerKey,
   options: { taskOverride?: WorkTaskId | null; allowReturn?: boolean },
-): void {
-  if (!isBotId(playerKey)) return;
-  const account = ensureBotAccount(state, playerKey);
+): GameState {
+  if (!isBotId(playerKey)) return state;
+  let next = updateBotAccount(state, playerKey, (acc) => acc);
   const character = getCharacter(playerKey);
 
   if (options.taskOverride !== undefined) {
-    account.taskOverride = options.taskOverride === null ? undefined : options.taskOverride;
+    const nextOverride = options.taskOverride === null ? undefined : options.taskOverride;
+    next = updateBotAccount(next, playerKey, (acc) => withTaskOverride(acc, nextOverride));
+    const account = getBotAccount(next, playerKey);
     if (account.work?.status === 'working') {
-      const threshold = returnThreshold(character?.stats, state.minimumBet);
+      const threshold = returnThreshold(character?.stats, next.minimumBet);
       const chosen = account.taskOverride ?? chooseTask(character?.stats, account.bank, threshold);
       if (chosen !== account.work.taskId) {
-        account.work = { status: 'working', taskId: chosen, daysWorked: 0 };
+        next = updateBotAccount(next, playerKey, (acc) => ({
+          ...acc,
+          work: { status: 'working', taskId: chosen, daysWorked: 0 },
+        }));
         const task = getWorkTask(chosen);
-        recordActivity(state, character?.name ?? playerKey, `switched work to ${task.label.toLowerCase()}`, 'work');
+        next = recordActivity(next, character?.name ?? playerKey, `switched work to ${task.label.toLowerCase()}`, 'work');
       }
     }
   }
 
   if (options.allowReturn !== undefined) {
-    account.allowReturn = options.allowReturn;
-    if (account.allowReturn && account.work?.status === 'ready' && (state.gameStatus === GameStatus.Init || isBetweenHands(state))) {
-      account.work = undefined;
-      account.taskOverride = undefined;
-      recordActivity(state, character?.name ?? playerKey, `returned to the table with $${account.bank}`, 'work');
+    const allowReturn = options.allowReturn;
+    next = updateBotAccount(next, playerKey, (acc) => ({ ...acc, allowReturn }));
+    const account = getBotAccount(next, playerKey);
+    if (account.allowReturn && account.work?.status === 'ready' && (next.gameStatus === GameStatus.Init || isBetweenHands(next))) {
+      const bank = account.bank;
+      next = updateBotAccount(next, playerKey, clearBotWork);
+      next = recordActivity(next, character?.name ?? playerKey, `returned to the table with $${bank}`, 'work');
     }
   }
 
-  syncSeatWithAccount(state, playerKey);
+  return syncSeatWithAccount(next, playerKey);
 }
 
 /**
  * Mid-round, when the deck cannot cover a draw: shuffle every card that is not
  * in someone's hand into a fresh deck, so play can carry on.
  */
-export function refillDeck(state: GameState, rng: () => number = () => Math.random()): void {
-  state.deck = refillDeckCards(state.deck, Number(state.tableRules.numberOfDecks), rng);
-  recordActivity(state, '', 'Deck shuffled', 'shuffle');
+export function refillDeck(state: GameState, rng: () => number = () => Math.random()): GameState {
+  return recordActivity({
+    ...state,
+    deck: refillDeckCards(state.deck, Number(state.tableRules.numberOfDecks), rng),
+  }, '', 'Deck shuffled', 'shuffle');
 }
 
 /** Cards each seat may need in a round; the deck is rebuilt when fewer remain */
 const CARDS_PER_SEAT = 6;
 
 /** Rebuild and shuffle the deck between rounds when it is running low */
-export function reshuffleIfLow(state: GameState, rng: () => number = () => Math.random()): void {
+export function reshuffleIfLow(state: GameState, rng: () => number = () => Math.random()): GameState {
   const players = allPlayers(state.playerStore);
   const numberOfDecks = Number(state.tableRules.numberOfDecks);
-  if (state.deck.cardKeys.length >= players.length * CARDS_PER_SEAT * numberOfDecks) return;
-  state.deck = syncDeckHands(createDeck(numberOfDecks, rng), players.map((player) => player.key));
-  recordActivity(state, '', 'Deck shuffled', 'shuffle');
+  if (state.deck.cardKeys.length >= players.length * CARDS_PER_SEAT * numberOfDecks) return state;
+  return recordActivity({
+    ...state,
+    deck: syncDeckHands(createDeck(numberOfDecks, rng), players.map((player) => player.key)),
+  }, '', 'Deck shuffled', 'shuffle');
 }
 
 /** True between hands: the round is over and has been settled */
@@ -532,19 +646,33 @@ export const rosterSignature = (seats: { key: PlayerKey }[]): string => seats.ma
  * are removed, and new seats join with their persistent bank (for computer characters)
  * or a fresh bank. Seating follows the roster order.
  */
-export function applyRoster(state: GameState, seats: IPlayerOptions[], botAccounts?: Record<string, BotAccountState>): void {
-  if (!isBetweenHands(state) || seats.length === 0) return;
+export function applyRoster(
+  state: GameState,
+  seats: IPlayerOptions[],
+  botAccounts?: Record<string, BotAccountState>,
+): GameState {
+  if (!isBetweenHands(state) || seats.length === 0) return state;
+
+  let next = state;
   if (botAccounts) {
+    let updatedAccounts: Record<string, BotAccountState> | undefined;
     for (const [id, incoming] of Object.entries(botAccounts)) {
-      if (!state.botAccounts[id]) state.botAccounts[id] = cloneBotAccount(incoming);
+      if (!next.botAccounts[id]) {
+        updatedAccounts ??= { ...next.botAccounts };
+        updatedAccounts[id] = cloneBotAccount(incoming);
+      }
+    }
+    if (updatedAccounts) {
+      next = { ...next, botAccounts: updatedAccounts };
     }
   }
-  if (rosterSignature(seats) === rosterSignature(allPlayers(state.playerStore))) return;
 
-  const previous = state.playerStore.players;
+  if (rosterSignature(seats) === rosterSignature(allPlayers(next.playerStore))) return next;
+
+  const previous = next.playerStore.players;
   const enrichedSeats = seats.map((seat) => {
     if (previous[seat.key]) return seat;
-    const account = isBotId(seat.key) ? state.botAccounts[seat.key] : undefined;
+    const account = isBotId(seat.key) ? next.botAccounts[seat.key] : undefined;
     return account ? {
       ...seat,
       bank: account.bank,
@@ -553,18 +681,24 @@ export function applyRoster(state: GameState, seats: IPlayerOptions[], botAccoun
       isReadyToReturn: account.work?.status === 'ready',
     } : seat;
   });
-  const store = replaceRoster(state.playerStore, enrichedSeats);
+  const store = replaceRoster(next.playerStore, enrichedSeats);
 
   const joined = seats.filter((seat) => !previous[seat.key]).map((seat) => seat.title);
   const left = Object.values(previous).filter((player) => !store.players[player.key]).map((player) => player.title);
 
-  state.deck = syncDeckHands(state.deck, seats.map((seat) => seat.key));
+  const deck = syncDeckHands(next.deck, seats.map((seat) => seat.key));
+  const controllingPlayer = next.controllingPlayer && !store.players[next.controllingPlayer] ? undefined : next.controllingPlayer;
+  const winner = next.winner && !store.players[next.winner] ? undefined : next.winner;
+  const loser = next.loser && !store.players[next.loser] ? undefined : next.loser;
 
-  state.playerStore = store;
-  if (state.controllingPlayer && !store.players[state.controllingPlayer]) state.controllingPlayer = undefined;
-  if (state.winner && !store.players[state.winner]) state.winner = undefined;
-  if (state.loser && !store.players[state.loser]) state.loser = undefined;
   const changes = [joined.length ? `${joined.join(', ')} joined` : '', left.length ? `${left.join(', ')} left` : ''].filter(Boolean);
-  recordActivity(state, '', `Players changed: ${changes.join('; ') || 'seating order'}`, 'round');
+  return recordActivity({
+    ...next,
+    deck,
+    playerStore: store,
+    controllingPlayer,
+    winner,
+    loser,
+  }, '', `Players changed: ${changes.join('; ') || 'seating order'}`, 'round');
 }
 

@@ -112,7 +112,7 @@ export function simulateHistory(options: SimulationOptions): SimulationResult {
           }
         });
         // the log is not needed here, and copying a long one on every action is slow
-        state.activityLog = [];
+        state = { ...state, activityLog: [] };
         played += 1;
         if (played % 500 === 0) onProgress?.(played);
       }
