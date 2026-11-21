@@ -36,16 +36,16 @@ it('changes the theme, accent, card style and card back from the Appearance sect
     return '';
   };
   const shell = () => document.querySelector('[data-theme-mode]') as HTMLElement;
-  expect(shell()).toHaveAttribute('data-theme-mode', 'light');
-  expect(themeVariable('--colorBrandBackground')).toBe(brandPresets.blue.ramp[80]);
-
-  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-  fireEvent.click(screen.getByRole('radio', { name: 'Dark' }));
   expect(shell()).toHaveAttribute('data-theme-mode', 'dark');
   expect(themeVariable('--colorNeutralBackground1')).toBe(webDarkTheme.colorNeutralBackground1);
 
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'Light' }));
+  expect(shell()).toHaveAttribute('data-theme-mode', 'light');
+  expect(themeVariable('--colorBrandBackground')).toBe(brandPresets.blue.ramp[80]);
+
   fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Accent color' })).getByRole('radio', { name: 'Teal' }));
-  expect(themeVariable('--colorBrandBackground')).toBe(createAppTheme('dark', 'teal').colorBrandBackground);
+  expect(themeVariable('--colorBrandBackground')).toBe(createAppTheme('light', 'teal').colorBrandBackground);
   expect(shell()).toHaveAttribute('data-accent', 'teal');
 
   fireEvent.click(screen.getByRole('combobox', { name: 'Card style' }));
@@ -67,10 +67,10 @@ it('changes the theme, accent, card style and card back from the Appearance sect
   first.unmount();
 
   render(<App />);
-  expect(shell()).toHaveAttribute('data-theme-mode', 'dark');
+  expect(shell()).toHaveAttribute('data-theme-mode', 'light');
   expect(shell()).toHaveAttribute('data-accent', 'teal');
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-  expect(screen.getByRole('radio', { name: 'Dark' })).toBeChecked();
+  expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked();
   expect(screen.getByRole('radio', { name: 'Stripes' })).toBeChecked();
   expect(within(screen.getByRole('radiogroup', { name: 'Accent color' })).getByRole('radio', { name: 'Teal' })).toBeChecked();
 });
@@ -151,8 +151,8 @@ it('resets only the appearance settings', () => {
   expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'highContrast');
 
   fireEvent.click(screen.getByRole('button', { name: 'Reset appearance' }));
-  expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'light');
-  expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked();
+  expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'dark');
+  expect(screen.getByRole('radio', { name: 'Dark' })).toBeChecked();
   expect(screen.getByRole('radio', { name: 'Rings' })).toBeChecked();
   expect(screen.getByRole('switch', { name: 'Open Activity Log by default' })).toBeChecked();
 });
