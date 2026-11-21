@@ -1,9 +1,9 @@
-import { PlayingCardDeck } from "../classes/PlayingCardDeck";
 import { createGameState } from "../context/GameContext";
 import { settingDefaults } from "../context/SettingContext";
 import { StoreName } from "../enums";
 import { IPlayerStoreState } from "../interfaces";
 import { DeckState, GameState, ProfileState, SavedGame, SavedGameSnapshot, SettingKey, SettingsState, defaultTableRules, isTableRules, settingOptions, tableRulesFrom } from "../types";
+import { restoreDeckState } from "./deck";
 import { createPlayerStore, playerStoreSnapshot } from "./playerStore";
 import { defaultProfileState, normalizeProfileState } from "./profiles";
 
@@ -73,7 +73,7 @@ export function gameSnapshot(state: GameState, { maxActivity }: { maxActivity?: 
     ? state.activityLog.slice(-maxActivity)
     : state.activityLog;
   return {
-    deck: state.deck.state,
+    deck: state.deck,
     players: playerStoreSnapshot(state.playerStore),
     game: {
       version: GAME_STORE_VERSION,
@@ -111,7 +111,7 @@ export function restoreGameState(snapshot: unknown): GameState | undefined {
       ...saved,
       activityLog: saved.activityLog.slice(-MAX_SAVED_ACTIVITY),
       tableRules,
-      deck: new PlayingCardDeck(deck, Number(tableRules.numberOfDecks)),
+      deck: restoreDeckState(deck),
       playerStore: createPlayerStore(players),
     };
   } catch {

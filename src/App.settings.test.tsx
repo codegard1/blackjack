@@ -2,10 +2,24 @@ import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { webDarkTheme } from '@fluentui/react-components';
-import { PlayingCardDeck } from './classes/PlayingCardDeck';
+import { dealCards, drawCards, emptyHand } from './functions/deck';
+import { handValue } from './functions/getHandValue';
+import { DeckState } from './types';
 import { brandPresets, createAppTheme } from './theme';
 import App from './App';
 import { StoreName } from './enums';
+
+vi.mock('./functions/deck', { spy: true });
+
+const rigDeal = (hands: Record<string, string[]>) =>
+  (deck: DeckState, _count?: number, keys?: readonly string[]): DeckState => {
+    const playerHands = { ...deck.playerHands };
+    for (const [key, cards] of Object.entries(hands)) {
+      if (keys && !keys.includes(key)) continue;
+      playerHands[key] = { ...(playerHands[key] ?? emptyHand()), cards: [...cards], handValue: handValue(cards) };
+    }
+    return { ...deck, playerHands };
+  };
 
 afterEach(() => {
   vi.useRealTimers();
@@ -17,10 +31,10 @@ const finishResults = () => act(() => { vi.advanceTimersByTime(10_000); });
 
 it('changes the theme, accent, card style and card back from the Appearance section and remembers them', () => {
   // neither hand is a natural, so the round stays in play and the dealer's hole card stays face down
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_7'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
   const first = render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   // FluentProvider writes the theme as CSS variables into a style sheet rule for its class
@@ -76,16 +90,10 @@ it('changes the theme, accent, card style and card back from the Appearance sect
 });
 
 it.each(['Next hand', 'Options Deal'])('defers table rules through a reload until %s', (dealFrom) => {
-  vi.spyOn(PlayingCardDeck.prototype, 'deal')
-    .mockImplementationOnce(function (this: PlayingCardDeck) {
-      this.playerHands.chris.cards = ['Spade_10', 'Diamond_9'];
-      this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-    })
-    .mockImplementation(function (this: PlayingCardDeck) {
-      this.playerHands.chris.cards = ['Spade_10', 'Diamond_14_2'];
-      this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-    });
-  vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
+  vi.mocked(dealCards)
+    .mockImplementationOnce(rigDeal({ chris: ['Spade_10', 'Diamond_9'], dealer: ['Club_10', 'Heart_7'] }))
+    .mockImplementation(rigDeal({ chris: ['Spade_10', 'Diamond_14_2'], dealer: ['Club_10', 'Heart_7'] }));
+  vi.mocked(drawCards).mockImplementation((deck) => ({ deck, drawn: ['Heart_5'] }));
   const first = render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
@@ -187,10 +195,10 @@ it('opens and closes the in-app blackjack rules from the header', () => {
 
 it('shows strategy hints once they are switched on in Options, and remembers the choice', () => {
   // chris holds 16 against the dealer's 6 (the dealer's first card is the hole card)
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_10', 'Diamond_6'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_6'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_6'],
+    dealer: ['Club_10', 'Heart_6'],
+  }));
   const hint = () => screen.queryByText('Hint: Hard 16 vs dealer 6: stay');
   const first = render(<App />);
 
@@ -207,7 +215,7 @@ it('shows strategy hints once they are switched on in Options, and remembers the
   expect(first.container.querySelector('[data-hint]')).toBe(screen.getByRole('button', { name: 'Stay' }));
 
   // the hint follows the hand: a four makes 20, which stays
-  vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_4']);
+  vi.mocked(drawCards).mockImplementation((deck) => ({ deck, drawn: ['Heart_4'] }));
   fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
   expect(hint()).not.toBeInTheDocument();
   expect(screen.getByText('Hint: Hard 20 vs dealer 6: stay')).toBeInTheDocument();

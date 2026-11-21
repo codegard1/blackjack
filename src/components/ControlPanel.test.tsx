@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createGameState, GameContext, GameDispatchContext, PotAnimationContext, SettingContext, settingDefaults } from '../context';
 import { GameAction, GameStatus } from '../enums';
+import { updateHand } from '../functions/deck';
 import { gameReducer } from '../functions/gameReducer';
 import { antePlayer, setCurrentPlayer, updatePlayer } from '../functions/playerStore';
 import { ControlPanel } from './ControlPanel';
@@ -18,7 +19,7 @@ const renderControls = (gameStatus: GameStatus, currentPlayerKey: string, chrisC
     playerKeys: ['chris', 'dealer'],
   });
   state.playerStore = setCurrentPlayer(antePlayer(state.playerStore, 'chris', state.minimumBet).store, currentPlayerKey);
-  state.deck.playerHands.chris.cards = chrisCards;
+  state.deck = updateHand(state.deck, 'chris', 0, (h) => ({ ...h, cards: chrisCards }));
   state.gameStatus = gameStatus;
   const dispatch = vi.fn();
   render(
@@ -266,8 +267,8 @@ describe('strategy hints', () => {
     const { hints = true, currentPlayerKey = 'chris', dealerSoft17 = 'stand', numberOfDecks = '1' } = options;
     const state = gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] });
     state.playerStore = setCurrentPlayer(antePlayer(state.playerStore, 'chris', state.minimumBet).store, currentPlayerKey);
-    state.deck.playerHands.chris.cards = chrisCards;
-    state.deck.playerHands.dealer.cards = ['Spade_13', dealerUp];
+    state.deck = updateHand(state.deck, 'chris', 0, (h) => ({ ...h, cards: chrisCards }));
+    state.deck = updateHand(state.deck, 'dealer', 0, (h) => ({ ...h, cards: ['Spade_13', dealerUp] }));
     state.gameStatus = GameStatus.InProgress;
     state.tableRules = { ...state.tableRules, dealerSoft17, numberOfDecks };
     return render(

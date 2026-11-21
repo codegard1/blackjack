@@ -8,8 +8,6 @@ export * from './IPlayerContainerProps';
 export * from './IPlayerOpts';
 export * from './IPlayerStore';
 export * from './IProfileAction';
-export * from './IPlayingCard';
-export * from './IPlayingCardDeck';
 export * from './IPlayingCardSort';
 export * from './IPlayingCardSuit';
 export * from './ISettingReducerAction';

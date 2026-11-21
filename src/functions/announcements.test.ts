@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createGameState } from '../context';
 import { GameAction, GameStatus } from '../enums';
+import { appendCardsToHand } from './deck';
 import { gameReducer } from './gameReducer';
 import { GameSnapshot, PlayerSnapshot } from '../types';
 import { diffAnnouncements, snapshotGame } from './announcements';
@@ -220,8 +221,7 @@ describe('diffAnnouncements', () => {
     }];
     const before = snapshotGame(state);
 
-    state.deck.hand('chris', 1)?.cards.push('Spade_10');
-    state.deck.updateHandValue('chris', 1);
+    state.deck = appendCardsToHand(state.deck, 'chris', ['Spade_10'], 1);
     const after = snapshotGame(state);
 
     expect(after.players.find((player) => player.key === 'chris')).toMatchObject({

@@ -1,6 +1,7 @@
 import { GameStatus } from "../enums";
 import { Announcement, GameSnapshot, GameState, PlayerSnapshot, WagerSnapshot } from "../types";
 import { formatCardName } from "./cards";
+import { getPlayerHand, getPlayerHandValue } from "./deck";
 import { allPlayers } from "./playerStore";
 import { roleOf } from "./round";
 import { isRoundOver } from "./seatStatus";
@@ -29,7 +30,7 @@ export function snapshotGame(state: GameState): GameSnapshot {
     controllingPlayer: state.controllingPlayer,
     players: allPlayers(state.playerStore).map((player): PlayerSnapshot => {
       const handIndex = state.controllingPlayer === player.key ? state.activeHandIndex : 0;
-      const hand = state.deck.hand(player.key, handIndex);
+      const hand = getPlayerHand(state.deck, player.key, handIndex);
       return {
         key: player.key,
         title: player.title,
@@ -37,7 +38,7 @@ export function snapshotGame(state: GameState): GameSnapshot {
         role: roleOf(player) ?? 'human',
         cardCount: hand?.cards.length ?? 0,
         cards: (hand?.cards ?? []).map((card) => formatCardName(card)),
-        total: hand ? state.deck.getHandValue(player.key, handIndex).highest : 0,
+        total: hand ? getPlayerHandValue(state.deck, player.key, handIndex).highest : 0,
         isBusted: !!player.isBusted,
         isStaying: !!player.isStaying,
         isBlackjack: !!player.isBlackjack,

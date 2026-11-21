@@ -2,6 +2,7 @@ import { GameStatus } from "../enums";
 import { IPlayer } from "../interfaces";
 import { GameState } from "../types";
 import { recordActivity } from "./activity";
+import { getPlayerHands, updateHand } from "./deck";
 import { advancePlayer, allPlayers, payoutPlayer, updatePlayerStats } from "./playerStore";
 import { collectAntes, isDealer, netFor, roundStake } from "./round";
 
@@ -38,11 +39,12 @@ function settleRound(state: GameState): void {
   if (state.gameStatusFlag) return;
 
   allPlayers(state.playerStore).filter((player) => !isDealer(player)).forEach((player) => {
-    state.deck.getHands(player.key).forEach((hand, index) => {
+    const hands = getPlayerHands(state.deck, player.key);
+    hands.forEach((hand, index) => {
       if (!hand.result) return;
       const stake = hand.stake ?? roundStake(state, player.key);
       const net = hand.net ?? netFor(hand.result, stake, state.tableRules.blackjackPayout);
-      hand.net = net;
+      state.deck = updateHand(state.deck, player.key, index, (h) => ({ ...h, net }));
       const amount = Math.max(0, stake + net);
       if (amount !== 0) state.playerStore = payoutPlayer(state.playerStore, player.key, amount);
       const handPlayer = {
@@ -52,7 +54,7 @@ function settleRound(state: GameState): void {
         isBlackjack: hand.isBlackjack,
         net,
       };
-      const label = state.deck.getHands(player.key).length > 1 ? `${player.title} (hand ${index + 1})` : player.title;
+      const label = hands.length > 1 ? `${player.title} (hand ${index + 1})` : player.title;
       recordActivity(state, label, describeResult(handPlayer), activityEvent(handPlayer), { amount });
 
       const won = hand.result === 'win' || hand.result === 'blackjack';
@@ -98,13 +100,13 @@ function settleRound(state: GameState): void {
  * @param state Current game state to evaluate.
  * @returns The updated game state.
  */
-export function evaluateGame(state: GameState): GameState {
+export function evaluateGame(state: GameState, rng: () => number = () => Math.random()): GameState {
   switch (state.gameStatus) {
     case GameStatus.InProgress:
       /* First play of a new game: every player antes the minimum */
       if (state.turnCount === 0) {
         state.pot = 0;
-        collectAntes(state);
+        collectAntes(state, rng);
         state.turnCount = 1;
       }
       break;

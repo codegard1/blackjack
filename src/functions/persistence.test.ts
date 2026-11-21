@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GameAction, GameStatus, StoreName } from '../enums';
-import { PlayingCard } from '../classes/PlayingCard';
+import { getPlayerHands } from './deck';
 import { gameReducer } from './gameReducer';
 import { GAME_STORE_VERSION, MAX_SAVED_ACTIVITY, gameSnapshot, loadGameState, loadSettings, restoreGameState, saveGameState, saveSettings } from './persistence';
 import { activePlayerKeys, playerCount } from './playerStore';
@@ -19,13 +19,13 @@ describe('persistence', () => {
     saveSettings({ ...settingDefaults, numberOfDecks: '2', blackjackPayout: '6:5' });
     const restored = loadGameState();
     expect(restored.tableRules).toEqual(tableRules);
-    expect(restored.deck.length).toBe(416);
-    restored.deck.reset();
-    expect(restored.deck.length).toBe(416);
+    expect(restored.deck.cardKeys.length).toBe(416);
+    const refilled = gameReducer({ ...restored, deck: { ...restored.deck, cardKeys: [] } }, { type: GameAction.NewRound });
+    expect(refilled.deck.cardKeys.length).toBe(416);
     expect(loadSettings()).toMatchObject({ numberOfDecks: '2', dealerSoft17: 'stand', blackjackPayout: '6:5' });
     const next = gameReducer(restored, { type: GameAction.NewRound, tableRules: loadSettings() });
     expect(next.tableRules).toEqual({ numberOfDecks: '2', dealerSoft17: 'stand', blackjackPayout: '6:5' });
-    expect(next.deck.length).toBe(104);
+    expect(next.deck.cardKeys.length).toBe(104);
   });
 
   it('keeps only the newest activity log entries in storage, and takes no more than that from it', () => {
@@ -47,7 +47,7 @@ describe('persistence', () => {
 
   it('migrates version-4 saves to default rules without losing the hand', () => {
     const state = startedGame();
-    state.deck.cards = ['Club_7', 'Heart_10', 'Diamond_9', 'Spade_10'].map((key) => new PlayingCard(key));
+    state.deck = { ...state.deck, cardKeys: ['Club_7', 'Heart_10', 'Diamond_9', 'Spade_10'] };
     const snapshot = gameSnapshot(gameReducer(state, { type: GameAction.Deal }));
     const { tableRules, ...oldGame } = snapshot.game;
     const restored = restoreGameState({ ...snapshot, game: { ...oldGame, version: 4 } });
@@ -84,14 +84,13 @@ describe('persistence', () => {
     expect(activePlayerKeys(restored.playerStore)).toEqual(['chris', 'dealer']);
     expect(restored.playerStore.players.chris.bank).toBe(dealt.playerStore.players.chris.bank);
     expect(restored.deck.playerHands.chris.cards).toEqual(dealt.deck.playerHands.chris.cards);
-    expect(restored.deck.length).toBe(dealt.deck.length);
+    expect(restored.deck.cardKeys.length).toBe(dealt.deck.cardKeys.length);
     expect(restored.activityLog).toEqual(dealt.activityLog);
   });
 
   it('restores the active hand and both card stacks mid-split', () => {
     let state = gameReducer(startedGame(), { type: GameAction.EvaluateGame });
-    state.deck.cards = ['Spade_9', 'Spade_10', 'Diamond_7', 'Club_10', 'Heart_8', 'Club_8']
-      .map((key) => new PlayingCard(key));
+    state.deck = { ...state.deck, cardKeys: ['Spade_9', 'Spade_10', 'Diamond_7', 'Club_10', 'Heart_8', 'Club_8'] };
     state = gameReducer(state, { type: GameAction.Deal });
     state = gameReducer(state, { type: GameAction.Split, playerKey: 'chris' });
     state = gameReducer(state, { type: GameAction.Stay, playerKey: 'chris' });
@@ -102,7 +101,7 @@ describe('persistence', () => {
 
     expect(restored.activeHandIndex).toBe(1);
     expect(restored.controllingPlayer).toBe('chris');
-    expect(restored.deck.getHands('chris').map((hand) => hand.cards)).toEqual([
+    expect(getPlayerHands(restored.deck, 'chris').map((hand) => hand.cards)).toEqual([
       ['Club_8', 'Spade_10'],
       ['Heart_8', 'Spade_9'],
     ]);

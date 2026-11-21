@@ -1,14 +1,13 @@
-import { PlayingCardDeck } from "../classes";
 import { GameStatus } from "../enums";
 import { IPlayerStoreState } from "../interfaces";
-import { PlayerKey, TableRules } from "./";
+import { DeckState, PlayerKey, TableRules } from "./";
 
 export type GameState = {
   activityLog: ActivityLogEntry[];
   activeHandIndex: number;
   controllingPlayer?: PlayerKey;
   dealerHasControl: boolean;
-  deck: PlayingCardDeck;
+  deck: DeckState;
   gameStatus: GameStatus;
   gameStatusFlag: boolean;
   isSpinnerVisible: boolean;

@@ -1,6 +1,6 @@
 import { Dispatch, createContext, useContext } from 'react';
-import { PlayingCardDeck } from '../classes';
 import { GameStatus } from '../enums';
+import { createDeck } from '../functions/deck';
 import { createPlayerStore } from '../functions/playerStore';
 import { GameReducerAction } from '../interfaces';
 import { GameState, defaultTableRules } from '../types';
@@ -9,7 +9,7 @@ export const createGameState = (): GameState => ({
   activeHandIndex: 0,
   activityLog: [],
   gameStatus: GameStatus.Init,
-  deck: new PlayingCardDeck(),
+  deck: createDeck(),
   gameStatusFlag: false,
   isSpinnerVisible: false,
   loser: undefined,
