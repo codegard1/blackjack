@@ -19,30 +19,69 @@ import { appendBalance, chooseTask, defaultBotAccount, defaultBotAccounts, getWo
  * then every hand is compared with the dealer's.
  */
 
-/** A seat's role; players saved before roles existed are the human and the dealer */
+/**
+ * A seat's role; players saved before roles existed are the human and the dealer.
+ * @param player - The seat to inspect
+ * @returns The seat's role, or `undefined` when there is no player
+ */
 export function roleOf(player: IPlayer | undefined): PlayerRole | undefined {
   if (!player) return undefined;
   return player.role ?? (player.isNPC ? 'dealer' : 'human');
 }
 
+/**
+ * True when the seat is the dealer.
+ * @param player - The seat to inspect
+ * @returns Whether the seat's role is `dealer`
+ */
 export const isDealer = (player: IPlayer | undefined): boolean => roleOf(player) === 'dealer';
+
+/**
+ * True when the seat is a computer character.
+ * @param player - The seat to inspect
+ * @returns Whether the seat's role is `bot`
+ */
 export const isBot = (player: IPlayer | undefined): boolean => roleOf(player) === 'bot';
+
+/**
+ * True when the seat is the human player.
+ * @param player - The seat to inspect
+ * @returns Whether the seat's role is `human`
+ */
 export const isHuman = (player: IPlayer | undefined): boolean => roleOf(player) === 'human';
 
+/**
+ * The dealer's seat.
+ * @param state - Current game state
+ * @returns The dealer, or `undefined` if none is seated
+ */
 export function getDealer(state: GameState): IPlayer | undefined {
   return allPlayers(state.playerStore).find(isDealer);
 }
 
+/**
+ * The human player's seat.
+ * @param state - Current game state
+ * @returns The human player, or `undefined` if none is seated
+ */
 export function getHuman(state: GameState): IPlayer | undefined {
   return allPlayers(state.playerStore).find(isHuman);
 }
 
-/** Seats that play against the dealer, in turn order */
+/**
+ * Seats that play against the dealer, in turn order.
+ * @param state - Current game state
+ * @returns Every seat except the dealer
+ */
 export function playerSeats(state: GameState): IPlayer[] {
   return allPlayers(state.playerStore).filter((player) => !isDealer(player));
 }
 
-/** Every seat in turn order, the dealer last */
+/**
+ * Every seat in turn order, the dealer last.
+ * @param state - Current game state
+ * @returns Seat keys in turn order
+ */
 export function seatOrder(state: GameState): PlayerKey[] {
   const dealer = getDealer(state);
   return [...playerSeats(state).map((player) => player.key), ...(dealer ? [dealer.key] : [])];
@@ -60,6 +99,7 @@ export function seatOrder(state: GameState): PlayerKey[] {
  * @param inControl the seat whose turn it is, if a hand is in play
  * @param isRoundOver true once every hand has a result
  * @param stillWaiting a seat to keep waiting although the round is over, while its card turns over
+ * @returns The keys of the seats `waiting` above the stage and those that have `played` below it
  */
 export function seatQueues(
   turnOrder: PlayerKey[],
@@ -77,12 +117,22 @@ export function seatQueues(
   };
 }
 
-/** True when the seat was dealt into the current round */
+/**
+ * True when the seat was dealt into the current round.
+ * @param state - Current game state
+ * @param player - The seat to check
+ * @returns Whether the seat is not sitting out and holds at least one card
+ */
 export function hasHand(state: GameState, player: IPlayer): boolean {
   return !player.isSittingOut && getPlayerHands(state.deck, player.key).some((hand) => hand.cards.length > 0);
 }
 
-/** Amount a player has put on the table this round (ante plus wagers). */
+/**
+ * Amount a player has put on the table this round (ante plus wagers).
+ * @param state - Current game state
+ * @param key - Key of the seat
+ * @returns The ante plus total wagers, or 0 for an unknown seat
+ */
 export function roundStake(state: GameState, key: PlayerKey): number {
   const player = getPlayer(state.playerStore, key);
   return (player?.lastAnte ?? 0) + (player?.totalBet ?? 0);
@@ -92,6 +142,10 @@ export function roundStake(state: GameState, key: PlayerKey): number {
  * True when the given player may double down: it is their turn in a live
  * round, they are not the dealer, they hold exactly two cards, and they can
  * cover their stake.
+ * @param state - Current game state
+ * @param playerKey - Key of the seat asking to double down
+ * @param handIndex - Which of the seat's hands to check; defaults to the active hand
+ * @returns Whether doubling down is allowed
  */
 export function canDoubleDown(state: GameState, playerKey: PlayerKey, handIndex = state.activeHandIndex): boolean {
   const player = getPlayer(state.playerStore, playerKey);
@@ -107,7 +161,13 @@ export function canDoubleDown(state: GameState, playerKey: PlayerKey, handIndex 
     && player.bank >= stake;
 }
 
-/** A split is allowed once, on a same-rank pair, when the player can match the stake. */
+/**
+ * A split is allowed once, on a same-rank pair, when the player can match the stake.
+ * @param state - Current game state
+ * @param playerKey - Key of the seat asking to split
+ * @param handIndex - Which of the seat's hands to check; must be the active hand
+ * @returns Whether splitting is allowed
+ */
 export function canSplit(state: GameState, playerKey: PlayerKey, handIndex = state.activeHandIndex): boolean {
   const player = getPlayer(state.playerStore, playerKey);
   const hand = getPlayerHand(state.deck, playerKey, handIndex);
@@ -123,6 +183,11 @@ export function canSplit(state: GameState, playerKey: PlayerKey, handIndex = sta
  * The move for the computer seat in control. The dealer follows the active
  * table rules; a computer character plays to its stats, against the
  * dealer's face-up card.
+ * @param state - Current game state
+ * @param key - Key of the computer seat in control
+ * @param rng - Random source for the character's decisions
+ * @param handIndex - Which of the seat's hands to play; defaults to the active hand
+ * @returns The chosen move
  */
 export function decideSeatMove(state: GameState, key: PlayerKey, rng: Rng = Math.random, handIndex = state.activeHandIndex): BotMove {
   const player = getPlayer(state.playerStore, key);
@@ -145,7 +210,12 @@ export function decideSeatMove(state: GameState, key: PlayerKey, rng: Rng = Math
   });
 }
 
-/** Hand control to a seat */
+/**
+ * Hand control to a seat, ending the previous seat's turn and starting the new one.
+ * @param state - Current game state
+ * @param key - Key of the seat to take control
+ * @returns A new state with that seat in control
+ */
 export function setControl(state: GameState, key: PlayerKey): GameState {
   let playerStore = state.playerStore;
   const previous = state.controllingPlayer;
@@ -161,7 +231,13 @@ export function setControl(state: GameState, key: PlayerKey): GameState {
   };
 }
 
-/** A seat that still has to play its hand */
+/**
+ * Index of the seat's next hand that still has to play.
+ * @param state - Current game state
+ * @param player - The seat to search
+ * @param fromIndex - First hand index to consider
+ * @returns The hand index, or -1 if no hand is left to play
+ */
 function playableHandIndex(state: GameState, player: IPlayer, fromIndex = 0): number {
   return getPlayerHands(state.deck, player.key).findIndex((hand, index) => index >= fromIndex
     && hand.cards.length > 0 && !hand.result && !hand.isStaying && !hand.isBusted);
@@ -172,6 +248,10 @@ function playableHandIndex(state: GameState, player: IPlayer, fromIndex = 0): nu
  * (or from the first seat when omitted). When every seat is done, the dealer
  * plays if any hand is still waiting on the dealer's total; otherwise the
  * round ends without the dealer drawing.
+ * @param state - Current game state
+ * @param fromKey - Seat that just played; omit to start from the first seat
+ * @param fromHandIndex - Hand that just played; the seat's later hands are tried first
+ * @returns A new state with the next seat in control, or the settled state if the round ended
  */
 export function advanceTurn(state: GameState, fromKey?: PlayerKey, fromHandIndex = state.activeHandIndex): GameState {
   const seats = playerSeats(state);
@@ -203,6 +283,8 @@ export function advanceTurn(state: GameState, fromKey?: PlayerKey, fromHandIndex
  * After the deal, flag natural blackjacks. A dealer natural ends the round at
  * once: player naturals push and every other hand loses. Otherwise a player
  * natural wins the table's blackjack payout and that seat skips its turn.
+ * @param state - Current game state, just after the deal
+ * @returns A new state with naturals flagged, either ended or advanced to the first turn
  */
 export function resolveNaturals(state: GameState): GameState {
   let playerStore = state.playerStore;
@@ -250,6 +332,8 @@ export function resolveNaturals(state: GameState): GameState {
 /**
  * Compare every hand still in play with the dealer's, then end the round.
  * Hands that already have a result (busts and naturals) keep it.
+ * @param state - Current game state once every seat has played
+ * @returns A new state with every hand resolved and the round over
  */
 export function resolveShowdown(state: GameState): GameState {
   const dealer = getDealer(state);
@@ -269,7 +353,13 @@ export function resolveShowdown(state: GameState): GameState {
   return finishRound({ ...state, deck });
 }
 
-/** Bank change for a hand with the given result and stake, stake included */
+/**
+ * Bank change for a hand with the given result and stake, stake included.
+ * @param result - The hand's result
+ * @param stake - Amount staked on the hand
+ * @param payout - Table's blackjack payout ratio; defaults to the default table rules
+ * @returns The net change: a payout for a win or blackjack, minus the stake for a loss, otherwise 0
+ */
 export function netFor(result: IPlayer['result'], stake: number, payout: TableRules['blackjackPayout'] = defaultTableRules.blackjackPayout): number {
   switch (result) {
     case 'blackjack': return Math.floor(stake * (payout === '6:5' ? 1.2 : 1.5));
@@ -282,6 +372,8 @@ export function netFor(result: IPlayer['result'], stake: number, payout: TableRu
 /**
  * Work out what each hand is worth and end the round. The dealer's result is
  * the house's net: up, down or even. Money moves when the round is settled.
+ * @param state - Current game state with every hand's result set
+ * @returns A new state with each seat's net and result recorded and the status set to round over
  */
 export function finishRound(state: GameState): GameState {
   const dealer = getDealer(state);
@@ -333,7 +425,12 @@ export function finishRound(state: GameState): GameState {
   };
 }
 
-/** Read a computer character's account, falling back to a default anchored at their seated bank */
+/**
+ * Read a computer character's account, falling back to a default anchored at their seated bank.
+ * @param state - Current game state
+ * @param key - Key of the computer character
+ * @returns The stored account, or a default one
+ */
 export function getBotAccount(state: GameState, key: PlayerKey): BotAccountState {
   const existing = state.botAccounts?.[key];
   if (existing) return existing;
@@ -341,7 +438,13 @@ export function getBotAccount(state: GameState, key: PlayerKey): BotAccountState
   return defaultBotAccount(seatedBank);
 }
 
-/** Update a computer character's account immutably, preserving unchanged slices */
+/**
+ * Update a computer character's account immutably, preserving unchanged slices.
+ * @param state - Current game state
+ * @param key - Key of the computer character
+ * @param updater - Pure function mapping the existing account to its replacement
+ * @returns A new state, or `state` unchanged if the account exists and `updater` returns it as is
+ */
 export function updateBotAccount(
   state: GameState,
   key: PlayerKey,
@@ -360,6 +463,11 @@ export function updateBotAccount(
   };
 }
 
+/**
+ * Copy of an account with its work cleared, so the character is back at the table.
+ * @param account - The account to clear
+ * @returns The account without `work` or `taskOverride`
+ */
 function clearBotWork(account: BotAccountState): BotAccountState {
   return {
     bank: account.bank,
@@ -368,6 +476,12 @@ function clearBotWork(account: BotAccountState): BotAccountState {
   };
 }
 
+/**
+ * Copy of an account with its task override replaced.
+ * @param account - The account to copy
+ * @param taskOverride - The task to prefer, or `undefined` to remove the override
+ * @returns The account with the new override
+ */
 function withTaskOverride(account: BotAccountState, taskOverride: WorkTaskId | undefined): BotAccountState {
   return {
     bank: account.bank,
@@ -378,7 +492,12 @@ function withTaskOverride(account: BotAccountState, taskOverride: WorkTaskId | u
   };
 }
 
-/** Copy a computer character's bank and away-working flags onto their seat at the table, if seated */
+/**
+ * Copy a computer character's bank and away-working flags onto their seat at the table, if seated.
+ * @param state - Current game state
+ * @param key - Key of the computer character
+ * @returns A new state, or `state` unchanged if the seat is missing or already matches the account
+ */
 export function syncSeatWithAccount(state: GameState, key: PlayerKey): GameState {
   const player = getPlayer(state.playerStore, key);
   const account = state.botAccounts?.[key];
@@ -411,6 +530,8 @@ export function syncSeatWithAccount(state: GameState, key: PlayerKey): GameState
 /**
  * Advance every away character's work by one day (24 hours = one hand).
  * Runs for all computer characters, whether or not they are currently in the roster.
+ * @param state - Current game state
+ * @returns A new state with work progressed, wages paid, and returns and task changes logged
  */
 export function advanceWork(state: GameState): GameState {
   let next = state;
@@ -483,6 +604,9 @@ export function advanceWork(state: GameState): GameState {
  * by a day first. A computer player at the table who cannot cover the ante leaves
  * to work; the human always plays, staked or not. Computer players then add wagers
  * according to their aggression.
+ * @param state - Current game state at the start of a round
+ * @param rng - Random source for the computer players' wagers
+ * @returns A new state with antes and wagers moved into the pot
  */
 export function collectAntes(state: GameState, rng: () => number = () => Math.random()): GameState {
   let next = advanceWork(state);
@@ -565,6 +689,12 @@ export function collectAntes(state: GameState, rng: () => number = () => Math.ra
  * Override a computer character's work task or toggle whether they return when ready.
  * If the character is already ready to return and the table is between hands (or before
  * a game starts), enabling allowReturn brings them back at once.
+ * @param state - Current game state
+ * @param playerKey - Key of the computer character
+ * @param options - Changes to apply
+ * @param options.taskOverride - Task to prefer, or `null` to remove the override
+ * @param options.allowReturn - Whether the character may return to the table when ready
+ * @returns A new state, or `state` unchanged if `playerKey` is not a computer character
  */
 export function configureCharacterWork(
   state: GameState,
@@ -610,6 +740,9 @@ export function configureCharacterWork(
 /**
  * Mid-round, when the deck cannot cover a draw: shuffle every card that is not
  * in someone's hand into a fresh deck, so play can carry on.
+ * @param state - Current game state
+ * @param rng - Random source for shuffling
+ * @returns A new state with a refilled deck and a logged shuffle
  */
 export function refillDeck(state: GameState, rng: () => number = () => Math.random()): GameState {
   return recordActivity({
@@ -621,7 +754,12 @@ export function refillDeck(state: GameState, rng: () => number = () => Math.rand
 /** Cards each seat may need in a round; the deck is rebuilt when fewer remain */
 const CARDS_PER_SEAT = 6;
 
-/** Rebuild and shuffle the deck between rounds when it is running low */
+/**
+ * Rebuild and shuffle the deck between rounds when it is running low.
+ * @param state - Current game state
+ * @param rng - Random source for shuffling
+ * @returns A new state with a fresh deck, or `state` unchanged if enough cards remain
+ */
 export function reshuffleIfLow(state: GameState, rng: () => number = () => Math.random()): GameState {
   const players = allPlayers(state.playerStore);
   const numberOfDecks = Number(state.tableRules.numberOfDecks);
@@ -632,12 +770,20 @@ export function reshuffleIfLow(state: GameState, rng: () => number = () => Math.
   }, '', 'Deck shuffled', 'shuffle');
 }
 
-/** True between hands: the round is over and has been settled */
+/**
+ * True between hands: the round is over and has been settled.
+ * @param state - Current game state
+ * @returns Whether the round is over and settled
+ */
 export function isBetweenHands(state: GameState): boolean {
   return state.gameStatus >= GameStatus.RoundOver && state.gameStatusFlag;
 }
 
-/** The seat keys of a roster, in seating order; two rosters match when their signatures do */
+/**
+ * The seat keys of a roster, in seating order; two rosters match when their signatures do.
+ * @param seats - Seats in seating order
+ * @returns The seat keys joined with `|`
+ */
 export const rosterSignature = (seats: { key: PlayerKey }[]): string => seats.map((seat) => seat.key).join('|');
 
 /**
@@ -645,6 +791,10 @@ export const rosterSignature = (seats: { key: PlayerKey }[]): string => seats.ma
  * new roster is ignored. Seats that stay keep their bank and stats, seats that leave
  * are removed, and new seats join with their persistent bank (for computer characters)
  * or a fresh bank. Seating follows the roster order.
+ * @param state - Current game state
+ * @param seats - The new roster, in seating order
+ * @param botAccounts - Persisted computer character accounts to adopt for any not already known
+ * @returns A new state with the roster applied, or `state` unchanged if a hand is in play or the roster is empty
  */
 export function applyRoster(
   state: GameState,
