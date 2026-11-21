@@ -61,6 +61,15 @@ export type WagerSnapshot = {
   amount: number;
 };
 
+/**
+ * A work notice from the activity log (leaving to work, ready to return, or returning).
+ */
+export type WorkNoticeSnapshot = {
+  id: number;
+  name: string;
+  description: string;
+};
+
 /** The parts of the game that announcements are derived from */
 export type GameSnapshot = {
   gameStatus: GameStatus;
@@ -69,6 +78,8 @@ export type GameSnapshot = {
   totalPotContributions: number;
   /** the wagers in the log, oldest first */
   wagers: WagerSnapshot[];
+  /** work notices in the log, oldest first */
+  workNotices?: WorkNoticeSnapshot[];
   controllingPlayer?: PlayerKey;
   players: PlayerSnapshot[];
 };

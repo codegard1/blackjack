@@ -2,6 +2,7 @@ import { GameStatus } from "../enums";
 import { IPlayer } from "../interfaces";
 import { SeatStatus } from "../types";
 import { isDealer } from "./round";
+import { getWorkTask } from "./work";
 
 /** True once every hand in the round has a result */
 export function isRoundOver(gameStatus: GameStatus): boolean {
@@ -49,6 +50,8 @@ export function seatStatus(player: IPlayer, gameStatus: GameStatus): SeatStatus 
   const isActive = !!player.turn && !roundOver;
 
   if (player.result === 'blackjack' || (player.result === 'win' && player.isBlackjack)) return { text: '✨ Blackjack', color: 'success', appearance: 'tint' };
+  if (player.isReadyToReturn) return { text: 'Ready to return', color: 'informative', appearance: 'tint' };
+  if (player.awayTask) return { text: `Away: ${getWorkTask(player.awayTask).shortLabel}`, color: 'subtle', appearance: 'tint' };
   if (player.isSittingOut) return { text: 'Sitting out', color: 'subtle', appearance: 'tint' };
   if (roundOver && player.result === 'win') return { text: '🏆 Winner', color: 'success', appearance: 'tint' };
   if (roundOver && player.result === 'loss') return { text: player.isBusted ? '💥 Busted' : '💔 Loser', color: 'danger', appearance: 'tint' };

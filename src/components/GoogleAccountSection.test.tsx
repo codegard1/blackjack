@@ -115,4 +115,25 @@ describe('GoogleAccountSection in PlayersDialog', () => {
 
     expect(within(dialog).getByRole('alert')).toHaveTextContent('Invalid Google credential.');
   });
+
+  it('resets bot account work settings on sign-out even after a game has started', () => {
+    saveSyncState({
+      ownerId: GOOGLE_OWNER,
+      user: { name: 'Chris Odegard', email: 'chris@example.com' },
+      syncedAt: { profiles: 0, game: 0 },
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+    const dialog = screen.getByRole('dialog', { name: 'Players' });
+
+    const ogionItem = within(dialog).getByRole('checkbox', { name: /Ogion/ }).closest('li')!;
+    const allowReturnSwitch = within(ogionItem).getByRole('switch', { name: 'Let back when ready' });
+    fireEvent.click(allowReturnSwitch);
+    expect(allowReturnSwitch).toBeChecked();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Sign out' }));
+    expect(allowReturnSwitch).not.toBeChecked();
+  });
 });

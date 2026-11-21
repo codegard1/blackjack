@@ -1,6 +1,7 @@
 import type { IPlayer, IPlayerStoreState } from '../../src/interfaces';
 import type { ActivityLogEntry, DeckState, PlayerHand, SavedGame, SavedGameSnapshot } from '../../src/types';
 import { isTableRules, tableRulesFrom } from '../../src/types/TableRules';
+import { cloneBotAccounts, isBotAccountState, isWorkTaskId } from '../../src/types/Work';
 import { isFiniteNumber, isObject, isStats, parseJsonBody } from './validate';
 
 /**
@@ -17,13 +18,19 @@ const MAX_SPLIT_HANDS = 4;
 const CARD_KEY = /^[A-Za-z]{1,12}_[A-Za-z0-9]{1,12}(?:_\d{1,3})?$/;
 const ROUND_RESULTS = ['blackjack', 'win', 'push', 'loss'];
 const PLAYER_ROLES = ['human', 'bot', 'dealer'];
-const ACTIVITY_EVENTS = ['game', 'round', 'deal', 'draw', 'ante', 'bet', 'double', 'split', 'stay', 'win', 'loss', 'push', 'shuffle'];
+const ACTIVITY_EVENTS = ['game', 'round', 'deal', 'draw', 'ante', 'bet', 'double', 'split', 'stay', 'win', 'loss', 'push', 'shuffle', 'work'];
+/**
+ * The computer characters, by profile id. Kept here rather than read from
+ * src/characters.ts, which imports SVG portraits; a test holds the two in step.
+ */
+export const BOT_IDS = ['ogion', 'shevek', 'haber', 'genly-ai'] as const;
 
 const isCardKeys = (value: unknown): value is string[] =>
   Array.isArray(value) && value.length <= MAX_CARDS && value.every((key) => typeof key === 'string' && CARD_KEY.test(key));
 const optional = (value: unknown, check: (value: unknown) => boolean): boolean => value === undefined || check(value);
 const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean';
-const isOneOf = (options: string[]) => (value: unknown): boolean => typeof value === 'string' && options.includes(value);
+const isOneOf = (options: readonly string[]) => (value: unknown): boolean => typeof value === 'string' && options.includes(value);
+const isBotId = isOneOf(BOT_IDS);
 const isShortText = (max: number) => (value: unknown): value is string => typeof value === 'string' && value.length <= max;
 const isSmallInteger = (max: number) => (value: unknown): boolean => Number.isInteger(value) && (value as number) >= 0 && (value as number) <= max;
 
@@ -67,10 +74,11 @@ function isPlayer(value: unknown, key: string): value is IPlayer {
     && isStats(value.stats)
     && optional(value.role, isOneOf(PLAYER_ROLES))
     && optional(value.result, isOneOf(ROUND_RESULTS))
+    && optional(value.awayTask, isWorkTaskId)
     && optional(value.lastAction, isSmallInteger(16))
     && optional(value.status, isSmallInteger(16))
     && ['lastAnte', 'lastBet', 'lossStreak', 'net', 'totalBet'].every((field) => optional(value[field], isFiniteNumber))
-    && ['disabled', 'isFinished', 'isSelected', 'isBusted', 'isBlackjack', 'isStaying', 'isSittingOut', 'turn'].every((flag) => optional(value[flag], isBoolean));
+    && ['disabled', 'isFinished', 'isSelected', 'isBusted', 'isBlackjack', 'isStaying', 'isSittingOut', 'isReadyToReturn', 'turn'].every((flag) => optional(value[flag], isBoolean));
 }
 
 function isPlayersState(value: unknown): value is IPlayerStoreState {
@@ -94,10 +102,18 @@ function isActivityEntry(value: unknown): value is ActivityLogEntry {
     && optional(value.amount, isFiniteNumber);
 }
 
+function isBotAccountsMap(value: unknown): boolean {
+  if (!isObject(value)) return false;
+  const entries = Object.entries(value);
+  return entries.length <= MAX_SEATS
+    && entries.every(([key, account]) => isBotId(key) && isBotAccountState(account));
+}
+
 function isSavedGame(value: unknown): value is SavedGame {
   return isObject(value)
     && isFiniteNumber(value.version)
     && ((value.version < 5 && value.tableRules === undefined) || isTableRules(value.tableRules))
+    && optional(value.botAccounts, isBotAccountsMap)
     && isFiniteNumber(value.activeHandIndex)
     && Array.isArray(value.activityLog)
     && value.activityLog.length <= MAX_ACTIVITY
@@ -128,7 +144,7 @@ function pick<T extends object>(source: T, fields: (keyof T)[]): T {
 const HAND_FIELDS: (keyof PlayerHand)[] = ['cards', 'handValue', 'stake', 'net', 'result', 'isBusted', 'isStaying', 'isBlackjack', 'isSplit', 'isSplitAces'];
 const PLAYER_FIELDS: (keyof IPlayer)[] = [
   'key', 'title', 'isNPC', 'id', 'bank', 'disabled', 'role', 'stats', 'isFinished', 'isSelected', 'isBusted', 'isBlackjack',
-  'isStaying', 'isSittingOut', 'lastAction', 'lastAnte', 'lastBet', 'lossStreak', 'net', 'result', 'status', 'totalBet', 'turn',
+  'isStaying', 'isSittingOut', 'awayTask', 'isReadyToReturn', 'lastAction', 'lastAnte', 'lastBet', 'lossStreak', 'net', 'result', 'status', 'totalBet', 'turn',
 ];
 const ENTRY_FIELDS: (keyof ActivityLogEntry)[] = ['id', 'sessionId', 'round', 'event', 'timestamp', 'name', 'description', 'amount'];
 const GAME_FIELDS: (keyof SavedGame)[] = [
@@ -159,6 +175,7 @@ function pickGameSnapshot({ deck, players, game }: SavedGameSnapshot): SavedGame
     game: {
       ...pick(game, GAME_FIELDS),
       ...(game.tableRules === undefined ? {} : { tableRules: tableRulesFrom(game.tableRules) }),
+      ...(game.botAccounts === undefined ? {} : { botAccounts: cloneBotAccounts(game.botAccounts) }),
       activityLog: game.activityLog.map((entry) => pick(entry, ENTRY_FIELDS)),
     },
   };

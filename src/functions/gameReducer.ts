@@ -1,19 +1,21 @@
 import { PlayerStore } from "../classes/PlayerStore";
 import { PlayingCardDeck } from "../classes/PlayingCardDeck";
+import { isBotId } from "../characters";
 import { createGameState } from "../context";
 import { defaultplayersArr } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
 import { GameReducerAction, IPlayerOptions } from "../interfaces";
-import { GameState, PlayerHand, isTableRules, tableRulesFrom } from "../types";
+import { GameState, PlayerHand, cloneBotAccounts, isTableRules, tableRulesFrom } from "../types";
 import { evaluateGame } from "./evaluateGame";
 import { debugLog } from "./debugLog";
 import { recordActivity } from "./activity";
 import { restoreGameState } from "./persistence";
 import { seededRandom } from "./random";
 import {
-  advanceTurn, applyRoster, canDoubleDown, canSplit, collectAntes, isDealer, playerSeats, refillDeck, reshuffleIfLow, resolveNaturals,
-  resolveShowdown, roundStake, seatOrder, setControl,
+  advanceTurn, applyRoster, canDoubleDown, canSplit, collectAntes, configureCharacterWork, ensureBotAccount, isBot, isDealer, playerSeats, refillDeck, reshuffleIfLow, resolveNaturals,
+  resolveShowdown, roundStake, seatOrder, setControl, syncSeatWithAccount,
 } from "./round";
+import { defaultBotAccount, defaultBotAccounts } from "./work";
 
 /**
  * After a player draws, check for a bust. A busted player loses and the turn
@@ -40,7 +42,7 @@ function updatePlayerHandStatus(state: GameState, playerKey: string, handIndex: 
 
 /** The first seat to act in a round: the first player who has not sat out */
 function firstSeat(state: GameState): string | undefined {
-  return playerSeats(state).find((player) => !player.isSittingOut)?.key ?? state.playerStore.activePlayerKeys[0];
+  return playerSeats(state).find((player) => !player.isSittingOut)?.key;
 }
 
 export { canDoubleDown, canSplit } from "./round";
@@ -60,7 +62,13 @@ export function gameReducer(state: GameState, action: GameReducerAction): GameSt
   // so the same action gives the same result. Without them the clock and Math.random are used.
   if (action.seed !== undefined) deck.randomSource = seededRandom(action.seed);
   const lastWriteTime = new Date(action.now ?? Date.now()).toISOString();
-  return applyAction({ ...state, deck, playerStore: state.playerStore.clone(), lastWriteTime }, action);
+  return applyAction({
+    ...state,
+    botAccounts: cloneBotAccounts(state.botAccounts),
+    deck,
+    playerStore: state.playerStore.clone(),
+    lastWriteTime,
+  }, action);
 }
 
 /**
@@ -86,12 +94,22 @@ function applyAction(state: GameState, action: GameReducerAction): GameState {
       const { playerKey, betAmount } = action;
       if (state.playerStore.bet(playerKey, betAmount)) {
         state.pot += betAmount;
+        const player = state.playerStore.player(playerKey);
+        if (isBot(player)) ensureBotAccount(state, playerKey).bank = player.bank;
         if (state.playerStore.currentPlayerKey === playerKey) {
           const hand = state.deck.hand(playerKey, state.activeHandIndex);
           if (hand?.cards.length) hand.stake = (hand.stake ?? 0) + betAmount;
         }
-        recordActivity(state, state.playerStore.player(playerKey).title, `wagered $${betAmount}`, 'bet', { amount: -betAmount });
+        recordActivity(state, player.title, `wagered $${betAmount}`, 'bet', { amount: -betAmount });
       }
+      return state;
+    }
+
+    case GameAction.ConfigureWork: {
+      configureCharacterWork(state, action.playerKey, {
+        taskOverride: action.taskOverride,
+        allowReturn: action.allowReturn,
+      });
       return state;
     }
 
@@ -99,10 +117,15 @@ function applyAction(state: GameState, action: GameReducerAction): GameState {
      * Initiate a new game from scratch
      */
     case GameAction.NewGame: {
-      const { players, playerKeys } = action;
+      const { players, playerKeys, botAccounts } = action;
       if (isTableRules(action.tableRules)) state.tableRules = tableRulesFrom(action.tableRules);
       state.playerStore = new PlayerStore();
       state.deck = new PlayingCardDeck(undefined, Number(state.tableRules.numberOfDecks), state.deck.randomSource);
+      state.botAccounts = {
+        ...defaultBotAccounts(),
+        ...cloneBotAccounts(state.botAccounts),
+        ...cloneBotAccounts(botAccounts),
+      };
       state.pot = 0;
       state.winner = undefined;
       state.loser = undefined;
@@ -116,6 +139,15 @@ function applyAction(state: GameState, action: GameReducerAction): GameState {
       seats.forEach((seat) => {
         state.playerStore.newPlayer(seat);
         state.deck.newPlayerHand(seat.key);
+        if (isBotId(seat.key) && !botAccounts?.[seat.key]) {
+          state.botAccounts[seat.key] = {
+            ...defaultBotAccount(seat.bank),
+            ...(seat.awayTask ? {
+              work: { status: seat.isReadyToReturn ? 'ready' : 'working', taskId: seat.awayTask, daysWorked: 0 },
+            } : {}),
+          };
+        }
+        if (isBotId(seat.key)) syncSeatWithAccount(state, seat.key);
       });
       state.controllingPlayer = undefined;
       state.activeHandIndex = 0;
@@ -133,8 +165,8 @@ function applyAction(state: GameState, action: GameReducerAction): GameState {
      * Seat a new roster between hands; ignored while a hand is in play
      */
     case GameAction.SetRoster: {
-      const { players } = action;
-      applyRoster(state, players);
+      const { players, botAccounts } = action;
+      applyRoster(state, players, botAccounts);
       return state;
     }
 
@@ -219,6 +251,16 @@ function applyAction(state: GameState, action: GameReducerAction): GameState {
       return state;
     }
 
+    case GameAction.SitOut: {
+      const human = state.playerStore.all.find((p) => !p.isNPC && !isDealer(p));
+      const key = action.playerKey ?? human?.key ?? state.playerStore.currentPlayerKey;
+      if (!key) return state;
+      const player = state.playerStore.player(key);
+      if (!player) return state;
+      player.isSittingOut = action.isSittingOut !== undefined ? action.isSittingOut : true;
+      return state;
+    }
+
     // Unselect a card
     case GameAction.Unselect: {
       const { cardKey } = action;
@@ -291,9 +333,11 @@ function applyAction(state: GameState, action: GameReducerAction): GameState {
       const stake = roundStake(state, key);
       state.playerStore.bet(key, stake);
       state.pot += stake;
+      const player = state.playerStore.player(key);
+      if (isBot(player)) ensureBotAccount(state, key).bank = player.bank;
       const hand = state.deck.hand(key, index);
       if (hand) hand.stake = (hand.stake ?? stake) + stake;
-      recordActivity(state, state.playerStore.player(key).title, `doubled down for $${stake}`, 'double', { amount: -stake });
+      recordActivity(state, player.title, `doubled down for $${stake}`, 'double', { amount: -stake });
 
       state = applyAction(state, { type: GameAction.Draw, playerKey: key, handIndex: index, deckSide: 'top', numberOfCards: 1 });
       if (state.gameStatus === GameStatus.InProgress && !state.playerStore.player(key).isBusted) {
@@ -312,6 +356,7 @@ function applyAction(state: GameState, action: GameReducerAction): GameState {
       const stake = roundStake(state, key);
       if (!state.playerStore.bet(key, stake)) return state;
       state.pot += stake;
+      if (isBot(player)) ensureBotAccount(state, key).bank = player.bank;
       recordActivity(state, player.title, `split for $${stake}`, 'split', { amount: -stake });
 
       const [movedCard] = hand.cards.splice(1, 1);

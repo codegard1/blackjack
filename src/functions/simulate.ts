@@ -28,10 +28,13 @@ export type SimulationResult = {
   stats: Record<string, PlayerStats>;
   /** each character's total bank change, keyed by character id; they sum to zero */
   net: Record<string, number>;
+  /** recent simulated bankroll snapshots for each computer character */
+  balanceHistory: Record<string, number[]>;
 };
 
 /** Guards against a round that never ends; a real round takes a handful of moves per seat */
 const MAX_MOVES_PER_ROUND = 200;
+const SIMULATED_BALANCE_POINTS = 48;
 
 const pick = <T,>(items: T[], rng: () => number): T => items[Math.floor(rng() * items.length)];
 
@@ -77,6 +80,7 @@ export function simulateHistory(options: SimulationOptions): SimulationResult {
   const { rounds, rng = Math.random, sessionLength = [20, 200], onProgress } = options;
   const stats: Record<string, PlayerStats> = Object.fromEntries(CHARACTERS.map((character) => [character.id, emptyStats()]));
   const net: Record<string, number> = Object.fromEntries(CHARACTERS.map((character) => [character.id, 0]));
+  const balanceHistory: Record<string, number[]> = Object.fromEntries(BOTS.map((bot) => [bot.id, []]));
 
   // the deck, bots and their bets all draw from Math.random; route it through rng for the run
   const realRandom = Math.random;
@@ -100,6 +104,11 @@ export function simulateHistory(options: SimulationOptions): SimulationResult {
         state.playerStore.all.forEach((player) => {
           stats[player.key] = { ...player.stats };
           net[player.key] += player.net ?? 0;
+          if (isBot(player)) {
+            const series = balanceHistory[player.key];
+            series.push(player.bank);
+            if (series.length > SIMULATED_BALANCE_POINTS) series.shift();
+          }
         });
         // the log is not needed here, and copying a long one on every action is slow
         state.activityLog = [];
@@ -111,5 +120,5 @@ export function simulateHistory(options: SimulationOptions): SimulationResult {
     Math.random = realRandom;
   }
 
-  return { rounds: played, sessions, stats, net };
+  return { rounds: played, sessions, stats, net, balanceHistory };
 }

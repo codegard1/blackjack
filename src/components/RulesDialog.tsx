@@ -61,7 +61,7 @@ export const RulesDialog: React.FC<IRulesDialogProps> = ({ open, onOpenChange })
 
             <section className={styles.section} aria-labelledby="rules-wagers">
               <Text as="h3" id="rules-wagers" weight="semibold">Antes and wagers</Text>
-              <Text as="p">At the start of each round, every player antes the minimum bet of ${minimumBet}; the dealer does not. Before dealing or during your turn, use Wager to add another ${minimumBet} to your stake and the pot. You can wager more than once, up to the money in your bank. Computer players wager according to their temperament, and one who cannot cover the ante sits the round out.</Text>
+              <Text as="p">At the start of each round, every player antes the minimum bet of ${minimumBet}; the dealer does not. Before dealing or during your turn, use Wager to add another ${minimumBet} to your stake and the pot. You can wager more than once, up to the money in your bank. Computer players wager according to their temperament; one who cannot cover the ante leaves the table to work and earn a fresh bankroll.</Text>
             </section>
 
             <section className={styles.section} aria-labelledby="rules-turn">
@@ -90,7 +90,7 @@ export const RulesDialog: React.FC<IRulesDialogProps> = ({ open, onOpenChange })
             <section className={styles.section} aria-labelledby="rules-table">
               <Text as="h3" id="rules-table" weight="semibold">Meet the table</Text>
               <Text as="p">The active shoe uses {tableRules.numberOfDecks} {tableRules.numberOfDecks === '1' ? 'deck' : 'decks'}. Choose table rules in Options; changes take effect at the next hand.</Text>
-              <Text as="p">Choose up to {MAX_OPPONENTS} computer players from the Players menu. Each plays to its own temperament: nerve, aggression, discipline and tilt. Open a seat's info button to read a character's card.</Text>
+              <Text as="p">Choose up to {MAX_OPPONENTS} computer players from the Players menu. Each plays to its own temperament: nerve, aggression, discipline and tilt. When a character cannot cover the ante, they leave to work a job suited to their stats (each hand played at the table is one day of work); in the Players menu you can pick their job or switch on Let back when ready so they rejoin as soon as they have enough. Open a seat's info button to read a character's card and balance history.</Text>
               <Text as="p" size={200}>{NAME_CREDIT}</Text>
             </section>
           </DialogContent>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Avatar, Button, Text, makeStyles, tokens } from '@fluentui/react-components';
 import { useGameContext, useProfileContext, useSettingContext } from '../context';
 import { GameAction } from '../enums';
-import { defaultProfileState, seatsFor } from '../functions/profiles';
+import { botAccountsFor, defaultProfileState, seatsFor } from '../functions/profiles';
 import { GoogleUser, loadSyncState, signInWithGoogle, signOutGoogle, subscribeSyncState } from '../functions/remote';
 import { isDarkMode, resolveThemeMode, usePrefersDark } from '../theme';
 
@@ -157,7 +157,7 @@ export const GoogleAccountSection: React.FC<GoogleAccountSectionProps> = ({ clie
     signOutGoogle();
     const defaults = defaultProfileState();
     profileDispatch({ type: 'reset' });
-    gameDispatch({ type: GameAction.NewGame, players: seatsFor(defaults) });
+    gameDispatch({ type: GameAction.NewGame, players: seatsFor(defaults), botAccounts: botAccountsFor(defaults) });
   };
 
   if (!user && !activeClientId) return null;

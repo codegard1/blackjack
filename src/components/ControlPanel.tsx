@@ -25,8 +25,8 @@ import { useGameContext, usePlayersDialog, usePotAnimation, useProfileContext, u
 import { GameAction, GameStatus } from "../enums";
 import { BotMove } from "../functions/botStrategy";
 import { canDoubleDown, canSplit } from "../functions/gameReducer";
-import { seatsFor } from "../functions/profiles";
-import { getDealer } from "../functions/round";
+import { botAccountsFor, seatsFor } from "../functions/profiles";
+import { getDealer, isBot } from "../functions/round";
 import { recommendMove } from "../functions/strategyHint";
 import { IControlPanelProps } from "../interfaces";
 import { tableRulesFrom } from "../types";
@@ -146,9 +146,28 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
     gameDispatch({ type: GameAction.Deal, tableRules: tableRulesFrom(settings) });
   };
 
+  const isSittingOut = !!player?.isSittingOut;
+  const hasAvailableBots = gameState.playerStore.all.some(
+    (p) => isBot(p) && !p.isSittingOut && p.bank >= minimumBet
+  );
+  const canSitOut = hasAvailableBots;
+
   // The hand is over, so a roster change made during play takes effect before the next deal
   const nextHand = () => {
-    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles) });
+    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles), botAccounts: botAccountsFor(profiles) });
+    gameDispatch({ type: GameAction.SitOut, playerKey, isSittingOut: false });
+    deal();
+  };
+
+  const sitOut = () => {
+    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles), botAccounts: botAccountsFor(profiles) });
+    gameDispatch({ type: GameAction.SitOut, playerKey, isSittingOut: true });
+    deal();
+  };
+
+  const rejoinTable = () => {
+    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles), botAccounts: botAccountsFor(profiles) });
+    gameDispatch({ type: GameAction.SitOut, playerKey, isSittingOut: false });
     deal();
   };
 
@@ -177,7 +196,8 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
         : key === 's' && !isPlayDisabled ? () => gameDispatch({ type: GameAction.Stay, playerKey })
         : key === 'd' && !isDoubleDownDisabled ? () => gameDispatch({ type: GameAction.DoubleDown, playerKey })
         : key === 'w' && !isBtnDisabled ? () => gameDispatch({ type: GameAction.Bet, playerKey, betAmount: minimumBet })
-        : (key === 'enter' || key === 'n') && isRoundComplete ? nextHand
+        : (key === 'enter' || key === 'n') && isRoundComplete ? (isSittingOut ? rejoinTable : nextHand)
+        : key === 'o' && isRoundComplete && canSitOut ? sitOut
         : (key === 'enter' || key === 'n') && !isDealDisabled ? deal
         : undefined;
       if (!action) return;
@@ -189,11 +209,43 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
     // no dependency list: the handlers above are made anew on every render, so the listener is too
   });
 
-  // Once the hand is over the human gets two choices instead of the action toolbar
+  // Once the hand is over the human gets choices instead of the action toolbar
   if (!hidden && !npcFlag && isRoundComplete) {
     return (
       <div className={`player-endactions ${styles.endActions}`}>
-        <Button ref={nextHandButton} appearance="primary" size="large" disabledFocusable={isWaiting} onClick={nextHand}>Next hand</Button>
+        {isSittingOut ? (
+          <>
+            <Tooltip content="Rejoin the table and resume play (Enter or N)" relationship="description">
+              <Button ref={nextHandButton} appearance="primary" size="large" disabledFocusable={isWaiting} onClick={rejoinTable}>
+                Rejoin table
+              </Button>
+            </Tooltip>
+            <Tooltip
+              content={!canSitOut ? "No computer players available to play" : "Sit out another hand while computer players play (O)"}
+              relationship="description"
+            >
+              <Button appearance="secondary" size="large" disabledFocusable={isWaiting} disabled={!canSitOut} onClick={sitOut}>
+                Sit out another hand
+              </Button>
+            </Tooltip>
+          </>
+        ) : (
+          <>
+            <Tooltip content="Deal a new round (Enter or N)" relationship="description">
+              <Button ref={nextHandButton} appearance="primary" size="large" disabledFocusable={isWaiting} onClick={nextHand}>
+                Next hand
+              </Button>
+            </Tooltip>
+            <Tooltip
+              content={!canSitOut ? "No computer players available to play" : "Sit out the next hand while computer players play (O)"}
+              relationship="description"
+            >
+              <Button appearance="secondary" size="large" disabledFocusable={isWaiting} disabled={!canSitOut} onClick={sitOut}>
+                Sit out
+              </Button>
+            </Tooltip>
+          </>
+        )}
         <Button appearance="secondary" size="large" onClick={openPlayers}>Change players</Button>
       </div>
     );
