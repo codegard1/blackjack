@@ -226,3 +226,26 @@ it('shows strategy hints once they are switched on in Options, and remembers the
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
   expect(screen.getByRole('switch', { name: 'Show strategy hints' })).toBeChecked();
 });
+
+it('toggles character animations from the Options panel and remembers the setting', () => {
+  const first = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+
+  const animationsSwitch = screen.getByRole('switch', { name: 'Character animations' });
+  expect(animationsSwitch).toBeChecked();
+
+  fireEvent.click(animationsSwitch);
+  expect(animationsSwitch).not.toBeChecked();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+
+  const dealerPortrait = screen.getByRole('region', { name: "Faxe's hand" });
+  expect(dealerPortrait.querySelector('canvas')).toBeNull();
+
+  first.unmount();
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  expect(screen.getByRole('switch', { name: 'Character animations' })).not.toBeChecked();
+});
