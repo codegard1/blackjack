@@ -575,6 +575,70 @@ describe('split hands', () => {
     const state = dealSeats(startDefaultGame(), [['Club_10', 'Heart_13'], ['Club_10', 'Diamond_8']]);
     expect(canSplit(state, 'chris')).toBe(false);
   });
+
+  it('allows resplitting up to four hands when enabled, and blocks a fifth', () => {
+    const started = gameReducer(createGameState(), {
+      type: GameAction.NewGame,
+      playerKeys: ['chris', 'dealer'],
+      tableRules: { ...defaultTableRules, resplit: true },
+    });
+    const evaluated = gameReducer(started, { type: GameAction.EvaluateGame });
+    let state = dealSeats(
+      evaluated,
+      [['Club_8', 'Heart_8'], ['Club_10', 'Diamond_8']],
+      ['Spade_8', 'Diamond_2', 'Diamond_8', 'Heart_3', 'Club_8', 'Spade_4', 'Club_5'],
+    );
+
+    // Split 1: [8,8] -> [8,8] and [8,2] (2 hands)
+    state = gameReducer(state, { type: GameAction.Split, playerKey: 'chris' });
+    expect(getPlayerHands(state.deck, 'chris')).toHaveLength(2);
+    expect(canSplit(state, 'chris', 0)).toBe(true);
+
+    // Split 2 (on hand 0): -> [8,8], [8,3], [8,2] (3 hands)
+    state = gameReducer(state, { type: GameAction.Split, playerKey: 'chris' });
+    expect(getPlayerHands(state.deck, 'chris')).toHaveLength(3);
+    expect(canSplit(state, 'chris', 0)).toBe(true);
+
+    // Split 3 (on hand 0): -> [8,8], [8,4], [8,3], [8,2] (4 hands = MAX_SPLIT_HANDS)
+    state = gameReducer(state, { type: GameAction.Split, playerKey: 'chris' });
+    expect(getPlayerHands(state.deck, 'chris')).toHaveLength(4);
+    expect(canSplit(state, 'chris', 0)).toBe(false);
+
+    // Resplitting on a non-zero split hand also works when under the limit
+    let state2 = dealSeats(
+      evaluated,
+      [['Club_8', 'Heart_8'], ['Club_10', 'Diamond_8']],
+      ['Spade_2', 'Diamond_8', 'Heart_8', 'Club_4'],
+    );
+    state2 = gameReducer(state2, { type: GameAction.Split, playerKey: 'chris' });
+    state2 = stay(state2, 'chris');
+    expect(state2.activeHandIndex).toBe(1);
+    expect(canSplit(state2, 'chris', 1)).toBe(true);
+    state2 = gameReducer(state2, { type: GameAction.Split, playerKey: 'chris' });
+    expect(getPlayerHands(state2.deck, 'chris').map((h) => h.cards)).toEqual([
+      ['Club_8', 'Spade_2'],
+      ['Heart_8', 'Heart_8'],
+      ['Diamond_8', 'Club_4'],
+    ]);
+  });
+
+  it('allows doubling after a split only when doubleAfterSplit is enabled', () => {
+    const started = gameReducer(createGameState(), {
+      type: GameAction.NewGame,
+      playerKeys: ['chris', 'dealer'],
+      tableRules: { ...defaultTableRules, doubleAfterSplit: true },
+    });
+    const evaluated = gameReducer(started, { type: GameAction.EvaluateGame });
+    let state = dealSeats(evaluated, [['Club_5', 'Heart_5'], ['Club_10', 'Diamond_8']], ['Spade_6', 'Diamond_4', 'Club_10']);
+
+    state = gameReducer(state, { type: GameAction.Split, playerKey: 'chris' });
+    expect(canDoubleDown(state, 'chris', 0)).toBe(true);
+    state = gameReducer(state, { type: GameAction.DoubleDown, playerKey: 'chris' });
+    expect(getPlayerHand(state.deck, 'chris', 0)?.cards).toEqual(['Club_5', 'Spade_6', 'Club_10']);
+    expect(getPlayerHand(state.deck, 'chris', 0)?.stake).toBe(50);
+    expect(state.activeHandIndex).toBe(1);
+    expect(canDoubleDown(state, 'chris', 1)).toBe(true);
+  });
 });
 
 describe('computer players', () => {

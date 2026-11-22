@@ -35,6 +35,8 @@ export type StrategyOptions = {
   dealerSoft17?: TableRules['dealerSoft17'];
   /** how many decks are in the shoe; with one or two, some plays differ. A shoe of six by default */
   numberOfDecks?: TableRules['numberOfDecks'];
+  /** whether doubling down after a split is allowed at this table */
+  doubleAfterSplit?: TableRules['doubleAfterSplit'];
 };
 
 /** What a chart needs to know about the table */
@@ -43,6 +45,8 @@ type Table = {
   hitsSoft17: boolean;
   /** one, two, or a shoe: charts for four to eight decks are the same, so they count as six */
   decks: 1 | 2 | 6;
+  /** doubling down after a split is allowed */
+  doubleAfterSplit: boolean;
 };
 
 /** A chart cell: whether to double down when that is allowed, and the play when it is not */
@@ -60,14 +64,15 @@ const between = (value: number, low: number, high: number): boolean => value >= 
  * not allow doubling down after a split, which is why low pairs are split less often than
  * on charts drawn for tables that do.
  */
-function splitsPair(rank: number, up: number, { decks }: Table): boolean {
+function splitsPair(rank: number, up: number, { decks, doubleAfterSplit }: Table): boolean {
   if (rank === 14 || rank === 8) return true;
   if (rank === 9) return between(up, 2, 6) || up === 8 || up === 9;
   if (rank === 7) return between(up, 2, 7);
-  if (rank === 6) return between(up, decks === 6 ? 3 : 2, 6);
-  if (rank === 3) return between(up, 4, 7);
-  if (rank === 2) return between(up, decks === 1 ? 3 : 4, 7);
-  // fours, fives and ten-value cards play better as the total they make
+  if (rank === 6) return between(up, doubleAfterSplit || decks !== 6 ? 2 : 3, 6);
+  if (rank === 4) return doubleAfterSplit && between(up, 5, 6);
+  if (rank === 3) return between(up, doubleAfterSplit ? 2 : 4, 7);
+  if (rank === 2) return between(up, doubleAfterSplit ? 2 : decks === 1 ? 3 : 4, 7);
+  // fives and ten-value cards play better as the total they make
   return false;
 }
 
@@ -134,6 +139,7 @@ export function recommendMove(options: StrategyOptions): StrategyHint | undefine
   const table: Table = {
     hitsSoft17: options.dealerSoft17 === 'hit',
     decks: options.numberOfDecks === '1' ? 1 : options.numberOfDecks === '2' ? 2 : 6,
+    doubleAfterSplit: Boolean(options.doubleAfterSplit),
   };
   const up = cardValue(dealerUpCard);
   const { aceAsOne, aceAsEleven, highest } = handValue(cards);

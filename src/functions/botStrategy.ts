@@ -46,7 +46,7 @@ export function decideBotMove(options: {
   canDouble: boolean;
   canSplit?: boolean;
   /** the rules of the table in play, which the textbook play depends on */
-  tableRules?: Pick<TableRules, 'dealerSoft17' | 'numberOfDecks'>;
+  tableRules?: Partial<Pick<TableRules, 'dealerSoft17' | 'numberOfDecks' | 'doubleAfterSplit'>>;
   rng?: Rng;
 }): BotMove {
   const { cards, dealerUpCard, canDouble, canSplit = false, rng = Math.random } = options;

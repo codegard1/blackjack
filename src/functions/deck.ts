@@ -279,8 +279,9 @@ export function splitPlayerHand(
   handIndex: number,
   stake: number,
 ): { deck: DeckState; isSplitAces: boolean } {
+  const root = deck.playerHands[key];
   const hand = getPlayerHand(deck, key, handIndex);
-  if (!hand || hand.cards.length < 2) return { deck, isSplitAces: false };
+  if (!root || !hand || hand.cards.length < 2) return { deck, isSplitAces: false };
 
   const [firstCard, movedCard, ...rest] = hand.cards;
   const isSplitAces = Number(movedCard.split('_')[1]) === 14;
@@ -292,17 +293,42 @@ export function splitPlayerHand(
     ...(isSplitAces ? { isSplitAces: true } : {}),
   };
   const mainCards = [firstCard, ...rest];
-  const nextDeck = updateHand(deck, key, handIndex, (h) => ({
-    ...h,
+  const updatedHand: PlayerHand = {
+    ...hand,
     cards: mainCards,
     handValue: handValue(mainCards),
     stake,
     isSplit: true,
     ...(isSplitAces ? { isSplitAces: true } : {}),
-    splitHands: [...(h.splitHands ?? []), splitHand],
-  }));
+  };
 
-  return { deck: nextDeck, isSplitAces };
+  let nextRoot: PlayerHand;
+  if (handIndex === 0) {
+    nextRoot = {
+      ...updatedHand,
+      splitHands: [splitHand, ...(root.splitHands ?? [])],
+    };
+  } else {
+    const nextSplits = [...(root.splitHands ?? [])];
+    const splitIndex = handIndex - 1;
+    nextSplits[splitIndex] = updatedHand;
+    nextSplits.splice(splitIndex + 1, 0, splitHand);
+    nextRoot = {
+      ...root,
+      splitHands: nextSplits,
+    };
+  }
+
+  return {
+    deck: {
+      ...deck,
+      playerHands: {
+        ...deck.playerHands,
+        [key]: nextRoot,
+      },
+    },
+    isSplitAces,
+  };
 }
 
 /** Add a card key to `selectedKeys` if not already selected */

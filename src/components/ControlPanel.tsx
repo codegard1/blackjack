@@ -125,6 +125,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
       canSplit: !isSplitDisabled,
       dealerSoft17: gameState.tableRules.dealerSoft17,
       numberOfDecks: gameState.tableRules.numberOfDecks,
+      doubleAfterSplit: gameState.tableRules.doubleAfterSplit,
     })
     : undefined;
   // The filled button is the one to press: the hinted move, or Hit when there is no hint

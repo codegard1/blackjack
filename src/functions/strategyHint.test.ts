@@ -89,6 +89,17 @@ describe('recommendMove', () => {
     expect(shoe(['Heart_2', 'Spade_2'], 'Club_3', true)).toBe('hit');
   });
 
+  it('splits low pairs more often when double after split is allowed', () => {
+    const das = (cards: string[], dealerUpCard: string, numberOfDecks: '1' | '2' | '6' | '8' = '6') =>
+      recommendMove({ cards, dealerUpCard, canDouble: true, canSplit: true, numberOfDecks, doubleAfterSplit: true })?.move;
+    expect(das(['Heart_4', 'Spade_4'], 'Club_5')).toBe('split');
+    expect(das(['Heart_4', 'Spade_4'], 'Club_6')).toBe('split');
+    expect(das(['Heart_4', 'Spade_4'], 'Club_4')).toBe('hit');
+    expect(das(['Heart_2', 'Spade_2'], 'Club_2')).toBe('split');
+    expect(das(['Heart_3', 'Spade_3'], 'Club_2')).toBe('split');
+    expect(das(['Heart_6', 'Spade_6'], 'Club_2')).toBe('split');
+  });
+
   it('reads a pair as the total it makes when it cannot be split', () => {
     expect(recommendMove({ cards: ['Heart_8', 'Spade_8'], dealerUpCard: 'Club_10', canDouble: true, canSplit: false }))
       .toMatchObject({ move: 'hit', hand: 'Hard 16' });
