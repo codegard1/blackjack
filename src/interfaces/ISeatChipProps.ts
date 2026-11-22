@@ -5,6 +5,8 @@ export interface ISeatChipProps {
   player: IPlayer;
   /** status label, if any */
   status?: SeatStatus;
+  /** reactive character utterance; falls back to the character's tagline when omitted */
+  utterance?: string;
   /** hand total to show; omit to hide it */
   total?: number;
   /** gently bob the chip, used before the game starts */

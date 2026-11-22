@@ -134,7 +134,7 @@ const useStyles = makeStyles({
  * and the player's cards when given
  */
 export const SeatChip: React.FC<ISeatChipProps> = (props) => {
-  const { player, status, total, cards, floating, index, focus, onSelect } = props;
+  const { player, status, utterance, total, cards, floating, index, focus, onSelect } = props;
   const styles = useStyles();
 
   const className = mergeClasses(
@@ -155,7 +155,7 @@ export const SeatChip: React.FC<ISeatChipProps> = (props) => {
       <CharacterPortrait id={player.key} name={player.title} size="md" decorative />
       <span className={styles.text}>
         <span className={styles.name}>{`${player.title} ($${player.bank || 0})`}</span>
-        {character && <span className={mergeClasses('seat-chip-tagline', styles.tagline)}>{character.tagline}</span>}
+        {character && <span className={mergeClasses('seat-chip-tagline', styles.tagline)}>{utterance ?? character.tagline}</span>}
         {status && <Badge size="small" appearance={status.appearance} color={status.color}>{status.text}</Badge>}
         {total !== undefined && <span className={styles.total}>{`Total ${total}`}</span>}
       </span>
