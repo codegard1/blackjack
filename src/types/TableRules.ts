@@ -6,6 +6,8 @@ export type TableRules = {
   numberOfDecks: typeof deckCounts[number];
   dealerSoft17: typeof dealerSoft17Options[number];
   blackjackPayout: typeof blackjackPayouts[number];
+  resplit?: boolean;
+  doubleAfterSplit?: boolean;
 };
 
 export const defaultTableRules: TableRules = {
@@ -19,11 +21,15 @@ export function isTableRules(value: unknown): value is TableRules {
   const rules = value as TableRules;
   return deckCounts.includes(rules.numberOfDecks)
     && dealerSoft17Options.includes(rules.dealerSoft17)
-    && blackjackPayouts.includes(rules.blackjackPayout);
+    && blackjackPayouts.includes(rules.blackjackPayout)
+    && (rules.resplit === undefined || typeof rules.resplit === 'boolean')
+    && (rules.doubleAfterSplit === undefined || typeof rules.doubleAfterSplit === 'boolean');
 }
 
 export const tableRulesFrom = (rules: TableRules): TableRules => ({
   numberOfDecks: rules.numberOfDecks,
   dealerSoft17: rules.dealerSoft17,
   blackjackPayout: rules.blackjackPayout,
+  ...(rules.resplit ? { resplit: true } : {}),
+  ...(rules.doubleAfterSplit ? { doubleAfterSplit: true } : {}),
 });

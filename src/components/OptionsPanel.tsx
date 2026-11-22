@@ -151,6 +151,8 @@ export const OptionsPanel: React.FC = () => {
               {blackjackPayouts.map((payout) => <Radio key={payout} value={payout} label={payout} />)}
             </RadioGroup>
           </Field>
+          <Switch checked={Boolean(settings.resplit)} label="Allow resplitting" onChange={(_, data) => toggleSetting({ key: 'resplit', value: data.checked })} />
+          <Switch checked={Boolean(settings.doubleAfterSplit)} label="Double after split" onChange={(_, data) => toggleSetting({ key: 'doubleAfterSplit', value: data.checked })} />
         </section>
 
         <Divider />

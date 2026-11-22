@@ -138,6 +138,8 @@ export function roundStake(state: GameState, key: PlayerKey): number {
   return (player?.lastAnte ?? 0) + (player?.totalBet ?? 0);
 }
 
+export const MAX_SPLIT_HANDS = 4;
+
 /**
  * True when the given player may double down: it is their turn in a live
  * round, they are not the dealer, they hold exactly two cards, and they can
@@ -149,20 +151,22 @@ export function roundStake(state: GameState, key: PlayerKey): number {
  */
 export function canDoubleDown(state: GameState, playerKey: PlayerKey, handIndex = state.activeHandIndex): boolean {
   const player = getPlayer(state.playerStore, playerKey);
-  const stake = roundStake(state, playerKey);
   const hand = getPlayerHand(state.deck, playerKey, handIndex);
+  const stake = hand?.stake ?? roundStake(state, playerKey);
   return !!player
     && !isDealer(player)
     && state.gameStatus === GameStatus.InProgress
     && state.playerStore.currentPlayerKey === playerKey
     && hand?.cards.length === 2
-    && !hand.isSplit
+    && !hand.isSplitAces
+    && (!hand.isSplit || Boolean(state.tableRules.doubleAfterSplit))
     && stake > 0
     && player.bank >= stake;
 }
 
 /**
- * A split is allowed once, on a same-rank pair, when the player can match the stake.
+ * A split is allowed on a same-rank pair when the player can match the stake,
+ * once by default or up to `MAX_SPLIT_HANDS` when resplitting is enabled.
  * @param state - Current game state
  * @param playerKey - Key of the seat asking to split
  * @param handIndex - Which of the seat's hands to check; must be the active hand
@@ -173,9 +177,11 @@ export function canSplit(state: GameState, playerKey: PlayerKey, handIndex = sta
   const hand = getPlayerHand(state.deck, playerKey, handIndex);
   if (!player || isDealer(player) || state.gameStatus !== GameStatus.InProgress
     || state.playerStore.currentPlayerKey !== playerKey || handIndex !== state.activeHandIndex
-    || !hand || hand.isSplit || hand.cards.length !== 2) return false;
+    || !hand || hand.cards.length !== 2) return false;
+  const hands = getPlayerHands(state.deck, playerKey);
+  if (hand.isSplit && (!state.tableRules.resplit || hands.length >= MAX_SPLIT_HANDS)) return false;
   const rank = (card: string) => card.split('_')[1];
-  const stake = roundStake(state, playerKey);
+  const stake = hand.stake ?? roundStake(state, playerKey);
   return rank(hand.cards[0]) === rank(hand.cards[1]) && stake > 0 && player.bank >= stake;
 }
 

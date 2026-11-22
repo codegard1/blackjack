@@ -365,7 +365,7 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
       const index = handIndex ?? state.activeHandIndex;
       if (!key || !canDoubleDown(state, key, index)) return state;
 
-      const stake = roundStake(state, key);
+      const stake = getPlayerHand(state.deck, key, index)?.stake ?? roundStake(state, key);
       const playerStore = betPlayer(state.playerStore, key, stake).store;
       const player = getPlayer(playerStore, key)!;
       const deck = getPlayerHand(state.deck, key, index)
@@ -397,8 +397,9 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
       const index = handIndex ?? state.activeHandIndex;
       if (!key || !canSplit(state, key, index)) return state;
       const player = getPlayer(state.playerStore, key);
-      if (!player || !getPlayerHand(state.deck, key, index)) return state;
-      const stake = roundStake(state, key);
+      const targetHand = getPlayerHand(state.deck, key, index);
+      if (!player || !targetHand) return state;
+      const stake = targetHand.stake ?? roundStake(state, key);
       const betResult = betPlayer(state.playerStore, key, stake);
       if (!betResult.paid) return state;
 

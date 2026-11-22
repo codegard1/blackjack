@@ -7,6 +7,8 @@ import { SettingsState, defaultTableRules } from '../types';
  */
 export const settingDefaults: SettingsState = {
   ...defaultTableRules,
+  resplit: false,
+  doubleAfterSplit: false,
   isActivityLogVisible: false,
   isAnimationsEnabled: true,
   isCardDescVisible: false,
