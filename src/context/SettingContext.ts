@@ -9,6 +9,8 @@ export const settingDefaults: SettingsState = {
   ...defaultTableRules,
   resplit: false,
   doubleAfterSplit: false,
+  insurance: false,
+  surrender: false,
   isActivityLogVisible: false,
   isAnimationsEnabled: true,
   isCardDescVisible: false,

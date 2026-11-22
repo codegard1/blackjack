@@ -24,7 +24,7 @@ import { defaultProfileState, normalizeProfileState } from "./profiles";
 import { defaultBotAccount, defaultBotAccounts } from "./work";
 
 /** Bump when the shape of the saved game snapshot changes. */
-export const GAME_STORE_VERSION = 6;
+export const GAME_STORE_VERSION = 7;
 
 /** How many of the newest activity log entries a snapshot sent to the server keeps */
 export const MAX_SYNCED_ACTIVITY = 200;
@@ -77,7 +77,7 @@ function isSavedBotAccounts(value: unknown): boolean {
 
 function isSavedGame(value: unknown): value is SavedGame {
   return isObject(value)
-    && (value.version === GAME_STORE_VERSION || value.version === 5 || value.version === 4)
+    && (value.version === GAME_STORE_VERSION || value.version === 6 || value.version === 5 || value.version === 4)
     && (value.version === 4 || isTableRules(value.tableRules))
     && isSavedBotAccounts(value.botAccounts)
     && typeof value.gameStatus === 'number'
@@ -105,6 +105,7 @@ export function gameSnapshot(state: GameState, { maxActivity }: { maxActivity?: 
       botAccounts: cloneBotAccounts(state.botAccounts),
       controllingPlayer: state.controllingPlayer,
       dealerHasControl: state.dealerHasControl,
+      ...(state.isInsuranceOpen ? { isInsuranceOpen: true } : {}),
       gameStatus: state.gameStatus,
       gameStatusFlag: state.gameStatusFlag,
       loser: state.loser,

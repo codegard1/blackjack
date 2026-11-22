@@ -26,7 +26,7 @@ Run `npm test` for the test suite (`npm run test:coverage` also measures coverag
 
 #### Rules
 * You and up to four computer players each play against a dealer that hits below 17 and stands otherwise by default; Options can make the dealer hit soft 17 instead
-* Table rules in Options select 1, 2, 6 or 8 decks (default 1), dealer behavior on soft 17 (default stand), and blackjack payout (default 3:2, or 6:5). Changes are saved immediately but apply only when the next hand starts, including through Next hand or the Options panel's Deal. The in-app guide shows the active hand's rules
+* Table rules in Options select 1, 2, 6 or 8 decks (default 1), dealer behavior on soft 17 (default stand), blackjack payout (default 3:2, or 6:5), and optional toggles (all off by default) for resplitting up to four hands, doubling after a split, insurance against a dealer ace, and late surrender. Changes are saved immediately but apply only when the next hand starts, including through Next hand or the Options panel's Deal. The in-app guide shows the active hand's rules
 * Shoes reshuffle between hands when fewer than six cards per seat per deck remain; changing the deck count starts a fresh shoe. An exhausted shoe refills without cards currently held in any hand
 * Number cards count as shown, face cards count as 10, and aces count as 1 or 11
 * Each round starts with a minimum ante from every player (the dealer does not ante); you can add minimum-bet increments before dealing or during your turn. A computer player who cannot cover the ante leaves the table to work and earn a fresh bankroll

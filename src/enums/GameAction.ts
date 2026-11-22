@@ -5,6 +5,7 @@ export enum GameAction {
   DoubleDown = 'DoubleDown',
   Draw = 'Draw',
   EvaluateGame = 'EvaluateGame',
+  Insurance = 'Insurance',
   NewGame = 'NewGame',
   NewRound = 'NewRound',
   ResetGame = 'ResetGame',
@@ -16,5 +17,6 @@ export enum GameAction {
   SetSpinnerVisible = 'SetSpinnerVisible',
   Shuffle = 'Shuffle',
   Stay = 'Stay',
+  Surrender = 'Surrender',
   Unselect = 'Unselect',
 }

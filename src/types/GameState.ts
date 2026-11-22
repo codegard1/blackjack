@@ -9,6 +9,7 @@ export type GameState = {
   botAccounts: Record<string, BotAccountState>;
   controllingPlayer?: PlayerKey;
   dealerHasControl: boolean;
+  isInsuranceOpen?: boolean;
   deck: DeckState;
   gameStatus: GameStatus;
   gameStatusFlag: boolean;
@@ -29,7 +30,7 @@ export type ActivityLogEntry = {
   sessionId?: number;
   /** the hand this entry belongs to; absent in logs saved before hands were tracked */
   round?: number;
-  event?: 'game' | 'round' | 'deal' | 'draw' | 'ante' | 'bet' | 'double' | 'split' | 'stay' | 'win' | 'loss' | 'push' | 'shuffle' | 'work';
+  event?: 'game' | 'round' | 'deal' | 'draw' | 'ante' | 'bet' | 'double' | 'split' | 'stay' | 'insurance' | 'surrender' | 'win' | 'loss' | 'push' | 'shuffle' | 'work';
   timestamp: number;
   name: string;
   description: string;

@@ -2,7 +2,7 @@ import { PlayingCardKey, TableRules } from "../types";
 import { handValue } from "./getHandValue";
 
 /** A move a seat can make on its turn */
-export type BotMove = 'hit' | 'stay' | 'double' | 'split';
+export type BotMove = 'hit' | 'stay' | 'double' | 'split' | 'surrender';
 
 /** Blackjack value of a card for strategy purposes: face cards 10, ace 11 */
 export function cardValue(card: PlayingCardKey): number {
@@ -37,6 +37,8 @@ export type StrategyOptions = {
   numberOfDecks?: TableRules['numberOfDecks'];
   /** whether doubling down after a split is allowed at this table */
   doubleAfterSplit?: TableRules['doubleAfterSplit'];
+  /** whether late surrender is allowed on this hand right now */
+  canSurrender?: boolean;
 };
 
 /** What a chart needs to know about the table */
@@ -52,7 +54,7 @@ type Table = {
 /** A chart cell: whether to double down when that is allowed, and the play when it is not */
 type Play = { double: boolean; otherwise: BotMove };
 
-const MOVE_WORDS: Record<BotMove, string> = { hit: 'hit', stay: 'stay', double: 'double down', split: 'split' };
+const MOVE_WORDS: Record<BotMove, string> = { hit: 'hit', stay: 'stay', double: 'double down', split: 'split', surrender: 'surrender' };
 const RANK_NAMES: Record<number, string> = { 11: 'jacks', 12: 'queens', 13: 'kings', 14: 'aces' };
 const ACE = 11;
 
@@ -154,6 +156,8 @@ export function recommendMove(options: StrategyOptions): StrategyHint | undefine
 
   if (isPair && canSplit && splitsPair(pairRank, up, table)) {
     move = 'split';
+  } else if (options.canSurrender && !isSoft && ((highest === 16 && (up === 9 || up === 10 || up === ACE)) || (highest === 15 && up === 10))) {
+    move = 'surrender';
   } else {
     const play = (isPair ? unsplitPair(pairRank, up, table) : undefined)
       ?? (isSoft ? softPlay(highest, up, table) : hardPlay(highest, up, table));

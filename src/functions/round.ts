@@ -4,12 +4,12 @@ import { GameStatus } from "../enums";
 import { IPlayer, IPlayerOptions } from "../interfaces";
 import { BotAccountState, GameState, PlayerKey, PlayerRole, TableRules, WorkTaskId, cloneBotAccount, defaultTableRules } from "../types";
 import { recordActivity } from "./activity";
-import { BotMove, Rng, botWagerCount, decideBotMove } from "./botStrategy";
+import { BotMove, Rng, botWagerCount, decideBotInsurance, decideBotMove } from "./botStrategy";
 import {
   createDeck, getPlayerHand, getPlayerHands, getPlayerHandValue, refillDeckCards, syncDeckHands, updateHand,
 } from "./deck";
 import {
-  allPlayers, antePlayer, betPlayer, endPlayerTurn, getPlayer, replaceRoster, setCurrentPlayer, startPlayerTurn, updatePlayer,
+  allPlayers, antePlayer, betPlayer, endPlayerTurn, getPlayer, payoutPlayer, replaceRoster, setCurrentPlayer, startPlayerTurn, updatePlayer,
 } from "./playerStore";
 import { appendBalance, chooseTask, defaultBotAccount, defaultBotAccounts, getWorkTask, returnThreshold } from "./work";
 
@@ -155,6 +155,7 @@ export function canDoubleDown(state: GameState, playerKey: PlayerKey, handIndex 
   const stake = hand?.stake ?? roundStake(state, playerKey);
   return !!player
     && !isDealer(player)
+    && !state.isInsuranceOpen
     && state.gameStatus === GameStatus.InProgress
     && state.playerStore.currentPlayerKey === playerKey
     && hand?.cards.length === 2
@@ -175,7 +176,7 @@ export function canDoubleDown(state: GameState, playerKey: PlayerKey, handIndex 
 export function canSplit(state: GameState, playerKey: PlayerKey, handIndex = state.activeHandIndex): boolean {
   const player = getPlayer(state.playerStore, playerKey);
   const hand = getPlayerHand(state.deck, playerKey, handIndex);
-  if (!player || isDealer(player) || state.gameStatus !== GameStatus.InProgress
+  if (!player || isDealer(player) || state.isInsuranceOpen || state.gameStatus !== GameStatus.InProgress
     || state.playerStore.currentPlayerKey !== playerKey || handIndex !== state.activeHandIndex
     || !hand || hand.cards.length !== 2) return false;
   const hands = getPlayerHands(state.deck, playerKey);
@@ -183,6 +184,62 @@ export function canSplit(state: GameState, playerKey: PlayerKey, handIndex = sta
   const rank = (card: string) => card.split('_')[1];
   const stake = hand.stake ?? roundStake(state, playerKey);
   return rank(hand.cards[0]) === rank(hand.cards[1]) && stake > 0 && player.bank >= stake;
+}
+
+/**
+ * Late surrender is allowed on the first decision of an unsplit two-card hand
+ * when the table enables surrender.
+ */
+export function canSurrender(state: GameState, playerKey: PlayerKey, handIndex = state.activeHandIndex): boolean {
+  const player = getPlayer(state.playerStore, playerKey);
+  const hand = getPlayerHand(state.deck, playerKey, handIndex);
+  const stake = hand?.stake ?? roundStake(state, playerKey);
+  return Boolean(state.tableRules.surrender)
+    && !state.isInsuranceOpen
+    && !!player
+    && !isDealer(player)
+    && state.gameStatus === GameStatus.InProgress
+    && state.playerStore.currentPlayerKey === playerKey
+    && handIndex === state.activeHandIndex
+    && hand?.cards.length === 2
+    && !hand.isSplit
+    && !hand.isSurrendered
+    && !hand.result
+    && stake > 0;
+}
+
+/** Maximum insurance side bet a seat may place (up to half its stake, capped by bank) */
+export function maxInsuranceBet(state: GameState, playerKey: PlayerKey): number {
+  const player = getPlayer(state.playerStore, playerKey);
+  const hand = getPlayerHand(state.deck, playerKey, 0);
+  if (!player || !hand) return 0;
+  const stake = hand.stake ?? roundStake(state, playerKey);
+  return Math.max(0, Math.min(Math.floor(stake / 2), player.bank));
+}
+
+/** Whether a seat may place or decline an insurance side bet right now */
+export function canInsurance(state: GameState, playerKey: PlayerKey): boolean {
+  const player = getPlayer(state.playerStore, playerKey);
+  const hand = getPlayerHand(state.deck, playerKey, 0);
+  return Boolean(state.isInsuranceOpen)
+    && Boolean(state.tableRules.insurance)
+    && state.gameStatus === GameStatus.InProgress
+    && !!player
+    && !isDealer(player)
+    && !player.isSittingOut
+    && !!hand
+    && hand.cards.length === 2
+    && hand.insuranceBet === undefined
+    && maxInsuranceBet(state, playerKey) > 0;
+}
+
+/** Whether insurance should be offered after the deal (insurance enabled, dealer shows an ace, at least one seat can insure) */
+export function offersInsurance(state: GameState): boolean {
+  if (!state.tableRules.insurance) return false;
+  const dealer = getDealer(state);
+  const upCard = dealer ? getPlayerHand(state.deck, dealer.key)?.cards[1] : undefined;
+  if (!upCard || Number(upCard.split('_')[1]) !== 14) return false;
+  return playerSeats(state).some((p) => !p.isSittingOut && hasHand(state, p) && maxInsuranceBet(state, p.key) > 0);
 }
 
 /**
@@ -212,6 +269,7 @@ export function decideSeatMove(state: GameState, key: PlayerKey, rng: Rng = Math
   return decideBotMove({
     cards, dealerUpCard, stats, lossStreak: player?.lossStreak,
     canDouble: canDoubleDown(state, key, handIndex), canSplit: canSplit(state, key, handIndex),
+    canSurrender: canSurrender(state, key, handIndex),
     tableRules: state.tableRules, rng,
   });
 }
@@ -283,6 +341,76 @@ export function advanceTurn(state: GameState, fromKey?: PlayerKey, fromHandIndex
     return setControl({ ...state, activeHandIndex: playableHandIndex(state, dealer) }, dealer.key);
   }
   return resolveShowdown(state);
+}
+
+/** Record one seat's insurance decision (0 = declined) */
+export function applyInsuranceBet(state: GameState, playerKey: PlayerKey, amount: number): GameState {
+  const player = getPlayer(state.playerStore, playerKey);
+  if (!player) return state;
+  const bet = Math.min(maxInsuranceBet(state, playerKey), Math.max(0, Math.floor(amount)));
+  let playerStore = state.playerStore;
+  if (bet > 0) playerStore = payoutPlayer(playerStore, playerKey, -bet);
+  const deck = updateHand(state.deck, playerKey, 0, (h) => ({ ...h, insuranceBet: bet }));
+  let next: GameState = { ...state, playerStore, deck };
+  if (bet > 0 && isBot(player)) {
+    const bank = getPlayer(playerStore, playerKey)!.bank;
+    next = updateBotAccount(next, playerKey, (acc) => (acc.bank === bank ? acc : { ...acc, bank }));
+  }
+  return recordActivity(
+    next,
+    player.title,
+    bet > 0 ? `took $${bet} insurance` : 'declined insurance',
+    'insurance',
+    bet > 0 ? { amount: -bet } : undefined,
+  );
+}
+
+/**
+ * Open the insurance phase after the deal when the dealer shows an ace.
+ * Computer characters decide immediately; if a human seat can insure, wait for their decision.
+ */
+export function openInsurancePhase(state: GameState, rng: Rng = Math.random): GameState {
+  let next: GameState = { ...state, isInsuranceOpen: true, controllingPlayer: undefined };
+  for (const player of playerSeats(next)) {
+    if (!isBot(player) || !canInsurance(next, player.key)) continue;
+    const stats = getCharacter(player.key)?.stats;
+    const take = stats ? decideBotInsurance(stats, rng) : false;
+    next = applyInsuranceBet(next, player.key, take ? maxInsuranceBet(next, player.key) : 0);
+  }
+  const hasHumanPending = playerSeats(next).some((p) => !isBot(p) && canInsurance(next, p.key));
+  return hasHumanPending ? next : resolveInsuranceAndNaturals(next);
+}
+
+/** Settle all insurance side bets against the dealer's hole card, then resolve naturals */
+export function resolveInsuranceAndNaturals(state: GameState): GameState {
+  const dealer = getDealer(state);
+  const dealerHand = dealer ? getPlayerHand(state.deck, dealer.key) : undefined;
+  const dealerHasNatural = Boolean(dealer && dealerHand?.cards.length === 2 && getPlayerHandValue(state.deck, dealer.key).highest === 21);
+
+  let next: GameState = { ...state, isInsuranceOpen: false };
+  for (const player of playerSeats(next)) {
+    const bet = getPlayerHand(next.deck, player.key, 0)?.insuranceBet ?? 0;
+    if (bet <= 0) continue;
+    if (dealerHasNatural) {
+      const winnings = bet * 2;
+      let playerStore = payoutPlayer(next.playerStore, player.key, bet + winnings);
+      if (dealer) playerStore = payoutPlayer(playerStore, dealer.key, -winnings);
+      next = { ...next, playerStore };
+      if (isBot(player)) {
+        const bank = getPlayer(playerStore, player.key)!.bank;
+        next = updateBotAccount(next, player.key, (acc) => ({
+          ...acc,
+          bank,
+          balanceHistory: appendBalance(acc.balanceHistory, bank),
+        }));
+      }
+      next = recordActivity(next, player.title, `won $${winnings} on insurance`, 'insurance', { amount: bet + winnings });
+    } else {
+      const playerStore = dealer ? payoutPlayer(next.playerStore, dealer.key, bet) : next.playerStore;
+      next = recordActivity({ ...next, playerStore }, player.title, `lost $${bet} on insurance`, 'insurance');
+    }
+  }
+  return resolveNaturals(next);
 }
 
 /**
@@ -389,7 +517,10 @@ export function finishRound(state: GameState): GameState {
   for (const player of playerSeats(state)) {
     const hands = getPlayerHands(state.deck, player.key).filter((hand) => hand.result);
     if (hands.length === 0) continue;
-    const net = hands.reduce((total, hand) => total + netFor(hand.result, hand.stake ?? roundStake(state, player.key), state.tableRules.blackjackPayout), 0);
+    const net = hands.reduce(
+      (total, hand) => total + (hand.net ?? netFor(hand.result, hand.stake ?? roundStake(state, player.key), state.tableRules.blackjackPayout)),
+      0,
+    );
     const results = hands.map((hand) => hand.result);
     const result = results.every((item) => item === results[0])
       ? results[0]

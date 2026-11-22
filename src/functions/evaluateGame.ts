@@ -60,7 +60,9 @@ function settleRound(state: GameState): GameState {
         net,
       };
       const label = hands.length > 1 ? `${player.title} (hand ${index + 1})` : player.title;
-      next = recordActivity({ ...next, deck, playerStore }, label, describeResult(handPlayer), activityEvent(handPlayer), { amount });
+      const description = hand.isSurrendered ? `surrendered, lost $${-net}` : describeResult(handPlayer);
+      const event = hand.isSurrendered ? 'surrender' : activityEvent(handPlayer);
+      next = recordActivity({ ...next, deck, playerStore }, label, description, event, { amount });
 
       const won = hand.result === 'win' || hand.result === 'blackjack';
       next = {
@@ -71,6 +73,7 @@ function settleRound(state: GameState): GameState {
           numberOfGamesWon: won ? 1 : 0,
           numberOfTimesBlackjack: hand.isBlackjack ? 1 : 0,
           numberOfTimesBusted: hand.isBusted ? 1 : 0,
+          numberOfTimesSurrendered: hand.isSurrendered ? 1 : 0,
           totalWinnings: Math.max(0, net),
           netResult: net,
           winLossRatio: 0,

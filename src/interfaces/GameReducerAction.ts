@@ -29,6 +29,8 @@ type ActionPayloads = {
   [GameAction.Draw]: SeatMove & { deckSide?: 'top' | 'bottom' | 'random'; numberOfCards?: number };
   /** Run the bookkeeping the current status calls for: the opening antes, or a finished round's payouts */
   [GameAction.EvaluateGame]: object;
+  /** Place or decline an insurance side bet against a dealer ace */
+  [GameAction.Insurance]: { playerKey?: PlayerKey; accept?: boolean; amount?: number };
   /** Seat a new game: the seats in `players`, or else the default players named in `playerKeys` */
   [GameAction.NewGame]: { players?: IPlayerOptions[]; playerKeys?: PlayerKey[]; tableRules?: TableRules; botAccounts?: Record<string, BotAccountState> };
   [GameAction.NewRound]: { tableRules?: TableRules };
@@ -44,6 +46,7 @@ type ActionPayloads = {
   [GameAction.Shuffle]: object;
   [GameAction.Split]: SeatMove;
   [GameAction.Stay]: SeatMove;
+  [GameAction.Surrender]: SeatMove;
   [GameAction.Unselect]: { cardKey: PlayingCardKey };
 };
 

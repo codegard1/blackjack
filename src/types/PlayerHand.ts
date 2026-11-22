@@ -8,6 +8,7 @@ export type PlayerHand = {
   handValue: PlayerHandValue;
   splitHands?: PlayerHand[];
   stake?: number;
+  insuranceBet?: number;
   net?: number;
   result?: RoundResult;
   isBusted?: boolean;
@@ -15,6 +16,7 @@ export type PlayerHand = {
   isBlackjack?: boolean;
   isSplit?: boolean;
   isSplitAces?: boolean;
+  isSurrendered?: boolean;
 };
 
 /**
