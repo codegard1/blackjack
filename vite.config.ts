@@ -64,6 +64,7 @@ export default defineConfig(({ command, mode }) => {
       environment: 'jsdom',
       pool: 'vmThreads',
       setupFiles: './src/setupTests.ts',
+      exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
       coverage: {
         provider: 'v8',
         include: ['src/**/*.{ts,tsx}', 'netlify/**/*.ts'],
