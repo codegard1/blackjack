@@ -70,6 +70,12 @@ export const RulesDialog: React.FC<IRulesDialogProps> = ({ open, onOpenChange })
                 <li>Hit to draw a card, or Stay to end your turn.</li>
                 <li>Double Down is available on your turn with exactly two cards{tableRules.doubleAfterSplit ? '' : ' on an unsplit hand'} when your bank can cover your current stake. It adds an equal amount, draws one card, and then stands unless you bust.</li>
                 <li>Split is available on a same-rank pair when your bank can cover another equal stake. You play each hand in turn. {tableRules.resplit ? 'You may resplit up to four hands' : 'You may split only once'}; split aces get one card each and stand, and 21 on a split hand is not a natural. Double Down is {tableRules.doubleAfterSplit ? 'allowed' : 'not available'} after splitting.</li>
+                {tableRules.insurance && (
+                  <li>Insurance is offered when the dealer's face-up card is an ace, before the dealer checks for a natural. You may wager up to half your stake; it pays 2:1 if the dealer has blackjack.</li>
+                )}
+                {tableRules.surrender && (
+                  <li>Late surrender is available on your first decision with two cards on an unsplit hand: give up the hand and take half your stake back.</li>
+                )}
                 <li>A total over 21 busts and loses your stake, even if the dealer busts later.</li>
                 <li>You play first, then each computer player in turn, then the dealer.</li>
               </ul>

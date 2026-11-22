@@ -59,7 +59,7 @@ describe('persistence', () => {
   });
 
   it('round-trips v6 botAccounts, seated awayTask and isReadyToReturn flags, and work activity log entries', () => {
-    expect(GAME_STORE_VERSION).toBe(6);
+    expect(GAME_STORE_VERSION).toBe(7);
     const profiles = { ...defaultProfileState(), opponentIds: ['ogion'] };
     const state = gameReducer(createGameState(), {
       type: GameAction.NewGame,
@@ -218,6 +218,23 @@ describe('persistence', () => {
     expect(restored.deck.playerHands.chris.cards).toEqual(dealt.deck.playerHands.chris.cards);
     expect(restored.deck.cardKeys.length).toBe(dealt.deck.cardKeys.length);
     expect(restored.activityLog).toEqual(dealt.activityLog);
+  });
+
+  it('restores an open insurance phase and optional insurance/surrender rules', () => {
+    let state = gameReducer(startedGame(), {
+      type: GameAction.NewGame,
+      playerKeys: ['chris', 'dealer'],
+      tableRules: { ...defaultTableRules, insurance: true, surrender: true },
+    });
+    state = gameReducer(state, { type: GameAction.EvaluateGame });
+    state.deck = { ...state.deck, cardKeys: ['Spade_9', 'Heart_14', 'Club_10', 'Diamond_9', 'Club_9'] };
+    state = gameReducer(state, { type: GameAction.Deal });
+    expect(state.isInsuranceOpen).toBe(true);
+
+    saveGameState(state);
+    const restored = loadGameState();
+    expect(restored.isInsuranceOpen).toBe(true);
+    expect(restored.tableRules).toMatchObject({ insurance: true, surrender: true });
   });
 
   it('restores the active hand and both card stacks mid-split', () => {

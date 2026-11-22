@@ -14,7 +14,7 @@ import {
   activePlayerKeys, allPlayers, createPlayerStore, getPlayer, playerCount, setCurrentPlayer, updatePlayer,
 } from './playerStore';
 import { defaultProfileState, seatsFor } from './profiles';
-import { applyRoster, canDoubleDown, canSplit, configureCharacterWork, decideSeatMove, reshuffleIfLow, setControl } from './round';
+import { applyRoster, canDoubleDown, canInsurance, canSplit, canSurrender, configureCharacterWork, decideSeatMove, reshuffleIfLow, setControl } from './round';
 import { handValue } from './getHandValue';
 import { seatStatus } from './seatStatus';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -1414,5 +1414,100 @@ describe('what an action may carry', () => {
     accept({ type: GameAction.Shuffle, cardKey: 'Spade_8' });
     // @ts-expect-error configuring work requires a playerKey
     accept({ type: GameAction.ConfigureWork, allowReturn: true });
+  });
+});
+
+describe('insurance and late surrender', () => {
+  const startWithRules = (rules: Partial<TableRules>, players?: ReturnType<typeof seatsFor>) => {
+    const started = gameReducer(createGameState(), {
+      type: GameAction.NewGame,
+      ...(players ? { players } : { playerKeys: ['chris', 'dealer'] }),
+      tableRules: { ...defaultTableRules, ...rules },
+    });
+    return gameReducer(started, { type: GameAction.EvaluateGame });
+  };
+
+  it('offers insurance before checking for a dealer natural, and pays 2:1 when the dealer has blackjack', () => {
+    // Dealer gets [Spade_10, Heart_14] (hole card 10, up card Ace = natural)
+    let state = dealSeats(startWithRules({ insurance: true }), [['Club_9', 'Diamond_9'], ['Spade_10', 'Heart_14']]);
+
+    expect(state.isInsuranceOpen).toBe(true);
+    expect(state.gameStatus).toBe(GameStatus.InProgress);
+    expect(canInsurance(state, 'chris')).toBe(true);
+    expect(canDoubleDown(state, 'chris')).toBe(false);
+
+    // Stake is $25, max insurance is $12. Insurance wins 2:1 (+$24), main hand loses -$25 -> net -$1
+    state = gameReducer(state, { type: GameAction.Insurance, playerKey: 'chris', accept: true, amount: 12 });
+    expect(state.isInsuranceOpen).toBe(false);
+    expect(state.gameStatus).toBe(GameStatus.RoundOver);
+    state = gameReducer(state, { type: GameAction.EvaluateGame });
+    expect(state.playerStore.players.chris.bank).toBe(999);
+    expect(state.playerStore.players.dealer.bank).toBe(1001);
+  });
+
+  it('collects a lost insurance bet and continues play when the dealer has no natural', () => {
+    let state = dealSeats(startWithRules({ insurance: true }), [['Club_10', 'Diamond_9'], ['Spade_6', 'Heart_14']]);
+
+    expect(state.isInsuranceOpen).toBe(true);
+    state = gameReducer(state, { type: GameAction.Insurance, playerKey: 'chris', accept: true, amount: 12 });
+    expect(state.isInsuranceOpen).toBe(false);
+    expect(state.gameStatus).toBe(GameStatus.InProgress);
+    expect(state.controllingPlayer).toBe('chris');
+    // Insurance $12 was lost to the dealer immediately
+    expect(state.playerStore.players.chris.bank).toBe(963);
+    expect(state.playerStore.players.dealer.bank).toBe(1012);
+
+    state = stay(state, 'chris');
+    state = stay(state, 'dealer');
+    state = gameReducer(state, { type: GameAction.EvaluateGame });
+    // Chris wins $25 on the 19 vs 17 main hand: 963 + 50 = 1013 (1000 - 12 + 25)
+    expect(state.playerStore.players.chris.bank).toBe(1013);
+  });
+
+  it('does not offer insurance when the rule is off', () => {
+    const state = dealSeats(startWithRules({ insurance: false }), [['Club_9', 'Diamond_9'], ['Spade_10', 'Heart_14']]);
+    expect(state.isInsuranceOpen).toBeFalsy();
+    expect(state.gameStatus).toBe(GameStatus.RoundOver);
+  });
+
+  it('allows late surrender on a two-card unsplit hand when enabled and returns half the stake', () => {
+    let state = dealSeats(startWithRules({ surrender: true }), [['Club_10', 'Diamond_6'], ['Spade_10', 'Heart_10']]);
+
+    expect(canSurrender(state, 'chris')).toBe(true);
+    state = gameReducer(state, { type: GameAction.Surrender, playerKey: 'chris' });
+    expect(getPlayerHand(state.deck, 'chris', 0)?.isSurrendered).toBe(true);
+    expect(getPlayerHand(state.deck, 'chris', 0)?.result).toBe('loss');
+    expect(state.gameStatus).toBe(GameStatus.RoundOver);
+
+    state = gameReducer(state, { type: GameAction.EvaluateGame });
+    // Stake was $25 -> $12 returned, $13 lost
+    expect(state.playerStore.players.chris.bank).toBe(987);
+    expect(state.playerStore.players.chris.stats.numberOfTimesSurrendered).toBe(1);
+    expect(state.playerStore.players.dealer.bank).toBe(1013);
+  });
+
+  it('does not allow surrender when the rule is off or after hitting', () => {
+    const offState = dealSeats(startWithRules({ surrender: false }), [['Club_10', 'Diamond_6'], ['Spade_10', 'Heart_10']]);
+    expect(canSurrender(offState, 'chris')).toBe(false);
+
+    let onState = dealSeats(startWithRules({ surrender: true }), [['Club_10', 'Diamond_4'], ['Spade_10', 'Heart_10']], ['Club_2']);
+    expect(canSurrender(onState, 'chris')).toBe(true);
+    onState = hit(onState, 'chris');
+    expect(canSurrender(onState, 'chris')).toBe(false);
+  });
+
+  it('has disciplined bots surrender 16 vs 10 while maniacs do not', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    const state = dealSeats(
+      startWithRules({ surrender: true }, seatsFor({ ...defaultProfileState(), opponentIds: ['shevek', 'haber'] })),
+      [['Club_10', 'Diamond_10'], ['Club_10', 'Heart_6'], ['Spade_10', 'Diamond_6'], ['Club_9', 'Heart_10']],
+    );
+    const afterChris = stay(state, 'chris');
+    expect(afterChris.controllingPlayer).toBe('shevek');
+    // Shevek (discipline 10) surrenders 16 vs 10 even with rng=0.5 (or 0.01)
+    expect(decideSeatMove(afterChris, 'shevek', () => 0.01)).toBe('surrender');
+    // Haber (aggression 10) never surrenders
+    const afterShevek = stay(afterChris, 'shevek');
+    expect(decideSeatMove(afterShevek, 'haber', () => 0.01)).not.toBe('surrender');
   });
 });

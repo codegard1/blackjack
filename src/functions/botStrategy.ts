@@ -45,17 +45,25 @@ export function decideBotMove(options: {
   lossStreak?: number;
   canDouble: boolean;
   canSplit?: boolean;
+  canSurrender?: boolean;
   /** the rules of the table in play, which the textbook play depends on */
   tableRules?: Partial<Pick<TableRules, 'dealerSoft17' | 'numberOfDecks' | 'doubleAfterSplit'>>;
   rng?: Rng;
 }): BotMove {
-  const { cards, dealerUpCard, canDouble, canSplit = false, rng = Math.random } = options;
+  const { cards, dealerUpCard, canDouble, canSplit = false, canSurrender = false, rng = Math.random } = options;
   const stats = effectiveStats(options.stats, options.lossStreak);
   const isPassive = stats.aggression <= 3;
   const total = handValue(cards).highest;
 
   if (rng() < stats.discipline / 10) {
-    const textbook = recommendMove({ cards, dealerUpCard, canDouble: canDouble && !isPassive, canSplit, ...options.tableRules });
+    const textbook = recommendMove({
+      cards,
+      dealerUpCard,
+      canDouble: canDouble && !isPassive,
+      canSplit,
+      canSurrender: canSurrender && stats.aggression < 8,
+      ...options.tableRules,
+    });
     // without the dealer's card there is no textbook play, and the character goes on instinct
     if (textbook) return textbook.move;
   }
@@ -74,4 +82,10 @@ export function decideBotMove(options: {
 export function botWagerCount(stats: CharacterStats, lossStreak = 0, rng: Rng = Math.random): number {
   const { aggression } = effectiveStats(stats, lossStreak);
   return Math.floor(aggression / 4) + (rng() < aggression / 20 ? 1 : 0);
+}
+
+/** Whether a computer character takes insurance against a dealer ace */
+export function decideBotInsurance(stats: CharacterStats, rng: Rng = Math.random): boolean {
+  if (stats.discipline >= 8) return false;
+  return rng() < (10 - stats.discipline) * 0.04;
 }

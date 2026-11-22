@@ -17,8 +17,9 @@ import {
 } from "./playerStore";
 import { seededRandom } from "./random";
 import {
-  advanceTurn, applyRoster, canDoubleDown, canSplit, collectAntes, configureCharacterWork, isBot, isDealer, playerSeats, refillDeck, reshuffleIfLow, resolveNaturals,
-  resolveShowdown, roundStake, seatOrder, setControl, syncSeatWithAccount, updateBotAccount,
+  advanceTurn, applyInsuranceBet, applyRoster, canDoubleDown, canInsurance, canSplit, canSurrender, collectAntes, configureCharacterWork,
+  isBot, isDealer, maxInsuranceBet, offersInsurance, openInsurancePhase, playerSeats, refillDeck, reshuffleIfLow, resolveInsuranceAndNaturals,
+  resolveNaturals, resolveShowdown, roundStake, seatOrder, setControl, syncSeatWithAccount, updateBotAccount,
 } from "./round";
 import { defaultBotAccount, defaultBotAccounts } from "./work";
 
@@ -56,7 +57,7 @@ function firstSeat(state: GameState): string | undefined {
   return playerSeats(state).find((player) => !player.isSittingOut)?.key;
 }
 
-export { canDoubleDown, canSplit } from "./round";
+export { canDoubleDown, canInsurance, canSplit, canSurrender, maxInsuranceBet } from "./round";
 
 /**
  * Reducer function for game state
@@ -174,6 +175,7 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
         controllingPlayer: undefined,
         activeHandIndex: 0,
         dealerHasControl: false,
+        isInsuranceOpen: false,
         gameStatus: GameStatus.InProgress,
         round: 1,
         turnCount: 0,
@@ -242,6 +244,7 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
         controllingPlayer: undefined,
         activeHandIndex: 0,
         dealerHasControl: false,
+        isInsuranceOpen: false,
         gameStatus: GameStatus.InProgress,
         gameStatusFlag: false,
         pot: 0,
@@ -352,7 +355,7 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
       for (const key of dealtKeys) {
         next = recordActivity(next, getPlayer(next.playerStore, key)!.title, 'was dealt two cards', 'deal');
       }
-      return resolveNaturals(next);
+      return offersInsurance(next) ? openInsurancePhase(next, rng) : resolveNaturals(next);
     }
 
     /**
@@ -438,6 +441,41 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
         next = advanceTurn({ ...next, deck, playerStore }, key, index);
       }
       return next;
+    }
+
+    case GameAction.Insurance: {
+      const human = allPlayers(state.playerStore).find((p) => !p.isNPC && !isDealer(p));
+      const key = action.playerKey ?? human?.key;
+      if (!key || !canInsurance(state, key)) return state;
+      const amount = action.accept === false ? 0 : (action.amount ?? maxInsuranceBet(state, key));
+      const next = applyInsuranceBet(state, key, amount);
+      return resolveInsuranceAndNaturals(next);
+    }
+
+    case GameAction.Surrender: {
+      const { playerKey, handIndex } = action;
+      const key = playerKey ?? state.playerStore.currentPlayerKey;
+      const index = handIndex ?? state.activeHandIndex;
+      if (!key || !canSurrender(state, key, index)) return state;
+      const player = getPlayer(state.playerStore, key);
+      const hand = getPlayerHand(state.deck, key, index);
+      if (!player || !hand) return state;
+
+      const stake = hand.stake ?? roundStake(state, key);
+      const returned = Math.floor(stake / 2);
+      const net = returned - stake;
+      const deck = updateHand(state.deck, key, index, (h) => ({
+        ...h,
+        isSurrendered: true,
+        isStaying: true,
+        result: 'loss',
+        net,
+      }));
+      const hands = getPlayerHands(deck, key);
+      const isStaying = hands.every((item) => item.isStaying || item.result);
+      const playerStore = updatePlayer(state.playerStore, key, (p) => ({ ...p, isStaying }));
+      const next = recordActivity({ ...state, deck, playerStore }, player.title, 'surrendered', 'surrender');
+      return advanceTurn(next, key, index);
     }
 
     default: {

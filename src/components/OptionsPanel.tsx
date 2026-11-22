@@ -153,6 +153,8 @@ export const OptionsPanel: React.FC = () => {
           </Field>
           <Switch checked={Boolean(settings.resplit)} label="Allow resplitting" onChange={(_, data) => toggleSetting({ key: 'resplit', value: data.checked })} />
           <Switch checked={Boolean(settings.doubleAfterSplit)} label="Double after split" onChange={(_, data) => toggleSetting({ key: 'doubleAfterSplit', value: data.checked })} />
+          <Switch checked={Boolean(settings.insurance)} label="Offer insurance" onChange={(_, data) => toggleSetting({ key: 'insurance', value: data.checked })} />
+          <Switch checked={Boolean(settings.surrender)} label="Allow late surrender" onChange={(_, data) => toggleSetting({ key: 'surrender', value: data.checked })} />
         </section>
 
         <Divider />
