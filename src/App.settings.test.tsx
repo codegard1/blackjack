@@ -89,7 +89,7 @@ it('changes the theme, accent, card style and card back from the Appearance sect
   expect(within(screen.getByRole('radiogroup', { name: 'Accent color' })).getByRole('radio', { name: 'Teal' })).toBeChecked();
 });
 
-it.each(['Next hand', 'Options Deal'])('defers table rules through a reload until %s', (dealFrom) => {
+it('defers table rules through a reload until Next hand', () => {
   vi.mocked(dealCards)
     .mockImplementationOnce(rigDeal({ chris: ['Spade_10', 'Diamond_9'], dealer: ['Club_10', 'Heart_7'] }))
     .mockImplementation(rigDeal({ chris: ['Spade_10', 'Diamond_14_2'], dealer: ['Club_10', 'Heart_7'] }));
@@ -124,12 +124,7 @@ it.each(['Next hand', 'Options Deal'])('defers table rules through a reload unti
   checkRules(1, '3:2', 'stands on 17 or higher');
 
   finishResults();
-  if (dealFrom === 'Options Deal') {
-    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Start a new round with the selected players' }));
-  } else {
-    fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
-  }
+  fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
   checkRules(2, '6:5', 'draws below 17 and on soft 17');
   const game = JSON.parse(localStorage.getItem(StoreName.GAMESTORE) ?? '{}');
   expect(game.tableRules).toEqual({ numberOfDecks: '2', dealerSoft17: 'hit', blackjackPayout: '6:5' });

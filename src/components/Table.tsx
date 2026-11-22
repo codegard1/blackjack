@@ -5,7 +5,7 @@ import { Badge, Button, Spinner, Text, makeStyles, mergeClasses, tokens } from '
 
 // Local Resources
 import {
-  ActivityLog, ActivityLogToggle, Agent, BOT_ACTION_DELAY_MS, CardStack, ControlPanel, DEALER_ACTION_DELAY_MS, PlayerContainer, SeatChip, TableToasts,
+  ActivityLog, ActivityLogToggle, Agent, BOT_ACTION_DELAY_MS, ControlPanel, DEALER_ACTION_DELAY_MS, PlayerContainer, SeatChip, TableToasts,
 } from ".";
 import { useActivityDrawer } from "./ActivityLog";
 import { isPotToast, useTableToasts } from "./TableToasts";
@@ -247,29 +247,6 @@ export const Table: React.FC = () => {
                 delayMs={isDealer(controller) ? DEALER_ACTION_DELAY_MS : BOT_ACTION_DELAY_MS}
               />
             )}
-
-            {gameState.deck.cardKeys.length > 0 &&
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
-                  <CardStack
-                    cards={gameState.deck.cardKeys}
-                    title="Deck"
-                    hidden={!settings.isDeckVisible}
-                    isSelectable={false}
-                  />
-                  <CardStack
-                    cards={gameState.deck.drawnKeys}
-                    title="Drawn Cards"
-                    hidden={!settings.isDrawnVisible}
-                    isSelectable={false}
-                  />
-                  <CardStack
-                    cards={gameState.deck.selectedKeys}
-                    title="Selected Cards"
-                    hidden={!settings.isSelectedVisible}
-                    isSelectable={false}
-                  />
-              </div>
-            }
           </div>
 
           <div className={mergeClasses('table-dock', styles.dock, potLines.length > 0 && 'has-pot-toast')} style={{ '--pot-lines': potLines.length } as React.CSSProperties}>

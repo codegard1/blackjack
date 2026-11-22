@@ -290,13 +290,13 @@ describe('persistence', () => {
     expect(loadSettings()).toMatchObject({ themeMode: 'dark', accent: 'crimson', cardBackPattern: 'stripes' });
 
     localStorage.setItem(StoreName.SETTINGSTORE, JSON.stringify({
-      themeMode: 'sepia', accent: true, cardStyle: 'bold', isDeckVisible: 'yes',
+      themeMode: 'sepia', accent: true, cardStyle: 'bold', isHandValueVisible: 'yes',
     }));
     const loaded = loadSettings();
     expect(loaded.themeMode).toBe(settingDefaults.themeMode);
     expect(loaded.accent).toBe(settingDefaults.accent);
     expect(loaded.cardStyle).toBe('bold');
-    expect(loaded.isDeckVisible).toBe(false);
+    expect(loaded.isHandValueVisible).toBe(false);
   });
 
   it('round-trips the queue side and falls back to the left for a value it does not accept', () => {
