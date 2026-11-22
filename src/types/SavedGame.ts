@@ -5,7 +5,7 @@ import type { GameState } from './GameState';
 /** Scalar game fields saved alongside the deck and player stores */
 export type SavedGame = Pick<GameState,
   'activityLog' | 'activeHandIndex' | 'controllingPlayer' | 'dealerHasControl' | 'gameStatus' | 'gameStatusFlag' |
-  'isInsuranceOpen' | 'loser' | 'minimumBet' | 'pot' | 'round' | 'tableRules' | 'turnCount' | 'winner'
+  'isInsuranceOpen' | 'loser' | 'minimumBet' | 'pot' | 'round' | 'session' | 'tableRules' | 'turnCount' | 'winner'
 > & { version: number; botAccounts?: GameState['botAccounts'] };
 
 /**

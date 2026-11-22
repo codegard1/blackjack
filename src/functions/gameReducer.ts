@@ -21,6 +21,7 @@ import {
   isBot, isDealer, maxInsuranceBet, offersInsurance, openInsurancePhase, playerSeats, refillDeck, reshuffleIfLow, resolveInsuranceAndNaturals,
   resolveNaturals, resolveShowdown, roundStake, seatOrder, setControl, syncSeatWithAccount, updateBotAccount,
 } from "./round";
+import { initSession } from "./session";
 import { defaultBotAccount, defaultBotAccounts } from "./work";
 
 /**
@@ -183,6 +184,7 @@ function applyAction(state: GameState, action: GameReducerAction, rng: () => num
       for (const seat of seats) {
         if (isBotId(seat.key)) next = syncSeatWithAccount(next, seat.key);
       }
+      next = { ...next, session: initSession(next.playerStore) };
       const first = firstSeat(next);
       if (first) next = setControl(next, first);
       return recordActivity(next, '', 'Game started', 'game');

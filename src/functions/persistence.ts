@@ -21,10 +21,11 @@ import {
 import { restoreDeckState } from "./deck";
 import { allPlayers, createPlayerStore, playerStoreSnapshot } from "./playerStore";
 import { defaultProfileState, normalizeProfileState } from "./profiles";
+import { cloneSessionSummary, isSessionSummary } from "./session";
 import { defaultBotAccount, defaultBotAccounts } from "./work";
 
 /** Bump when the shape of the saved game snapshot changes. */
-export const GAME_STORE_VERSION = 7;
+export const GAME_STORE_VERSION = 8;
 
 /** How many of the newest activity log entries a snapshot sent to the server keeps */
 export const MAX_SYNCED_ACTIVITY = 200;
@@ -77,9 +78,10 @@ function isSavedBotAccounts(value: unknown): boolean {
 
 function isSavedGame(value: unknown): value is SavedGame {
   return isObject(value)
-    && (value.version === GAME_STORE_VERSION || value.version === 6 || value.version === 5 || value.version === 4)
+    && (value.version === GAME_STORE_VERSION || value.version === 7 || value.version === 6 || value.version === 5 || value.version === 4)
     && (value.version === 4 || isTableRules(value.tableRules))
     && isSavedBotAccounts(value.botAccounts)
+    && (value.session === undefined || isSessionSummary(value.session))
     && typeof value.gameStatus === 'number'
     && typeof value.activeHandIndex === 'number'
     && typeof value.pot === 'number'
@@ -112,6 +114,7 @@ export function gameSnapshot(state: GameState, { maxActivity }: { maxActivity?: 
       minimumBet: state.minimumBet,
       pot: state.pot,
       round: state.round,
+      ...(state.session ? { session: cloneSessionSummary(state.session) } : {}),
       tableRules: tableRulesFrom(state.tableRules),
       turnCount: state.turnCount,
       winner: state.winner,
