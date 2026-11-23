@@ -9,7 +9,7 @@ import './App.css';
 import { AppHeader, OptionsPanel, PlayersDialog, Table } from './components';
 import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
 import { GameAction, GameStatus } from './enums';
-import { botAccountsFor, collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync } from './functions';
+import { botAccountsFor, collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync, useSettingSync } from './functions';
 import { GameReducerAction } from './interfaces';
 import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark, PAGE_GUTTER } from './theme';
 
@@ -55,8 +55,9 @@ const App = () => {
   React.useEffect(() => saveSettings(settings), [settings]);
   React.useEffect(() => saveGameState(gameState), [gameState]);
   React.useEffect(() => saveProfiles(profiles), [profiles]);
-  // and keep the profiles and the game in step with the server, when there is one
+  // and keep the profiles, settings and the game in step with the server, when there is one
   useProfileSync(profiles, profileDispatch);
+  useSettingSync(settings, toggleSetting);
   useGameSync(gameState, gameDispatch);
   // and pick up what every other table has played with the characters
   useCommunitySync();
