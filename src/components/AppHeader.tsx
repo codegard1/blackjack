@@ -22,7 +22,8 @@ import { BookOpen24Regular, Info24Regular, People24Regular, Settings24Regular } 
 // Local Resources
 import { usePlayersDialog, useSettingContext } from '../context';
 import { AppLogo } from './AppLogo';
-import { RulesDialog } from './RulesDialog';
+
+const RulesDialog = React.lazy(() => import('./RulesDialog').then((m) => ({ default: m.RulesDialog })));
 import { PAGE_GUTTER } from '../theme/layout';
 import { description, repository, version } from '../../package.json';
 
@@ -97,6 +98,11 @@ export const AppHeader: React.FC = () => {
 
   const openPlayers = usePlayersDialog();
   const [isRulesOpen, setRulesOpen] = React.useState(false);
+  const [hasOpenedRules, setHasOpenedRules] = React.useState(false);
+  const openRules = () => {
+    setHasOpenedRules(true);
+    setRulesOpen(true);
+  };
 
   const toggleOptionsPanel = () =>
     toggleSetting({ key: 'isOptionsPanelVisible', value: !settings.isOptionsPanelVisible });
@@ -110,9 +116,13 @@ export const AppHeader: React.FC = () => {
 
       <div className={styles.actions}>
         <Tooltip content="Blackjack rules" relationship="label">
-          <Button appearance="subtle" aria-label="Blackjack rules" icon={<BookOpen24Regular />} onClick={() => setRulesOpen(true)} />
+          <Button appearance="subtle" aria-label="Blackjack rules" icon={<BookOpen24Regular />} onClick={openRules} />
         </Tooltip>
-        <RulesDialog open={isRulesOpen} onOpenChange={setRulesOpen} />
+        {hasOpenedRules && (
+          <React.Suspense fallback={null}>
+            <RulesDialog open={isRulesOpen} onOpenChange={setRulesOpen} />
+          </React.Suspense>
+        )}
         <Tooltip content="Players" relationship="label">
           <Button appearance="subtle" aria-label="Players" icon={<People24Regular />} onClick={openPlayers} />
         </Tooltip>

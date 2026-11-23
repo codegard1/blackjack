@@ -29,7 +29,7 @@ afterEach(() => {
 /** let the toasts tell every seat's result, after which the game's buttons are free again; needs fake timers */
 const finishResults = () => act(() => { vi.advanceTimersByTime(10_000); });
 
-it('changes the theme, accent, card style and card back from the Appearance section and remembers them', () => {
+it('changes the theme, accent, card style and card back from the Appearance section and remembers them', async () => {
   // neither hand is a natural, so the round stays in play and the dealer's hole card stays face down
   vi.mocked(dealCards).mockImplementation(rigDeal({
     chris: ['Spade_10', 'Diamond_7'],
@@ -54,6 +54,7 @@ it('changes the theme, accent, card style and card back from the Appearance sect
   expect(themeVariable('--colorNeutralBackground1')).toBe(webDarkTheme.colorNeutralBackground1);
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   fireEvent.click(screen.getByRole('radio', { name: 'Light' }));
   expect(shell()).toHaveAttribute('data-theme-mode', 'light');
   expect(themeVariable('--colorBrandBackground')).toBe(brandPresets.blue.ramp[80]);
@@ -84,12 +85,13 @@ it('changes the theme, accent, card style and card back from the Appearance sect
   expect(shell()).toHaveAttribute('data-theme-mode', 'light');
   expect(shell()).toHaveAttribute('data-accent', 'teal');
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked();
   expect(screen.getByRole('radio', { name: 'Stripes' })).toBeChecked();
   expect(within(screen.getByRole('radiogroup', { name: 'Accent color' })).getByRole('radio', { name: 'Teal' })).toBeChecked();
 });
 
-it('defers table rules through a reload until Next hand', () => {
+it('defers table rules through a reload until Next hand', async () => {
   vi.mocked(dealCards)
     .mockImplementationOnce(rigDeal({ chris: ['Spade_10', 'Diamond_9'], dealer: ['Club_10', 'Heart_7'] }))
     .mockImplementation(rigDeal({ chris: ['Spade_10', 'Diamond_14_2'], dealer: ['Club_10', 'Heart_7'] }));
@@ -98,6 +100,7 @@ it('defers table rules through a reload until Next hand', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Number of decks' })).getByRole('radio', { name: '2' }));
   fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Dealer on soft 17' })).getByRole('radio', { name: 'Hit' }));
   fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Blackjack pays' })).getByRole('radio', { name: '6:5' }));
@@ -107,47 +110,52 @@ it('defers table rules through a reload until Next hand', () => {
 
   vi.useFakeTimers();
   render(<App />);
-  const checkRules = (decks: number, payout: string, dealerRule: string) => {
+  const checkRules = async (decks: number, payout: string, dealerRule: string) => {
     fireEvent.click(screen.getByRole('button', { name: 'Blackjack rules' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
     const dialog = screen.getByRole('dialog', { name: 'Blackjack rules' });
     expect(dialog).toHaveTextContent(`active shoe uses ${decks} ${decks === 1 ? 'deck' : 'decks'}`);
     expect(dialog).toHaveTextContent(`natural blackjack is paid ${payout}`);
     expect(dialog).toHaveTextContent(dealerRule);
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
   };
-  checkRules(1, '3:2', 'stands on 17 or higher');
+  await checkRules(1, '3:2', 'stands on 17 or higher');
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   expect(screen.getByRole('radio', { name: '2' })).toBeChecked();
   expect(screen.getByRole('radio', { name: '6:5' })).toBeChecked();
   fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
   fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
-  checkRules(1, '3:2', 'stands on 17 or higher');
+  await checkRules(1, '3:2', 'stands on 17 or higher');
 
   finishResults();
   fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
-  checkRules(2, '6:5', 'draws below 17 and on soft 17');
+  await checkRules(2, '6:5', 'draws below 17 and on soft 17');
   const game = JSON.parse(localStorage.getItem(StoreName.GAMESTORE) ?? '{}');
   expect(game.tableRules).toEqual({ numberOfDecks: '2', dealerSoft17: 'hit', blackjackPayout: '6:5' });
   const players = JSON.parse(localStorage.getItem(StoreName.PLAYERSTORE) ?? '{}');
   expect(players.players.chris.bank).toBe(1005);
 });
 
-it('uses table rules selected before starting a game', () => {
+it('uses table rules selected before starting a game', async () => {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   fireEvent.click(screen.getByRole('radio', { name: '8' }));
   fireEvent.click(screen.getByRole('radio', { name: '6:5' }));
   fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Blackjack rules' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   const dialog = screen.getByRole('dialog', { name: 'Blackjack rules' });
   expect(dialog).toHaveTextContent('active shoe uses 8 decks');
   expect(dialog).toHaveTextContent('natural blackjack is paid 6:5');
 });
 
-it('resets only the appearance settings', () => {
+it('resets only the appearance settings', async () => {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   fireEvent.click(screen.getByRole('switch', { name: 'Open Activity Log by default' }));
   fireEvent.click(screen.getByRole('radio', { name: 'High contrast' }));
   fireEvent.click(screen.getByRole('radio', { name: 'Solid' }));
@@ -175,10 +183,11 @@ it('shows the app name in the header and opens the About dialog', () => {
   expect(screen.queryByRole('dialog', { name: "About Chris's Blackjack" })).not.toBeInTheDocument();
 });
 
-it('opens and closes the in-app blackjack rules from the header', () => {
+it('opens and closes the in-app blackjack rules from the header', async () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Blackjack rules' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   const dialog = screen.getByRole('dialog', { name: 'Blackjack rules' });
   expect(within(dialog).getByText(/minimum bet of \$25/)).toBeInTheDocument();
   expect(within(dialog).getByText(/Double Down is available on your turn with exactly two cards/)).toBeInTheDocument();
@@ -188,7 +197,7 @@ it('opens and closes the in-app blackjack rules from the header', () => {
   expect(screen.queryByRole('dialog', { name: 'Blackjack rules' })).not.toBeInTheDocument();
 });
 
-it('shows strategy hints once they are switched on in Options, and remembers the choice', () => {
+it('shows strategy hints once they are switched on in Options, and remembers the choice', async () => {
   // chris holds 16 against the dealer's 6 (the dealer's first card is the hole card)
   vi.mocked(dealCards).mockImplementation(rigDeal({
     chris: ['Spade_10', 'Diamond_6'],
@@ -204,6 +213,7 @@ it('shows strategy hints once they are switched on in Options, and remembers the
   expect(first.container.querySelector('[data-hint]')).toBeNull();
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   fireEvent.click(screen.getByRole('switch', { name: 'Show strategy hints' }));
   fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
   expect(hint()).toBeInTheDocument();
@@ -219,10 +229,11 @@ it('shows strategy hints once they are switched on in Options, and remembers the
   render(<App />);
   expect(screen.getByText('Hint: Hard 20 vs dealer 6: stay')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   expect(screen.getByRole('switch', { name: 'Show strategy hints' })).toBeChecked();
 });
 
-it('toggles gameplay and pot notifications in Options while preserving the pot breakdown and immediate log entries', () => {
+it('toggles gameplay and pot notifications in Options while preserving the pot breakdown and immediate log entries', async () => {
   vi.mocked(dealCards).mockImplementation(rigDeal({
     chris: ['Spade_10', 'Diamond_7'],
     dealer: ['Club_10', 'Heart_7'],
@@ -231,6 +242,7 @@ it('toggles gameplay and pot notifications in Options while preserving the pot b
   const first = render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   const gameplaySwitch = screen.getByRole('switch', { name: 'Gameplay notifications' });
   const potSwitch = screen.getByRole('switch', { name: 'Pot notifications' });
   expect(gameplaySwitch).toBeChecked();
@@ -248,6 +260,7 @@ it('toggles gameplay and pot notifications in Options while preserving the pot b
   vi.useFakeTimers();
   const { container } = render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   expect(screen.getByRole('switch', { name: 'Gameplay notifications' })).not.toBeChecked();
   expect(screen.getByRole('switch', { name: 'Pot notifications' })).not.toBeChecked();
   fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
@@ -276,11 +289,12 @@ it('toggles gameplay and pot notifications in Options while preserving the pot b
   expect(log().getByText('busted, lost $50')).toBeInTheDocument();
 });
 
-it('toggles character animations from the Options panel and remembers the setting', () => {
+it('toggles character animations from the Options panel and remembers the setting', async () => {
   const first = render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
 
   const animationsSwitch = screen.getByRole('switch', { name: 'Character animations' });
   expect(animationsSwitch).toBeChecked();
@@ -296,5 +310,6 @@ it('toggles character animations from the Options panel and remembers the settin
   first.unmount();
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   expect(screen.getByRole('switch', { name: 'Character animations' })).not.toBeChecked();
 });

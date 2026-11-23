@@ -18,8 +18,9 @@ import { Info24Regular } from '@fluentui/react-icons';
 /* custom stuff */
 import { CardStack, StatusDisplay } from '.';
 import { getCharacter } from "../characters";
-import { CharacterDialog } from "./CharacterCard";
 import { CharacterPortrait } from "./CharacterPortrait";
+
+const CharacterDialog = React.lazy(() => import('./CharacterCard').then((m) => ({ default: m.CharacterDialog })));
 import { IPlayerContainerProps } from "../interfaces";
 import { GameStatus } from "../enums";
 import { isRoundOver, isSeatWinner, seatStatus } from "../functions/seatStatus";
@@ -206,15 +207,19 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
           ? <Button appearance="subtle" aria-label={`About ${player.title}`} icon={<Info24Regular />} onClick={() => setCharacterOpen(true)} />
           : <StatusDisplay player={player} />}
       />
-      <CharacterDialog
-        character={character}
-        stats={player.stats}
-        account={gameState.botAccounts?.[playerKey]}
-        minimumBet={gameState.minimumBet}
-        isSeated
-        open={isCharacterOpen}
-        onOpenChange={setCharacterOpen}
-      />
+      {isCharacterOpen && (
+        <React.Suspense fallback={null}>
+          <CharacterDialog
+            character={character}
+            stats={player.stats}
+            account={gameState.botAccounts?.[playerKey]}
+            minimumBet={gameState.minimumBet}
+            isSeated
+            open={isCharacterOpen}
+            onOpenChange={setCharacterOpen}
+          />
+        </React.Suspense>
+      )}
 
       <div className={styles.body}>
         <div id={id} className="player-hand">

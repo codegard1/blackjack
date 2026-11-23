@@ -26,10 +26,11 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it('creates a player, selects it for the next game, and starts with its name', () => {
+it('creates a player, selects it for the next game, and starts with its name', async () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   const dialog = screen.getByRole('dialog', { name: 'Players' });
   fireEvent.change(within(dialog).getByPlaceholderText('Name'), { target: { value: 'Alex' } });
   fireEvent.click(within(dialog).getByRole('button', { name: 'Add player' }));
@@ -42,10 +43,11 @@ it('creates a player, selects it for the next game, and starts with its name', (
   expect(screen.getByText('Alex ($975)')).toBeInTheDocument();
 });
 
-it('rejects a duplicate or empty player name', () => {
+it('rejects a duplicate or empty player name', async () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   const dialog = screen.getByRole('dialog', { name: 'Players' });
   fireEvent.change(within(dialog).getByPlaceholderText('Name'), { target: { value: 'chris' } });
   fireEvent.click(within(dialog).getByRole('button', { name: 'Add player' }));
@@ -56,7 +58,7 @@ it('rejects a duplicate or empty player name', () => {
   expect(within(dialog).getByText('Enter a name.')).toBeInTheDocument();
 });
 
-it('carries a settled round into each player\'s statistics, including the next game', () => {
+it('carries a settled round into each player\'s statistics, including the next game', async () => {
   vi.mocked(dealCards).mockImplementation(rigDeal({
     chris: ['Spade_11', 'Diamond_14'],
     dealer: ['Club_10', 'Heart_7'],
@@ -73,6 +75,7 @@ it('carries a settled round into each player\'s statistics, including the next g
   };
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   expect(statsRow('Chris')).toEqual(['1', '1', '0', '0', '100%', '1', '0', '+$37']);
   // Faxe's record is the simulated history plus this lost round, which paid Chris $37
   const history = CHARACTER_HISTORY.stats.dealer;
@@ -87,14 +90,16 @@ it('carries a settled round into each player\'s statistics, including the next g
   fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   fireEvent.click(screen.getByText('Reset Game'));
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   expect(statsRow('Chris')[0]).toBe('1');
 });
 
-it('seats chosen computer players, who play their turns before the dealer', () => {
+it('seats chosen computer players, who play their turns before the dealer', async () => {
   vi.spyOn(Math, 'random').mockReturnValue(0.99);
   vi.mocked(dealCards).mockImplementation(rigDeal({
     chris: ['Spade_10', 'Diamond_7'],
@@ -104,6 +109,7 @@ it('seats chosen computer players, who play their turns before the dealer', () =
   const { container } = render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   const dialog = screen.getByRole('dialog', { name: 'Players' });
   fireEvent.click(within(dialog).getByRole('checkbox', { name: /Ogion/ }));
   fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
@@ -169,7 +175,7 @@ it('seats chosen computer players, who play their turns before the dealer', () =
   expect(container.querySelector('[data-focus]')).toBeNull();
 });
 
-it('allows the human player to sit out between hands while computer players play a single hand, then rejoin', () => {
+it('allows the human player to sit out between hands while computer players play a single hand, then rejoin', async () => {
   vi.spyOn(Math, 'random').mockReturnValue(0.99);
   vi.mocked(dealCards).mockImplementation(rigDeal({
     chris: ['Spade_10', 'Diamond_7'],
@@ -179,6 +185,7 @@ it('allows the human player to sit out between hands while computer players play
   const { container } = render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   const dialog = screen.getByRole('dialog', { name: 'Players' });
   fireEvent.click(within(dialog).getByRole('checkbox', { name: /Ogion/ }));
   fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
@@ -225,11 +232,12 @@ it('allows the human player to sit out between hands while computer players play
   expect(screen.getByRole('button', { name: 'Stay' })).toBeInTheDocument();
 });
 
-it('queues seats on the left by default, or on the right from the Seat queue side setting', () => {
+it('queues seats on the left by default, or on the right from the Seat queue side setting', async () => {
   const { container } = render(<App />);
   expect(container.querySelector('.table-layout')).not.toHaveClass('is-queue-right');
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Seat queue side' })).getByRole('radio', { name: 'Right' }));
   fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
   expect(container.querySelector('.table-layout')).toHaveClass('is-queue-right');
@@ -239,13 +247,15 @@ it('queues seats on the left by default, or on the right from the Seat queue sid
   expect(container.querySelector('.table-layout')).toHaveClass('is-queue-right');
 });
 
-it("opens a character's card from the Players dialog", () => {
+it("opens a character's card from the Players dialog", async () => {
   render(<App />);
 
   // the Players dialog stays closed until it is opened
   expect(screen.queryByText('Computer players')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   fireEvent.click(screen.getByRole('button', { name: 'About Haber' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
 
   const card = screen.getByRole('dialog', { name: 'Haber, The Maniac' });
   expect(within(card).getByRole('img', { name: /big man with a red-brown beard/ })).toBeInTheDocument();
@@ -254,7 +264,7 @@ it("opens a character's card from the Players dialog", () => {
   expect(within(card).getByText(/Ursula K. Le Guin/)).toBeInTheDocument();
 });
 
-it('shows character work status in the Players dialog and renders the balance chart on the character card', () => {
+it('shows character work status in the Players dialog and renders the balance chart on the character card', async () => {
   const profiles = defaultProfileState();
   profiles.opponentIds = ['ogion'];
   profiles.profiles = profiles.profiles.map((profile) => {
@@ -283,6 +293,7 @@ it('shows character work status in the Players dialog and renders the balance ch
 
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   const dialog = screen.getByRole('dialog', { name: 'Players' });
 
   // Seated character at the table, unseated away working character, ready character, and available character
@@ -293,6 +304,7 @@ it('shows character work status in the Players dialog and renders the balance ch
 
   // Open Ogion's character card and inspect work status + SVG BalanceChart
   fireEvent.click(within(dialog).getByRole('button', { name: 'About Ogion' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   const card = screen.getByRole('dialog', { name: 'Ogion, The Rock' });
   expect(within(card).getByRole('heading', { name: 'Bank and work' })).toBeInTheDocument();
   expect(within(card).getByText('At the table · $420 (returns at $300)')).toBeInTheDocument();
@@ -310,7 +322,7 @@ it('shows character work status in the Players dialog and renders the balance ch
   expect(within(card).getByText('Now: $420')).toBeInTheDocument();
 });
 
-it("overrides a character's work task from the Players dialog before and during a game", () => {
+it("overrides a character's work task from the Players dialog before and during a game", async () => {
   const profiles = defaultProfileState();
   profiles.opponentIds = ['ogion'];
   profiles.profiles = profiles.profiles.map((profile) => (
@@ -322,6 +334,7 @@ it("overrides a character's work task from the Players dialog before and during 
 
   // Before the game starts, override Ogion's task from his own pick (gobrin-ice) to weaving-baskets
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   let dialog = screen.getByRole('dialog', { name: 'Players' });
   const taskSelect = within(dialog).getByRole<HTMLSelectElement>('combobox', { name: "Ogion's work task" });
   expect(taskSelect.value).toBe('gobrin-ice');
@@ -344,6 +357,7 @@ it("overrides a character's work task from the Players dialog before and during 
 
   // Switching the task in the Players dialog while the game is active updates the live work state at once
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   dialog = screen.getByRole('dialog', { name: 'Players' });
   expect(within(dialog).getByText('Away working: Weaving baskets (7 days left, +$1) · $10 / $300')).toBeInTheDocument();
 
@@ -358,7 +372,7 @@ it("overrides a character's work task from the Players dialog before and during 
   expect(screen.getByText('Away: hauling a sledge')).toBeInTheDocument();
 });
 
-it('lets a ready character back to the table when "Let back when ready" is switched on between hands', () => {
+it('lets a ready character back to the table when "Let back when ready" is switched on between hands', async () => {
   vi.mocked(dealCards).mockImplementation(rigDeal({
     chris: ['Spade_11', 'Diamond_14'],
     dealer: ['Club_10', 'Heart_7'],
@@ -392,6 +406,7 @@ it('lets a ready character back to the table when "Let back when ready" is switc
 
   // Open Players dialog, verify ready notice, and toggle "Let back when ready" for Genly Ai
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   const dialog = screen.getByRole('dialog', { name: 'Players' });
   expect(within(dialog).getByText('Ready to return · Has $107 (threshold $100) and wants back in')).toBeInTheDocument();
 
