@@ -24,7 +24,9 @@ import {
 import { useGameContext, usePlayersDialog, usePotAnimation, useProfileContext, useSettingContext } from "../context";
 import { GameAction, GameStatus } from "../enums";
 import { BotMove } from "../functions/botStrategy";
-import { canDoubleDown, canSplit } from "../functions/gameReducer";
+import { canDoubleDown, canInsurance, canSplit, canSurrender, maxInsuranceBet } from "../functions/gameReducer";
+import { getPlayerHand } from "../functions/deck";
+import { allPlayers } from "../functions/playerStore";
 import { botAccountsFor, seatsFor } from "../functions/profiles";
 import { getDealer, isBot } from "../functions/round";
 import { recommendMove } from "../functions/strategyHint";
@@ -96,7 +98,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const { profiles } = useProfileContext();
   const { settings } = useSettingContext();
   const { gameStatus, minimumBet } = gameState;
-  const playerStore = gameState.playerStore.state;
+  const playerStore = gameState.playerStore;
 
   // Computed properties
   const currentPlayerKey = playerStore.currentPlayerKey;
@@ -105,24 +107,29 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   const isRoundComplete = gameStatus >= GameStatus.RoundOver;
   const isBtnDisabled = isRoundComplete || currentPlayerKey !== playerKey;
   // Hit and Stay need a dealt hand; a new game has no cards until the first deal
-  const isRoundDealt = Object.values(gameState.deck.state.playerHands).some((hand) => hand.cards.length > 0);
+  const isRoundDealt = Object.values(gameState.deck.playerHands).some((hand) => hand.cards.length > 0);
   const isPlayDisabled = isBtnDisabled || !isRoundDealt;
   const isDealDisabled = !isRoundComplete && (currentPlayerKey !== playerKey || isRoundDealt);
   const isDoubleDownDisabled = !canDoubleDown(gameState, playerKey, gameState.activeHandIndex);
   const isSplitDisabled = !canSplit(gameState, playerKey, gameState.activeHandIndex);
+  const isSurrenderDisabled = !canSurrender(gameState, playerKey, gameState.activeHandIndex);
+  const isInsurancePending = canInsurance(gameState, playerKey);
+  const insuranceAmount = isInsurancePending ? maxInsuranceBet(gameState, playerKey) : 0;
   const wagerLabel = `Wager $${minimumBet}`;
 
   // The textbook play for the hand in control, when hints are switched on and there is a move
   // to make. It reads the dealer's face-up card only: the hole card is dealt first.
   const dealer = getDealer(gameState);
-  const hint = settings.isStrategyHintVisible && !npcFlag && !isPlayDisabled
+  const hint = settings.isStrategyHintVisible && !npcFlag && !isPlayDisabled && !isInsurancePending
     ? recommendMove({
-      cards: gameState.deck.hand(playerKey, gameState.activeHandIndex)?.cards ?? [],
-      dealerUpCard: dealer ? gameState.deck.hand(dealer.key)?.cards[1] : undefined,
+      cards: getPlayerHand(gameState.deck, playerKey, gameState.activeHandIndex)?.cards ?? [],
+      dealerUpCard: dealer ? getPlayerHand(gameState.deck, dealer.key)?.cards[1] : undefined,
       canDouble: !isDoubleDownDisabled,
       canSplit: !isSplitDisabled,
+      canSurrender: !isSurrenderDisabled,
       dealerSoft17: gameState.tableRules.dealerSoft17,
       numberOfDecks: gameState.tableRules.numberOfDecks,
+      doubleAfterSplit: gameState.tableRules.doubleAfterSplit,
     })
     : undefined;
   // The filled button is the one to press: the hinted move, or Hit when there is no hint
@@ -147,7 +154,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
   };
 
   const isSittingOut = !!player?.isSittingOut;
-  const hasAvailableBots = gameState.playerStore.all.some(
+  const hasAvailableBots = allPlayers(gameState.playerStore).some(
     (p) => isBot(p) && !p.isSittingOut && p.bank >= minimumBet
   );
   const canSitOut = hasAvailableBots;
@@ -208,6 +215,21 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
     return () => window.removeEventListener('keydown', onKeyDown);
     // no dependency list: the handlers above are made anew on every render, so the listener is too
   });
+
+  // When the dealer shows an ace and insurance is enabled, offer the side bet before checking for a natural
+  if (!hidden && !npcFlag && isInsurancePending) {
+    const humanHasNatural = getPlayerHand(gameState.deck, playerKey, 0)?.handValue.highest === 21;
+    return (
+      <div className={`player-endactions ${styles.endActions}`} role="group" aria-label="Insurance">
+        <Button appearance="primary" size="large" onClick={() => gameDispatch({ type: GameAction.Insurance, playerKey, accept: true, amount: insuranceAmount })}>
+          {humanHasNatural ? `Even money ($${insuranceAmount})` : `Take insurance ($${insuranceAmount})`}
+        </Button>
+        <Button appearance="secondary" size="large" onClick={() => gameDispatch({ type: GameAction.Insurance, playerKey, accept: false })}>
+          No insurance
+        </Button>
+      </div>
+    );
+  }
 
   // Once the hand is over the human gets choices instead of the action toolbar
   if (!hidden && !npcFlag && isRoundComplete) {
@@ -274,6 +296,13 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
           <Tooltip content="Split a pair into two hands with an equal wager" relationship="description">
             <ToolbarButton className={styles.button} aria-label="Split" appearance={emphasis('split')} {...hinted('split')} icon={<ArrowSwap20Regular />} disabled={isSplitDisabled} disabledFocusable={waitUnless(isSplitDisabled)} onClick={() => gameDispatch({ type: GameAction.Split, playerKey, handIndex: gameState.activeHandIndex })}>
               <Label>Split</Label>
+            </ToolbarButton>
+          </Tooltip>
+        )}
+        {!npcFlag && gameState.tableRules.surrender && (
+          <Tooltip content="Forfeit half your stake and end this hand" relationship="description">
+            <ToolbarButton className={styles.button} aria-label="Surrender" appearance={emphasis('surrender')} {...hinted('surrender')} disabled={isSurrenderDisabled} disabledFocusable={waitUnless(isSurrenderDisabled)} onClick={() => gameDispatch({ type: GameAction.Surrender, playerKey, handIndex: gameState.activeHandIndex })}>
+              <Label>Surrender</Label>
             </ToolbarButton>
           </Tooltip>
         )}

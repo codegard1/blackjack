@@ -6,6 +6,7 @@ import { GameAction, GameStatus } from '../enums';
 import { GameState } from '../types';
 import { gameReducer } from './gameReducer';
 import { gameSnapshot, MAX_SYNCED_ACTIVITY } from './persistence';
+import { activePlayerKeys } from './playerStore';
 import { loadSyncState, saveSyncState } from './remote';
 import { SYNC_DEBOUNCE_MS } from './useRemoteSync';
 import { toRemoteGame, useGameSync } from './useGameSync';
@@ -53,7 +54,7 @@ describe('useGameSync', () => {
 
     expect(result.current.state.gameStatus).toBe(dealt.gameStatus);
     expect(result.current.state.round).toBe(dealt.round);
-    expect(result.current.state.playerStore.activePlayerKeys).toEqual(['chris', 'dealer']);
+    expect(activePlayerKeys(result.current.state.playerStore)).toEqual(['chris', 'dealer']);
     expect(result.current.state.deck.playerHands.chris.cards).toEqual(dealt.deck.playerHands.chris.cards);
     expect(loadSyncState().syncedAt.game).toBe(20);
     expect(fetch).toHaveBeenCalledTimes(1);

@@ -1,7 +1,9 @@
 import { BOTS } from "../characters";
 import { GameStatus } from "../enums";
-import { PlayingCard } from "../classes";
 import { Announcement, GameSnapshot, GameState, PlayerSnapshot, WagerSnapshot, WorkNoticeSnapshot } from "../types";
+import { formatCardName } from "./cards";
+import { getPlayerHand, getPlayerHandValue } from "./deck";
+import { allPlayers } from "./playerStore";
 import { roleOf } from "./round";
 import { isRoundOver } from "./seatStatus";
 
@@ -38,17 +40,17 @@ export function snapshotGame(state: GameState): GameSnapshot {
         : []
     )),
     controllingPlayer: state.controllingPlayer,
-    players: state.playerStore.all.map((player): PlayerSnapshot => {
+    players: allPlayers(state.playerStore).map((player): PlayerSnapshot => {
       const handIndex = state.controllingPlayer === player.key ? state.activeHandIndex : 0;
-      const hand = state.deck.hand(player.key, handIndex);
+      const hand = getPlayerHand(state.deck, player.key, handIndex);
       return {
         key: player.key,
         title: player.title,
         isNPC: player.isNPC,
         role: roleOf(player) ?? 'human',
         cardCount: hand?.cards.length ?? 0,
-        cards: (hand?.cards ?? []).map((card) => new PlayingCard(card).toString()),
-        total: hand ? state.deck.getHandValue(player.key, handIndex).highest : 0,
+        cards: (hand?.cards ?? []).map((card) => formatCardName(card)),
+        total: hand ? getPlayerHandValue(state.deck, player.key, handIndex).highest : 0,
         isBusted: !!player.isBusted,
         isStaying: !!player.isStaying,
         isBlackjack: !!player.isBlackjack,

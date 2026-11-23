@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { GameAction, GameStatus, StoreName } from '../enums';
-import { PlayingCard } from '../classes/PlayingCard';
+import { getPlayerHands } from './deck';
 import { gameReducer } from './gameReducer';
 import { GAME_STORE_VERSION, MAX_SAVED_ACTIVITY, gameSnapshot, loadGameState, loadProfiles, loadSettings, restoreGameState, saveGameState, saveProfiles, saveSettings } from './persistence';
+import { activePlayerKeys, getPlayer, playerCount, updatePlayer } from './playerStore';
 import { defaultProfileState, profileReducer, seatsFor } from './profiles';
 import { createGameState, settingDefaults } from '../context';
 import { defaultTableRules } from '../types';
@@ -19,13 +20,13 @@ describe('persistence', () => {
     saveSettings({ ...settingDefaults, numberOfDecks: '2', blackjackPayout: '6:5' });
     const restored = loadGameState();
     expect(restored.tableRules).toEqual(tableRules);
-    expect(restored.deck.length).toBe(416);
-    restored.deck.reset();
-    expect(restored.deck.length).toBe(416);
+    expect(restored.deck.cardKeys.length).toBe(416);
+    const refilled = gameReducer({ ...restored, deck: { ...restored.deck, cardKeys: [] } }, { type: GameAction.NewRound });
+    expect(refilled.deck.cardKeys.length).toBe(416);
     expect(loadSettings()).toMatchObject({ numberOfDecks: '2', dealerSoft17: 'stand', blackjackPayout: '6:5' });
     const next = gameReducer(restored, { type: GameAction.NewRound, tableRules: loadSettings() });
     expect(next.tableRules).toEqual({ numberOfDecks: '2', dealerSoft17: 'stand', blackjackPayout: '6:5' });
-    expect(next.deck.length).toBe(104);
+    expect(next.deck.cardKeys.length).toBe(104);
   });
 
   it('keeps only the newest activity log entries in storage, and takes no more than that from it', () => {
@@ -47,7 +48,7 @@ describe('persistence', () => {
 
   it('migrates version-4 saves to default rules without losing the hand', () => {
     const state = startedGame();
-    state.deck.cards = ['Club_7', 'Heart_10', 'Diamond_9', 'Spade_10'].map((key) => new PlayingCard(key));
+    state.deck = { ...state.deck, cardKeys: ['Club_7', 'Heart_10', 'Diamond_9', 'Spade_10'] };
     const snapshot = gameSnapshot(gameReducer(state, { type: GameAction.Deal }));
     const { tableRules, ...oldGame } = snapshot.game;
     const restored = restoreGameState({ ...snapshot, game: { ...oldGame, version: 4 } });
@@ -58,7 +59,7 @@ describe('persistence', () => {
   });
 
   it('round-trips v6 botAccounts, seated awayTask and isReadyToReturn flags, and work activity log entries', () => {
-    expect(GAME_STORE_VERSION).toBe(6);
+    expect(GAME_STORE_VERSION).toBe(7);
     const profiles = { ...defaultProfileState(), opponentIds: ['ogion'] };
     const state = gameReducer(createGameState(), {
       type: GameAction.NewGame,
@@ -73,15 +74,21 @@ describe('persistence', () => {
         },
       },
     });
-    state.activityLog.push({
-      id: 99,
-      timestamp: 1000,
-      name: 'Ogion',
-      description: 'left to work: herding goats on gont',
-      event: 'work',
-    });
+    const withLog = {
+      ...state,
+      activityLog: [
+        ...state.activityLog,
+        {
+          id: 99,
+          timestamp: 1000,
+          name: 'Ogion',
+          description: 'left to work: herding goats on gont',
+          event: 'work' as const,
+        },
+      ],
+    };
 
-    saveGameState(state);
+    saveGameState(withLog);
     const restored = loadGameState();
 
     expect(restored.botAccounts.ogion).toEqual({
@@ -91,7 +98,7 @@ describe('persistence', () => {
       taskOverride: 'herding-goats',
       allowReturn: true,
     });
-    expect(restored.playerStore.player('ogion')).toMatchObject({
+    expect(getPlayer(restored.playerStore, 'ogion')).toMatchObject({
       bank: 120,
       isSittingOut: true,
       awayTask: 'herding-goats',
@@ -106,11 +113,11 @@ describe('persistence', () => {
 
   it('migrates v4 and v5 snapshots without botAccounts by initializing botAccounts from seated bot banks, and rejects invalid botAccounts', () => {
     const profiles = { ...defaultProfileState(), opponentIds: ['ogion'] };
-    const state = gameReducer(createGameState(), {
+    let state = gameReducer(createGameState(), {
       type: GameAction.NewGame,
       players: seatsFor(profiles),
     });
-    state.playerStore.player('ogion').bank = 425;
+    state = { ...state, playerStore: updatePlayer(state.playerStore, 'ogion', (p) => ({ ...p, bank: 425 })) };
     const snapshot = gameSnapshot(state);
     const { botAccounts, ...v5Game } = snapshot.game;
 
@@ -194,7 +201,7 @@ describe('persistence', () => {
   it('returns a fresh game when nothing is saved', () => {
     const state = loadGameState();
     expect(state.gameStatus).toBe(GameStatus.Init);
-    expect(state.playerStore.length).toBe(0);
+    expect(playerCount(state.playerStore)).toBe(0);
   });
 
   it('round-trips a game in progress', () => {
@@ -206,17 +213,33 @@ describe('persistence', () => {
     expect(restored.pot).toBe(dealt.pot);
     expect(restored.round).toBe(dealt.round);
     expect(restored.controllingPlayer).toBe(dealt.controllingPlayer);
-    expect(restored.playerStore.activePlayerKeys).toEqual(['chris', 'dealer']);
-    expect(restored.playerStore.player('chris').bank).toBe(dealt.playerStore.player('chris').bank);
+    expect(activePlayerKeys(restored.playerStore)).toEqual(['chris', 'dealer']);
+    expect(restored.playerStore.players.chris.bank).toBe(dealt.playerStore.players.chris.bank);
     expect(restored.deck.playerHands.chris.cards).toEqual(dealt.deck.playerHands.chris.cards);
-    expect(restored.deck.length).toBe(dealt.deck.length);
+    expect(restored.deck.cardKeys.length).toBe(dealt.deck.cardKeys.length);
     expect(restored.activityLog).toEqual(dealt.activityLog);
+  });
+
+  it('restores an open insurance phase and optional insurance/surrender rules', () => {
+    let state = gameReducer(startedGame(), {
+      type: GameAction.NewGame,
+      playerKeys: ['chris', 'dealer'],
+      tableRules: { ...defaultTableRules, insurance: true, surrender: true },
+    });
+    state = gameReducer(state, { type: GameAction.EvaluateGame });
+    state.deck = { ...state.deck, cardKeys: ['Spade_9', 'Heart_14', 'Club_10', 'Diamond_9', 'Club_9'] };
+    state = gameReducer(state, { type: GameAction.Deal });
+    expect(state.isInsuranceOpen).toBe(true);
+
+    saveGameState(state);
+    const restored = loadGameState();
+    expect(restored.isInsuranceOpen).toBe(true);
+    expect(restored.tableRules).toMatchObject({ insurance: true, surrender: true });
   });
 
   it('restores the active hand and both card stacks mid-split', () => {
     let state = gameReducer(startedGame(), { type: GameAction.EvaluateGame });
-    state.deck.cards = ['Spade_9', 'Spade_10', 'Diamond_7', 'Club_10', 'Heart_8', 'Club_8']
-      .map((key) => new PlayingCard(key));
+    state.deck = { ...state.deck, cardKeys: ['Spade_9', 'Spade_10', 'Diamond_7', 'Club_10', 'Heart_8', 'Club_8'] };
     state = gameReducer(state, { type: GameAction.Deal });
     state = gameReducer(state, { type: GameAction.Split, playerKey: 'chris' });
     state = gameReducer(state, { type: GameAction.Stay, playerKey: 'chris' });
@@ -227,7 +250,7 @@ describe('persistence', () => {
 
     expect(restored.activeHandIndex).toBe(1);
     expect(restored.controllingPlayer).toBe('chris');
-    expect(restored.deck.getHands('chris').map((hand) => hand.cards)).toEqual([
+    expect(getPlayerHands(restored.deck, 'chris').map((hand) => hand.cards)).toEqual([
       ['Club_8', 'Spade_10'],
       ['Heart_8', 'Spade_9'],
     ]);
@@ -237,11 +260,11 @@ describe('persistence', () => {
   it('falls back to a fresh game when saved data is malformed', () => {
     saveGameState(startedGame());
     localStorage.setItem(StoreName.DECKSTORE, '{not json');
-    expect(loadGameState().playerStore.length).toBe(0);
+    expect(playerCount(loadGameState().playerStore)).toBe(0);
 
     saveGameState(startedGame());
     localStorage.setItem(StoreName.GAMESTORE, JSON.stringify({ version: 0 }));
-    expect(loadGameState().playerStore.length).toBe(0);
+    expect(playerCount(loadGameState().playerStore)).toBe(0);
   });
 
   it('restores a game from its snapshot and refuses an incomplete one', () => {
@@ -251,7 +274,7 @@ describe('persistence', () => {
 
     const restored = restoreGameState(JSON.parse(JSON.stringify(snapshot)));
     expect(restored?.gameStatus).toBe(dealt.gameStatus);
-    expect(restored?.playerStore.player('chris').bank).toBe(dealt.playerStore.player('chris').bank);
+    expect(restored?.playerStore.players.chris.bank).toBe(dealt.playerStore.players.chris.bank);
     expect(restored?.deck.playerHands.chris.cards).toEqual(dealt.deck.playerHands.chris.cards);
     expect(restored?.isSpinnerVisible).toBe(false);
     expect(restored && gameSnapshot(restored)).toEqual(snapshot);
@@ -284,13 +307,13 @@ describe('persistence', () => {
     expect(loadSettings()).toMatchObject({ themeMode: 'dark', accent: 'crimson', cardBackPattern: 'stripes' });
 
     localStorage.setItem(StoreName.SETTINGSTORE, JSON.stringify({
-      themeMode: 'sepia', accent: true, cardStyle: 'bold', isDeckVisible: 'yes',
+      themeMode: 'sepia', accent: true, cardStyle: 'bold', isHandValueVisible: 'yes',
     }));
     const loaded = loadSettings();
     expect(loaded.themeMode).toBe(settingDefaults.themeMode);
     expect(loaded.accent).toBe(settingDefaults.accent);
     expect(loaded.cardStyle).toBe('bold');
-    expect(loaded.isDeckVisible).toBe(false);
+    expect(loaded.isHandValueVisible).toBe(false);
   });
 
   it('round-trips the queue side and falls back to the left for a value it does not accept', () => {
@@ -306,7 +329,7 @@ describe('persistence', () => {
     const loaded = loadSettings();
     expect(loaded.isActivityLogVisible).toBe(true);
     expect(loaded).toMatchObject({
-      themeMode: 'light', accent: 'blue', cardStyle: 'classic', cardBackPattern: 'rings', cardBackColor: 'brand',
+      themeMode: 'dark', accent: 'blue', cardStyle: 'classic', cardBackPattern: 'rings', cardBackColor: 'brand',
     });
   });
 });

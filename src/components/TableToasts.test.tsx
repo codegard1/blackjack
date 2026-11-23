@@ -1,6 +1,5 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PlayingCard } from '../classes';
 import { createGameState } from '../context';
 import { GameAction } from '../enums';
 import { gameReducer } from '../functions';
@@ -26,7 +25,7 @@ afterEach(() => {
 const startedGame = (): GameState => {
   const started = gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] });
   const anted = gameReducer(started, { type: GameAction.EvaluateGame });
-  anted.deck.cards = ['Heart_2', 'Club_10', 'Diamond_7', 'Heart_6', 'Spade_5'].map((key) => new PlayingCard(key));
+  anted.deck = { ...anted.deck, cardKeys: ['Heart_2', 'Club_10', 'Diamond_7', 'Heart_6', 'Spade_5'] };
   return gameReducer(anted, { type: GameAction.Deal });
 };
 

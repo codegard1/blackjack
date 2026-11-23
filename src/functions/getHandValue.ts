@@ -1,5 +1,5 @@
-import { PlayingCard } from "../classes/PlayingCard";
 import { PlayerHandValue, PlayingCardKey } from "../types";
+import { cardPointValue } from "./cards";
 
 /**
  * Calculate and return the possible point values of a given set of cardKeys
@@ -7,7 +7,7 @@ import { PlayerHandValue, PlayingCardKey } from "../types";
  * @returns 
  */
 export function handValue(hand: PlayingCardKey[]): PlayerHandValue {
-  const aceAsOne = hand.reduce((total, key) => total + PlayingCard.pointValue(key)[0], 0);
+  const aceAsOne = hand.reduce((total, key) => total + cardPointValue(key)[0], 0);
   const hasAce = hand.some((key) => Number(key.split('_')[1]) === 14);
   const aceAsEleven = aceAsOne + (hasAce ? 10 : 0);
   return {

@@ -1,4 +1,5 @@
 import { GameState, PotShare } from "../types";
+import { allPlayers } from "./playerStore";
 
 /** True for the log entries where money went into the pot */
 const isPotEvent = (event: string | undefined): boolean => event === 'ante' || event === 'bet' || event === 'double' || event === 'split';
@@ -22,7 +23,7 @@ export function potBreakdown(state: GameState): PotShare[] {
       shares.set(entry.name, {
         name: entry.name,
         amount,
-        playerKey: state.playerStore.all.find((player) => player.title === entry.name)?.key,
+        playerKey: allPlayers(state.playerStore).find((player) => player.title === entry.name)?.key,
       });
     }
   }
