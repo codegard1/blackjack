@@ -1,12 +1,13 @@
 import { StoreName } from '../enums';
 
 /** The kinds of state kept on the server, each in its own function and collection */
-export type SyncKind = 'profiles' | 'game';
+export type SyncKind = 'profiles' | 'game' | 'settings';
 
 /** Where each kind's Netlify function is routed (see netlify/functions) */
 export const SYNC_API: Record<SyncKind, string> = {
   profiles: '/api/profiles',
   game: '/api/game',
+  settings: '/api/settings',
 };
 
 /** Where a browser asks for its owner id or exchanges a Google credential */
@@ -43,7 +44,7 @@ const GOOGLE_KIND = 'google';
 /** An id the server issued: kind, identifier, a dot and the signature */
 const SIGNED_OWNER_ID = /^[a-z]{2,16}:[A-Za-z0-9._-]{8,128}\.[A-Za-z0-9_-]{20,128}$/;
 
-const noSync = (): Record<SyncKind, number> => ({ profiles: 0, game: 0 });
+const noSync = (): Record<SyncKind, number> => ({ profiles: 0, game: 0, settings: 0 });
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);

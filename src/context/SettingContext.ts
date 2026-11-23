@@ -1,6 +1,6 @@
 import { Dispatch, createContext, useContext } from 'react';
 import { ISettingReducerAction } from '../interfaces';
-import { SettingsState, defaultTableRules } from '../types';
+import { SettingsState, settingDefaults } from '../types';
 
 /**
  * Default values for SettingsState

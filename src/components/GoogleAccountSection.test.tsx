@@ -118,14 +118,19 @@ describe('GoogleAccountSection in PlayersDialog', () => {
     expect(within(dialog).getByRole('alert')).toHaveTextContent('Invalid Google credential.');
   });
 
-  it('resets bot account work settings on sign-out even after a game has started', () => {
+  it('resets bot account work settings and app settings on sign-out even after a game has started', () => {
     saveSyncState({
       ownerId: GOOGLE_OWNER,
       user: { name: 'Chris Odegard', email: 'chris@example.com' },
-      syncedAt: { profiles: 0, game: 0 },
+      syncedAt: { profiles: 0, game: 0, settings: 0 },
     });
 
     render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Dark' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+    expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'dark');
+
     fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
     fireEvent.click(screen.getByRole('button', { name: 'Players' }));
     const dialog = screen.getByRole('dialog', { name: 'Players' });
@@ -137,5 +142,6 @@ describe('GoogleAccountSection in PlayersDialog', () => {
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Sign out' }));
     expect(allowReturnSwitch).not.toBeChecked();
+    expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'light');
   });
 });

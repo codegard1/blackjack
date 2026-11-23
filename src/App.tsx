@@ -9,9 +9,9 @@ import './App.css';
 import { AppHeader, OptionsPanel, PlayersDialog, Table } from './components';
 import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
 import { GameAction, GameStatus } from './enums';
-import { allPlayers, botAccountsFor, collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync } from './functions';
+import { allPlayers, botAccountsFor, collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync, useSettingSync } from './functions';
 import { GameReducerAction } from './interfaces';
-import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark, PAGE_GUTTER } from './theme';
+import { createAppTheme, isDarkMode, PAGE_GUTTER, resolveThemeMode, usePrefersDark } from './theme';
 
 // The page behind the table: a striped felt drawn from the brand color, so it follows
 // the accent and the light or dark mode. Fluent's tokens resolve inside the provider.
@@ -55,8 +55,9 @@ const App = () => {
   React.useEffect(() => saveSettings(settings), [settings]);
   React.useEffect(() => saveGameState(gameState), [gameState]);
   React.useEffect(() => saveProfiles(profiles), [profiles]);
-  // and keep the profiles and the game in step with the server, when there is one
+  // and keep the profiles, settings and the game in step with the server, when there is one
   useProfileSync(profiles, profileDispatch);
+  useSettingSync(settings, toggleSetting);
   useGameSync(gameState, gameDispatch);
   // and pick up what every other table has played with the characters
   useCommunitySync();
@@ -112,29 +113,29 @@ const App = () => {
       {/* The shell is a child, not the provider itself: Fluent copies the provider's
           classes onto its portal layer, which would paint the felt over every popup */}
       <div className={styles.shell} data-theme-mode={themeMode} data-accent={settings.accent}>
-      <SettingContext.Provider value={settings}>
-        <SettingDispatchContext.Provider value={toggleSetting}>
-          <ProfileContext.Provider value={profiles}>
-            <ProfileDispatchContext.Provider value={profileDispatch}>
-              <GameContext.Provider value={gameState}>
-                <GameDispatchContext.Provider value={gameDispatch}>
+        <SettingContext.Provider value={settings}>
+          <SettingDispatchContext.Provider value={toggleSetting}>
+            <ProfileContext.Provider value={profiles}>
+              <ProfileDispatchContext.Provider value={profileDispatch}>
+                <GameContext.Provider value={gameState}>
+                  <GameDispatchContext.Provider value={gameDispatch}>
 
-                  <PlayersDialogContext.Provider value={openPlayers}>
-                  <AppHeader />
+                    <PlayersDialogContext.Provider value={openPlayers}>
+                      <AppHeader />
 
-                  <OptionsPanel />
-                  <div className="app-content">
-                    <Table />
-                  </div>
-                  <PlayersDialog open={isPlayersOpen} onOpenChange={setPlayersOpen} />
-                  </PlayersDialogContext.Provider>
+                      <OptionsPanel />
+                      <div className="app-content">
+                        <Table />
+                      </div>
+                      <PlayersDialog open={isPlayersOpen} onOpenChange={setPlayersOpen} />
+                    </PlayersDialogContext.Provider>
 
-                </GameDispatchContext.Provider>
-              </GameContext.Provider>
-            </ProfileDispatchContext.Provider>
-          </ProfileContext.Provider>
-        </SettingDispatchContext.Provider>
-      </SettingContext.Provider>
+                  </GameDispatchContext.Provider>
+                </GameContext.Provider>
+              </ProfileDispatchContext.Provider>
+            </ProfileContext.Provider>
+          </SettingDispatchContext.Provider>
+        </SettingContext.Provider>
       </div>
     </FluentProvider>
   );
