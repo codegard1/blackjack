@@ -23,6 +23,7 @@ import { CharacterPortrait } from "./CharacterPortrait";
 import { IPlayerContainerProps } from "../interfaces";
 import { GameStatus } from "../enums";
 import { isRoundOver, isSeatWinner, seatStatus } from "../functions/seatStatus";
+import { botUtterance } from "../functions/dialogue";
 import { getPlayerHands } from "../functions/deck";
 
 // Styles
@@ -73,8 +74,13 @@ const useStyles = makeStyles({
     rowGap: tokens.spacingVerticalXXS,
   },
   tagline: {
+    display: 'block',
+    flex: '1 1 auto',
+    maxWidth: '100%',
     fontStyle: 'italic',
     color: tokens.colorNeutralForeground3,
+    overflowWrap: 'anywhere',
+    whiteSpace: 'normal',
   },
   body: {
     display: 'flex',
@@ -201,7 +207,7 @@ export const PlayerContainer: React.FC<IPlayerContainerProps> = (props) => {
             {status && <Badge appearance={status.appearance} color={status.color}>{status.text}</Badge>}
           </div>
         }
-        description={character && <Text size={300} className={styles.tagline}>&ldquo;{character.tagline}&rdquo;</Text>}
+        description={character && <Text size={300} className={styles.tagline}>&ldquo;{botUtterance(gameState, player.key) ?? character.tagline}&rdquo;</Text>}
         action={character
           ? <Button appearance="subtle" aria-label={`About ${player.title}`} icon={<Info24Regular />} onClick={() => setCharacterOpen(true)} />
           : <StatusDisplay player={player} />}

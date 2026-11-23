@@ -20,6 +20,7 @@ import { PotAnimationContext, useGameContext, useProfileContext, useSettingConte
 import { playerDefaults } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
 import { seatTag, isHoleCardHidden, isRoundOver } from "../functions/seatStatus";
+import { botUtterance } from "../functions/dialogue";
 import { decideSeatMove, isDealer, isHuman, seatOrder, seatQueues } from "../functions/round";
 import { potBreakdown } from "../functions/pot";
 import { getPlayerHand } from "../functions/deck";
@@ -142,13 +143,14 @@ export const Table: React.FC = () => {
           <SeatChip
             player={player}
             status={seatTag(player, gameStatus)}
+            utterance={botUtterance(gameState, player.key)}
             total={showTotal ? hand.handValue.highest : undefined}
             cards={hand?.cards}
             focus={toastFocus?.key === player.key ? toastFocus.tone : undefined}
             onSelect={() => setPin({ key: player.key, moment: pinMoment })}
           />
         ) : (
-          <SeatChip player={player} status={seatTag(player, gameStatus)} floating index={index} />
+          <SeatChip player={player} status={seatTag(player, gameStatus)} utterance={botUtterance(gameState, player.key)} floating index={index} />
         )}
       </div>
     );

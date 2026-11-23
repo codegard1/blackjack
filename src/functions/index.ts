@@ -14,6 +14,7 @@ export * from './announcements';
 export * from './seatStatus';
 export * from './round';
 export * from './botStrategy';
+export * from './dialogue';
 export * from './strategyHint';
 export * from './history';
 export * from './community';
