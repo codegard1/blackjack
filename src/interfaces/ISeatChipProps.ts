@@ -16,5 +16,5 @@ export interface ISeatChipProps {
   /** set while this seat's result is announced: the chip pulses and brightens, ringed in the result's color */
   focus?: AnnouncementTone;
   /** when given, the chip is a button that brings this seat into focus */
-  onSelect?: () => void;
+  onSelect?: (key: string) => void;
 }

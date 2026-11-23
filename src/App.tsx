@@ -10,7 +10,7 @@ import { AppHeader, Table } from './components';
 
 const OptionsPanel = React.lazy(() => import('./components/OptionsPanel').then((m) => ({ default: m.OptionsPanel })));
 const PlayersDialog = React.lazy(() => import('./components/PlayersDialog').then((m) => ({ default: m.PlayersDialog })));
-import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext, useSettingContext } from './context';
+import { GameContext, GameDispatchContext, GameStatusContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext, useSettingContext } from './context';
 import { GameAction, GameStatus } from './enums';
 import { allPlayers, botAccountsFor, collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync, useSettingSync, useTabLock } from './functions';
 import { GameReducerAction } from './interfaces';
@@ -123,6 +123,7 @@ const ActiveGame: React.FC = () => {
     <ProfileContext.Provider value={profiles}>
       <ProfileDispatchContext.Provider value={profileDispatch}>
         <GameContext.Provider value={gameState}>
+          <GameStatusContext.Provider value={gameState.gameStatus}>
           <GameDispatchContext.Provider value={gameDispatch}>
             <PlayersDialogContext.Provider value={openPlayers}>
               <AppHeader />
@@ -141,6 +142,7 @@ const ActiveGame: React.FC = () => {
               )}
             </PlayersDialogContext.Provider>
           </GameDispatchContext.Provider>
+          </GameStatusContext.Provider>
         </GameContext.Provider>
       </ProfileDispatchContext.Provider>
     </ProfileContext.Provider>

@@ -31,7 +31,12 @@ export const gameDefaults: GameState = createGameState();
 
 
 export const GameContext = createContext<GameState>(gameDefaults);
+export const GameStatusContext = createContext<GameStatus>(gameDefaults.gameStatus);
 export const GameDispatchContext = createContext<Dispatch<GameReducerAction>>(() => { });
+
+export const useGameStatus = (): GameStatus => useContext(GameStatusContext);
+
+export const useGameDispatch = (): Dispatch<GameReducerAction> => useContext(GameDispatchContext);
 
 // Custom hook to consume context
 export const useGameContext = () => {

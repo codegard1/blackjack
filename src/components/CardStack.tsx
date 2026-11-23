@@ -6,7 +6,7 @@ import { ChevronDown16Regular, ChevronUp16Regular } from '@fluentui/react-icons'
 
 /* custom stuff */
 import { CardContainer } from '.';
-import { useGameContext, useSettingContext } from '../context';
+import { useGameStatus, useSettingContext } from '../context';
 import { ICardStackProps } from '../interfaces';
 import { handValue, isDealer, isHoleCardHidden, parseCard } from '../functions';
 
@@ -16,7 +16,7 @@ import { handValue, isDealer, isHoleCardHidden, parseCard } from '../functions';
  * @param props 
  * @returns 
  */
-export const CardStack: React.FC<ICardStackProps> = (props) => {
+export const CardStack: React.FC<ICardStackProps> = React.memo((props) => {
 
   const {
     cards,
@@ -30,10 +30,10 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
 
   // Context props
   const { settings } = useSettingContext();
-  const { gameState } = useGameContext();
+  const gameStatus = useGameStatus();
   // only the dealer's first card, the hole card, is dealt face down; players' cards are face up
   const hasHoleCard = isDealer(player);
-  const isHoleHidden = isHoleCardHidden(player, settings.isDealerHandVisible, gameState.gameStatus);
+  const isHoleHidden = isHoleCardHidden(player, settings.isDealerHandVisible, gameStatus);
 
   // State
   const [isDeckVisible, setVisible] = React.useState<boolean>(true);
@@ -88,4 +88,4 @@ export const CardStack: React.FC<ICardStackProps> = (props) => {
       )}
     </section>
   );
-}
+});

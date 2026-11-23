@@ -60,7 +60,7 @@ interface ICharacterPortraitProps {
 /**
  * A computer character's pixel portrait, or a human player's initials
  */
-export const CharacterPortrait: React.FC<ICharacterPortraitProps> = ({
+export const CharacterPortrait: React.FC<ICharacterPortraitProps> = React.memo(({
   id,
   name,
   size = 'md',
@@ -115,4 +115,4 @@ export const CharacterPortrait: React.FC<ICharacterPortraitProps> = ({
       />
     </span>
   );
-};
+});

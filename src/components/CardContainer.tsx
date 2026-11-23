@@ -2,7 +2,7 @@
 import React from 'react';
 
 // Local Resources
-import { useGameContext, useSettingContext } from '../context';
+import { useGameDispatch, useSettingContext } from '../context';
 import { GameAction } from '../enums';
 import { ICardContainerProps } from '../interfaces';
 import { cardBackClassNames, cardBackColorVariables } from '../theme';
@@ -18,10 +18,10 @@ import { CARD_FLIP_MS } from './useCardFlip';
  * isBackFacing turns it over with a CSS transition; any other card draws only the
  * face it shows.
  */
-export const CardContainer: React.FC<ICardContainerProps> = (props) => {
+export const CardContainer: React.FC<ICardContainerProps> = React.memo((props) => {
 
   // Context
-  const { gameDispatch } = useGameContext();
+  const gameDispatch = useGameDispatch();
   const { settings } = useSettingContext();
 
   // Props
@@ -99,4 +99,4 @@ export const CardContainer: React.FC<ICardContainerProps> = (props) => {
       {isFlippable ? <span className="playing-card-inner">{faces}</span> : faces}
     </button>
   );
-}
+});

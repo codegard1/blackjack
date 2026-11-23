@@ -131,6 +131,8 @@ export const Table: React.FC = () => {
   const waitingSeats = seatsOf(queues.waiting);
   const playedSeats = seatsOf(queues.played);
 
+  const selectSeat = React.useCallback((key: string) => setPin({ key, moment: pinMoment }), [pinMoment]);
+
   // A collapsed seat. During a game its chip brings the seat forward; before one it floats.
   const renderChip = (player: IPlayer, role: 'waiting' | 'played', index: number) => {
     const hand = isStarted ? deck.playerHands[player.key] : undefined;
@@ -145,7 +147,7 @@ export const Table: React.FC = () => {
             total={showTotal ? hand.handValue.highest : undefined}
             cards={hand?.cards}
             focus={toastFocus?.key === player.key ? toastFocus.tone : undefined}
-            onSelect={() => setPin({ key: player.key, moment: pinMoment })}
+            onSelect={selectSeat}
           />
         ) : (
           <SeatChip player={player} status={seatTag(player, gameStatus)} floating index={index} />
