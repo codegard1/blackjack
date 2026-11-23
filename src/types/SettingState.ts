@@ -1,4 +1,4 @@
-import { TableRules, blackjackPayouts, dealerSoft17Options, deckCounts } from './TableRules';
+import { TableRules, blackjackPayouts, dealerSoft17Options, deckCounts, defaultTableRules } from './TableRules';
 
 /** How the Fluent UI theme is chosen */
 export const themeModes = ['light', 'dark', 'system', 'highContrast'] as const;
@@ -62,3 +62,35 @@ export const settingOptions = {
 
 /** The settings that shape the theme, cards and card backs */
 export const appearanceSettingKeys = ['themeMode', 'accent', 'cardStyle', 'cardBackPattern', 'cardBackColor'] as const;
+
+/** Default values for SettingsState */
+export const settingDefaults: SettingsState = {
+  ...defaultTableRules,
+  resplit: false,
+  doubleAfterSplit: false,
+  insurance: false,
+  surrender: false,
+  isActivityLogVisible: false,
+  isAnimationsEnabled: true,
+  isCardDescVisible: false,
+  isDealerHandVisible: false,
+  isHandValueVisible: false,
+  isOptionsPanelVisible: false,
+  isStrategyHintVisible: false,
+  themeMode: 'dark',
+  accent: 'blue',
+  cardStyle: 'classic',
+  cardBackPattern: 'rings',
+  cardBackColor: 'brand',
+  queueSide: 'left',
+};
+
+const isEnumeratedSetting = (key: SettingKey): key is keyof typeof settingOptions => key in settingOptions;
+
+/** Whether `value` is one the setting `key` accepts: a boolean, or one of its listed options */
+export function isValidSettingValue(key: SettingKey, value: unknown): boolean {
+  if (isEnumeratedSetting(key)) {
+    return typeof value === 'string' && (settingOptions[key] as readonly string[]).includes(value);
+  }
+  return typeof value === 'boolean';
+}
