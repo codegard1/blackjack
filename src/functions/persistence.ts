@@ -15,7 +15,7 @@ import {
   defaultTableRules,
   isBotAccountState,
   isTableRules,
-  settingOptions,
+  isValidSettingValue,
   tableRulesFrom,
 } from "../types";
 import { restoreDeckState } from "./deck";
@@ -196,14 +196,34 @@ export function saveProfiles(state: ProfileState): void {
   writeJson(StoreName.PROFILESTORE, state);
 }
 
-const isEnumeratedSetting = (key: SettingKey): key is keyof typeof settingOptions => key in settingOptions;
+export { isValidSettingValue };
 
-/** Whether `value` is one the setting `key` accepts: a boolean, or one of its listed options */
-export function isValidSettingValue(key: SettingKey, value: unknown): boolean {
-  if (isEnumeratedSetting(key)) {
-    return typeof value === 'string' && (settingOptions[key] as readonly string[]).includes(value);
+/**
+ * Normalize a remote settings object over the defaults. Returns undefined when the
+ * value is not an object, has no known settings, or has an invalid value for any
+ * known setting. Preserves the local drawer visibility so syncing never pops open
+ * or slams shut the Options panel.
+ */
+export function normalizeSettings(value: unknown, current?: SettingsState): SettingsState | undefined {
+  if (!isObject(value)) return undefined;
+  const keys = Object.keys(settingDefaults) as SettingKey[];
+  let hasKnownKey = false;
+  const settings: Record<string, unknown> = { ...settingDefaults };
+  for (const key of keys) {
+    if (!(key in value) || value[key] === undefined) continue;
+    if (!isValidSettingValue(key, value[key])) return undefined;
+    hasKnownKey = true;
+    settings[key] = value[key];
   }
-  return typeof value === 'boolean';
+  if (!hasKnownKey) return undefined;
+  settings.isOptionsPanelVisible = current?.isOptionsPanelVisible ?? false;
+  return settings as SettingsState;
+}
+
+/** The form of settings sent to the server: excludes transient drawer visibility */
+export function toRemoteSettings(settings: SettingsState): Omit<SettingsState, 'isOptionsPanelVisible'> {
+  const { isOptionsPanelVisible: _, ...remote } = settings;
+  return remote;
 }
 
 /**

@@ -45,7 +45,7 @@ describe('toRemoteGame', () => {
 
 describe('useGameSync', () => {
   it('resumes the server copy of the game when it is newer', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 10 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 10, settings: 0 } });
     const dealt = gameReducer(startedGame(), { type: GameAction.Deal });
     const fetch = vi.fn().mockResolvedValue(jsonResponse({ game: gameSnapshot(dealt), updatedAt: 20 }));
 
@@ -61,7 +61,7 @@ describe('useGameSync', () => {
   });
 
   it('ignores a server copy that is not a valid snapshot and sends the local game', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0, settings: 0 } });
     const fetch = vi.fn()
       .mockResolvedValueOnce(jsonResponse({ game: { deck: {}, players: {}, game: {} }, updatedAt: 20 }))
       .mockResolvedValueOnce(jsonResponse({ updatedAt: 21 }));
@@ -78,7 +78,7 @@ describe('useGameSync', () => {
   });
 
   it('sends the game once a move settles, but not a change that leaves the snapshot alone', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0, settings: 0 } });
     const fetch = vi.fn()
       .mockResolvedValueOnce(jsonResponse({ error: 'Not found.' }, 404))
       .mockResolvedValue(jsonResponse({ updatedAt: 6 }));

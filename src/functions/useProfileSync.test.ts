@@ -29,7 +29,7 @@ afterEach(() => {
 
 describe('useProfileSync', () => {
   it('replaces the local profiles when the server copy is newer', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 10, game: 0 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 10, game: 0, settings: 0 } });
     const remote = profileReducer(defaultProfileState(), { type: 'create', name: 'Remote' });
     const fetch = vi.fn().mockResolvedValue(jsonResponse({ profiles: remote, updatedAt: 20 }));
 
@@ -42,7 +42,7 @@ describe('useProfileSync', () => {
   });
 
   it('ignores a server copy of the wrong shape and sends the local one', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0, settings: 0 } });
     const fetch = vi.fn()
       .mockResolvedValueOnce(jsonResponse({ profiles: { selectedId: 'x' }, updatedAt: 20 }))
       .mockResolvedValueOnce(jsonResponse({ updatedAt: 21 }));
@@ -68,11 +68,11 @@ describe('useProfileSync', () => {
     expect(fetch.mock.calls[0]).toEqual(['/api/owner', expect.objectContaining({ method: 'POST' })]);
     expect(fetch.mock.calls[1][0]).toBe('/api/profiles');
     expect(fetch.mock.calls[1][1].headers.Authorization).toBe(`Bearer ${OWNER}`);
-    expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 5, game: 0 } });
+    expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 5, game: 0, settings: 0 } });
   });
 
   it('replaces an owner id the server rejects and sends the local profiles under the new one', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 9, game: 9 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 9, game: 9, settings: 0 } });
     const replacement = `${OWNER.slice(0, -4)}ZZZZ`;
     const fetch = vi.fn()
       .mockResolvedValueOnce(jsonResponse({ error: 'Unknown owner id.' }, 403))
@@ -89,7 +89,7 @@ describe('useProfileSync', () => {
     expect(fetch.mock.calls[2][0]).toBe('/api/profiles');
     expect(fetch.mock.calls[2][1].headers.Authorization).toBe(`Bearer ${replacement}`);
     expect(fetch.mock.calls[2][1]).toMatchObject({ method: 'PUT' });
-    expect(loadSyncState()).toEqual({ ownerId: replacement, syncedAt: { profiles: 30, game: 0 } });
+    expect(loadSyncState()).toEqual({ ownerId: replacement, syncedAt: { profiles: 30, game: 0, settings: 0 } });
   });
 
   it('sends nothing while the server will not issue an owner id', async () => {
@@ -105,7 +105,7 @@ describe('useProfileSync', () => {
   });
 
   it('pushes the local profiles when the server has nothing newer', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0, settings: 0 } });
     const fetch = vi.fn()
       .mockResolvedValueOnce(jsonResponse({ error: 'Not found.' }, 404))
       .mockResolvedValueOnce(jsonResponse({ updatedAt: 5 }));
@@ -120,7 +120,7 @@ describe('useProfileSync', () => {
   });
 
   it('sends a later change once it settles, and not an unchanged state', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0, settings: 0 } });
     const fetch = vi.fn()
       .mockResolvedValueOnce(jsonResponse({ error: 'Not found.' }, 404))
       .mockResolvedValue(jsonResponse({ updatedAt: 6 }));
@@ -146,7 +146,7 @@ describe('useProfileSync', () => {
   });
 
   it('keeps working offline and pushes pending changes when the page is hidden', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0, settings: 0 } });
     const fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
     const { result } = renderSync(defaultProfileState(), fetch);
     await flush();
@@ -162,7 +162,7 @@ describe('useProfileSync', () => {
   });
 
   it('merges anonymous local stats into existing Google account profiles and pushes the combined result on sign-in', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 5, game: 0 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 5, game: 0, settings: 0 } });
     const local = profileReducer(defaultProfileState(), {
       type: 'syncStats',
       stats: { chris: { ...emptyStats(), numberOfGamesPlayed: 3, numberOfGamesWon: 2, netResult: 40 } },
@@ -205,7 +205,7 @@ describe('useProfileSync', () => {
     expect(loadSyncState()).toEqual({
       ownerId: GOOGLE_OWNER,
       user,
-      syncedAt: { profiles: 55, game: 0 },
+      syncedAt: { profiles: 55, game: 0, settings: 0 },
     });
   });
 });

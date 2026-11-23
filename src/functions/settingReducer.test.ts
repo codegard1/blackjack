@@ -29,4 +29,23 @@ describe('settingReducer', () => {
 
     expect(settingReducer(changed, { key: 'reset' })).toEqual(settingDefaults);
   });
+
+  it('replaces settings from a valid remote object while preserving drawer visibility', () => {
+    const open: SettingsState = { ...settingDefaults, isOptionsPanelVisible: true };
+    const replaced = settingReducer(open, {
+      key: 'replace',
+      settings: { themeMode: 'dark', accent: 'teal', numberOfDecks: '6', isOptionsPanelVisible: false },
+    });
+    expect(replaced).toEqual({
+      ...settingDefaults,
+      themeMode: 'dark',
+      accent: 'teal',
+      numberOfDecks: '6',
+      isOptionsPanelVisible: true,
+    });
+
+    // invalid remote shapes are ignored
+    expect(settingReducer(open, { key: 'replace', settings: { themeMode: 'neon' } })).toBe(open);
+    expect(settingReducer(open, { key: 'replace', settings: {} })).toBe(open);
+  });
 });

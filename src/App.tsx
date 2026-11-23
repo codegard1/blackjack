@@ -7,11 +7,11 @@ import { Card, FluentProvider, Text, makeStyles, tokens } from '@fluentui/react-
 // Local Resources
 import './App.css';
 import { AppHeader, OptionsPanel, PlayersDialog, Table } from './components';
-import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
+import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext, useSettingContext } from './context';
 import { GameAction, GameStatus } from './enums';
-import { allPlayers, botAccountsFor, collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync, useTabLock } from './functions';
+import { allPlayers, botAccountsFor, collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync, useSettingSync, useTabLock } from './functions';
 import { GameReducerAction } from './interfaces';
-import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark, PAGE_GUTTER } from './theme';
+import { createAppTheme, isDarkMode, PAGE_GUTTER, resolveThemeMode, usePrefersDark } from './theme';
 
 // The page behind the table: a striped felt drawn from the brand color, so it follows
 // the accent and the light or dark mode. Fluent's tokens resolve inside the provider.
@@ -43,6 +43,7 @@ const useStyles = makeStyles({
 
 const ActiveGame: React.FC = () => {
   // State from context
+  const { settings, toggleSetting } = useSettingContext();
   const [gameState, dispatchGame] = React.useReducer(gameReducer, undefined, loadGameState);
   // every action is given its time and a random seed here, so the reducer needs neither the clock nor Math.random
   const gameDispatch = React.useCallback((action: GameReducerAction) => dispatchGame(stampAction(action)), []);
@@ -54,8 +55,9 @@ const ActiveGame: React.FC = () => {
   // Persist game and player profiles so a reload resumes where the player left off
   React.useEffect(() => saveGameState(gameState), [gameState]);
   React.useEffect(() => saveProfiles(profiles), [profiles]);
-  // and keep the profiles and the game in step with the server, when there is one
+  // and keep the profiles, settings and the game in step with the server, when there is one
   useProfileSync(profiles, profileDispatch);
+  useSettingSync(settings, toggleSetting);
   useGameSync(gameState, gameDispatch);
   // and pick up what every other table has played with the characters
   useCommunitySync();
