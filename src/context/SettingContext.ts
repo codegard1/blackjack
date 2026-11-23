@@ -16,6 +16,8 @@ export const settingDefaults: SettingsState = {
   isOptionsPanelVisible: false,
   isSelectedVisible: false,
   isStrategyHintVisible: false,
+  isGameplayToastsEnabled: true,
+  isPotToastsEnabled: true,
   themeMode: 'light',
   accent: 'blue',
   cardStyle: 'classic',

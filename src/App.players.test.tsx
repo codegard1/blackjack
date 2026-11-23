@@ -139,16 +139,17 @@ it('seats chosen computer players, who play their turns before the dealer', () =
   expect(container.querySelector('.table-waiting')).toBeNull();
   expect(seatsIn('.table-played')).toEqual(['ogion', 'chris']);
 
-  // the dealer stands and the round ends: nobody has the stage, and each seat is brought into
-  // focus in turn order as its result is told, Chris, then Ogion, then the dealer
+  // the dealer stands and the round ends: nobody has the stage, and only the human and dealer
+  // seats are brought into focus as their results are told; Ogion's result shows on his chip
   const order: string[] = [];
   const nextHand = () => screen.queryByRole('button', { name: 'Next hand' });
-  for (let waited = 0; waited < 60_000 && !(order.length === 3 && nextHand() && !nextHand()?.hasAttribute('aria-disabled')); waited += 100) {
+  for (let waited = 0; waited < 60_000 && !(order.length === 2 && nextHand() && !nextHand()?.hasAttribute('aria-disabled')); waited += 100) {
     act(() => vi.advanceTimersByTime(100));
     const key = container.querySelector('[data-focus]')?.closest<HTMLElement>('[data-seat-key]')?.dataset.seatKey;
     if (key && order.at(-1) !== key) order.push(key);
   }
-  expect(order).toEqual(['chris', 'ogion', 'dealer']);
+  expect(order).toEqual(['chris', 'dealer']);
+  expect(within(container.querySelector('[data-seat-key="ogion"]') as HTMLElement).getByText('💔 Loser')).toBeInTheDocument();
   expect(container.querySelector('.table-focus')).toBeNull();
   expect(seatsIn('.table-played')).toEqual(['dealer', 'ogion', 'chris']);
   expect(container.querySelector('[data-focus]')).toBeNull();

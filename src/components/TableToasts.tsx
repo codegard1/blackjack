@@ -201,58 +201,68 @@ type ToastPlan = {
   revealId: number;
   /** the log this plan belongs to; a cleared log makes older plans obsolete */
   generation: number;
+  /** earliest clock time this toast's log entries may be revealed */
+  revealAt: number;
+};
+
+/** Optional notification toggles controlling which announcement categories are shown */
+export type TableToastOptions = {
+  isGameplayToastsEnabled?: boolean;
+  isPotToastsEnabled?: boolean;
 };
 
 const latestEntryId = (entries: ActivityLogEntry[]): number => entries[entries.length - 1]?.id ?? 0;
 
 /**
- * Queue announcements for every meaningful change in the game, and pace the activity log
+ * Queue announcements for gameplay outcomes and pot updates, and pace the activity log
  * to them. The first state seen is only a baseline, so a restored game does not replay
  * its history.
  *
- * Toasts show in order, no sooner than TOAST_GAP_MS after the one before, and each stays
- * beside the ones already showing. A toast leaves after TOAST_LIFE_MS, or sooner when more
- * than its feed holds are showing and it is the oldest: TOAST_MAX_LINES of the table's
- * notices, TOAST_POT_MAX_LINES of the pot's (see `isPotToast`). Both kinds share the one
- * queue, so they still arrive in order; the Table shows them in separate places. The log entries recorded by the
- * same change are held back until the last of its toasts has been on screen for
- * TOAST_REVEAL_MS, and are returned from this hook only then, in order. Entries with no
- * toast of their own wait behind whichever toast is still due, so they never overtake
- * earlier ones.
+ * Pot contributions (`kind: 'pot-contribution'`) use their own queue and appear immediately
+ * over the pot (where a newer line replaces the older one) without blocking computer play.
+ * Center table notices (outcomes, sit-outs, away-work updates) show in order, at least
+ * TOAST_GAP_MS apart (TOAST_RESULT_MS for round results), and stay beside the lines already
+ * showing up to TOAST_MAX_LINES. Only gameplay toasts report `isBacklogged`, so computer play
+ * only pauses while a gameplay toast is waiting.
  *
- * Computer players move faster than the toasts show. While a toast is waiting for its turn
- * the hook reports `isBacklogged`, and the Table holds computer play until the toast has
- * appeared; the moves then keep pace with the notices.
+ * The activity log entries recorded by a change appear once its last toast has been on screen
+ * for TOAST_REVEAL_MS (never overtaking an earlier queued toast). When a category is disabled
+ * via `options`, its toasts are dropped before scheduling so their log entries appear at once;
+ * toasts already queued finish normally.
  *
- * At the end of a round each seat's result is a toast of its own, each holding the newest
- * place for TOAST_RESULT_MS. While one is shown its seat has `focus`, so its chip can pulse,
- * and `isAnnouncingResults` stays true from the moment the results are queued until the last
- * seat has had its turn. The results wait out `holdResultsMs` first, the time the Table is
- * still showing the dealer's hole card turning over.
+ * At the end of a round the human's and dealer's results are each a toast of their own, holding
+ * the newest place for TOAST_RESULT_MS while that seat has `focus` so its chip can pulse.
+ * `isAnnouncingResults` stays true from when the results are queued until the last has finished,
+ * waiting out `holdResultsMs` first while the dealer's hole card turns over.
  * @param gameState current game state
  * @param revealDealerTotal true when the dealer's total may be shown
  * @param holdResultsMs how long the results of a round that has just ended must wait before they start
- * @returns the toasts on screen, the activity log entries that may be shown, whether a toast is waiting,
+ * @param options notification toggles for gameplay and pot categories (both enabled by default)
+ * @returns the toasts on screen, the activity log entries that may be shown, whether a gameplay toast is waiting,
  * the seat in focus, and whether results are being announced
  */
 export function useTableToasts(
   gameState: GameState,
   revealDealerTotal: boolean,
   holdResultsMs = 0,
+  options: TableToastOptions = {},
 ): { toasts: VisibleToast[]; activityLog: ActivityLogEntry[]; isBacklogged: boolean; focus?: ToastFocus; isAnnouncingResults: boolean } {
+  const { isGameplayToastsEnabled = true, isPotToastsEnabled = true } = options;
   const [shown, setShown] = React.useState<VisibleToast[]>([]);
-  /** toasts scheduled but not yet on screen */
+  /** gameplay toasts scheduled but not yet on screen */
   const [waiting, setWaiting] = React.useState(0);
   /** result toasts queued or in focus */
   const [announcing, setAnnouncing] = React.useState(0);
   const [focus, setFocus] = React.useState<ToastFocus>();
-  // the latest wait, read when a round's results are queued so a change to it does not rerun the diff
+  // the latest wait and toggles, read when announcements are queued so changing them does not rerun the diff
   const holdResults = React.useRef(holdResultsMs);
   React.useLayoutEffect(() => { holdResults.current = holdResultsMs; });
+  const toastOptions = React.useRef({ gameplay: isGameplayToastsEnabled, pot: isPotToastsEnabled });
+  React.useLayoutEffect(() => { toastOptions.current = { gameplay: isGameplayToastsEnabled, pot: isPotToastsEnabled }; });
   const [revealedId, setRevealedId] = React.useState(() => latestEntryId(gameState.activityLog));
   const previous = React.useRef<GameSnapshot | null>(null);
   const nextId = React.useRef(1);
-  /** earliest time the next toast may appear */
+  /** earliest time the next center-table toast may appear */
   const nextShowAt = React.useRef(0);
   /** the newest entry id handed to the pacing so far */
   const loggedId = React.useRef(revealedId);
@@ -293,12 +303,13 @@ export function useTableToasts(
   }, [later]);
 
   /** show a toast, schedule its leaving, and hand over its log entries once it has had its moment */
-  const present = React.useCallback((toast: ToastItem, plan: ToastPlan, delayMs: number) => {
+  const present = React.useCallback((toast: ToastItem, plan: ToastPlan, delayMs: number, revealDelayMs: number) => {
     const isResult = toast.kind === 'result';
-    if (delayMs > 0) setWaiting((count) => count + 1);
+    const blocksPlay = toast.category === 'gameplay' && delayMs > 0;
+    if (blocksPlay) setWaiting((count) => count + 1);
     if (isResult) setAnnouncing((count) => count + 1);
     later(delayMs, () => {
-      if (delayMs > 0) setWaiting((count) => count - 1);
+      if (blocksPlay) setWaiting((count) => count - 1);
       leaving.current.set(toast.id, false);
       setShown((list) => [...list, { ...toast, isLeaving: false }]);
       if (isResult) {
@@ -309,7 +320,7 @@ export function useTableToasts(
           setAnnouncing((count) => count - 1);
         });
       }
-      later(TOAST_REVEAL_MS, () => {
+      later(revealDelayMs, () => {
         if (tail.current === plan) tail.current = null;
         if (plan.generation === generation.current) {
           setRevealedId((current) => Math.max(current, plan.revealId));
@@ -347,25 +358,34 @@ export function useTableToasts(
     // a seat left in focus from the last round has no claim on the next
     if (current.round !== prior.round) setFocus(undefined);
 
-    const items = diffAnnouncements(prior, current, revealDealerTotal);
+    const items = diffAnnouncements(prior, current, revealDealerTotal).filter((item) => (
+      item.category === 'pot' ? toastOptions.current.pot : toastOptions.current.gameplay
+    ));
 
-    // Each toast appears no sooner than TOAST_GAP_MS after the previous one, a result TOAST_RESULT_MS;
-    // the first result also waits for the dealer's hole card to finish turning over
+    // Pot contributions appear immediately on their own timing; center table notices appear
+    // no sooner than TOAST_GAP_MS after the previous one (TOAST_RESULT_MS for results, after holdResultsMs).
+    const now = Date.now();
     let last: ToastPlan | undefined;
     let isHeld = false;
     for (const item of items) {
       // a seat's name lets a player without a portrait show their initials
       const playerName = current.players.find((player) => player.key === item.playerKey)?.title;
       const toast: ToastItem = { ...item, ...(playerName ? { playerName } : {}), id: nextId.current++ };
-      if (item.kind === 'result' && !isHeld) {
-        isHeld = true;
-        nextShowAt.current = Math.max(nextShowAt.current, Date.now() + holdResults.current);
+      let showAt: number;
+      if (isPotToast(item)) {
+        showAt = now;
+      } else {
+        if (item.kind === 'result' && !isHeld) {
+          isHeld = true;
+          nextShowAt.current = Math.max(nextShowAt.current, now + holdResults.current);
+        }
+        showAt = Math.max(now, nextShowAt.current);
+        nextShowAt.current = showAt + (item.kind === 'result' ? TOAST_RESULT_MS : TOAST_GAP_MS);
       }
-      const showAt = Math.max(Date.now(), nextShowAt.current);
-      nextShowAt.current = showAt + (item.kind === 'result' ? TOAST_RESULT_MS : TOAST_GAP_MS);
-      last = { revealId: 0, generation: generation.current };
+      const revealAt = Math.max(showAt + TOAST_REVEAL_MS, tail.current?.revealAt ?? 0);
+      last = { revealId: 0, generation: generation.current, revealAt };
       tail.current = last;
-      present(toast, last, showAt - Date.now());
+      present(toast, last, showAt - now, revealAt - showAt);
     }
 
     if (!hasNewEntries) return;

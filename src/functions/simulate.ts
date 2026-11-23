@@ -2,7 +2,7 @@ import { BOTS, CHARACTERS, DEALER } from "../characters";
 import { createGameState } from "../context/GameContext";
 import { STARTING_BANK } from "../definitions";
 import { GameAction, GameStatus } from "../enums";
-import { IPlayerOptions } from "../interfaces";
+import { GameReducerAction, IPlayerOptions } from "../interfaces";
 import { GameState, PlayerStats } from "../types";
 import { gameReducer } from "./gameReducer";
 import { emptyStats } from "./profiles";
@@ -19,6 +19,8 @@ export type SimulationOptions = {
   sessionLength?: [number, number];
   /** called every so often with the rounds played so far */
   onProgress?: (roundsPlayed: number) => void;
+  /** called after each reducer action with the state before and after the change */
+  onStep?: (prev: GameState, next: GameState) => void;
 };
 
 export type SimulationResult = {
@@ -57,14 +59,16 @@ function seatsFor(lineup: typeof BOTS, stats: Record<string, PlayerStats>): IPla
 }
 
 /** Play every computer move until the round has a result */
-function playRound(state: GameState, rng: () => number): GameState {
+function playRound(state: GameState, rng: () => number, onStep?: SimulationOptions['onStep']): GameState {
   for (let moves = 0; state.gameStatus === GameStatus.InProgress; moves++) {
     const key = state.controllingPlayer;
     if (!key || moves > MAX_MOVES_PER_ROUND) throw new Error(`Round ${state.round} did not finish`);
     const move = decideSeatMove(state, key, rng);
+    const prev = state;
     state = move === 'hit' ? gameReducer(state, { type: GameAction.Draw, playerKey: key, deckSide: 'top', numberOfCards: 1 })
       : move === 'double' ? gameReducer(state, { type: GameAction.DoubleDown, playerKey: key })
       : gameReducer(state, { type: GameAction.Stay, playerKey: key });
+    onStep?.(prev, state);
   }
   return state;
 }
@@ -77,10 +81,15 @@ function playRound(state: GameState, rng: () => number): GameState {
  * Stats carry from one sitting to the next.
  */
 export function simulateHistory(options: SimulationOptions): SimulationResult {
-  const { rounds, rng = Math.random, sessionLength = [20, 200], onProgress } = options;
+  const { rounds, rng = Math.random, sessionLength = [20, 200], onProgress, onStep } = options;
   const stats: Record<string, PlayerStats> = Object.fromEntries(CHARACTERS.map((character) => [character.id, emptyStats()]));
   const net: Record<string, number> = Object.fromEntries(CHARACTERS.map((character) => [character.id, 0]));
   const balanceHistory: Record<string, number[]> = Object.fromEntries(BOTS.map((bot) => [bot.id, []]));
+  const step = (prev: GameState, action: GameReducerAction): GameState => {
+    const next = gameReducer(prev, action);
+    onStep?.(prev, next);
+    return next;
+  };
 
   // the deck, bots and their bets all draw from Math.random; route it through rng for the run
   const realRandom = Math.random;
@@ -91,15 +100,15 @@ export function simulateHistory(options: SimulationOptions): SimulationResult {
     while (played < rounds) {
       sessions += 1;
       const length = sessionLength[0] + Math.floor(rng() * (sessionLength[1] - sessionLength[0] + 1));
-      let state = gameReducer(createGameState(), { type: GameAction.NewGame, players: seatsFor(chooseLineup(rng), stats) });
+      let state = step(createGameState(), { type: GameAction.NewGame, players: seatsFor(chooseLineup(rng), stats) });
       // the first evaluation collects the opening antes
-      state = gameReducer(state, { type: GameAction.EvaluateGame });
+      state = step(state, { type: GameAction.EvaluateGame });
 
       for (let inSession = 0; inSession < length && played < rounds; inSession++) {
-        state = gameReducer(state, { type: GameAction.Deal });
+        state = step(state, { type: GameAction.Deal });
         if (state.playerStore.all.filter(isBot).every((player) => player.isSittingOut)) break;
-        state = playRound(state, rng);
-        state = gameReducer(state, { type: GameAction.EvaluateGame });
+        state = playRound(state, rng, onStep);
+        state = step(state, { type: GameAction.EvaluateGame });
 
         state.playerStore.all.forEach((player) => {
           stats[player.key] = { ...player.stats };

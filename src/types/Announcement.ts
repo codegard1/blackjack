@@ -1,16 +1,21 @@
 import { GameStatus } from "../enums";
 import { PlayerKey } from "./PlayerKey";
 import { PlayerRole, RoundResult } from "./Seat";
+import { WorkTaskId } from "./Work";
 
 export type AnnouncementTone = 'brand' | 'neutral' | 'danger' | 'success' | 'info';
 
+/** Controls which notification setting gates the announcement, separately from where it is displayed */
+export type AnnouncementCategory = 'gameplay' | 'pot';
+
 /**
- * A large, short-lived notice shown over the table (turn changes, hits, busts, results)
+ * A short-lived notice shown over the table (blackjacks, busts, results, pot contributions, sit-outs, work updates)
  */
 export type Announcement = {
   title: string;
   subtitle?: string;
   tone: AnnouncementTone;
+  category: AnnouncementCategory;
   /**
    * pot-contribution: money added to the pot.
    * result: how a seat's hand ended; its chip pulses while the toast is announced.
@@ -43,6 +48,8 @@ export type PlayerSnapshot = {
   isBusted: boolean;
   isStaying: boolean;
   isBlackjack: boolean;
+  isSittingOut?: boolean;
+  awayTask?: WorkTaskId;
   result?: RoundResult;
 };
 
