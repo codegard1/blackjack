@@ -11,8 +11,14 @@ export interface SettingResetAction {
   keys?: readonly SettingKey[];
 }
 
+/** Replace settings with a validated remote copy */
+export interface SettingReplaceAction {
+  key: 'replace';
+  settings: unknown;
+}
+
 /**
  * Dispatcher that changes settings values.
  * Possible keys must correspond to settingDefaults in SettingContext.ts
  */
-export type ISettingReducerAction = SettingChangeAction | SettingResetAction;
+export type ISettingReducerAction = SettingChangeAction | SettingResetAction | SettingReplaceAction;

@@ -22,6 +22,7 @@ export * from './remote';
 export * from './useRemoteSync';
 export * from './useProfileSync';
 export * from './useGameSync';
+export * from './useSettingSync';
 export * from './pot';
 export * from './session';
 export * from './work';
