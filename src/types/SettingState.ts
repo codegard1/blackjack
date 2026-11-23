@@ -37,6 +37,10 @@ export type SettingsState = TableRules & {
   isOptionsPanelVisible: boolean;
   /** point out the textbook play on the human's turn */
   isStrategyHintVisible: boolean;
+  /** show toast notices for hand outcomes: blackjacks, busts, and round results */
+  isGameplayToastsEnabled: boolean;
+  /** show toast notices for pot contributions, sitting out, and away-work updates */
+  isPotToastsEnabled: boolean;
   themeMode: ThemeMode;
   accent: AccentKey;
   cardStyle: CardStyle;
@@ -77,6 +81,8 @@ export const settingDefaults: SettingsState = {
   isHandValueVisible: false,
   isOptionsPanelVisible: false,
   isStrategyHintVisible: false,
+  isGameplayToastsEnabled: true,
+  isPotToastsEnabled: true,
   themeMode: 'dark',
   accent: 'blue',
   cardStyle: 'classic',

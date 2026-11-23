@@ -1023,6 +1023,7 @@ describe('Tier 4 — Real-World Application Scenarios', () => {
         title: `${character.name} wagered $25`,
         subtitle: 'Pot: $50',
         tone: 'brand',
+        category: 'pot',
         kind: 'pot-contribution',
         playerKey: id,
         playerName: character.name,

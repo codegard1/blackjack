@@ -222,6 +222,60 @@ it('shows strategy hints once they are switched on in Options, and remembers the
   expect(screen.getByRole('switch', { name: 'Show strategy hints' })).toBeChecked();
 });
 
+it('toggles gameplay and pot notifications in Options while preserving the pot breakdown and immediate log entries', () => {
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_7'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
+  vi.mocked(drawCards).mockImplementation((deck) => ({ deck, drawn: ['Heart_5'] }));
+  const first = render(<App />);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  const gameplaySwitch = screen.getByRole('switch', { name: 'Gameplay notifications' });
+  const potSwitch = screen.getByRole('switch', { name: 'Pot notifications' });
+  expect(gameplaySwitch).toBeChecked();
+  expect(potSwitch).toBeChecked();
+
+  // Turn both off and open the Activity Log; Reset appearance must leave notification toggles alone
+  fireEvent.click(gameplaySwitch);
+  fireEvent.click(potSwitch);
+  fireEvent.click(screen.getByRole('switch', { name: 'Open Activity Log by default' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Reset appearance' }));
+  expect(gameplaySwitch).not.toBeChecked();
+  expect(potSwitch).not.toBeChecked();
+  first.unmount();
+
+  vi.useFakeTimers();
+  const { container } = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  expect(screen.getByRole('switch', { name: 'Gameplay notifications' })).not.toBeChecked();
+  expect(screen.getByRole('switch', { name: 'Pot notifications' })).not.toBeChecked();
+  fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+
+  const log = () => within(document.getElementById('ActivityLogRoot') as HTMLElement);
+
+  // Starting and wagering show no pot toast, while the log updates at once and tapping the pot still works
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  expect(screen.queryByText('+$25 added to the pot')).not.toBeInTheDocument();
+  expect(log().getByText('anted $25')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Wager $25' }));
+  expect(screen.queryByText('Chris wagered $25')).not.toBeInTheDocument();
+  expect(log().getByText('wagered $25')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: /Pot: \$50/ }));
+  expect(container.querySelector('.table-toasts-pot')).toHaveTextContent('Chris: $50');
+
+  // Busting produces no gameplay toast, Next hand is immediately free, and the log updates without waiting
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
+  expect(screen.queryByText('Chris busts!')).not.toBeInTheDocument();
+  expect(screen.queryByText('Chris loses')).not.toBeInTheDocument();
+  expect(screen.queryByText('Faxe wins!')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Next hand' })).not.toHaveAttribute('aria-disabled');
+  expect(log().getByText('busted, lost $50')).toBeInTheDocument();
+});
+
 it('toggles character animations from the Options panel and remembers the setting', () => {
   const first = render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));

@@ -120,6 +120,26 @@ export const OptionsPanel: React.FC = () => {
 
         <Divider />
 
+        <section className="options-panel-appearance" aria-labelledby="options-notifications-heading">
+          <Text as="h3" id="options-notifications-heading" weight="semibold" size={400}>Notifications</Text>
+          <Field hint="Hand outcomes: blackjacks, busts, and round results">
+            <Switch
+              checked={settings.isGameplayToastsEnabled}
+              label="Gameplay notifications"
+              onChange={(_, data) => toggleSetting({ key: 'isGameplayToastsEnabled', value: data.checked })}
+            />
+          </Field>
+          <Field hint="Antes, wagers, sitting out, and characters leaving to work">
+            <Switch
+              checked={settings.isPotToastsEnabled}
+              label="Pot notifications"
+              onChange={(_, data) => toggleSetting({ key: 'isPotToastsEnabled', value: data.checked })}
+            />
+          </Field>
+        </section>
+
+        <Divider />
+
         <section className="options-panel-appearance" aria-labelledby="options-rules-heading">
           <Text as="h3" id="options-rules-heading" weight="semibold" size={400}>Table rules</Text>
           <Text as="p" size={200}>Changes apply at the next hand, not during the current hand.</Text>

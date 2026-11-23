@@ -161,14 +161,18 @@ export const Table: React.FC = () => {
     tableRules: tableRulesFrom(settings),
   });
 
-  // Toasts announce each change; its activity log entries follow once its toasts have had their moment.
-  // Computer play waits while a toast is queued, so the moves keep pace with the notices. At the end of
-  // a round each seat's result is a toast of its own, after the dealer's card has turned, and the seat's
+  // Toasts announce outcomes and pot updates; activity log entries follow once their toasts have had their moment.
+  // Computer play waits only while a gameplay toast is queued. At the end of a round the human's and
+  // dealer's results are each a toast of their own, after the dealer's card has turned, and each seat's
   // chip is in focus meanwhile; the game's buttons wait until the last result has been told.
   const { toasts, activityLog, isBacklogged, focus: toastFocus, isAnnouncingResults } = useTableToasts(
     gameState,
     revealDealerTotal,
     holeCardFlip.isBusy ? holeCardFlip.waitMs : 0,
+    {
+      isGameplayToastsEnabled: settings.isGameplayToastsEnabled,
+      isPotToastsEnabled: settings.isPotToastsEnabled,
+    },
   );
   // money going into the pot is told over the pot; everything else in the feed above the middle of the dock
   const potToasts = toasts.filter(isPotToast);

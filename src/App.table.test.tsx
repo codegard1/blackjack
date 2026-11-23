@@ -7,7 +7,7 @@ import { DeckState } from './types';
 import App from './App';
 import { CARD_FLIP_MS, CARD_REVEAL_PAUSE_MS } from './components/useCardFlip';
 import { POT_BOUNCE_MS, POT_ENTER_MS, POT_LEAVE_MS } from './components/usePotMotion';
-import { TOAST_EXIT_MS, TOAST_GAP_MS, TOAST_LIFE_MS } from './components/TableToasts';
+import { TOAST_EXIT_MS, TOAST_LIFE_MS } from './components/TableToasts';
 
 vi.mock('./functions/deck', { spy: true });
 
@@ -49,7 +49,7 @@ it('keeps the pot in the dock and bounces it when a wager is made, holding play 
 
   // the new game's pot slides in from the top, then bounces for the ante; the controls wait
   // (only players ante, so one human player puts in $25)
-  expect(screen.getByText('Pot: $25')).toBeInTheDocument();
+  expect(container.querySelector('.table-dock .table-pot')).toHaveTextContent('Pot: $25');
   expect(container.querySelector('.table-dock .table-pot .table-pot-badge.is-entering')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Wager $25' })).toHaveAttribute('aria-disabled', 'true');
 
@@ -59,30 +59,25 @@ it('keeps the pot in the dock and bounces it when a wager is made, holding play 
 
   act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
   expect(container.querySelector('.table-pot-badge.is-bouncing')).not.toBeInTheDocument();
+  expect(screen.getByText('+$25 added to the pot').closest('[role=status]')).toHaveClass('table-toasts-pot');
   const wager = screen.getByRole('button', { name: 'Wager $25' });
   expect(wager).not.toHaveAttribute('aria-disabled');
 
   fireEvent.click(wager);
-  expect(screen.getByText('Pot: $50')).toBeInTheDocument();
+  expect(container.querySelector('.table-dock .table-pot')).toHaveTextContent('Pot: $50');
   expect(container.querySelector('.table-dock .table-pot .table-pot-badge.is-bouncing')).toBeInTheDocument();
   expect(container.querySelector('.table-pot-shimmer')).toBeInTheDocument();
 
   // a click during the bounce does nothing
   fireEvent.click(screen.getByRole('button', { name: 'Wager $25' }));
-  expect(screen.getByText('Pot: $50')).toBeInTheDocument();
+  expect(container.querySelector('.table-dock .table-pot')).toHaveTextContent('Pot: $50');
 
-  // the pot never leaves the dock, even while its contribution toast is showing
+  // the pot never leaves the dock, and the wager toast shows immediately over the pot (with no turn toast over the table)
   act(() => vi.advanceTimersByTime(POT_BOUNCE_MS));
-  // the ante, the turn and the wager each get a toast in turn, and the wager's names who made it
-  expect(screen.getByText('+$25 added to the pot')).toBeInTheDocument();
-  for (let waited = 0; !screen.queryByText('Chris wagered $25') && waited < 10 * TOAST_GAP_MS; waited += 100) {
-    act(() => vi.advanceTimersByTime(100));
-  }
   expect(screen.getByText('Chris wagered $25')).toBeInTheDocument();
   expect(screen.getByText('Pot: $50', { selector: '[role=status] *' })).toBeInTheDocument();
-  // it is told over the pot, apart from the table's notices
   expect(screen.getByText('Chris wagered $25').closest('[role=status]')).toHaveClass('table-toasts-pot');
-  expect(screen.getByText("Chris's turn").closest('[role=status]')).toHaveClass('table-toasts-table');
+  expect(screen.queryByText("Chris's turn")).not.toBeInTheDocument();
   expect(container.querySelectorAll('.table-pot')).toHaveLength(1);
   expect(container.querySelector('.table-dock .table-pot')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Wager $25' })).not.toHaveAttribute('aria-disabled');
@@ -142,7 +137,7 @@ it('keeps the pot after a hand ends, then slides it up and back in for the next 
   vi.useRealTimers();
 });
 
-it("announces the dealer's turn as a toast that leaves on its own", () => {
+it('announces a round outcome as a table toast that leaves on its own', () => {
   vi.mocked(dealCards).mockImplementation(rigDeal({
     chris: ['Spade_10', 'Diamond_7'],
     dealer: ['Club_10', 'Heart_7'],
@@ -154,17 +149,19 @@ it("announces the dealer's turn as a toast that leaves on its own", () => {
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
   fireEvent.click(screen.getByRole('button', { name: 'Stay' }));
 
-  // the toasts before it take their turns first, each for the same time
-  for (let waited = 0; !screen.queryByText("Faxe's turn") && waited < 10 * TOAST_GAP_MS; waited += 100) {
+  // turn changes and stands are not announced; wait for the dealer's play to end the round
+  expect(screen.queryByText("Faxe's turn")).not.toBeInTheDocument();
+  for (let waited = 0; !screen.queryByText('Chris pushes') && waited < 10_000; waited += 100) {
     act(() => vi.advanceTimersByTime(100));
   }
-  expect(screen.getByText("Faxe's turn")).toBeInTheDocument();
+  expect(screen.getByText('Chris pushes').closest('[role=status]')).toHaveClass('table-toasts-table');
+  expect(screen.queryByText('Faxe stands')).not.toBeInTheDocument();
 
   // the line stays in the feed for its time, then fades and goes
   act(() => vi.advanceTimersByTime(TOAST_LIFE_MS + TOAST_EXIT_MS - 100));
-  expect(screen.getByText("Faxe's turn")).toBeInTheDocument();
+  expect(screen.getByText('Chris pushes')).toBeInTheDocument();
   act(() => vi.advanceTimersByTime(200));
-  expect(screen.queryByText("Faxe's turn")).not.toBeInTheDocument();
+  expect(screen.queryByText('Chris pushes')).not.toBeInTheDocument();
 });
 
 it("turns the dealer's hole card over when the round ends, then empties the stage and tells each seat's result", () => {

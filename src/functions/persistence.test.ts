@@ -342,12 +342,18 @@ describe('persistence', () => {
     expect(loadSettings().queueSide).toBe('left');
   });
 
-  it('fills in appearance defaults for a settings store saved before they existed', () => {
+  it('fills in appearance and notification defaults for a settings store saved before they existed', () => {
     localStorage.setItem(StoreName.SETTINGSTORE, JSON.stringify({ isActivityLogVisible: true }));
     const loaded = loadSettings();
     expect(loaded.isActivityLogVisible).toBe(true);
     expect(loaded).toMatchObject({
-      themeMode: 'dark', accent: 'blue', cardStyle: 'classic', cardBackPattern: 'rings', cardBackColor: 'brand',
+      themeMode: 'dark',
+      accent: 'blue',
+      cardStyle: 'classic',
+      cardBackPattern: 'rings',
+      cardBackColor: 'brand',
+      isGameplayToastsEnabled: true,
+      isPotToastsEnabled: true,
     });
   });
 });

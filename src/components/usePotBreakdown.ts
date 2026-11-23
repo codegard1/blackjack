@@ -42,6 +42,7 @@ export function usePotBreakdown(shares: PotShare[], round: number): { lines: Vis
     id: -(index + 1),
     title: `${share.name}: $${share.amount}`,
     tone: 'brand',
+    category: 'pot',
     kind: 'pot-contribution',
     playerKey: share.playerKey,
     playerName: share.name,
