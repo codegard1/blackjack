@@ -59,7 +59,7 @@ describe('persistence', () => {
   });
 
   it('round-trips v6 botAccounts, seated awayTask and isReadyToReturn flags, and work activity log entries', () => {
-    expect(GAME_STORE_VERSION).toBe(7);
+    expect(GAME_STORE_VERSION).toBe(8);
     const profiles = { ...defaultProfileState(), opponentIds: ['ogion'] };
     const state = gameReducer(createGameState(), {
       type: GameAction.NewGame,
@@ -235,6 +235,24 @@ describe('persistence', () => {
     const restored = loadGameState();
     expect(restored.isInsuranceOpen).toBe(true);
     expect(restored.tableRules).toMatchObject({ insurance: true, surrender: true });
+  });
+
+  it('round-trips session summary stats and balanceHistory across reloads', () => {
+    let state = gameReducer(startedGame(), { type: GameAction.EvaluateGame });
+    state.deck = { ...state.deck, cardKeys: ['Spade_9', 'Club_10', 'Heart_7', 'Diamond_10', 'Club_10'] };
+    state = gameReducer(state, { type: GameAction.Deal });
+    state = gameReducer(state, { type: GameAction.Stay, playerKey: 'chris' });
+    state = gameReducer(state, { type: GameAction.Stay, playerKey: 'dealer' });
+    state = gameReducer(state, { type: GameAction.EvaluateGame });
+
+    saveGameState(state);
+    const restored = loadGameState();
+    expect(restored.session?.seats.chris).toMatchObject({
+      hands: 1,
+      wins: 1,
+      net: 25,
+      balanceHistory: [1000, 1025],
+    });
   });
 
   it('restores the active hand and both card stacks mid-split', () => {

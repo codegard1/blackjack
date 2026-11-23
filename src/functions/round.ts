@@ -11,6 +11,7 @@ import {
 import {
   allPlayers, antePlayer, betPlayer, endPlayerTurn, getPlayer, payoutPlayer, replaceRoster, setCurrentPlayer, startPlayerTurn, updatePlayer,
 } from "./playerStore";
+import { initSession } from "./session";
 import { appendBalance, chooseTask, defaultBotAccount, defaultBotAccounts, getWorkTask, returnThreshold } from "./work";
 
 /**
@@ -983,6 +984,7 @@ export function applyRoster(
     ...next,
     deck,
     playerStore: store,
+    session: initSession(store),
     controllingPlayer,
     winner,
     loser,

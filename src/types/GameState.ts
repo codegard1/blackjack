@@ -2,6 +2,22 @@ import { GameStatus } from "../enums";
 import { IPlayerStoreState } from "../interfaces";
 import { BotAccountState, DeckState, PlayerKey, TableRules } from "./";
 
+export type SessionSeatStats = {
+  title: string;
+  hands: number;
+  wins: number;
+  losses: number;
+  pushes: number;
+  blackjacks: number;
+  busts: number;
+  net: number;
+  balanceHistory: number[];
+};
+
+export type SessionSummaryState = {
+  seats: Record<PlayerKey, SessionSeatStats>;
+};
+
 export type GameState = {
   activityLog: ActivityLogEntry[];
   activeHandIndex: number;
@@ -20,6 +36,7 @@ export type GameState = {
   playerStore: IPlayerStoreState;
   pot: number;
   round: number;
+  session?: SessionSummaryState;
   tableRules: TableRules;
   turnCount: number;
   winner?: PlayerKey;

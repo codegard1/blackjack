@@ -5,6 +5,7 @@ import { recordActivity } from "./activity";
 import { getPlayerHands, updateHand } from "./deck";
 import { advancePlayer, allPlayers, getPlayer, payoutPlayer, updatePlayerStats } from "./playerStore";
 import { collectAntes, isBot, isDealer, netFor, roundStake, updateBotAccount } from "./round";
+import { recordSessionSeat } from "./session";
 import { appendBalance } from "./work";
 
 export { roundStake } from "./round";
@@ -42,6 +43,7 @@ function settleRound(state: GameState): GameState {
   let next = state;
   for (const player of allPlayers(next.playerStore).filter((p) => !isDealer(p))) {
     let playedRound = false;
+    let seatNet = 0;
     const hands = getPlayerHands(next.deck, player.key);
     for (let index = 0; index < hands.length; index++) {
       const hand = hands[index];
@@ -49,6 +51,7 @@ function settleRound(state: GameState): GameState {
       playedRound = true;
       const stake = hand.stake ?? roundStake(next, player.key);
       const net = hand.net ?? netFor(hand.result, stake, next.tableRules.blackjackPayout);
+      seatNet += net;
       const deck = updateHand(next.deck, player.key, index, (h) => ({ ...h, net }));
       const amount = Math.max(0, stake + net);
       const playerStore = amount !== 0 ? payoutPlayer(next.playerStore, player.key, amount) : next.playerStore;
@@ -81,13 +84,19 @@ function settleRound(state: GameState): GameState {
       };
     }
 
-    if (isBot(player) && playedRound) {
+    if (playedRound) {
       const bank = getPlayer(next.playerStore, player.key)!.bank;
-      next = updateBotAccount(next, player.key, (acc) => ({
-        ...acc,
-        bank,
-        balanceHistory: appendBalance(acc.balanceHistory, bank),
-      }));
+      next = {
+        ...next,
+        session: recordSessionSeat(next.session, next.playerStore, player, getPlayerHands(next.deck, player.key), bank, seatNet),
+      };
+      if (isBot(player)) {
+        next = updateBotAccount(next, player.key, (acc) => ({
+          ...acc,
+          bank,
+          balanceHistory: appendBalance(acc.balanceHistory, bank),
+        }));
+      }
     }
   }
 

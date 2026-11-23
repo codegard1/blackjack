@@ -1511,3 +1511,36 @@ describe('insurance and late surrender', () => {
     expect(decideSeatMove(afterShevek, 'haber', () => 0.01)).not.toBe('surrender');
   });
 });
+
+describe('session summary tracking', () => {
+  it('tracks per-seat hands, outcomes, net, and balanceHistory, and resets on roster change', () => {
+    let state = dealSeats(startDefaultGame(), [['Club_10', 'Diamond_10'], ['Spade_10', 'Heart_7']]);
+    state = stay(state, 'chris');
+    state = stay(state, 'dealer');
+    state = gameReducer(state, { type: GameAction.EvaluateGame });
+    // Second EvaluateGame must not double-count
+    state = gameReducer(state, { type: GameAction.EvaluateGame });
+
+    expect(state.session?.seats.chris).toMatchObject({
+      title: 'Chris',
+      hands: 1,
+      wins: 1,
+      losses: 0,
+      pushes: 0,
+      blackjacks: 0,
+      busts: 0,
+      net: 25,
+      balanceHistory: [1000, 1025],
+    });
+
+    // Changing roster between hands starts a fresh session
+    const nextRoster = seatsFor({ ...defaultProfileState(), opponentIds: ['ogion'] });
+    state = gameReducer(state, { type: GameAction.SetRoster, players: nextRoster });
+    expect(state.session?.seats.chris).toMatchObject({
+      hands: 0,
+      net: 0,
+      balanceHistory: [1025],
+    });
+    expect(state.session?.seats.ogion).toBeDefined();
+  });
+});

@@ -16,6 +16,8 @@ import {
   RadioGroup,
   Select,
   Switch,
+  Tab,
+  TabList,
   Table,
   TableBody,
   TableCell,
@@ -29,7 +31,7 @@ import {
 } from '@fluentui/react-components';
 
 // Local Resources
-import { BOTS, CHARACTERS, MAX_OPPONENTS, getCharacter } from '../characters';
+import { BOTS, CHARACTERS, MAX_OPPONENTS, getCharacter, isBotId } from '../characters';
 import { useGameContext, useProfileContext } from '../context';
 import { GameAction, GameStatus } from '../enums';
 import { formatCount, formatNet } from '../functions/format';
@@ -38,6 +40,7 @@ import { DEALER_PROFILE_ID, botAccountsFor, humanProfiles, summarizeStats, valid
 import { WORK_TASKS, chooseTask, describeCharacterWork, returnThreshold } from '../functions/work';
 import { IPlayersDialogProps } from '../interfaces/IPlayersDialogProps';
 import { isWorkTaskId } from '../types';
+import { BalanceChart } from './BalanceChart';
 import { CharacterDialog } from './CharacterCard';
 import { CharacterPortrait } from './CharacterPortrait';
 import { GoogleAccountSection } from './GoogleAccountSection';
@@ -161,6 +164,7 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
   const [error, setError] = React.useState<string>();
 
   const [characterId, setCharacterId] = React.useState<string>();
+  const [tab, setTab] = React.useState<'roster' | 'session'>('roster');
 
   const humans = humanProfiles(profiles.profiles);
   // the computer characters in seating order, then the dealer
@@ -189,6 +193,65 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
           <DialogTitle>Players</DialogTitle>
           <DialogContent className={styles.content}>
 
+            <TabList selectedValue={tab} onTabSelect={(_, data) => setTab(data.value as 'roster' | 'session')}>
+              <Tab value="roster">Roster &amp; stats</Tab>
+              <Tab value="session">Current session</Tab>
+            </TabList>
+
+            {tab === 'session' ? (() => {
+              const sessionSeats = Object.entries(gameState.session?.seats ?? {});
+              const humanEntry = sessionSeats.find(([key]) => !isBotId(key));
+              const humanSeat = humanEntry?.[1];
+              if (sessionSeats.length === 0) {
+                return <Text size={200}>Start a game to track stats for the current sitting.</Text>;
+              }
+              return (
+                <section aria-label="Current session summary" className={styles.content}>
+                  {humanSeat && (
+                    <div>
+                      <Text as="h3" weight="semibold" block>{`${humanSeat.title}'s bankroll`}</Text>
+                      <BalanceChart
+                        values={humanSeat.balanceHistory}
+                        label={humanSeat.title}
+                        referenceValue={humanSeat.balanceHistory[0]}
+                        referenceLabel="Start"
+                      />
+                    </div>
+                  )}
+                  <div className={styles.tableScroll}>
+                    <Table aria-label="Session statistics" size="small" className={styles.table}>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHeaderCell>Player</TableHeaderCell>
+                          <TableHeaderCell className={styles.numeric}>Hands</TableHeaderCell>
+                          <TableHeaderCell className={styles.numeric}>Won</TableHeaderCell>
+                          <TableHeaderCell className={styles.numeric}>Lost</TableHeaderCell>
+                          <TableHeaderCell className={styles.numeric}>Push</TableHeaderCell>
+                          <TableHeaderCell className={styles.numeric}>Blackjacks</TableHeaderCell>
+                          <TableHeaderCell className={styles.numeric}>Busts</TableHeaderCell>
+                          <TableHeaderCell className={styles.numeric}>Net</TableHeaderCell>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {sessionSeats.map(([key, seat]) => (
+                          <TableRow key={key}>
+                            <TableCell>{seat.title}</TableCell>
+                            <TableCell className={styles.numeric}>{formatCount(seat.hands)}</TableCell>
+                            <TableCell className={styles.numeric}>{formatCount(seat.wins)}</TableCell>
+                            <TableCell className={styles.numeric}>{formatCount(seat.losses)}</TableCell>
+                            <TableCell className={styles.numeric}>{formatCount(seat.pushes)}</TableCell>
+                            <TableCell className={styles.numeric}>{formatCount(seat.blackjacks)}</TableCell>
+                            <TableCell className={styles.numeric}>{formatCount(seat.busts)}</TableCell>
+                            <TableCell className={styles.numeric}>{formatNet(seat.net)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </section>
+              );
+            })() : (
+              <>
             <GoogleAccountSection />
 
             <section aria-labelledby="players-select-heading">
@@ -329,6 +392,8 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
                 </Table>
               </div>
             </section>
+              </>
+            )}
 
           </DialogContent>
           <DialogActions>

@@ -1,5 +1,6 @@
 import type { IPlayer, IPlayerStoreState } from '../../src/interfaces';
 import type { ActivityLogEntry, DeckState, PlayerHand, SavedGame, SavedGameSnapshot } from '../../src/types';
+import { cloneSessionSummary, isSessionSummary } from '../../src/functions/session';
 import { isTableRules, tableRulesFrom } from '../../src/types/TableRules';
 import { cloneBotAccounts, isBotAccountState, isWorkTaskId } from '../../src/types/Work';
 import { isFiniteNumber, isObject, isStats, parseJsonBody } from './validate';
@@ -115,6 +116,7 @@ function isSavedGame(value: unknown): value is SavedGame {
     && isFiniteNumber(value.version)
     && ((value.version < 5 && value.tableRules === undefined) || isTableRules(value.tableRules))
     && optional(value.botAccounts, isBotAccountsMap)
+    && optional(value.session, isSessionSummary)
     && isFiniteNumber(value.activeHandIndex)
     && Array.isArray(value.activityLog)
     && value.activityLog.length <= MAX_ACTIVITY
@@ -178,6 +180,7 @@ function pickGameSnapshot({ deck, players, game }: SavedGameSnapshot): SavedGame
       ...pick(game, GAME_FIELDS),
       ...(game.tableRules === undefined ? {} : { tableRules: tableRulesFrom(game.tableRules) }),
       ...(game.botAccounts === undefined ? {} : { botAccounts: cloneBotAccounts(game.botAccounts) }),
+      ...(game.session === undefined ? {} : { session: cloneSessionSummary(game.session) }),
       activityLog: game.activityLog.map((entry) => pick(entry, ENTRY_FIELDS)),
     },
   };
