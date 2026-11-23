@@ -34,14 +34,18 @@ describe('CardStack', () => {
     const onRender = vi.fn();
     const dispatch = vi.fn();
 
+    const MemoStack = React.memo(() => (
+      <React.Profiler id="stack" onRender={onRender}>
+        <CardStack cards={cards} hidden={false} isSelectable={false} player={player} title={player.title} />
+      </React.Profiler>
+    ));
+
     const tree = (gameState: typeof state) => (
       <GameContext.Provider value={gameState}>
         <GameStatusContext.Provider value={gameState.gameStatus}>
           <GameDispatchContext.Provider value={dispatch}>
             <SettingContext.Provider value={settingDefaults}>
-              <React.Profiler id="stack" onRender={onRender}>
-                <CardStack cards={cards} hidden={false} isSelectable={false} player={player} title={player.title} />
-              </React.Profiler>
+              <MemoStack />
             </SettingContext.Provider>
           </GameDispatchContext.Provider>
         </GameStatusContext.Provider>
