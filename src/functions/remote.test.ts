@@ -12,30 +12,30 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('loadSyncState', () => {
   it('has no owner id until the server has issued one', () => {
-    expect(loadSyncState()).toEqual({ syncedAt: { profiles: 0, game: 0 } });
+    expect(loadSyncState()).toEqual({ syncedAt: { profiles: 0, game: 0, settings: 0 } });
     localStorage.setItem(StoreName.SYNCSTORE, '{not json');
     expect(loadSyncState().ownerId).toBeUndefined();
   });
 
   it('drops an id from before ids were signed, and its sync times with it', () => {
     localStorage.setItem(StoreName.SYNCSTORE, JSON.stringify({ ownerId: UNSIGNED, syncedAt: { profiles: 42, game: 7 } }));
-    expect(loadSyncState()).toEqual({ syncedAt: { profiles: 0, game: 0 } });
+    expect(loadSyncState()).toEqual({ syncedAt: { profiles: 0, game: 0, settings: 0 } });
     localStorage.setItem(StoreName.SYNCSTORE, JSON.stringify({ ownerId: UNSIGNED, syncedAt: 42 }));
-    expect(loadSyncState()).toEqual({ syncedAt: { profiles: 0, game: 0 } });
+    expect(loadSyncState()).toEqual({ syncedAt: { profiles: 0, game: 0, settings: 0 } });
   });
 
   it('round-trips the sync times and records one kind at a time', () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 42, game: 7 } });
-    expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 42, game: 7 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 42, game: 7, settings: 0 } });
+    expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 42, game: 7, settings: 0 } });
     markSynced('game', 9);
-    expect(loadSyncState().syncedAt).toEqual({ profiles: 42, game: 9 });
+    expect(loadSyncState().syncedAt).toEqual({ profiles: 42, game: 9, settings: 0 });
   });
 
 });
 
 describe('ensureOwnerId', () => {
   it('returns the stored id without asking the server', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 1, game: 2 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 1, game: 2, settings: 0 } });
     const fetch = vi.fn();
     vi.stubGlobal('fetch', fetch);
     expect(await ensureOwnerId()).toBe(OWNER);
@@ -50,7 +50,7 @@ describe('ensureOwnerId', () => {
     expect(b).toBe(OWNER);
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(fetch.mock.calls[0]).toEqual([OWNER_API, expect.objectContaining({ method: 'POST' })]);
-    expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0 } });
+    expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 0, game: 0, settings: 0 } });
   });
 
   it('resolves to undefined, and keeps nothing, when the server refuses or sends an unsigned id', async () => {
@@ -112,35 +112,35 @@ describe('pushRemote', () => {
 
 describe('forgetting a rejected owner id', () => {
   it('drops the stored id and its sync times when the server answers 403, so a new one is issued', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5, settings: 0 } });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'Unknown owner id.' }, 403)));
     expect(await fetchRemote('profiles', OWNER)).toBeUndefined();
-    expect(loadSyncState()).toEqual({ syncedAt: { profiles: 0, game: 0 } });
+    expect(loadSyncState()).toEqual({ syncedAt: { profiles: 0, game: 0, settings: 0 } });
 
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5, settings: 0 } });
     expect(await pushRemote('game', OWNER, {})).toBeUndefined();
     expect(loadSyncState().ownerId).toBeUndefined();
   });
 
   it('leaves a newer id alone when the rejection was for an older one', async () => {
     const replacement = `${OWNER.slice(0, -4)}ZZZZ`;
-    saveSyncState({ ownerId: replacement, syncedAt: { profiles: 0, game: 0 } });
+    saveSyncState({ ownerId: replacement, syncedAt: { profiles: 0, game: 0, settings: 0 } });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'Unknown owner id.' }, 403)));
     await fetchRemote('profiles', OWNER);
     expect(loadSyncState().ownerId).toBe(replacement);
   });
 
   it('keeps the id on other failures', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5, settings: 0 } });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'Database unavailable.' }, 503)));
     await fetchRemote('profiles', OWNER);
-    expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5 } });
+    expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5, settings: 0 } });
   });
 });
 
 describe('signInWithGoogle and signOutGoogle', () => {
   it('exchanges a Google credential for a signed google owner id, flags anonymous merge, and notifies listeners', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 12, game: 8 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 12, game: 8, settings: 0 } });
     const listener = vi.fn();
     const unsubscribe = subscribeSyncState(listener);
     const user = { name: 'Chris Odegard', email: 'chris@example.com', picture: 'https://lh3.googleusercontent.com/a/avatar' };
@@ -153,23 +153,23 @@ describe('signInWithGoogle and signOutGoogle', () => {
       ownerId: GOOGLE_OWNER,
       user,
       mergeAnonymous: true,
-      syncedAt: { profiles: 0, game: 0 },
+      syncedAt: { profiles: 0, game: 0, settings: 0 },
     });
     expect(listener).toHaveBeenCalledTimes(1);
 
     // Signing out clears the Google account and notifies listeners
     signOutGoogle();
-    expect(loadSyncState()).toEqual({ syncedAt: { profiles: 0, game: 0 } });
+    expect(loadSyncState()).toEqual({ syncedAt: { profiles: 0, game: 0, settings: 0 } });
     expect(listener).toHaveBeenCalledTimes(2);
     unsubscribe();
   });
 
   it('returns an error message without altering sync state when Google sign-in fails', async () => {
-    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5 } });
+    saveSyncState({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5, settings: 0 } });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'Invalid Google credential.' }, 401)));
 
     const result = await signInWithGoogle('bad.jwt.token');
     expect(result).toEqual({ error: 'Invalid Google credential.' });
-    expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5 } });
+    expect(loadSyncState()).toEqual({ ownerId: OWNER, syncedAt: { profiles: 4, game: 5, settings: 0 } });
   });
 });
