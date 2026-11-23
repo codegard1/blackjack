@@ -1,30 +1,8 @@
 import { Dispatch, createContext, useContext } from 'react';
 import { ISettingReducerAction } from '../interfaces';
-import { SettingsState, defaultTableRules } from '../types';
+import { SettingsState, settingDefaults } from '../types';
 
-/**
- * Default values for SettingsState
- */
-export const settingDefaults: SettingsState = {
-  ...defaultTableRules,
-  isActivityLogVisible: false,
-  isCardDescVisible: false,
-  isDealerHandVisible: false,
-  isDeckVisible: false,
-  isDrawnVisible: false,
-  isHandValueVisible: false,
-  isOptionsPanelVisible: false,
-  isSelectedVisible: false,
-  isStrategyHintVisible: false,
-  isGameplayToastsEnabled: true,
-  isPotToastsEnabled: true,
-  themeMode: 'light',
-  accent: 'blue',
-  cardStyle: 'classic',
-  cardBackPattern: 'rings',
-  cardBackColor: 'brand',
-  queueSide: 'left',
-}
+export { settingDefaults };
 
 // Create context with default values
 export const SettingContext = createContext<SettingsState>(settingDefaults);

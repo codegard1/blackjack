@@ -3,7 +3,9 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createGameState, GameContext, GameDispatchContext, PotAnimationContext, SettingContext, settingDefaults } from '../context';
 import { GameAction, GameStatus } from '../enums';
+import { updateHand } from '../functions/deck';
 import { gameReducer } from '../functions/gameReducer';
+import { antePlayer, setCurrentPlayer, updatePlayer } from '../functions/playerStore';
 import { ControlPanel } from './ControlPanel';
 
 afterEach(() => {
@@ -16,10 +18,9 @@ const renderControls = (gameStatus: GameStatus, currentPlayerKey: string, chrisC
     type: GameAction.NewGame,
     playerKeys: ['chris', 'dealer'],
   });
-  state.playerStore.ante('chris', state.minimumBet);
-  state.deck.playerHands.chris.cards = chrisCards;
+  state.playerStore = setCurrentPlayer(antePlayer(state.playerStore, 'chris', state.minimumBet).store, currentPlayerKey);
+  state.deck = updateHand(state.deck, 'chris', 0, (h) => ({ ...h, cards: chrisCards }));
   state.gameStatus = gameStatus;
-  state.playerStore.currentPlayerKey = currentPlayerKey;
   const dispatch = vi.fn();
   render(
     <GameContext.Provider value={state}>
@@ -162,7 +163,7 @@ describe('player controls', () => {
     expect(dispatch).toHaveBeenCalledWith({ type: GameAction.SitOut, playerKey: 'chris', isSittingOut: true });
 
     // Now state is sitting out
-    state.playerStore.player('chris').isSittingOut = true;
+    state.playerStore = updatePlayer(state.playerStore, 'chris', (p) => ({ ...p, isSittingOut: true }));
     dispatch = vi.fn();
     rerender(
       <GameContext.Provider value={state}>
@@ -265,11 +266,10 @@ describe('strategy hints', () => {
   const renderHand = (chrisCards: string[], dealerUp: string, options: { hints?: boolean; currentPlayerKey?: string; dealerSoft17?: 'stand' | 'hit'; numberOfDecks?: '1' | '2' | '6' | '8' } = {}) => {
     const { hints = true, currentPlayerKey = 'chris', dealerSoft17 = 'stand', numberOfDecks = '1' } = options;
     const state = gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] });
-    state.playerStore.ante('chris', state.minimumBet);
-    state.deck.playerHands.chris.cards = chrisCards;
-    state.deck.playerHands.dealer.cards = ['Spade_13', dealerUp];
+    state.playerStore = setCurrentPlayer(antePlayer(state.playerStore, 'chris', state.minimumBet).store, currentPlayerKey);
+    state.deck = updateHand(state.deck, 'chris', 0, (h) => ({ ...h, cards: chrisCards }));
+    state.deck = updateHand(state.deck, 'dealer', 0, (h) => ({ ...h, cards: ['Spade_13', dealerUp] }));
     state.gameStatus = GameStatus.InProgress;
-    state.playerStore.currentPlayerKey = currentPlayerKey;
     state.tableRules = { ...state.tableRules, dealerSoft17, numberOfDecks };
     return render(
       <SettingContext.Provider value={{ ...settingDefaults, isStrategyHintVisible: hints }}>

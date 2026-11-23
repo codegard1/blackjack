@@ -5,7 +5,7 @@ import { Badge, Button, Spinner, Text, makeStyles, mergeClasses, tokens } from '
 
 // Local Resources
 import {
-  ActivityLog, ActivityLogToggle, Agent, BOT_ACTION_DELAY_MS, CardStack, ControlPanel, DEALER_ACTION_DELAY_MS, PlayerContainer, SeatChip, TableToasts,
+  ActivityLog, ActivityLogToggle, Agent, BOT_ACTION_DELAY_MS, ControlPanel, DEALER_ACTION_DELAY_MS, PlayerContainer, SeatChip, TableToasts,
 } from ".";
 import { useActivityDrawer } from "./ActivityLog";
 import { isPotToast, useTableToasts } from "./TableToasts";
@@ -22,6 +22,8 @@ import { GameAction, GameStatus } from "../enums";
 import { seatTag, isHoleCardHidden, isRoundOver } from "../functions/seatStatus";
 import { decideSeatMove, isDealer, isHuman, seatOrder, seatQueues } from "../functions/round";
 import { potBreakdown } from "../functions/pot";
+import { getPlayerHand } from "../functions/deck";
+import { allPlayers } from "../functions/playerStore";
 import { botAccountsFor, seatsFor } from "../functions/profiles";
 import { IPlayer } from "../interfaces";
 import { PlayerHandValue, tableRulesFrom } from "../types";
@@ -80,7 +82,7 @@ export const Table: React.FC = () => {
   const { profiles } = useProfileContext();
   const styles = useStyles();
   const { deck, gameStatus, pot, playerStore, round } = gameState;
-  const players = playerStore.all;
+  const players = allPlayers(playerStore);
   const human = players.find(isHuman);
   const roundOver = isRoundOver(gameStatus);
   const isStarted = gameStatus !== GameStatus.Init && players.length > 0;
@@ -101,14 +103,14 @@ export const Table: React.FC = () => {
 
   // The dealer's hole card turns over when the round ends, and the stage empties.
   // The dealer's seat keeps the stage until the card has turned and the pause after it is over, so the flip and the hand are seen at full size.
-  const holeCardKey = dealer ? deck.hand(dealer.key)?.cards[0] : undefined;
+  const holeCardKey = dealer ? getPlayerHand(deck, dealer.key)?.cards[0] : undefined;
   const holeCardFlip = useCardFlip(holeCardKey, isHoleCardHidden(dealer, !!settings.isDealerHandVisible, gameStatus), !!dealer && turnKey === dealer.key, roundOver);
   const focusKey = holeCardFlip.holdsFocus ? dealer?.key : turnKey;
   const focusPlayer = isStarted ? players.find((player) => player.key === focusKey) : undefined;
 
   // Computer autoplay runs here, not in a seat, so it keeps going while that seat is collapsed
   const controller = players.find((player) => player.key === gameState.controllingPlayer);
-  const controllerHand = controller ? deck.hand(controller.key, gameState.activeHandIndex) : undefined;
+  const controllerHand = controller ? getPlayerHand(deck, controller.key, gameState.activeHandIndex) : undefined;
   // while a computer seat plays, the dock names it in place of the human's buttons
   const isComputerTurn = !!controller?.isNPC && gameStatus === GameStatus.InProgress;
 
@@ -131,7 +133,7 @@ export const Table: React.FC = () => {
 
   // A collapsed seat. During a game its chip brings the seat forward; before one it floats.
   const renderChip = (player: IPlayer, role: 'waiting' | 'played', index: number) => {
-    const hand = isStarted ? deck.state.playerHands[player.key] : undefined;
+    const hand = isStarted ? deck.playerHands[player.key] : undefined;
     // only the dealer's total waits on the hole card; players' cards are face up
     const showTotal = settings.isHandValueVisible && !!hand?.cards.length && (!isDealer(player) || revealDealerTotal);
     return (
@@ -249,29 +251,6 @@ export const Table: React.FC = () => {
                 delayMs={isDealer(controller) ? DEALER_ACTION_DELAY_MS : BOT_ACTION_DELAY_MS}
               />
             )}
-
-            {gameState.deck.length > 0 &&
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 10 }}>
-                  <CardStack
-                    cards={gameState.deck.cardKeys}
-                    title="Deck"
-                    hidden={!settings.isDeckVisible}
-                    isSelectable={false}
-                  />
-                  <CardStack
-                    cards={gameState.deck.drawnKeys}
-                    title="Drawn Cards"
-                    hidden={!settings.isDrawnVisible}
-                    isSelectable={false}
-                  />
-                  <CardStack
-                    cards={gameState.deck.selectedKeys}
-                    title="Selected Cards"
-                    hidden={!settings.isSelectedVisible}
-                    isSelectable={false}
-                  />
-              </div>
-            }
           </div>
 
           <div className={mergeClasses('table-dock', styles.dock, potLines.length > 0 && 'has-pot-toast')} style={{ '--pot-lines': potLines.length } as React.CSSProperties}>

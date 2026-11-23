@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { PlayingCard } from '../classes';
+import { parseCard } from '../functions/cards';
 import { GameDispatchContext, SettingContext, settingDefaults } from '../context';
 import { GameAction } from '../enums';
 import { CardStyle, PlayingCardKey, SettingsState } from '../types';
@@ -11,7 +11,7 @@ const renderCard = (key: PlayingCardKey, props: Partial<React.ComponentProps<typ
   render(
     <SettingContext.Provider value={{ ...settingDefaults, ...settings }}>
       <GameDispatchContext.Provider value={dispatch}>
-        <CardContainer {...new PlayingCard(key)} key={key} id={key} {...props} />
+        <CardContainer {...parseCard(key)} key={key} id={key} {...props} />
       </GameDispatchContext.Provider>
     </SettingContext.Provider>,
   );
@@ -92,7 +92,7 @@ describe('CardContainer', () => {
     const flippable = (isBackFacing: boolean) => (
       <SettingContext.Provider value={settingDefaults}>
         <GameDispatchContext.Provider value={vi.fn()}>
-          <CardContainer {...new PlayingCard('Spade_12')} key="Spade_12" id="Spade_12" isFlippable isBackFacing={isBackFacing} />
+          <CardContainer {...parseCard('Spade_12')} key="Spade_12" id="Spade_12" isFlippable isBackFacing={isBackFacing} />
         </GameDispatchContext.Provider>
       </SettingContext.Provider>
     );

@@ -1,5 +1,6 @@
 import type { IPlayer, IPlayerStoreState } from '../../src/interfaces';
 import type { ActivityLogEntry, DeckState, PlayerHand, SavedGame, SavedGameSnapshot } from '../../src/types';
+import { cloneSessionSummary, isSessionSummary } from '../../src/functions/session';
 import { isTableRules, tableRulesFrom } from '../../src/types/TableRules';
 import { cloneBotAccounts, isBotAccountState, isWorkTaskId } from '../../src/types/Work';
 import { isFiniteNumber, isObject, isStats, parseJsonBody } from './validate';
@@ -18,7 +19,7 @@ const MAX_SPLIT_HANDS = 4;
 const CARD_KEY = /^[A-Za-z]{1,12}_[A-Za-z0-9]{1,12}(?:_\d{1,3})?$/;
 const ROUND_RESULTS = ['blackjack', 'win', 'push', 'loss'];
 const PLAYER_ROLES = ['human', 'bot', 'dealer'];
-const ACTIVITY_EVENTS = ['game', 'round', 'deal', 'draw', 'ante', 'bet', 'double', 'split', 'stay', 'win', 'loss', 'push', 'shuffle', 'work'];
+const ACTIVITY_EVENTS = ['game', 'round', 'deal', 'draw', 'ante', 'bet', 'double', 'split', 'stay', 'insurance', 'surrender', 'win', 'loss', 'push', 'shuffle', 'work'];
 /**
  * The computer characters, by profile id. Kept here rather than read from
  * src/characters.ts, which imports SVG portraits; a test holds the two in step.
@@ -48,9 +49,10 @@ function isHand(value: unknown, depth = 0): value is PlayerHand {
       && value.splitHands.every((hand) => isHand(hand, depth + 1))
     ))
     && optional(value.stake, isFiniteNumber)
+    && optional(value.insuranceBet, isFiniteNumber)
     && optional(value.net, isFiniteNumber)
     && optional(value.result, isOneOf(ROUND_RESULTS))
-    && ['isBusted', 'isStaying', 'isBlackjack', 'isSplit', 'isSplitAces'].every((flag) => optional(value[flag], isBoolean));
+    && ['isBusted', 'isStaying', 'isBlackjack', 'isSplit', 'isSplitAces', 'isSurrendered'].every((flag) => optional(value[flag], isBoolean));
 }
 
 function isDeckState(value: unknown): value is DeckState {
@@ -114,6 +116,7 @@ function isSavedGame(value: unknown): value is SavedGame {
     && isFiniteNumber(value.version)
     && ((value.version < 5 && value.tableRules === undefined) || isTableRules(value.tableRules))
     && optional(value.botAccounts, isBotAccountsMap)
+    && optional(value.session, isSessionSummary)
     && isFiniteNumber(value.activeHandIndex)
     && Array.isArray(value.activityLog)
     && value.activityLog.length <= MAX_ACTIVITY
@@ -122,6 +125,7 @@ function isSavedGame(value: unknown): value is SavedGame {
     && optional(value.loser, isShortText(64))
     && optional(value.winner, isShortText(64))
     && isBoolean(value.dealerHasControl)
+    && optional(value.isInsuranceOpen, isBoolean)
     && isBoolean(value.gameStatusFlag)
     && isFiniteNumber(value.gameStatus)
     && isFiniteNumber(value.minimumBet)
@@ -141,14 +145,14 @@ function pick<T extends object>(source: T, fields: (keyof T)[]): T {
   return copy as T;
 }
 
-const HAND_FIELDS: (keyof PlayerHand)[] = ['cards', 'handValue', 'stake', 'net', 'result', 'isBusted', 'isStaying', 'isBlackjack', 'isSplit', 'isSplitAces'];
+const HAND_FIELDS: (keyof PlayerHand)[] = ['cards', 'handValue', 'stake', 'insuranceBet', 'net', 'result', 'isBusted', 'isStaying', 'isBlackjack', 'isSplit', 'isSplitAces', 'isSurrendered'];
 const PLAYER_FIELDS: (keyof IPlayer)[] = [
   'key', 'title', 'isNPC', 'id', 'bank', 'disabled', 'role', 'stats', 'isFinished', 'isSelected', 'isBusted', 'isBlackjack',
   'isStaying', 'isSittingOut', 'awayTask', 'isReadyToReturn', 'lastAction', 'lastAnte', 'lastBet', 'lossStreak', 'net', 'result', 'status', 'totalBet', 'turn',
 ];
 const ENTRY_FIELDS: (keyof ActivityLogEntry)[] = ['id', 'sessionId', 'round', 'event', 'timestamp', 'name', 'description', 'amount'];
 const GAME_FIELDS: (keyof SavedGame)[] = [
-  'version', 'activityLog', 'activeHandIndex', 'controllingPlayer', 'dealerHasControl', 'gameStatus', 'gameStatusFlag',
+  'version', 'activityLog', 'activeHandIndex', 'controllingPlayer', 'dealerHasControl', 'isInsuranceOpen', 'gameStatus', 'gameStatusFlag',
   'loser', 'minimumBet', 'pot', 'round', 'turnCount', 'winner',
 ];
 
@@ -176,6 +180,7 @@ function pickGameSnapshot({ deck, players, game }: SavedGameSnapshot): SavedGame
       ...pick(game, GAME_FIELDS),
       ...(game.tableRules === undefined ? {} : { tableRules: tableRulesFrom(game.tableRules) }),
       ...(game.botAccounts === undefined ? {} : { botAccounts: cloneBotAccounts(game.botAccounts) }),
+      ...(game.session === undefined ? {} : { session: cloneSessionSummary(game.session) }),
       activityLog: game.activityLog.map((entry) => pick(entry, ENTRY_FIELDS)),
     },
   };

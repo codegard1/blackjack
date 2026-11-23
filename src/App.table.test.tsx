@@ -1,11 +1,25 @@
 import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { PlayingCardDeck } from './classes/PlayingCardDeck';
+import { dealCards, drawCards, emptyHand } from './functions/deck';
+import { handValue } from './functions/getHandValue';
+import { DeckState } from './types';
 import App from './App';
 import { CARD_FLIP_MS, CARD_REVEAL_PAUSE_MS } from './components/useCardFlip';
 import { POT_BOUNCE_MS, POT_ENTER_MS, POT_LEAVE_MS } from './components/usePotMotion';
 import { TOAST_EXIT_MS, TOAST_LIFE_MS } from './components/TableToasts';
+
+vi.mock('./functions/deck', { spy: true });
+
+const rigDeal = (hands: Record<string, string[]>) =>
+  (deck: DeckState, _count?: number, keys?: readonly string[]): DeckState => {
+    const playerHands = { ...deck.playerHands };
+    for (const [key, cards] of Object.entries(hands)) {
+      if (keys && !keys.includes(key)) continue;
+      playerHands[key] = { ...(playerHands[key] ?? emptyHand()), cards: [...cards], handValue: handValue(cards) };
+    }
+    return { ...deck, playerHands };
+  };
 
 afterEach(() => {
   vi.useRealTimers();
@@ -87,10 +101,10 @@ it('keeps the pot in the dock and bounces it when a wager is made, holding play 
 
 it('keeps the pot after a hand ends, then slides it up and back in for the next hand', () => {
   allowMotion();
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_11', 'Diamond_14'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_11', 'Diamond_14'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
   vi.useFakeTimers();
   const { container } = render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
@@ -124,10 +138,10 @@ it('keeps the pot after a hand ends, then slides it up and back in for the next 
 });
 
 it('announces a round outcome as a table toast that leaves on its own', () => {
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_7'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
   vi.useFakeTimers();
   render(<App />);
 
@@ -152,11 +166,11 @@ it('announces a round outcome as a table toast that leaves on its own', () => {
 
 it("turns the dealer's hole card over when the round ends, then empties the stage and tells each seat's result", () => {
   allowMotion();
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_7'],
     // the dealer stays on 18, so Chris on 17 loses
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_8'];
-  });
+    dealer: ['Club_10', 'Heart_8'],
+  }));
   vi.useFakeTimers();
   const { container } = render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
@@ -221,10 +235,10 @@ it("turns the dealer's hole card over when the round ends, then empties the stag
 
 it("keeps the dealer above the stage while its hole card turns over after the human busts, then moves it below", () => {
   allowMotion();
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_10', 'Diamond_10'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_10'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
   vi.useFakeTimers();
   const { container } = render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
@@ -236,7 +250,7 @@ it("keeps the dealer above the stage while its hole card turns over after the hu
   expect(dealerHand().closest('.table-waiting')).not.toBeNull();
 
   // busting ends the round without the dealer playing, so the dealer never had the stage
-  vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
+  vi.mocked(drawCards).mockImplementation((deck) => ({ deck, drawn: ['Heart_5'] }));
   fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
   expect(within(dealerHand()).getAllByRole('button')[0]).toBe(dealerHole);
   expect(dealerHole).not.toHaveClass('is-face-down');
@@ -260,10 +274,10 @@ it("keeps the dealer above the stage while its hole card turns over after the hu
 
 it("turns the dealer's hole card over where it waits when Show Dealer Hand is switched on, holding play until it has", () => {
   allowMotion();
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_7'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
   vi.useFakeTimers();
   const { container } = render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
@@ -294,10 +308,10 @@ it("turns the dealer's hole card over where it waits when Show Dealer Hand is sw
 });
 
 it("shows the dealer's hand as cards among the seats still to play during the human's turn", () => {
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_7'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
@@ -320,10 +334,10 @@ it("shows the dealer's hand as cards among the seats still to play during the hu
 
 it('forgets a pinned seat and an open pot breakdown when the game is reset and started again', () => {
   // hands that leave the human a turn to take; a natural would end the round on the deal
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_7'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
   const { container } = render(<App />);
   const stageKey = () => container.querySelector('.table-focus')?.getAttribute('data-seat-key');
   const pot = () => screen.getByRole('button', { name: /Pot: \$/ });

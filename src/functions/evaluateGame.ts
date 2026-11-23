@@ -2,7 +2,10 @@ import { GameStatus } from "../enums";
 import { IPlayer } from "../interfaces";
 import { GameState } from "../types";
 import { recordActivity } from "./activity";
-import { collectAntes, ensureBotAccount, isBot, isDealer, netFor, roundStake } from "./round";
+import { getPlayerHands, updateHand } from "./deck";
+import { advancePlayer, allPlayers, getPlayer, payoutPlayer, updatePlayerStats } from "./playerStore";
+import { collectAntes, isBot, isDealer, netFor, roundStake, updateBotAccount } from "./round";
+import { recordSessionSeat } from "./session";
 import { appendBalance } from "./work";
 
 export { roundStake } from "./round";
@@ -34,20 +37,24 @@ function activityEvent(player: IPlayer): 'win' | 'loss' | 'push' {
  * keeps a losing stake. The dealer's bank takes the other side of every hand.
  * Guarded by gameStatusFlag so a round is never settled twice.
  */
-function settleRound(state: GameState): void {
-  if (state.gameStatusFlag) return;
-  const { playerStore } = state;
+function settleRound(state: GameState): GameState {
+  if (state.gameStatusFlag) return state;
 
-  playerStore.all.filter((player) => !isDealer(player)).forEach((player) => {
+  let next = state;
+  for (const player of allPlayers(next.playerStore).filter((p) => !isDealer(p))) {
     let playedRound = false;
-    state.deck.getHands(player.key).forEach((hand, index) => {
-      if (!hand.result) return;
+    let seatNet = 0;
+    const hands = getPlayerHands(next.deck, player.key);
+    for (let index = 0; index < hands.length; index++) {
+      const hand = hands[index];
+      if (!hand.result) continue;
       playedRound = true;
-      const stake = hand.stake ?? roundStake(state, player.key);
-      const net = hand.net ?? netFor(hand.result, stake, state.tableRules.blackjackPayout);
-      hand.net = net;
+      const stake = hand.stake ?? roundStake(next, player.key);
+      const net = hand.net ?? netFor(hand.result, stake, next.tableRules.blackjackPayout);
+      seatNet += net;
+      const deck = updateHand(next.deck, player.key, index, (h) => ({ ...h, net }));
       const amount = Math.max(0, stake + net);
-      if (amount !== 0) playerStore.payout(player.key, amount);
+      const playerStore = amount !== 0 ? payoutPlayer(next.playerStore, player.key, amount) : next.playerStore;
       const handPlayer = {
         ...player,
         result: hand.result,
@@ -55,87 +62,112 @@ function settleRound(state: GameState): void {
         isBlackjack: hand.isBlackjack,
         net,
       };
-      const label = state.deck.getHands(player.key).length > 1 ? `${player.title} (hand ${index + 1})` : player.title;
-      recordActivity(state, label, describeResult(handPlayer), activityEvent(handPlayer), { amount });
+      const label = hands.length > 1 ? `${player.title} (hand ${index + 1})` : player.title;
+      const description = hand.isSurrendered ? `surrendered, lost $${-net}` : describeResult(handPlayer);
+      const event = hand.isSurrendered ? 'surrender' : activityEvent(handPlayer);
+      next = recordActivity({ ...next, deck, playerStore }, label, description, event, { amount });
 
       const won = hand.result === 'win' || hand.result === 'blackjack';
-      playerStore.updateStats(player.key, {
-        numberOfGamesLost: hand.result === 'loss' ? 1 : 0,
+      next = {
+        ...next,
+        playerStore: updatePlayerStats(next.playerStore, player.key, {
+          numberOfGamesLost: hand.result === 'loss' ? 1 : 0,
+          numberOfGamesPlayed: 1,
+          numberOfGamesWon: won ? 1 : 0,
+          numberOfTimesBlackjack: hand.isBlackjack ? 1 : 0,
+          numberOfTimesBusted: hand.isBusted ? 1 : 0,
+          numberOfTimesSurrendered: hand.isSurrendered ? 1 : 0,
+          totalWinnings: Math.max(0, net),
+          netResult: net,
+          winLossRatio: 0,
+        }),
+      };
+    }
+
+    if (playedRound) {
+      const bank = getPlayer(next.playerStore, player.key)!.bank;
+      next = {
+        ...next,
+        session: recordSessionSeat(next.session, next.playerStore, player, getPlayerHands(next.deck, player.key), bank, seatNet),
+      };
+      if (isBot(player)) {
+        next = updateBotAccount(next, player.key, (acc) => ({
+          ...acc,
+          bank,
+          balanceHistory: appendBalance(acc.balanceHistory, bank),
+        }));
+      }
+    }
+  }
+
+  const dealer = allPlayers(next.playerStore).find(isDealer);
+  if (dealer?.result) {
+    const net = dealer.net ?? 0;
+    const playerStore = net !== 0 ? payoutPlayer(next.playerStore, dealer.key, net) : next.playerStore;
+    next = recordActivity({ ...next, playerStore }, dealer.title, describeResult(dealer), activityEvent(dealer), { amount: net });
+    next = {
+      ...next,
+      playerStore: updatePlayerStats(next.playerStore, dealer.key, {
+        numberOfGamesLost: dealer.result === 'loss' ? 1 : 0,
         numberOfGamesPlayed: 1,
-        numberOfGamesWon: won ? 1 : 0,
-        numberOfTimesBlackjack: hand.isBlackjack ? 1 : 0,
-        numberOfTimesBusted: hand.isBusted ? 1 : 0,
+        numberOfGamesWon: dealer.result === 'win' ? 1 : 0,
+        numberOfTimesBlackjack: dealer.isBlackjack ? 1 : 0,
+        numberOfTimesBusted: dealer.isBusted ? 1 : 0,
         totalWinnings: Math.max(0, net),
         netResult: net,
         winLossRatio: 0,
-      });
-    });
-
-    if (isBot(player) && playedRound) {
-      const account = ensureBotAccount(state, player.key);
-      account.bank = player.bank;
-      account.balanceHistory = appendBalance(account.balanceHistory, player.bank);
-    }
-  });
-
-  const dealer = playerStore.all.find(isDealer);
-  if (dealer?.result) {
-    const net = dealer.net ?? 0;
-    if (net !== 0) playerStore.payout(dealer.key, net);
-    recordActivity(state, dealer.title, describeResult(dealer), activityEvent(dealer), { amount: net });
-    playerStore.updateStats(dealer.key, {
-      numberOfGamesLost: dealer.result === 'loss' ? 1 : 0,
-      numberOfGamesPlayed: 1,
-      numberOfGamesWon: dealer.result === 'win' ? 1 : 0,
-      numberOfTimesBlackjack: dealer.isBlackjack ? 1 : 0,
-      numberOfTimesBusted: dealer.isBusted ? 1 : 0,
-      totalWinnings: Math.max(0, net),
-      netResult: net,
-      winLossRatio: 0,
-    });
+      }),
+    };
   }
 
-  state.gameStatusFlag = true;
+  return {
+    ...next,
+    gameStatusFlag: true,
+  };
 }
 
 /**
  * Apply status-driven bookkeeping to the game state.
  *
  * Starts a game's ante, advances to the next player, settles completed rounds,
- * or resets a game-over status. The supplied state is updated and returned.
+ * or resets a game-over status, returning the updated state without mutating
+ * the input.
  *
  * @param state Current game state to evaluate.
  * @returns The updated game state.
  */
-export function evaluateGame(state: GameState): GameState {
+export function evaluateGame(state: GameState, rng: () => number = () => Math.random()): GameState {
   switch (state.gameStatus) {
     case GameStatus.InProgress:
       /* First play of a new game: every player antes the minimum */
       if (state.turnCount === 0) {
-        state.pot = 0;
-        collectAntes(state);
-        state.turnCount = 1;
+        return {
+          ...collectAntes({ ...state, pot: 0 }, rng),
+          turnCount: 1,
+        };
       }
-      break;
+      return state;
 
     case GameStatus.NextTurn:
       if (!state.gameStatusFlag) {
-        state.playerStore.nextPlayer();
-        state.gameStatus = GameStatus.InProgress;
+        return {
+          ...state,
+          playerStore: advancePlayer(state.playerStore),
+          gameStatus: GameStatus.InProgress,
+        };
       }
-      break;
+      return state;
 
     case GameStatus.RoundOver:
-      settleRound(state);
-      break;
+      return settleRound(state);
 
     case GameStatus.GameOver:
-      state.gameStatus = GameStatus.Init;
-      break;
+      return {
+        ...state,
+        gameStatus: GameStatus.Init,
+      };
 
     default:
-      break;
+      return state;
   }
-
-  return state;
 }

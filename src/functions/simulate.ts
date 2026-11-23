@@ -5,6 +5,7 @@ import { GameAction, GameStatus } from "../enums";
 import { GameReducerAction, IPlayerOptions } from "../interfaces";
 import { GameState, PlayerStats } from "../types";
 import { gameReducer } from "./gameReducer";
+import { allPlayers } from "./playerStore";
 import { emptyStats } from "./profiles";
 import { decideSeatMove, isBot } from "./round";
 
@@ -106,11 +107,11 @@ export function simulateHistory(options: SimulationOptions): SimulationResult {
 
       for (let inSession = 0; inSession < length && played < rounds; inSession++) {
         state = step(state, { type: GameAction.Deal });
-        if (state.playerStore.all.filter(isBot).every((player) => player.isSittingOut)) break;
+        if (allPlayers(state.playerStore).filter(isBot).every((player) => player.isSittingOut)) break;
         state = playRound(state, rng, onStep);
         state = step(state, { type: GameAction.EvaluateGame });
 
-        state.playerStore.all.forEach((player) => {
+        allPlayers(state.playerStore).forEach((player) => {
           stats[player.key] = { ...player.stats };
           net[player.key] += player.net ?? 0;
           if (isBot(player)) {
@@ -120,7 +121,7 @@ export function simulateHistory(options: SimulationOptions): SimulationResult {
           }
         });
         // the log is not needed here, and copying a long one on every action is slow
-        state.activityLog = [];
+        state = { ...state, activityLog: [] };
         played += 1;
         if (played % 500 === 0) onProgress?.(played);
       }

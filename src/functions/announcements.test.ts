@@ -3,7 +3,9 @@ import { BOTS, DEALER } from '../characters';
 import { createGameState } from '../context';
 import { STARTING_BANK } from '../definitions';
 import { GameAction, GameStatus } from '../enums';
+import { appendCardsToHand } from './deck';
 import { gameReducer } from './gameReducer';
+import { updatePlayer } from './playerStore';
 import { GameSnapshot, GameState, PlayerSnapshot } from '../types';
 import { diffAnnouncements, snapshotGame } from './announcements';
 import { decideSeatMove } from './round';
@@ -327,25 +329,38 @@ describe('diffAnnouncements', () => {
 
   describe('gameplay outcomes (busts, blackjacks, results)', () => {
     it('tracks draws and totals on the active split hand and announces a split-hand bust', () => {
-      const state = gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'ogion', 'dealer'] });
-      state.controllingPlayer = 'chris';
-      state.activeHandIndex = 1;
-      state.deck.playerHands.chris.cards = ['Club_10', 'Diamond_7'];
-      state.deck.playerHands.chris.splitHands = [{
-        cards: ['Heart_5', 'Club_2'],
-        handValue: { aceAsEleven: 7, aceAsOne: 7, highest: 7 },
-      }];
+      let state = gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'ogion', 'dealer'] });
+      state = {
+        ...state,
+        controllingPlayer: 'chris',
+        activeHandIndex: 1,
+        deck: {
+          ...state.deck,
+          playerHands: {
+            ...state.deck.playerHands,
+            chris: {
+              cards: ['Club_10', 'Diamond_7'],
+              handValue: { aceAsEleven: 17, aceAsOne: 17, highest: 17 },
+              splitHands: [{
+                cards: ['Heart_5', 'Club_2'],
+                handValue: { aceAsEleven: 7, aceAsOne: 7, highest: 7 },
+              }],
+            },
+          },
+        },
+      };
       const before = snapshotGame(state);
 
-      state.deck.hand('chris', 1)?.cards.push('Spade_10');
-      state.deck.updateHandValue('chris', 1);
+      state = { ...state, deck: appendCardsToHand(state.deck, 'chris', ['Spade_10'], 1) };
       const afterHit = snapshotGame(state);
       expect(afterHit.players.find((p) => p.key === 'chris')).toMatchObject({ cardCount: 3, total: 17 });
       expect(diffAnnouncements(before, afterHit, false)).toEqual([]);
 
-      state.deck.hand('chris', 1)?.cards.push('Diamond_8');
-      state.deck.updateHandValue('chris', 1);
-      state.playerStore.player('chris').isBusted = true;
+      state = {
+        ...state,
+        deck: appendCardsToHand(state.deck, 'chris', ['Diamond_8'], 1),
+        playerStore: updatePlayer(state.playerStore, 'chris', (p) => ({ ...p, isBusted: true })),
+      };
       const afterBust = snapshotGame(state);
 
       expect(afterBust.players.find((p) => p.key === 'chris')).toMatchObject({

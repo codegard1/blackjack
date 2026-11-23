@@ -2,7 +2,7 @@ import { PlayingCardKey, TableRules } from "../types";
 import { handValue } from "./getHandValue";
 
 /** A move a seat can make on its turn */
-export type BotMove = 'hit' | 'stay' | 'double' | 'split';
+export type BotMove = 'hit' | 'stay' | 'double' | 'split' | 'surrender';
 
 /** Blackjack value of a card for strategy purposes: face cards 10, ace 11 */
 export function cardValue(card: PlayingCardKey): number {
@@ -35,6 +35,10 @@ export type StrategyOptions = {
   dealerSoft17?: TableRules['dealerSoft17'];
   /** how many decks are in the shoe; with one or two, some plays differ. A shoe of six by default */
   numberOfDecks?: TableRules['numberOfDecks'];
+  /** whether doubling down after a split is allowed at this table */
+  doubleAfterSplit?: TableRules['doubleAfterSplit'];
+  /** whether late surrender is allowed on this hand right now */
+  canSurrender?: boolean;
 };
 
 /** What a chart needs to know about the table */
@@ -43,12 +47,14 @@ type Table = {
   hitsSoft17: boolean;
   /** one, two, or a shoe: charts for four to eight decks are the same, so they count as six */
   decks: 1 | 2 | 6;
+  /** doubling down after a split is allowed */
+  doubleAfterSplit: boolean;
 };
 
 /** A chart cell: whether to double down when that is allowed, and the play when it is not */
 type Play = { double: boolean; otherwise: BotMove };
 
-const MOVE_WORDS: Record<BotMove, string> = { hit: 'hit', stay: 'stay', double: 'double down', split: 'split' };
+const MOVE_WORDS: Record<BotMove, string> = { hit: 'hit', stay: 'stay', double: 'double down', split: 'split', surrender: 'surrender' };
 const RANK_NAMES: Record<number, string> = { 11: 'jacks', 12: 'queens', 13: 'kings', 14: 'aces' };
 const ACE = 11;
 
@@ -60,14 +66,15 @@ const between = (value: number, low: number, high: number): boolean => value >= 
  * not allow doubling down after a split, which is why low pairs are split less often than
  * on charts drawn for tables that do.
  */
-function splitsPair(rank: number, up: number, { decks }: Table): boolean {
+function splitsPair(rank: number, up: number, { decks, doubleAfterSplit }: Table): boolean {
   if (rank === 14 || rank === 8) return true;
   if (rank === 9) return between(up, 2, 6) || up === 8 || up === 9;
   if (rank === 7) return between(up, 2, 7);
-  if (rank === 6) return between(up, decks === 6 ? 3 : 2, 6);
-  if (rank === 3) return between(up, 4, 7);
-  if (rank === 2) return between(up, decks === 1 ? 3 : 4, 7);
-  // fours, fives and ten-value cards play better as the total they make
+  if (rank === 6) return between(up, doubleAfterSplit || decks !== 6 ? 2 : 3, 6);
+  if (rank === 4) return doubleAfterSplit && between(up, 5, 6);
+  if (rank === 3) return between(up, doubleAfterSplit ? 2 : 4, 7);
+  if (rank === 2) return between(up, doubleAfterSplit ? 2 : decks === 1 ? 3 : 4, 7);
+  // fives and ten-value cards play better as the total they make
   return false;
 }
 
@@ -134,6 +141,7 @@ export function recommendMove(options: StrategyOptions): StrategyHint | undefine
   const table: Table = {
     hitsSoft17: options.dealerSoft17 === 'hit',
     decks: options.numberOfDecks === '1' ? 1 : options.numberOfDecks === '2' ? 2 : 6,
+    doubleAfterSplit: Boolean(options.doubleAfterSplit),
   };
   const up = cardValue(dealerUpCard);
   const { aceAsOne, aceAsEleven, highest } = handValue(cards);
@@ -148,6 +156,8 @@ export function recommendMove(options: StrategyOptions): StrategyHint | undefine
 
   if (isPair && canSplit && splitsPair(pairRank, up, table)) {
     move = 'split';
+  } else if (options.canSurrender && !isSoft && ((highest === 16 && (up === 9 || up === 10 || up === ACE)) || (highest === 15 && up === 10))) {
+    move = 'surrender';
   } else {
     const play = (isPair ? unsplitPair(pairRank, up, table) : undefined)
       ?? (isSoft ? softPlay(highest, up, table) : hardPlay(highest, up, table));

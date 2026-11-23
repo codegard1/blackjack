@@ -28,6 +28,8 @@ const eventIcons = {
   double: { icon: <ArrowUp20Regular />, label: 'Double down' },
   split: { icon: <ArrowSwap20Regular />, label: 'Split' },
   stay: { icon: <ArrowForward20Regular />, label: 'Stay' },
+  insurance: { icon: <Money20Regular />, label: 'Insurance' },
+  surrender: { icon: <Flag20Regular />, label: 'Surrender' },
   win: { icon: <Trophy20Regular />, label: 'Round won' },
   loss: { icon: <ArrowDown20Regular />, label: 'Round lost' },
   push: { icon: <ArrowSwap20Regular />, label: 'Push' },

@@ -23,26 +23,24 @@ import {
 import {
   ArrowClockwise20Regular,
   ArrowReset20Regular,
-  ArrowSync20Regular,
   Delete20Regular,
   Dismiss20Regular,
-  Stack20Regular,
 } from '@fluentui/react-icons';
 
 // Context
 import { CardBackPreview } from "./CardBackPreview";
 import { useGameContext, useProfileContext, useSettingContext } from "../context";
 import { GameAction } from "../enums";
-import { clearStores, botAccountsFor, seatsFor } from "../functions";
+import { clearStores } from "../functions";
 import { brandPresets, cardBackColorList, cardBackPatternList, cardStyleList, cardStylePresets, themeModeList } from "../theme";
-import { AccentKey, CardBackColor, CardBackPattern, CardStyle, QueueSide, TableRules, ThemeMode, accentKeys, appearanceSettingKeys, blackjackPayouts, deckCounts, tableRulesFrom } from "../types";
+import { AccentKey, CardBackColor, CardBackPattern, CardStyle, QueueSide, TableRules, ThemeMode, accentKeys, appearanceSettingKeys, blackjackPayouts, deckCounts } from "../types";
 
 export const OptionsPanel: React.FC = () => {
 
   // Context
   const { settings, toggleSetting } = useSettingContext();
   const { gameDispatch } = useGameContext();
-  const { profiles, profileDispatch } = useProfileContext();
+  const { profileDispatch } = useProfileContext();
 
   const closeOptionsPanel = () => {
     toggleSetting({ key: "isOptionsPanelVisible", value: false });
@@ -61,18 +59,6 @@ export const OptionsPanel: React.FC = () => {
     gameDispatch({ type: GameAction.ResetGame, clearActivityLog: true });
     profileDispatch({ type: 'reset' });
     toggleSetting({ key: 'reset' });
-  }
-
-  const newDeal = () => {
-    // between hands, a roster change made during play takes effect first
-    gameDispatch({ type: GameAction.SetRoster, players: seatsFor(profiles), botAccounts: botAccountsFor(profiles) });
-    gameDispatch({ type: GameAction.Deal, tableRules: tableRulesFrom(settings) });
-    closeOptionsPanel();
-  }
-
-  const shuffle = () => {
-    gameDispatch({ type: GameAction.Shuffle });
-    closeOptionsPanel();
   }
 
   /** Put the theme, card style and card back settings back to their defaults */
@@ -104,14 +90,8 @@ export const OptionsPanel: React.FC = () => {
       </DrawerHeader>
       <DrawerBody>
         <div className="options-panel-actions">
-          <Tooltip content="Start a new round with the selected players" relationship="label">
-            <Button icon={<Stack20Regular />} onClick={newDeal}>Deal</Button>
-          </Tooltip>
           <Tooltip content="Reset the game with initial parameters" relationship="label">
             <Button icon={<ArrowClockwise20Regular />} onClick={resetGame}>Reset Game</Button>
-          </Tooltip>
-          <Tooltip content="Shuffle the remaining deck" relationship="label">
-            <Button icon={<ArrowSync20Regular />} onClick={shuffle}>Shuffle Deck</Button>
           </Tooltip>
           <Tooltip content="Clear application data stored locally in the browser" relationship="label">
             <Button icon={<Delete20Regular />} onClick={clearApplicationData}>Clear Stores</Button>
@@ -121,12 +101,10 @@ export const OptionsPanel: React.FC = () => {
         <Divider />
 
         <div className="options-panel-switches">
-          <Switch checked={settings.isDeckVisible} label="Show Deck" onChange={(_, data) => toggleSetting({ key: 'isDeckVisible', value: data.checked })} />
-          <Switch checked={settings.isDrawnVisible} label="Show Drawn" onChange={(_, data) => toggleSetting({ key: 'isDrawnVisible', value: data.checked })} />
-          <Switch checked={settings.isSelectedVisible} label="Show Selected" onChange={(_, data) => toggleSetting({ key: 'isSelectedVisible', value: data.checked })} />
           <Switch checked={settings.isDealerHandVisible} label="Show Dealer Hand" onChange={(_, data) => toggleSetting({ key: 'isDealerHandVisible', value: data.checked })} />
           <Switch checked={settings.isHandValueVisible} label="Show Hand Value" onChange={(_, data) => toggleSetting({ key: 'isHandValueVisible', value: data.checked })} />
           <Switch checked={settings.isStrategyHintVisible} label="Show strategy hints" onChange={(_, data) => toggleSetting({ key: 'isStrategyHintVisible', value: data.checked })} />
+          <Switch checked={settings.isAnimationsEnabled} label="Character animations" onChange={(_, data) => toggleSetting({ key: 'isAnimationsEnabled', value: data.checked })} />
           <Switch checked={settings.isActivityLogVisible} label="Open Activity Log by default" onChange={(_, data) => toggleSetting({ key: 'isActivityLogVisible', value: data.checked })} />
           <Field label="Seat queue side" hint="Where seats wait for their turn on a wide table">
             <RadioGroup
@@ -193,6 +171,10 @@ export const OptionsPanel: React.FC = () => {
               {blackjackPayouts.map((payout) => <Radio key={payout} value={payout} label={payout} />)}
             </RadioGroup>
           </Field>
+          <Switch checked={Boolean(settings.resplit)} label="Allow resplitting" onChange={(_, data) => toggleSetting({ key: 'resplit', value: data.checked })} />
+          <Switch checked={Boolean(settings.doubleAfterSplit)} label="Double after split" onChange={(_, data) => toggleSetting({ key: 'doubleAfterSplit', value: data.checked })} />
+          <Switch checked={Boolean(settings.insurance)} label="Offer insurance" onChange={(_, data) => toggleSetting({ key: 'insurance', value: data.checked })} />
+          <Switch checked={Boolean(settings.surrender)} label="Allow late surrender" onChange={(_, data) => toggleSetting({ key: 'surrender', value: data.checked })} />
         </section>
 
         <Divider />

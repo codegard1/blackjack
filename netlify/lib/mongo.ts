@@ -23,6 +23,9 @@ export const PROFILES_COLLECTION = 'profiles';
 /** The collection that holds each owner's game in progress */
 export const GAMES_COLLECTION = 'games';
 
+/** The collection that holds each owner's app settings */
+export const SETTINGS_COLLECTION = 'settings';
+
 /** The collection that holds the characters' stats summed across every owner */
 export const NPC_STATS_COLLECTION = 'npcStats';
 

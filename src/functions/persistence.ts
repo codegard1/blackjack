@@ -1,5 +1,3 @@
-import { PlayerStore } from "../classes/PlayerStore";
-import { PlayingCardDeck } from "../classes/PlayingCardDeck";
 import { isBotId } from "../characters";
 import { createGameState } from "../context/GameContext";
 import { settingDefaults } from "../context/SettingContext";
@@ -17,14 +15,17 @@ import {
   defaultTableRules,
   isBotAccountState,
   isTableRules,
-  settingOptions,
+  isValidSettingValue,
   tableRulesFrom,
 } from "../types";
+import { restoreDeckState } from "./deck";
+import { allPlayers, createPlayerStore, playerStoreSnapshot } from "./playerStore";
 import { defaultProfileState, normalizeProfileState } from "./profiles";
+import { cloneSessionSummary, isSessionSummary } from "./session";
 import { defaultBotAccount, defaultBotAccounts } from "./work";
 
 /** Bump when the shape of the saved game snapshot changes. */
-export const GAME_STORE_VERSION = 6;
+export const GAME_STORE_VERSION = 8;
 
 /** How many of the newest activity log entries a snapshot sent to the server keeps */
 export const MAX_SYNCED_ACTIVITY = 200;
@@ -77,9 +78,10 @@ function isSavedBotAccounts(value: unknown): boolean {
 
 function isSavedGame(value: unknown): value is SavedGame {
   return isObject(value)
-    && (value.version === GAME_STORE_VERSION || value.version === 5 || value.version === 4)
+    && (value.version === GAME_STORE_VERSION || value.version === 7 || value.version === 6 || value.version === 5 || value.version === 4)
     && (value.version === 4 || isTableRules(value.tableRules))
     && isSavedBotAccounts(value.botAccounts)
+    && (value.session === undefined || isSessionSummary(value.session))
     && typeof value.gameStatus === 'number'
     && typeof value.activeHandIndex === 'number'
     && typeof value.pot === 'number'
@@ -96,8 +98,8 @@ export function gameSnapshot(state: GameState, { maxActivity }: { maxActivity?: 
     ? state.activityLog.slice(-maxActivity)
     : state.activityLog;
   return {
-    deck: state.deck.state,
-    players: state.playerStore.state,
+    deck: state.deck,
+    players: playerStoreSnapshot(state.playerStore),
     game: {
       version: GAME_STORE_VERSION,
       activityLog,
@@ -105,12 +107,14 @@ export function gameSnapshot(state: GameState, { maxActivity }: { maxActivity?: 
       botAccounts: cloneBotAccounts(state.botAccounts),
       controllingPlayer: state.controllingPlayer,
       dealerHasControl: state.dealerHasControl,
+      ...(state.isInsuranceOpen ? { isInsuranceOpen: true } : {}),
       gameStatus: state.gameStatus,
       gameStatusFlag: state.gameStatusFlag,
       loser: state.loser,
       minimumBet: state.minimumBet,
       pot: state.pot,
       round: state.round,
+      ...(state.session ? { session: cloneSessionSummary(state.session) } : {}),
       tableRules: tableRulesFrom(state.tableRules),
       turnCount: state.turnCount,
       winner: state.winner,
@@ -130,10 +134,10 @@ export function restoreGameState(snapshot: unknown): GameState | undefined {
   try {
     const { version, botAccounts: savedAccounts, ...saved } = game;
     const tableRules = version === 4 ? { ...defaultTableRules } : tableRulesFrom(saved.tableRules);
-    const playerStore = new PlayerStore(players);
+    const playerStore = createPlayerStore(players);
     const botAccounts = { ...defaultBotAccounts(), ...cloneBotAccounts(savedAccounts) };
     // For snapshots saved before botAccounts existed, keep each seated bot's bank in step
-    playerStore.all.forEach((player) => {
+    allPlayers(playerStore).forEach((player) => {
       if (isBotId(player.key) && !savedAccounts?.[player.key]) {
         botAccounts[player.key] = defaultBotAccount(player.bank);
       }
@@ -144,7 +148,7 @@ export function restoreGameState(snapshot: unknown): GameState | undefined {
       activityLog: saved.activityLog.slice(-MAX_SAVED_ACTIVITY),
       botAccounts,
       tableRules,
-      deck: new PlayingCardDeck(deck, Number(tableRules.numberOfDecks)),
+      deck: restoreDeckState(deck),
       playerStore,
     };
   } catch {
@@ -192,14 +196,34 @@ export function saveProfiles(state: ProfileState): void {
   writeJson(StoreName.PROFILESTORE, state);
 }
 
-const isEnumeratedSetting = (key: SettingKey): key is keyof typeof settingOptions => key in settingOptions;
+export { isValidSettingValue };
 
-/** Whether `value` is one the setting `key` accepts: a boolean, or one of its listed options */
-export function isValidSettingValue(key: SettingKey, value: unknown): boolean {
-  if (isEnumeratedSetting(key)) {
-    return typeof value === 'string' && (settingOptions[key] as readonly string[]).includes(value);
+/**
+ * Normalize a remote settings object over the defaults. Returns undefined when the
+ * value is not an object, has no known settings, or has an invalid value for any
+ * known setting. Preserves the local drawer visibility so syncing never pops open
+ * or slams shut the Options panel.
+ */
+export function normalizeSettings(value: unknown, current?: SettingsState): SettingsState | undefined {
+  if (!isObject(value)) return undefined;
+  const keys = Object.keys(settingDefaults) as SettingKey[];
+  let hasKnownKey = false;
+  const settings: Record<string, unknown> = { ...settingDefaults };
+  for (const key of keys) {
+    if (!(key in value) || value[key] === undefined) continue;
+    if (!isValidSettingValue(key, value[key])) return undefined;
+    hasKnownKey = true;
+    settings[key] = value[key];
   }
-  return typeof value === 'boolean';
+  if (!hasKnownKey) return undefined;
+  settings.isOptionsPanelVisible = current?.isOptionsPanelVisible ?? false;
+  return settings as SettingsState;
+}
+
+/** The form of settings sent to the server: excludes transient drawer visibility */
+export function toRemoteSettings(settings: SettingsState): Omit<SettingsState, 'isOptionsPanelVisible'> {
+  const { isOptionsPanelVisible: _, ...remote } = settings;
+  return remote;
 }
 
 /**

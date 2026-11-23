@@ -1,11 +1,25 @@
 import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { PlayingCardDeck } from './classes/PlayingCardDeck';
+import { dealCards, emptyHand } from './functions/deck';
+import { handValue } from './functions/getHandValue';
+import { DeckState } from './types';
 import App from './App';
 import { defaultProfileState, saveProfiles } from './functions';
 import { formatNet } from './functions/format';
 import { CHARACTER_HISTORY, withBalanceHistory } from './functions/history';
+
+vi.mock('./functions/deck', { spy: true });
+
+const rigDeal = (hands: Record<string, string[]>) =>
+  (deck: DeckState, _count?: number, keys?: readonly string[]): DeckState => {
+    const playerHands = { ...deck.playerHands };
+    for (const [key, cards] of Object.entries(hands)) {
+      if (keys && !keys.includes(key)) continue;
+      playerHands[key] = { ...(playerHands[key] ?? emptyHand()), cards: [...cards], handValue: handValue(cards) };
+    }
+    return { ...deck, playerHands };
+  };
 
 afterEach(() => {
   vi.useRealTimers();
@@ -43,10 +57,10 @@ it('rejects a duplicate or empty player name', () => {
 });
 
 it('carries a settled round into each player\'s statistics, including the next game', () => {
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_11', 'Diamond_14'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_11', 'Diamond_14'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
@@ -82,11 +96,11 @@ it('carries a settled round into each player\'s statistics, including the next g
 
 it('seats chosen computer players, who play their turns before the dealer', () => {
   vi.spyOn(Math, 'random').mockReturnValue(0.99);
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
-    this.playerHands.ogion.cards = ['Club_10', 'Heart_3'];
-    this.playerHands.dealer.cards = ['Club_9', 'Heart_8'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_7'],
+    ogion: ['Club_10', 'Heart_3'],
+    dealer: ['Club_9', 'Heart_8'],
+  }));
   const { container } = render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
@@ -157,12 +171,11 @@ it('seats chosen computer players, who play their turns before the dealer', () =
 
 it('allows the human player to sit out between hands while computer players play a single hand, then rejoin', () => {
   vi.spyOn(Math, 'random').mockReturnValue(0.99);
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck, _count?: number, playerKeys?: string[]) {
-    const keys = playerKeys ?? Object.keys(this.playerHands);
-    if (keys.includes('chris')) this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
-    if (keys.includes('ogion')) this.playerHands.ogion.cards = ['Club_10', 'Heart_8'];
-    if (keys.includes('dealer')) this.playerHands.dealer.cards = ['Club_9', 'Heart_8'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_7'],
+    ogion: ['Club_10', 'Heart_8'],
+    dealer: ['Club_9', 'Heart_8'],
+  }));
   const { container } = render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
@@ -346,10 +359,10 @@ it("overrides a character's work task from the Players dialog before and during 
 });
 
 it('lets a ready character back to the table when "Let back when ready" is switched on between hands', () => {
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_11', 'Diamond_14'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_11', 'Diamond_14'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
 
   const profiles = defaultProfileState();
   profiles.opponentIds = ['genly-ai'];

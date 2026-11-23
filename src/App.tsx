@@ -2,16 +2,16 @@
 import React from 'react';
 
 // FluentUI
-import { FluentProvider, makeStyles, tokens } from '@fluentui/react-components';
+import { Card, FluentProvider, Text, makeStyles, tokens } from '@fluentui/react-components';
 
 // Local Resources
 import './App.css';
 import { AppHeader, OptionsPanel, PlayersDialog, Table } from './components';
-import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext } from './context';
+import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext, useSettingContext } from './context';
 import { GameAction, GameStatus } from './enums';
-import { botAccountsFor, collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync } from './functions';
+import { allPlayers, botAccountsFor, collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync, useSettingSync, useTabLock } from './functions';
 import { GameReducerAction } from './interfaces';
-import { isDarkMode, resolveThemeMode, createAppTheme, usePrefersDark, PAGE_GUTTER } from './theme';
+import { createAppTheme, isDarkMode, PAGE_GUTTER, resolveThemeMode, usePrefersDark } from './theme';
 
 // The page behind the table: a striped felt drawn from the brand color, so it follows
 // the accent and the light or dark mode. Fluent's tokens resolve inside the provider.
@@ -30,33 +30,34 @@ const useStyles = makeStyles({
     backgroundPosition: '7px 0, 0 0, 0 0',
     backgroundSize: '16px 48px',
   },
+  tabBlocked: {
+    margin: 'auto',
+    maxWidth: '420px',
+    padding: tokens.spacingHorizontalXL,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalS,
+    textAlign: 'center',
+  },
 });
 
-// Main Component
-const App = () => {
-  const styles = useStyles();
-
+const ActiveGame: React.FC = () => {
   // State from context
+  const { settings, toggleSetting } = useSettingContext();
   const [gameState, dispatchGame] = React.useReducer(gameReducer, undefined, loadGameState);
   // every action is given its time and a random seed here, so the reducer needs neither the clock nor Math.random
   const gameDispatch = React.useCallback((action: GameReducerAction) => dispatchGame(stampAction(action)), []);
-  const [settings, toggleSetting] = React.useReducer(settingReducer, undefined, loadSettings);
   const [profiles, profileDispatch] = React.useReducer(profileReducer, undefined, loadProfiles);
   // The Players dialog opens from the header and from the end-of-hand controls
   const [isPlayersOpen, setPlayersOpen] = React.useState(false);
   const openPlayers = React.useCallback(() => setPlayersOpen(true), []);
 
-  // Fluent theme from the appearance settings; 'system' follows the OS preference
-  const prefersDark = usePrefersDark();
-  const themeMode = resolveThemeMode(settings.themeMode, prefersDark);
-  const theme = createAppTheme(themeMode, settings.accent);
-
-  // Persist game, settings and player profiles so a reload resumes where the player left off
-  React.useEffect(() => saveSettings(settings), [settings]);
+  // Persist game and player profiles so a reload resumes where the player left off
   React.useEffect(() => saveGameState(gameState), [gameState]);
   React.useEffect(() => saveProfiles(profiles), [profiles]);
-  // and keep the profiles and the game in step with the server, when there is one
+  // and keep the profiles, settings and the game in step with the server, when there is one
   useProfileSync(profiles, profileDispatch);
+  useSettingSync(settings, toggleSetting);
   useGameSync(gameState, gameDispatch);
   // and pick up what every other table has played with the characters
   useCommunitySync();
@@ -88,7 +89,7 @@ const App = () => {
     if ((!wasSettledBefore && gameState.gameStatusFlag) || roundStarted) {
       profileDispatch({
         type: 'syncStats',
-        stats: collectStats(gameState.playerStore.all),
+        stats: collectStats(allPlayers(gameState.playerStore)),
         botAccounts: gameState.botAccounts,
       });
     }
@@ -108,36 +109,58 @@ const App = () => {
   }, [rosterKey, betweenHands, profiles, gameDispatch]);
 
   return (
+    <ProfileContext.Provider value={profiles}>
+      <ProfileDispatchContext.Provider value={profileDispatch}>
+        <GameContext.Provider value={gameState}>
+          <GameDispatchContext.Provider value={gameDispatch}>
+            <PlayersDialogContext.Provider value={openPlayers}>
+              <AppHeader />
+              <OptionsPanel />
+              <div className="app-content">
+                <Table />
+              </div>
+              <PlayersDialog open={isPlayersOpen} onOpenChange={setPlayersOpen} />
+            </PlayersDialogContext.Provider>
+          </GameDispatchContext.Provider>
+        </GameContext.Provider>
+      </ProfileDispatchContext.Provider>
+    </ProfileContext.Provider>
+  );
+};
+
+// Main Component
+const App = () => {
+  const styles = useStyles();
+  const hasLock = useTabLock();
+  const [settings, toggleSetting] = React.useReducer(settingReducer, undefined, loadSettings);
+  React.useEffect(() => saveSettings(settings), [settings]);
+
+  // Fluent theme from the appearance settings; 'system' follows the OS preference
+  const prefersDark = usePrefersDark();
+  const themeMode = resolveThemeMode(settings.themeMode, prefersDark);
+  const theme = createAppTheme(themeMode, settings.accent);
+
+  return (
     <FluentProvider theme={theme} style={{ colorScheme: isDarkMode(themeMode) ? 'dark' : 'light' }}>
       {/* The shell is a child, not the provider itself: Fluent copies the provider's
           classes onto its portal layer, which would paint the felt over every popup */}
       <div className={styles.shell} data-theme-mode={themeMode} data-accent={settings.accent}>
-      <SettingContext.Provider value={settings}>
-        <SettingDispatchContext.Provider value={toggleSetting}>
-          <ProfileContext.Provider value={profiles}>
-            <ProfileDispatchContext.Provider value={profileDispatch}>
-              <GameContext.Provider value={gameState}>
-                <GameDispatchContext.Provider value={gameDispatch}>
-
-                  <PlayersDialogContext.Provider value={openPlayers}>
-                  <AppHeader />
-
-                  <OptionsPanel />
-                  <div className="app-content">
-                    <Table />
-                  </div>
-                  <PlayersDialog open={isPlayersOpen} onOpenChange={setPlayersOpen} />
-                  </PlayersDialogContext.Provider>
-
-                </GameDispatchContext.Provider>
-              </GameContext.Provider>
-            </ProfileDispatchContext.Provider>
-          </ProfileContext.Provider>
-        </SettingDispatchContext.Provider>
-      </SettingContext.Provider>
+        <SettingContext.Provider value={settings}>
+          <SettingDispatchContext.Provider value={toggleSetting}>
+            {hasLock === true && <ActiveGame />}
+            {hasLock === false && (
+              <Card className={styles.tabBlocked} role="status">
+                <Text as="h2" size={500} weight="semibold">The game is open in another tab</Text>
+                <Text size={300}>
+                  Close the other tab to play here. This tab will resume automatically once it closes.
+                </Text>
+              </Card>
+            )}
+          </SettingDispatchContext.Provider>
+        </SettingContext.Provider>
       </div>
     </FluentProvider>
   );
-}
+};
 
 export default App;

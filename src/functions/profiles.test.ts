@@ -306,8 +306,8 @@ describe('seatsFor', () => {
 
     const game = gameReducer(createGameState(), { type: GameAction.NewGame, players: seatsFor(state) });
 
-    expect(game.playerStore.player('chris').stats).toEqual(stats);
-    expect(game.playerStore.player('dealer').stats).toEqual(emptyStats());
+    expect(game.playerStore.players.chris.stats).toEqual(stats);
+    expect(game.playerStore.players.dealer.stats).toEqual(emptyStats());
   });
 
   it('carries persistent bot banks and away-working or ready flags onto seated bots while human and dealer start at 1000', () => {

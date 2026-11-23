@@ -1,6 +1,5 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PlayingCard } from '../classes';
 import { createGameState } from '../context';
 import { GameAction } from '../enums';
 import { gameReducer } from '../functions';
@@ -26,7 +25,7 @@ afterEach(() => {
 const startedGame = (playerKeys: PlayerKey[] = ['chris', 'dealer']): GameState => {
   const started = gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys });
   const anted = gameReducer(started, { type: GameAction.EvaluateGame });
-  anted.deck.cards = ['Heart_2', 'Club_10', 'Diamond_7', 'Heart_6', 'Spade_5'].map((key) => new PlayingCard(key));
+  anted.deck = { ...anted.deck, cardKeys: ['Heart_2', 'Club_10', 'Diamond_7', 'Heart_6', 'Spade_5'] };
   return gameReducer(anted, { type: GameAction.Deal });
 };
 
@@ -45,14 +44,17 @@ const fourSeatBustGame = (): GameState => {
     ],
   });
   const anted = gameReducer(started, { type: GameAction.EvaluateGame });
-  // Deal pops from the end of deck.cards, 2 cards per seat in seatOrder: chris, ogion, shevek, dealer
-  anted.deck.cards = [
-    'Heart_8', 'Spade_8', // drawn on Chris's and Ogion's hits
-    'Club_7', 'Diamond_10', // dealer: 17
-    'Club_8', 'Diamond_10', // shevek: 18
-    'Club_6', 'Diamond_10', // ogion: 16
-    'Heart_6', 'Spade_10', // chris: 16
-  ].map((key) => new PlayingCard(key));
+  // Deal pops from the end of deck.cardKeys, 2 cards per seat in seatOrder: chris, ogion, shevek, dealer
+  anted.deck = {
+    ...anted.deck,
+    cardKeys: [
+      'Heart_8', 'Spade_8', // drawn on Chris's and Ogion's hits
+      'Club_7', 'Diamond_10', // dealer: 17
+      'Club_8', 'Diamond_10', // shevek: 18
+      'Club_6', 'Diamond_10', // ogion: 16
+      'Heart_6', 'Spade_10', // chris: 16
+    ],
+  };
   return gameReducer(anted, { type: GameAction.Deal });
 };
 

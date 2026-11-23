@@ -2,10 +2,24 @@ import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { webDarkTheme } from '@fluentui/react-components';
-import { PlayingCardDeck } from './classes/PlayingCardDeck';
+import { dealCards, drawCards, emptyHand } from './functions/deck';
+import { handValue } from './functions/getHandValue';
+import { DeckState } from './types';
 import { brandPresets, createAppTheme } from './theme';
 import App from './App';
 import { StoreName } from './enums';
+
+vi.mock('./functions/deck', { spy: true });
+
+const rigDeal = (hands: Record<string, string[]>) =>
+  (deck: DeckState, _count?: number, keys?: readonly string[]): DeckState => {
+    const playerHands = { ...deck.playerHands };
+    for (const [key, cards] of Object.entries(hands)) {
+      if (keys && !keys.includes(key)) continue;
+      playerHands[key] = { ...(playerHands[key] ?? emptyHand()), cards: [...cards], handValue: handValue(cards) };
+    }
+    return { ...deck, playerHands };
+  };
 
 afterEach(() => {
   vi.useRealTimers();
@@ -17,10 +31,10 @@ const finishResults = () => act(() => { vi.advanceTimersByTime(10_000); });
 
 it('changes the theme, accent, card style and card back from the Appearance section and remembers them', () => {
   // neither hand is a natural, so the round stays in play and the dealer's hole card stays face down
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_7'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
   const first = render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   // FluentProvider writes the theme as CSS variables into a style sheet rule for its class
@@ -36,16 +50,16 @@ it('changes the theme, accent, card style and card back from the Appearance sect
     return '';
   };
   const shell = () => document.querySelector('[data-theme-mode]') as HTMLElement;
-  expect(shell()).toHaveAttribute('data-theme-mode', 'light');
-  expect(themeVariable('--colorBrandBackground')).toBe(brandPresets.blue.ramp[80]);
-
-  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-  fireEvent.click(screen.getByRole('radio', { name: 'Dark' }));
   expect(shell()).toHaveAttribute('data-theme-mode', 'dark');
   expect(themeVariable('--colorNeutralBackground1')).toBe(webDarkTheme.colorNeutralBackground1);
 
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'Light' }));
+  expect(shell()).toHaveAttribute('data-theme-mode', 'light');
+  expect(themeVariable('--colorBrandBackground')).toBe(brandPresets.blue.ramp[80]);
+
   fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Accent color' })).getByRole('radio', { name: 'Teal' }));
-  expect(themeVariable('--colorBrandBackground')).toBe(createAppTheme('dark', 'teal').colorBrandBackground);
+  expect(themeVariable('--colorBrandBackground')).toBe(createAppTheme('light', 'teal').colorBrandBackground);
   expect(shell()).toHaveAttribute('data-accent', 'teal');
 
   fireEvent.click(screen.getByRole('combobox', { name: 'Card style' }));
@@ -67,25 +81,19 @@ it('changes the theme, accent, card style and card back from the Appearance sect
   first.unmount();
 
   render(<App />);
-  expect(shell()).toHaveAttribute('data-theme-mode', 'dark');
+  expect(shell()).toHaveAttribute('data-theme-mode', 'light');
   expect(shell()).toHaveAttribute('data-accent', 'teal');
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-  expect(screen.getByRole('radio', { name: 'Dark' })).toBeChecked();
+  expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked();
   expect(screen.getByRole('radio', { name: 'Stripes' })).toBeChecked();
   expect(within(screen.getByRole('radiogroup', { name: 'Accent color' })).getByRole('radio', { name: 'Teal' })).toBeChecked();
 });
 
-it.each(['Next hand', 'Options Deal'])('defers table rules through a reload until %s', (dealFrom) => {
-  vi.spyOn(PlayingCardDeck.prototype, 'deal')
-    .mockImplementationOnce(function (this: PlayingCardDeck) {
-      this.playerHands.chris.cards = ['Spade_10', 'Diamond_9'];
-      this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-    })
-    .mockImplementation(function (this: PlayingCardDeck) {
-      this.playerHands.chris.cards = ['Spade_10', 'Diamond_14_2'];
-      this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-    });
-  vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
+it('defers table rules through a reload until Next hand', () => {
+  vi.mocked(dealCards)
+    .mockImplementationOnce(rigDeal({ chris: ['Spade_10', 'Diamond_9'], dealer: ['Club_10', 'Heart_7'] }))
+    .mockImplementation(rigDeal({ chris: ['Spade_10', 'Diamond_14_2'], dealer: ['Club_10', 'Heart_7'] }));
+  vi.mocked(drawCards).mockImplementation((deck) => ({ deck, drawn: ['Heart_5'] }));
   const first = render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
@@ -116,12 +124,7 @@ it.each(['Next hand', 'Options Deal'])('defers table rules through a reload unti
   checkRules(1, '3:2', 'stands on 17 or higher');
 
   finishResults();
-  if (dealFrom === 'Options Deal') {
-    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Start a new round with the selected players' }));
-  } else {
-    fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
-  }
+  fireEvent.click(screen.getByRole('button', { name: 'Next hand' }));
   checkRules(2, '6:5', 'draws below 17 and on soft 17');
   const game = JSON.parse(localStorage.getItem(StoreName.GAMESTORE) ?? '{}');
   expect(game.tableRules).toEqual({ numberOfDecks: '2', dealerSoft17: 'hit', blackjackPayout: '6:5' });
@@ -151,8 +154,8 @@ it('resets only the appearance settings', () => {
   expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'highContrast');
 
   fireEvent.click(screen.getByRole('button', { name: 'Reset appearance' }));
-  expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'light');
-  expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked();
+  expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'dark');
+  expect(screen.getByRole('radio', { name: 'Dark' })).toBeChecked();
   expect(screen.getByRole('radio', { name: 'Rings' })).toBeChecked();
   expect(screen.getByRole('switch', { name: 'Open Activity Log by default' })).toBeChecked();
 });
@@ -187,10 +190,10 @@ it('opens and closes the in-app blackjack rules from the header', () => {
 
 it('shows strategy hints once they are switched on in Options, and remembers the choice', () => {
   // chris holds 16 against the dealer's 6 (the dealer's first card is the hole card)
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_10', 'Diamond_6'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_6'];
-  });
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_6'],
+    dealer: ['Club_10', 'Heart_6'],
+  }));
   const hint = () => screen.queryByText('Hint: Hard 16 vs dealer 6: stay');
   const first = render(<App />);
 
@@ -207,7 +210,7 @@ it('shows strategy hints once they are switched on in Options, and remembers the
   expect(first.container.querySelector('[data-hint]')).toBe(screen.getByRole('button', { name: 'Stay' }));
 
   // the hint follows the hand: a four makes 20, which stays
-  vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_4']);
+  vi.mocked(drawCards).mockImplementation((deck) => ({ deck, drawn: ['Heart_4'] }));
   fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
   expect(hint()).not.toBeInTheDocument();
   expect(screen.getByText('Hint: Hard 20 vs dealer 6: stay')).toBeInTheDocument();
@@ -220,11 +223,11 @@ it('shows strategy hints once they are switched on in Options, and remembers the
 });
 
 it('toggles gameplay and pot notifications in Options while preserving the pot breakdown and immediate log entries', () => {
-  vi.spyOn(PlayingCardDeck.prototype, 'deal').mockImplementation(function (this: PlayingCardDeck) {
-    this.playerHands.chris.cards = ['Spade_10', 'Diamond_7'];
-    this.playerHands.dealer.cards = ['Club_10', 'Heart_7'];
-  });
-  vi.spyOn(PlayingCardDeck.prototype, 'draw').mockReturnValue(['Heart_5']);
+  vi.mocked(dealCards).mockImplementation(rigDeal({
+    chris: ['Spade_10', 'Diamond_7'],
+    dealer: ['Club_10', 'Heart_7'],
+  }));
+  vi.mocked(drawCards).mockImplementation((deck) => ({ deck, drawn: ['Heart_5'] }));
   const first = render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
@@ -271,4 +274,27 @@ it('toggles gameplay and pot notifications in Options while preserving the pot b
   expect(screen.queryByText('Faxe wins!')).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Next hand' })).not.toHaveAttribute('aria-disabled');
   expect(log().getByText('busted, lost $50')).toBeInTheDocument();
+});
+
+it('toggles character animations from the Options panel and remembers the setting', () => {
+  const first = render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+
+  const animationsSwitch = screen.getByRole('switch', { name: 'Character animations' });
+  expect(animationsSwitch).toBeChecked();
+
+  fireEvent.click(animationsSwitch);
+  expect(animationsSwitch).not.toBeChecked();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+
+  const dealerPortrait = screen.getByRole('region', { name: "Faxe's hand" });
+  expect(dealerPortrait.querySelector('canvas')).toBeNull();
+
+  first.unmount();
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  expect(screen.getByRole('switch', { name: 'Character animations' })).not.toBeChecked();
 });

@@ -107,7 +107,7 @@ export const GoogleAccountSection: React.FC<GoogleAccountSectionProps> = ({ clie
   const styles = useStyles();
   const { profileDispatch } = useProfileContext();
   const { gameDispatch } = useGameContext();
-  const { settings } = useSettingContext();
+  const { settings, toggleSetting } = useSettingContext();
   const prefersDark = usePrefersDark();
   const dark = isDarkMode(resolveThemeMode(settings.themeMode, prefersDark));
 
@@ -158,6 +158,7 @@ export const GoogleAccountSection: React.FC<GoogleAccountSectionProps> = ({ clie
     signOutGoogle();
     const defaults = defaultProfileState();
     profileDispatch({ type: 'reset' });
+    toggleSetting({ key: 'reset' });
     gameDispatch({ type: GameAction.NewGame, players: seatsFor(defaults), botAccounts: botAccountsFor(defaults) });
   };
 
@@ -178,7 +179,7 @@ export const GoogleAccountSection: React.FC<GoogleAccountSectionProps> = ({ clie
               <Text weight="semibold">{user.name}</Text>
               {user.email && <Text size={200} className={styles.subtle}>{user.email}</Text>}
               <Text size={200} className={styles.subtle}>
-                Players, lifetime statistics, and current game sync across browsers.
+                Players, lifetime statistics, settings, and current game sync across browsers.
               </Text>
             </div>
           </div>
@@ -188,7 +189,7 @@ export const GoogleAccountSection: React.FC<GoogleAccountSectionProps> = ({ clie
         <div className={styles.card}>
           <div className={styles.identityText}>
             <Text size={200}>
-              Sign in with Google to save your players, lifetime statistics, and game in progress across browsers.
+              Sign in with Google to save your players, lifetime statistics, settings, and game in progress across browsers.
             </Text>
             {error && (
               <Text role="alert" size={200} className={styles.error} block>

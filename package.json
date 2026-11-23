@@ -1,7 +1,7 @@
 {
   "description": "Chris's own blackjack game, made for fun",
   "author": "Chris Odegard <c.odegard@gmail.com>",
-  "version": "2.3.0",
+  "version": "2.5.6",
   "private": true,
   "type": "module",
   "repository": {
@@ -16,6 +16,9 @@
     "react-dom": "19.3.1"
   },
   "scripts": {
+    "pretest": "node scripts/check-node-version.mjs",
+    "prestart": "node scripts/check-node-version.mjs",
+    "prebuild": "node scripts/check-node-version.mjs",
     "start": "vite --host 0.0.0.0 --port 3000",
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
@@ -24,6 +27,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\" \"netlify/**/*.ts\"",
     "portraits": "node scripts/build-portraits.mjs",
+    "animations": "node scripts/build-haber-animations.mjs && node scripts/build-faxe-animations.mjs && node scripts/build-ogion-animations.mjs && node scripts/build-shevek-animations.mjs && node scripts/build-genly-ai-animations.mjs",
     "simulate-history": "node scripts/simulate-history.mjs",
     "strategy-chart": "node scripts/basic-strategy.mjs",
     "aggregate-stats": "node scripts/aggregate-stats.mjs"

@@ -1,6 +1,22 @@
-import { PlayerStore, PlayingCardDeck } from "../classes";
 import { GameStatus } from "../enums";
-import { BotAccountState, PlayerKey, TableRules } from "./";
+import { IPlayerStoreState } from "../interfaces";
+import { BotAccountState, DeckState, PlayerKey, TableRules } from "./";
+
+export type SessionSeatStats = {
+  title: string;
+  hands: number;
+  wins: number;
+  losses: number;
+  pushes: number;
+  blackjacks: number;
+  busts: number;
+  net: number;
+  balanceHistory: number[];
+};
+
+export type SessionSummaryState = {
+  seats: Record<PlayerKey, SessionSeatStats>;
+};
 
 export type GameState = {
   activityLog: ActivityLogEntry[];
@@ -9,16 +25,18 @@ export type GameState = {
   botAccounts: Record<string, BotAccountState>;
   controllingPlayer?: PlayerKey;
   dealerHasControl: boolean;
-  deck: PlayingCardDeck;
+  isInsuranceOpen?: boolean;
+  deck: DeckState;
   gameStatus: GameStatus;
   gameStatusFlag: boolean;
   isSpinnerVisible: boolean;
   lastWriteTime: string;
   loser?: PlayerKey;
   minimumBet: number;
-  playerStore: PlayerStore;
+  playerStore: IPlayerStoreState;
   pot: number;
   round: number;
+  session?: SessionSummaryState;
   tableRules: TableRules;
   turnCount: number;
   winner?: PlayerKey;
@@ -29,7 +47,7 @@ export type ActivityLogEntry = {
   sessionId?: number;
   /** the hand this entry belongs to; absent in logs saved before hands were tracked */
   round?: number;
-  event?: 'game' | 'round' | 'deal' | 'draw' | 'ante' | 'bet' | 'double' | 'split' | 'stay' | 'win' | 'loss' | 'push' | 'shuffle' | 'work';
+  event?: 'game' | 'round' | 'deal' | 'draw' | 'ante' | 'bet' | 'double' | 'split' | 'stay' | 'insurance' | 'surrender' | 'win' | 'loss' | 'push' | 'shuffle' | 'work';
   timestamp: number;
   name: string;
   description: string;
