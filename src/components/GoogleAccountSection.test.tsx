@@ -127,9 +127,9 @@ describe('GoogleAccountSection in PlayersDialog', () => {
 
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
-    fireEvent.click(screen.getByRole('radio', { name: 'Dark' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Light' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
-    expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'dark');
+    expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'light');
 
     fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
     fireEvent.click(screen.getByRole('button', { name: 'Players' }));
@@ -142,6 +142,6 @@ describe('GoogleAccountSection in PlayersDialog', () => {
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Sign out' }));
     expect(allowReturnSwitch).not.toBeChecked();
-    expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'light');
+    expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'dark');
   });
 });

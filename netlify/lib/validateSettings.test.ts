@@ -47,7 +47,7 @@ describe('parseSettingsBody', () => {
   it('rejects invalid enumerated or boolean setting values', () => {
     expect(parseSettingsBody(JSON.stringify({ settings: { ...remoteDefaults, themeMode: 'neon' } }))).toHaveProperty('error');
     expect(parseSettingsBody(JSON.stringify({ settings: { ...remoteDefaults, numberOfDecks: '4' } }))).toHaveProperty('error');
-    expect(parseSettingsBody(JSON.stringify({ settings: { ...remoteDefaults, isDeckVisible: 'yes' } }))).toHaveProperty('error');
+    expect(parseSettingsBody(JSON.stringify({ settings: { ...remoteDefaults, isHandValueVisible: 'yes' } }))).toHaveProperty('error');
     expect(parseSettingsBody(JSON.stringify({ settings: { ...remoteDefaults, isOptionsPanelVisible: 'open' } }))).toHaveProperty('error');
   });
 });
