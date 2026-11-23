@@ -41,6 +41,7 @@ const useStyles = makeStyles({
     width: 'fit-content',
     minWidth: '180px',
     maxWidth: '100%',
+    overflow: 'hidden',
     padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`,
     margin: 0,
     border: `1px solid ${tokens.colorNeutralStroke2}`,
@@ -81,7 +82,10 @@ const useStyles = makeStyles({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-start',
+    width: '100%',
+    maxWidth: '100%',
     gap: tokens.spacingVerticalXXS,
+    minWidth: 0,
     margin: 0,
     padding: 0,
     border: 'none',
@@ -109,6 +113,8 @@ const useStyles = makeStyles({
     display: 'flex',
     alignItems: 'flex-start',
     gap: tokens.spacingHorizontalS,
+    width: '100%',
+    maxWidth: '100%',
     minWidth: 0,
   },
   text: {
@@ -116,10 +122,14 @@ const useStyles = makeStyles({
     flexDirection: 'column',
     alignItems: 'flex-start',
     gap: tokens.spacingVerticalXXS,
+    width: '100%',
+    maxWidth: '100%',
     minWidth: 0,
+    overflow: 'hidden',
   },
   tagline: {
-    maxWidth: '200px',
+    width: '100%',
+    maxWidth: '100%',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
@@ -150,12 +160,21 @@ export const SeatChip: React.FC<ISeatChipProps> = (props) => {
   } as React.CSSProperties;
 
   const character = getCharacter(player.key);
+  const dialogue = character ? utterance ?? character.tagline : undefined;
+
   const infoContent = (
     <span className={styles.identity}>
       <CharacterPortrait id={player.key} name={player.title} size="md" decorative />
       <span className={styles.text}>
         <span className={styles.name}>{`${player.title} ($${player.bank || 0})`}</span>
-        {character && <span className={mergeClasses('seat-chip-tagline', styles.tagline)}>{utterance ?? character.tagline}</span>}
+        {dialogue && (
+          <span
+            className={mergeClasses('seat-chip-tagline', styles.tagline)}
+            title={dialogue}
+          >
+            {dialogue}
+          </span>
+        )}
         {status && <Badge size="small" appearance={status.appearance} color={status.color}>{status.text}</Badge>}
         {total !== undefined && <span className={styles.total}>{`Total ${total}`}</span>}
       </span>
