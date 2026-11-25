@@ -1,8 +1,8 @@
 // @vitest-environment node
 import type { Db } from 'mongodb';
 import { describe, expect, it } from 'vitest';
-import { CHARACTERS } from '../../src/characters';
-import { emptyTally, type Tally } from '../../src/types/CommunityStats';
+import { CHARACTERS } from '../../src/game/characters';
+import { emptyTally, type Tally } from '../../shared/CommunityStats';
 import { advance, aggregateNpcStats, isPlausible, MAX_HANDS_PER_RUN, NPC_IDS, readNpcStats, SNAPSHOT_ID, toTally } from './aggregate';
 import { NPC_LEDGER_COLLECTION, NPC_STATS_COLLECTION, PROFILES_COLLECTION } from './mongo';
 

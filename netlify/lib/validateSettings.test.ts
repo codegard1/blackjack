@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { settingDefaults } from '../../src/types/SettingState';
+import { settingDefaults } from '../../shared/SettingState';
 import { parseSettingsBody, SETTINGS_MAX_BODY_BYTES } from './validateSettings';
 
 const { isOptionsPanelVisible: _, ...remoteDefaults } = settingDefaults;

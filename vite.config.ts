@@ -66,7 +66,7 @@ export default defineConfig(({ command, mode }) => {
       setupFiles: './src/setupTests.ts',
       coverage: {
         provider: 'v8',
-        include: ['src/**/*.{ts,tsx}', 'netlify/**/*.ts'],
+        include: ['src/**/*.{ts,tsx}', 'shared/**/*.ts', 'netlify/**/*.ts'],
         exclude: ['**/*.test.{ts,tsx}', 'src/setupTests.ts', 'src/vite-env.d.ts'],
         reporter: ['text-summary', 'html'],
         // a little under the figures when coverage was first measured (93% of statements,

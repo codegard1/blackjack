@@ -22,6 +22,7 @@
   },
   "include": [
     "src",
+    "shared",
     "netlify",
     "vite.config.ts"
   ]

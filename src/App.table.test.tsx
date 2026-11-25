@@ -1,15 +1,15 @@
 import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { dealCards, drawCards, emptyHand } from './functions/deck';
-import { handValue } from './functions/getHandValue';
-import { DeckState } from './types';
+import { dealCards, drawCards, emptyHand } from './game/deck';
+import { handValue } from './game/getHandValue';
+import { DeckState } from '../shared';
 import App from './App';
-import { CARD_FLIP_MS, CARD_REVEAL_PAUSE_MS } from './components/useCardFlip';
-import { POT_BOUNCE_MS, POT_ENTER_MS, POT_LEAVE_MS } from './components/usePotMotion';
-import { TOAST_EXIT_MS, TOAST_LIFE_MS } from './components/TableToasts';
+import { CARD_FLIP_MS, CARD_REVEAL_PAUSE_MS } from './ui/useCardFlip';
+import { POT_BOUNCE_MS, POT_ENTER_MS, POT_LEAVE_MS } from './ui/usePotMotion';
+import { TOAST_EXIT_MS, TOAST_LIFE_MS } from './ui/TableToasts';
 
-vi.mock('./functions/deck', { spy: true });
+vi.mock('./game/deck', { spy: true });
 
 const rigDeal = (hands: Record<string, string[]>) =>
   (deck: DeckState, _count?: number, keys?: readonly string[]): DeckState => {

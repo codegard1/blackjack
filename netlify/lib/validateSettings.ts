@@ -3,7 +3,7 @@ import {
   settingDefaults,
   type SettingKey,
   type SettingsState,
-} from '../../src/types/SettingState';
+} from '../../shared/SettingState';
 import { isObject, parseJsonBody } from './validate';
 
 /** The largest request body a settings PUT accepts; a full settings object is under 1 KB */

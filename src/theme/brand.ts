@@ -1,5 +1,5 @@
 import { BrandVariants } from '@fluentui/react-components';
-import { AccentKey } from '../types';
+import { AccentKey } from '../../shared';
 
 export interface BrandPreset {
   /** name shown in the options panel */

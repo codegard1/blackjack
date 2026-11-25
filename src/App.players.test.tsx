@@ -1,15 +1,16 @@
 import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { dealCards, emptyHand } from './functions/deck';
-import { handValue } from './functions/getHandValue';
-import { DeckState } from './types';
+import { dealCards, emptyHand } from './game/deck';
+import { handValue } from './game/getHandValue';
+import { DeckState } from '../shared';
 import App from './App';
-import { defaultProfileState, saveProfiles } from './functions';
-import { formatNet } from './functions/format';
-import { CHARACTER_HISTORY, withBalanceHistory } from './functions/history';
+import { defaultProfileState } from './game/profiles';
+import { saveProfiles } from './sync/persistence';
+import { formatNet } from './game/format';
+import { CHARACTER_HISTORY, withBalanceHistory } from './game/history';
 
-vi.mock('./functions/deck', { spy: true });
+vi.mock('./game/deck', { spy: true });
 
 const rigDeal = (hands: Record<string, string[]>) =>
   (deck: DeckState, _count?: number, keys?: readonly string[]): DeckState => {

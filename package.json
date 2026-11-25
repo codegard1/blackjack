@@ -25,7 +25,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint \"src/**/*.{ts,tsx}\" \"netlify/**/*.ts\"",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" \"shared/**/*.ts\" \"netlify/**/*.ts\"",
     "portraits": "node scripts/build-portraits.mjs",
     "animations": "node scripts/build-haber-animations.mjs && node scripts/build-faxe-animations.mjs && node scripts/build-ogion-animations.mjs && node scripts/build-shevek-animations.mjs && node scripts/build-genly-ai-animations.mjs",
     "simulate-history": "node scripts/simulate-history.mjs",

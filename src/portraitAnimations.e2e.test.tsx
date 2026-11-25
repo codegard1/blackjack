@@ -2,14 +2,14 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { act, cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { BOTS, CHARACTERS, Character, DEALER, DEALER_ID, getCharacter, isBotId, isCharacterId } from './characters';
-import { CharacterCard } from './components/CharacterCard';
-import { CharacterPortrait, PORTRAIT_SIZES } from './components/CharacterPortrait';
-import { SeatChip } from './components/SeatChip';
-import { TableToasts } from './components/TableToasts';
-import { PORTRAIT_GAP_DELAY_MS, PORTRAIT_INITIAL_DELAY_MS } from './components/usePortraitAnimation';
-import { SettingContext, settingDefaults } from './context/SettingContext';
-import { playerDefaults } from './definitions';
+import { BOTS, CHARACTERS, Character, DEALER, DEALER_ID, getCharacter, isBotId, isCharacterId } from './game/characters';
+import { CharacterCard } from './ui/CharacterCard';
+import { CharacterPortrait, PORTRAIT_SIZES } from './ui/CharacterPortrait';
+import { SeatChip } from './ui/SeatChip';
+import { TableToasts } from './ui/TableToasts';
+import { PORTRAIT_GAP_DELAY_MS, PORTRAIT_INITIAL_DELAY_MS } from './ui/usePortraitAnimation';
+import { SettingContext, settingDefaults } from './game/SettingContext';
+import { playerDefaults } from './game/definitions';
 import {
   LoadedPortraitAnimations,
   PORTRAIT_ANIMATION_LOADERS,
@@ -22,9 +22,9 @@ import {
   loadPortraitAnimations,
   nextDelayMs,
   parsePaletteRgb,
-} from './functions/portraitAnimation';
-import { IPlayer } from './interfaces';
-import { VisibleToast } from './types';
+} from './ui/portraitAnimation';
+import { IPlayer } from '../shared/IPlayer';
+import { VisibleToast } from '../shared';
 
 const GRID_SIZE = 24;
 const PIXEL_COUNT = GRID_SIZE * GRID_SIZE;

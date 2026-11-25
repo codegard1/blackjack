@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint';
 export default tseslint.config(
   { ignores: ['dist', 'coverage', 'node_modules', '.netlify'] },
   {
-    files: ['src/**/*.{ts,tsx}', 'netlify/**/*.ts'],
+    files: ['src/**/*.{ts,tsx}', 'shared/**/*.ts', 'netlify/**/*.ts'],
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommendedTypeChecked,

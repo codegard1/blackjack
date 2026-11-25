@@ -2,14 +2,14 @@ import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { webDarkTheme } from '@fluentui/react-components';
-import { dealCards, drawCards, emptyHand } from './functions/deck';
-import { handValue } from './functions/getHandValue';
-import { DeckState } from './types';
+import { dealCards, drawCards, emptyHand } from './game/deck';
+import { handValue } from './game/getHandValue';
+import { DeckState } from '../shared';
 import { brandPresets, createAppTheme } from './theme';
 import App from './App';
-import { StoreName } from './enums';
+import { StoreName } from '../shared';
 
-vi.mock('./functions/deck', { spy: true });
+vi.mock('./game/deck', { spy: true });
 
 const rigDeal = (hands: Record<string, string[]>) =>
   (deck: DeckState, _count?: number, keys?: readonly string[]): DeckState => {
