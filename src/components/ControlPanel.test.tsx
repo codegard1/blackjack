@@ -239,6 +239,7 @@ describe('player controls', () => {
 
     expect(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Stay' })).toBeDisabled();
+    console.log('deal style', getComputedStyle(screen.getByRole('button', { name: 'Deal' })).backgroundColor);
 
     fireEvent.click(screen.getByRole('button', { name: 'Wager $25' }));
     expect(dispatch).toHaveBeenCalledWith({ type: GameAction.Bet, playerKey: 'chris', betAmount: 25 });
