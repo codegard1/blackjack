@@ -1,13 +1,13 @@
 import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { dealCards, drawCards, emptyHand } from './functions/deck';
-import { handValue } from './functions/getHandValue';
-import { DeckState } from './types';
+import { dealCards, drawCards, emptyHand } from './game/deck';
+import { handValue } from './game/getHandValue';
+import { DeckState } from '../shared';
 import App from './App';
-import { TOAST_GAP_MS, TOAST_REVEAL_MS } from './components/TableToasts';
+import { TOAST_GAP_MS, TOAST_REVEAL_MS } from './ui/TableToasts';
 
-vi.mock('./functions/deck', { spy: true });
+vi.mock('./game/deck', { spy: true });
 
 const rigDeal = (hands: Record<string, string[]>) =>
   (deck: DeckState, _count?: number, keys?: readonly string[]): DeckState => {

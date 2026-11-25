@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cardBackColors, cardBackPatterns } from '../types';
+import { cardBackColors, cardBackPatterns } from '../../shared';
 import { cardBackClassNames, cardBackColorList, cardBackColorPresets, cardBackColorVariables, cardBackPatternList, cardBackPatternPresets } from './cardBacks';
 
 describe('card backs', () => {

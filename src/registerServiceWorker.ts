@@ -1,5 +1,5 @@
 import { registerSW } from 'virtual:pwa-register';
-import { debugLog } from './functions/debugLog';
+import { debugLog } from './debugLog';
 
 export function registerServiceWorker(): void {
   registerSW({

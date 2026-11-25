@@ -1,5 +1,5 @@
 import { BrandVariants, Theme, createDarkTheme, createLightTheme, teamsHighContrastTheme } from '@fluentui/react-components';
-import { AccentKey, SettingsState, ThemeMode } from '../types';
+import { AccentKey, SettingsState, ThemeMode } from '../../shared';
 import { brandPresets } from './brand';
 
 /** The theme that is actually rendered once 'system' is resolved */

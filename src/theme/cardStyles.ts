@@ -1,4 +1,4 @@
-import { CardStyle, cardStyles } from '../types';
+import { CardStyle, cardStyles } from '../../shared';
 
 export interface CardStylePreset {
   key: CardStyle;

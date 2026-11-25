@@ -1,11 +1,11 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { BOTS } from '../../src/characters';
-import { createGameState } from '../../src/context';
-import { GameAction } from '../../src/enums';
-import { gameReducer } from '../../src/functions/gameReducer';
-import { gameSnapshot } from '../../src/functions/persistence';
-import { defaultProfileState, seatsFor } from '../../src/functions/profiles';
+import { BOTS } from '../../src/game/characters';
+import { createGameState } from '../../src/game/GameContext';
+import { GameAction } from '../../shared';
+import { gameReducer } from '../../src/game/gameReducer';
+import { gameSnapshot } from '../../src/sync/persistence';
+import { defaultProfileState, seatsFor } from '../../src/game/profiles';
 import { BOT_IDS, GAME_MAX_BODY_BYTES, isGameSnapshot, parseGameBody } from './validateGame';
 
 const dealt = () => gameReducer(gameReducer(createGameState(), { type: GameAction.NewGame, playerKeys: ['chris', 'dealer'] }), { type: GameAction.Deal });

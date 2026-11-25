@@ -1,4 +1,4 @@
-import { ThemeMode, themeModes } from '../types';
+import { ThemeMode, themeModes } from '../../shared';
 
 export interface ThemeModePreset {
   key: ThemeMode;

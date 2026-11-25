@@ -48,9 +48,9 @@ const server = await createServer({
 });
 
 try {
-  const { simulateHistory, seededRandom } = await server.ssrLoadModule('/src/functions/simulate.ts');
-  const { CHARACTERS } = await server.ssrLoadModule('/src/characters.ts');
-  const { summarizeStats } = await server.ssrLoadModule('/src/functions/profiles.ts');
+  const { simulateHistory, seededRandom } = await server.ssrLoadModule('/src/game/simulate.ts');
+  const { CHARACTERS } = await server.ssrLoadModule('/src/game/characters.ts');
+  const { summarizeStats } = await server.ssrLoadModule('/src/game/profiles.ts');
 
   const started = performance.now();
   const result = simulateHistory({

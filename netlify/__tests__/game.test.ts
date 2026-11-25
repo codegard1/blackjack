@@ -1,9 +1,9 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createGameState } from '../../src/context';
-import { GameAction } from '../../src/enums';
-import { gameReducer } from '../../src/functions/gameReducer';
-import { gameSnapshot } from '../../src/functions/persistence';
+import { createGameState } from '../../src/game/GameContext';
+import { GameAction } from '../../shared';
+import { gameReducer } from '../../src/game/gameReducer';
+import { gameSnapshot } from '../../src/sync/persistence';
 import { resetIndexes } from '../lib/handler';
 import { mintOwnerId } from '../lib/owner';
 import handler, { config } from '../functions/game';

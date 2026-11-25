@@ -1,5 +1,5 @@
 import type { AnyBulkWriteOperation, Db } from 'mongodb';
-import { emptyTally, TALLY_KEYS, type CommunityStats, type Tally } from '../../src/types/CommunityStats';
+import { emptyTally, TALLY_KEYS, type CommunityStats, type Tally } from '../../shared/CommunityStats';
 import { NPC_LEDGER_COLLECTION, NPC_STATS_COLLECTION, PROFILES_COLLECTION } from './mongo';
 
 /**

@@ -2,8 +2,8 @@ import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import App from './App';
-import { STARTING_BANK } from './definitions';
-import { StoreName } from './enums';
+import { STARTING_BANK } from './game/definitions';
+import { StoreName } from '../shared';
 
 afterEach(() => {
   vi.useRealTimers();

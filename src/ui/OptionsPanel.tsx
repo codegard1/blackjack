@@ -1,0 +1,274 @@
+// React
+import React from "react";
+
+import {
+  Button,
+  ColorSwatch,
+  Drawer,
+  DrawerBody,
+  DrawerHeader,
+  DrawerHeaderTitle,
+  Divider,
+  Dropdown,
+  Field,
+  Link,
+  Option,
+  Radio,
+  RadioGroup,
+  SwatchPicker,
+  Switch,
+  Text,
+  Tooltip,
+} from '@fluentui/react-components';
+import {
+  ArrowClockwise20Regular,
+  ArrowReset20Regular,
+  Delete20Regular,
+  Dismiss20Regular,
+} from '@fluentui/react-icons';
+
+// Context
+import { CardBackPreview } from "./CardBackPreview";
+import { useGameDispatch } from "../game/GameContext";
+import { useProfileContext } from "../game/ProfileContext";
+import { useSettingContext } from "../game/SettingContext";
+import { GameAction } from "../../shared";
+import { clearStores } from "../sync/clearStores";
+import { brandPresets, cardBackColorList, cardBackPatternList, cardStyleList, cardStylePresets, themeModeList } from "../theme";
+import { AccentKey, CardBackColor, CardBackPattern, CardStyle, QueueSide, TableRules, ThemeMode, accentKeys, appearanceSettingKeys, blackjackPayouts, deckCounts } from "../../shared";
+
+export const OptionsPanel: React.FC = () => {
+
+  // Context
+  const { settings, toggleSetting } = useSettingContext();
+  const gameDispatch = useGameDispatch();
+  const { profileDispatch } = useProfileContext();
+
+  const closeOptionsPanel = () => {
+    toggleSetting({ key: "isOptionsPanelVisible", value: false });
+  }
+
+  /**
+   * Reset the game from the Options Panel
+   */
+  const resetGame = () => {
+    gameDispatch({ type: GameAction.ResetGame });
+    closeOptionsPanel();
+  }
+
+  const clearApplicationData = () => {
+    clearStores();
+    gameDispatch({ type: GameAction.ResetGame, clearActivityLog: true });
+    profileDispatch({ type: 'reset' });
+    toggleSetting({ key: 'reset' });
+  }
+
+  /** Put the theme, card style and card back settings back to their defaults */
+  const resetAppearance = () => toggleSetting({ key: 'reset', keys: appearanceSettingKeys });
+
+  return (
+    <Drawer
+      open={settings.isOptionsPanelVisible}
+      onOpenChange={(_, data) => {
+        if (!data.open) closeOptionsPanel();
+      }}
+      position="end"
+      size="medium"
+      modalType="modal"
+    >
+      <DrawerHeader>
+        <DrawerHeaderTitle
+          action={
+            <Button
+              appearance="subtle"
+              aria-label="Close options"
+              icon={<Dismiss20Regular />}
+              onClick={closeOptionsPanel}
+            />
+          }
+        >
+          Options
+        </DrawerHeaderTitle>
+      </DrawerHeader>
+      <DrawerBody>
+        <div className="options-panel-actions">
+          <Tooltip content="Reset the game with initial parameters" relationship="label">
+            <Button icon={<ArrowClockwise20Regular />} onClick={resetGame}>Reset Game</Button>
+          </Tooltip>
+          <Tooltip content="Clear application data stored locally in the browser" relationship="label">
+            <Button icon={<Delete20Regular />} onClick={clearApplicationData}>Clear Stores</Button>
+          </Tooltip>
+        </div>
+
+        <Divider />
+
+        <div className="options-panel-switches">
+          <Switch checked={settings.isDealerHandVisible} label="Show Dealer Hand" onChange={(_, data) => toggleSetting({ key: 'isDealerHandVisible', value: data.checked })} />
+          <Switch checked={settings.isHandValueVisible} label="Show Hand Value" onChange={(_, data) => toggleSetting({ key: 'isHandValueVisible', value: data.checked })} />
+          <Switch checked={settings.isStrategyHintVisible} label="Show strategy hints" onChange={(_, data) => toggleSetting({ key: 'isStrategyHintVisible', value: data.checked })} />
+          <Switch checked={settings.isAnimationsEnabled} label="Character animations" onChange={(_, data) => toggleSetting({ key: 'isAnimationsEnabled', value: data.checked })} />
+          <Switch checked={settings.isActivityLogVisible} label="Open Activity Log by default" onChange={(_, data) => toggleSetting({ key: 'isActivityLogVisible', value: data.checked })} />
+          <Field label="Seat queue side" hint="Where seats wait for their turn on a wide table">
+            <RadioGroup
+              layout="horizontal"
+              value={settings.queueSide}
+              onChange={(_, data) => toggleSetting({ key: 'queueSide', value: data.value as QueueSide })}
+            >
+              <Radio value="left" label="Left" />
+              <Radio value="right" label="Right" />
+            </RadioGroup>
+          </Field>
+        </div>
+
+        <Divider />
+
+        <section className="options-panel-appearance" aria-labelledby="options-notifications-heading">
+          <Text as="h3" id="options-notifications-heading" weight="semibold" size={400}>Notifications</Text>
+          <Field hint="Hand outcomes: blackjacks, busts, and round results">
+            <Switch
+              checked={settings.isGameplayToastsEnabled}
+              label="Gameplay notifications"
+              onChange={(_, data) => toggleSetting({ key: 'isGameplayToastsEnabled', value: data.checked })}
+            />
+          </Field>
+          <Field hint="Antes, wagers, sitting out, and characters leaving to work">
+            <Switch
+              checked={settings.isPotToastsEnabled}
+              label="Pot notifications"
+              onChange={(_, data) => toggleSetting({ key: 'isPotToastsEnabled', value: data.checked })}
+            />
+          </Field>
+        </section>
+
+        <Divider />
+
+        <section className="options-panel-appearance" aria-labelledby="options-rules-heading">
+          <Text as="h3" id="options-rules-heading" weight="semibold" size={400}>Table rules</Text>
+          <Text as="p" size={200}>Changes apply at the next hand, not during the current hand.</Text>
+          <Field label="Number of decks">
+            <RadioGroup
+              layout="horizontal"
+              value={settings.numberOfDecks}
+              onChange={(_, data) => toggleSetting({ key: 'numberOfDecks', value: data.value as TableRules['numberOfDecks'] })}
+            >
+              {deckCounts.map((count) => <Radio key={count} value={count} label={count} />)}
+            </RadioGroup>
+          </Field>
+          <Field label="Dealer on soft 17">
+            <RadioGroup
+              layout="horizontal"
+              value={settings.dealerSoft17}
+              onChange={(_, data) => toggleSetting({ key: 'dealerSoft17', value: data.value as TableRules['dealerSoft17'] })}
+            >
+              <Radio value="stand" label="Stand" />
+              <Radio value="hit" label="Hit" />
+            </RadioGroup>
+          </Field>
+          <Field label="Blackjack pays">
+            <RadioGroup
+              layout="horizontal"
+              value={settings.blackjackPayout}
+              onChange={(_, data) => toggleSetting({ key: 'blackjackPayout', value: data.value as TableRules['blackjackPayout'] })}
+            >
+              {blackjackPayouts.map((payout) => <Radio key={payout} value={payout} label={payout} />)}
+            </RadioGroup>
+          </Field>
+          <Switch checked={Boolean(settings.resplit)} label="Allow resplitting" onChange={(_, data) => toggleSetting({ key: 'resplit', value: data.checked })} />
+          <Switch checked={Boolean(settings.doubleAfterSplit)} label="Double after split" onChange={(_, data) => toggleSetting({ key: 'doubleAfterSplit', value: data.checked })} />
+          <Switch checked={Boolean(settings.insurance)} label="Offer insurance" onChange={(_, data) => toggleSetting({ key: 'insurance', value: data.checked })} />
+          <Switch checked={Boolean(settings.surrender)} label="Allow late surrender" onChange={(_, data) => toggleSetting({ key: 'surrender', value: data.checked })} />
+        </section>
+
+        <Divider />
+
+        <section className="options-panel-appearance" aria-labelledby="options-appearance-heading">
+          <Text as="h3" id="options-appearance-heading" weight="semibold" size={400}>Appearance</Text>
+
+          <Field label="Theme">
+            <RadioGroup
+              layout="horizontal"
+              value={settings.themeMode}
+              onChange={(_, data) => toggleSetting({ key: 'themeMode', value: data.value as ThemeMode })}
+            >
+              {themeModeList.map((mode) => <Radio key={mode.key} value={mode.key} label={mode.label} />)}
+            </RadioGroup>
+          </Field>
+
+          <Field label="Accent color">
+            <SwatchPicker
+              aria-label="Accent color"
+              shape="circular"
+              size="small"
+              selectedValue={settings.accent}
+              onSelectionChange={(_, data) => toggleSetting({ key: 'accent', value: data.selectedValue as AccentKey })}
+            >
+              {accentKeys.map((key) => (
+                <Tooltip key={key} content={brandPresets[key].label} relationship="label">
+                  <ColorSwatch value={key} color={brandPresets[key].ramp[80]} />
+                </Tooltip>
+              ))}
+            </SwatchPicker>
+          </Field>
+
+          <Field label="Card style" hint={cardStylePresets[settings.cardStyle].description}>
+            <Dropdown
+              aria-label="Card style"
+              value={cardStylePresets[settings.cardStyle].label}
+              selectedOptions={[settings.cardStyle]}
+              onOptionSelect={(_, data) => {
+                if (data.optionValue) toggleSetting({ key: 'cardStyle', value: data.optionValue as CardStyle });
+              }}
+            >
+              {cardStyleList.map((style) => <Option key={style.key} value={style.key} text={style.label}>{style.label}</Option>)}
+            </Dropdown>
+          </Field>
+
+          <div className="options-panel-card-back">
+            <CardBackPreview height={112} />
+            <div className="options-panel-card-back-fields">
+              <Field label="Card back pattern">
+                <RadioGroup
+                  layout="horizontal"
+                  value={settings.cardBackPattern}
+                  onChange={(_, data) => toggleSetting({ key: 'cardBackPattern', value: data.value as CardBackPattern })}
+                >
+                  {cardBackPatternList.map((pattern) => <Radio key={pattern.key} value={pattern.key} label={pattern.label} />)}
+                </RadioGroup>
+              </Field>
+              <Field label="Card back color">
+                <SwatchPicker
+                  aria-label="Card back color"
+                  shape="rounded"
+                  size="small"
+                  selectedValue={settings.cardBackColor}
+                  onSelectionChange={(_, data) => toggleSetting({ key: 'cardBackColor', value: data.selectedValue as CardBackColor })}
+                >
+                  {cardBackColorList.map((color) => (
+                    <Tooltip key={color.key} content={color.label} relationship="label">
+                      <ColorSwatch value={color.key} color={`var(--${color.primary})`} />
+                    </Tooltip>
+                  ))}
+                </SwatchPicker>
+              </Field>
+            </div>
+          </div>
+
+          <div>
+            <Tooltip content="Return the theme, card style and card back to their defaults" relationship="description">
+              <Button icon={<ArrowReset20Regular />} onClick={resetAppearance}>Reset appearance</Button>
+            </Tooltip>
+          </div>
+        </section>
+
+        <Divider />
+
+        <Text weight="semibold">Chris's Blackjack</Text>
+        <Text size={200}>
+          &copy;2026 <Link href="https://github.com/codegard1/blackjack">Chris Odegard</Link>
+          <br />
+          Made in Brooklyn with <Link href="https://react.dev/">React</Link> and <Link href="https://developer.microsoft.com/en-us/fluentui">Fluent UI</Link>.
+        </Text>
+      </DrawerBody>
+    </Drawer>
+  );
+}

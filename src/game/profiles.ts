@@ -1,0 +1,409 @@
+import { BOTS, CHARACTERS, DEALER, DEALER_ID, MAX_OPPONENTS, getCharacter, isBotId, isCharacterId } from "./characters";
+import { playerDefaults, STARTING_BANK } from "./definitions";
+import { IPlayer } from "../../shared/IPlayer";
+import { IPlayerOptions } from "../../shared/IPlayerOpts";
+import { IProfileAction } from "../../shared/IProfileAction";
+import {
+  BotAccountState,
+  MAX_BALANCE_HISTORY,
+  PlayerProfile,
+  PlayerStats,
+  ProfileState,
+  cloneBotAccount,
+  isBalanceHistory,
+  isCharacterWorkState,
+  isWorkTaskId,
+} from "../../shared";
+import { chooseTask, defaultBotAccount, returnThreshold } from "./work";
+
+/** The dealer's profile id; the dealer's seat key in every game */
+export const DEALER_PROFILE_ID = DEALER_ID;
+
+export const MAX_NAME_LENGTH = 20;
+
+/**
+ * How many profiles can exist, the computer characters and the dealer included.
+ * The server accepts no more than this (netlify/lib/validate.ts), so creation stops here.
+ */
+export const MAX_PROFILES = 50;
+
+export function emptyStats(): PlayerStats {
+  return { ...playerDefaults.stats };
+}
+
+/** A fixed profile for each computer character and the dealer */
+function characterProfiles(): PlayerProfile[] {
+  return CHARACTERS.map((character) => ({
+    id: character.id,
+    name: character.name,
+    createdAt: 0,
+    stats: emptyStats(),
+    ...(isBotId(character.id) ? defaultBotAccount() : {}),
+  }));
+}
+
+/** The profiles a new install starts with: Chris to play, the computer characters, and the dealer */
+export function defaultProfileState(): ProfileState {
+  return {
+    profiles: [
+      { id: 'chris', name: 'Chris', createdAt: 0, stats: emptyStats() },
+      ...characterProfiles(),
+    ],
+    selectedId: 'chris',
+    opponentIds: [],
+  };
+}
+
+/** The profiles that can play as the human player */
+export function humanProfiles(profiles: PlayerProfile[]): PlayerProfile[] {
+  return profiles.filter((profile) => !isCharacterId(profile.id));
+}
+
+/**
+ * Explain why a name cannot be used, or return undefined when it is acceptable.
+ * Names are unique regardless of case, and the characters' names are reserved.
+ */
+export function validateProfileName(name: string, profiles: PlayerProfile[]): string | undefined {
+  const trimmed = name.trim();
+  if (trimmed === '') return 'Enter a name.';
+  if (profiles.length >= MAX_PROFILES) return `There can be up to ${MAX_PROFILES} profiles. Clear application data to start over.`;
+  if (trimmed.length > MAX_NAME_LENGTH) return `Names can be up to ${MAX_NAME_LENGTH} characters.`;
+  const lower = trimmed.toLowerCase();
+  const taken = [...profiles.map((profile) => profile.name), ...CHARACTERS.map((character) => character.name), 'Dealer'];
+  if (taken.some((existing) => existing.toLowerCase() === lower)) return 'That name is already in use.';
+  return undefined;
+}
+
+/** Keep only known computer characters, once each, in seating order, up to the limit */
+function normalizeOpponents(ids: unknown): string[] {
+  const chosen = Array.isArray(ids) ? ids.filter((id): id is string => typeof id === 'string' && isBotId(id)) : [];
+  return BOTS.map((bot) => bot.id).filter((id) => chosen.includes(id)).slice(0, MAX_OPPONENTS);
+}
+
+function normalizeBotProfileFields(profile: PlayerProfile): Partial<PlayerProfile> {
+  if (!isBotId(profile.id)) return {};
+  const bank = typeof profile.bank === 'number' && Number.isFinite(profile.bank) && profile.bank >= 0
+    ? profile.bank
+    : STARTING_BANK;
+  const balanceHistory = isBalanceHistory(profile.balanceHistory) && profile.balanceHistory.length > 0
+    ? profile.balanceHistory.slice(-MAX_BALANCE_HISTORY)
+    : [bank];
+  const work = isCharacterWorkState(profile.work) ? { ...profile.work } : undefined;
+  const taskOverride = isWorkTaskId(profile.taskOverride) ? profile.taskOverride : undefined;
+  const allowReturn = typeof profile.allowReturn === 'boolean' ? profile.allowReturn : false;
+  return {
+    bank,
+    balanceHistory,
+    ...(work ? { work } : { work: undefined }),
+    ...(taskOverride ? { taskOverride } : { taskOverride: undefined }),
+    allowReturn,
+  };
+}
+
+/**
+ * Repair a profile state read from storage: fill in missing stats, make sure every
+ * character and at least one human profile exist, give the characters their current
+ * names, and select a human profile.
+ */
+export function normalizeProfileState(state: ProfileState): ProfileState {
+  let profiles = state.profiles.map((profile) => ({
+    ...profile,
+    name: getCharacter(profile.id)?.name ?? profile.name,
+    stats: { ...emptyStats(), ...profile.stats },
+    ...normalizeBotProfileFields(profile),
+  }));
+
+  const missing = characterProfiles().filter((character) => !profiles.some((profile) => profile.id === character.id));
+  profiles = [...profiles, ...missing];
+  if (humanProfiles(profiles).length === 0) {
+    profiles = [defaultProfileState().profiles[0], ...profiles];
+  }
+
+  const humans = humanProfiles(profiles);
+  const selectedId = humans.some((profile) => profile.id === state.selectedId) ? state.selectedId : humans[0].id;
+  return { profiles, selectedId, opponentIds: normalizeOpponents(state.opponentIds) };
+}
+
+/**
+ * Update the profile store. Returns the same state when an action has no effect.
+ */
+export function profileReducer(state: ProfileState, action: IProfileAction): ProfileState {
+  switch (action.type) {
+    case 'create': {
+      if (validateProfileName(action.name, state.profiles)) return state;
+      const profile: PlayerProfile = {
+        id: `player-${state.profiles.length + 1}-${Date.now().toString(36)}`,
+        name: action.name.trim(),
+        createdAt: Date.now(),
+        stats: emptyStats(),
+      };
+      return { ...state, profiles: [...state.profiles, profile], selectedId: profile.id };
+    }
+
+    case 'select': {
+      const isHuman = humanProfiles(state.profiles).some((profile) => profile.id === action.id);
+      return isHuman ? { ...state, selectedId: action.id } : state;
+    }
+
+    case 'toggleOpponent': {
+      if (!isBotId(action.id)) return state;
+      const seated = state.opponentIds.includes(action.id);
+      if (!seated && state.opponentIds.length >= MAX_OPPONENTS) return state;
+      const ids = seated ? state.opponentIds.filter((id) => id !== action.id) : [...state.opponentIds, action.id];
+      return { ...state, opponentIds: normalizeOpponents(ids) };
+    }
+
+    case 'syncStats':
+      return {
+        ...state,
+        profiles: state.profiles.map((profile) => {
+          const nextStats = action.stats[profile.id] ? { ...action.stats[profile.id] } : profile.stats;
+          const account = isBotId(profile.id) ? action.botAccounts?.[profile.id] : undefined;
+          if (!action.stats[profile.id] && !account) return profile;
+          return {
+            ...profile,
+            stats: nextStats,
+            ...(account ? {
+              bank: account.bank,
+              balanceHistory: account.balanceHistory.slice(-MAX_BALANCE_HISTORY),
+              work: account.work ? { ...account.work } : undefined,
+              taskOverride: account.taskOverride,
+              allowReturn: account.allowReturn ?? false,
+            } : {}),
+          };
+        }),
+      };
+
+    case 'configureWork': {
+      if (!isBotId(action.id)) return state;
+      return {
+        ...state,
+        profiles: state.profiles.map((profile) => {
+          if (profile.id !== action.id) return profile;
+          let nextOverride = action.taskOverride === undefined
+            ? profile.taskOverride
+            : action.taskOverride === null ? undefined : action.taskOverride;
+          const nextAllowReturn = action.allowReturn ?? profile.allowReturn ?? false;
+          let nextWork = profile.work ? { ...profile.work } : undefined;
+          if (nextWork?.status === 'ready' && nextAllowReturn) {
+            nextWork = undefined;
+            nextOverride = undefined;
+          } else if (nextWork?.status === 'working' && action.taskOverride !== undefined) {
+            const character = getCharacter(profile.id);
+            const bank = profile.bank ?? STARTING_BANK;
+            const chosen = nextOverride ?? chooseTask(character?.stats, bank, returnThreshold(character?.stats));
+            if (chosen !== nextWork.taskId) {
+              nextWork = { status: 'working', taskId: chosen, daysWorked: 0 };
+            }
+          }
+          return {
+            ...profile,
+            taskOverride: nextOverride,
+            allowReturn: nextAllowReturn,
+            work: nextWork,
+          };
+        }),
+      };
+    }
+
+    case 'replace':
+      return normalizeProfileState(action.state);
+
+    case 'reset':
+      return defaultProfileState();
+
+    default:
+      return state;
+  }
+}
+
+/** Extract each computer character's persistent account state from the profile store */
+export function botAccountsFor(state: ProfileState): Record<string, BotAccountState> {
+  return Object.fromEntries(BOTS.map((bot) => {
+    const profile = state.profiles.find((item) => item.id === bot.id);
+    const bank = typeof profile?.bank === 'number' && Number.isFinite(profile.bank) && profile.bank >= 0
+      ? profile.bank
+      : STARTING_BANK;
+    const balanceHistory = isBalanceHistory(profile?.balanceHistory) && profile.balanceHistory.length > 0
+      ? profile.balanceHistory.slice(-MAX_BALANCE_HISTORY)
+      : [bank];
+    return [bot.id, cloneBotAccount({
+      bank,
+      balanceHistory,
+      work: isCharacterWorkState(profile?.work) ? profile.work : undefined,
+      taskOverride: isWorkTaskId(profile?.taskOverride) ? profile.taskOverride : undefined,
+      allowReturn: typeof profile?.allowReturn === 'boolean' ? profile.allowReturn : false,
+    })];
+  }));
+}
+
+/**
+ * The seats for a new game: the selected human, then the chosen computer players,
+ * then the dealer. Each seat starts with that profile's lifetime stats; computer
+ * characters also carry their persistent bank and away-working status.
+ */
+export function seatsFor(state: ProfileState): IPlayerOptions[] {
+  const defaults = defaultProfileState().profiles;
+  const humans = humanProfiles(state.profiles);
+  const human = humans.find((profile) => profile.id === state.selectedId) ?? humans[0] ?? defaults[0];
+  const statsFor = (id: string) => ({ ...(state.profiles.find((profile) => profile.id === id)?.stats ?? emptyStats()) });
+  const accounts = botAccountsFor(state);
+  const bots = BOTS.filter((bot) => (state.opponentIds ?? []).includes(bot.id));
+
+  return [
+    { key: human.id, title: human.name, isNPC: false, role: 'human', id: 1, bank: STARTING_BANK, disabled: false, stats: { ...human.stats } },
+    ...bots.map((bot, index): IPlayerOptions => {
+      const account = accounts[bot.id];
+      return {
+        key: bot.id,
+        title: bot.name,
+        isNPC: true,
+        role: 'bot',
+        id: index + 2,
+        bank: account?.bank ?? STARTING_BANK,
+        disabled: false,
+        stats: statsFor(bot.id),
+        ...(account?.work ? {
+          isSittingOut: true,
+          awayTask: account.work.taskId,
+          isReadyToReturn: account.work.status === 'ready',
+        } : {}),
+      };
+    }),
+    { key: DEALER.id, title: DEALER.name, isNPC: true, role: 'dealer', id: bots.length + 2, bank: STARTING_BANK, disabled: false, stats: statsFor(DEALER.id) },
+  ];
+}
+
+/** Each player's current stats, keyed by profile id */
+export function collectStats(players: IPlayer[]): Record<string, PlayerStats> {
+  return Object.fromEntries(players.map((player) => [player.key, { ...player.stats }]));
+}
+
+/**
+ * Sum two lifetime stat records, recomputing the win-loss ratio from the combined
+ * games played and won.
+ */
+export function mergeStats(a: PlayerStats, b: PlayerStats): PlayerStats {
+  const first = { ...emptyStats(), ...a };
+  const second = { ...emptyStats(), ...b };
+  const numberOfGamesPlayed = first.numberOfGamesPlayed + second.numberOfGamesPlayed;
+  const numberOfGamesWon = first.numberOfGamesWon + second.numberOfGamesWon;
+  return {
+    numberOfGamesPlayed,
+    numberOfGamesWon,
+    numberOfGamesLost: first.numberOfGamesLost + second.numberOfGamesLost,
+    numberOfTimesBlackjack: first.numberOfTimesBlackjack + second.numberOfTimesBlackjack,
+    numberOfTimesBusted: first.numberOfTimesBusted + second.numberOfTimesBusted,
+    totalWinnings: first.totalWinnings + second.totalWinnings,
+    netResult: (first.netResult ?? 0) + (second.netResult ?? 0),
+    winLossRatio: numberOfGamesPlayed > 0 ? Math.round((numberOfGamesWon / numberOfGamesPlayed) * 100) : 0,
+  };
+}
+
+/** Whether a profile store has any played hands, added players, chosen opponents, or updated bot accounts */
+export function hasProfileProgress(state: ProfileState): boolean {
+  const humans = humanProfiles(state.profiles);
+  return state.profiles.some((profile) => (profile.stats.numberOfGamesPlayed ?? 0) > 0
+    || (isBotId(profile.id) && (
+      (profile.bank !== undefined && profile.bank !== STARTING_BANK)
+      || (profile.balanceHistory !== undefined && (profile.balanceHistory.length > 1 || profile.balanceHistory[0] !== STARTING_BANK))
+      || profile.work !== undefined
+      || profile.taskOverride !== undefined
+      || profile.allowReturn === true
+    )))
+    || humans.some((profile) => profile.id !== 'chris' || profile.name !== 'Chris')
+    || state.opponentIds.length > 0;
+}
+
+/**
+ * Combine a Google account's remote profiles with anonymous local progress from this
+ * browser, summing lifetime statistics for matching profiles and keeping any new
+ * human profiles created locally (up to MAX_PROFILES).
+ */
+export function mergeProfileStates(remote: ProfileState, local: ProfileState): ProfileState {
+  const remoteNorm = normalizeProfileState(remote);
+  const localNorm = normalizeProfileState(local);
+  if (!hasProfileProgress(localNorm)) return remoteNorm;
+
+  const remoteUntouched = !hasProfileProgress(remoteNorm);
+  const localHumans = humanProfiles(localNorm.profiles);
+  const matchedLocalIds = new Set<string>();
+
+  const mergedProfiles: PlayerProfile[] = remoteNorm.profiles.map((remoteProfile) => {
+    if (isCharacterId(remoteProfile.id)) {
+      const localChar = localNorm.profiles.find((p) => p.id === remoteProfile.id);
+      if (!localChar) return remoteProfile;
+      const base = remoteUntouched ? localChar : remoteProfile;
+      return { ...base, stats: mergeStats(remoteProfile.stats, localChar.stats) };
+    }
+    const localMatch = localHumans.find(
+      (p) => !matchedLocalIds.has(p.id) && (p.id === remoteProfile.id || p.name.toLowerCase() === remoteProfile.name.toLowerCase()),
+    );
+    if (!localMatch) return remoteProfile;
+    matchedLocalIds.add(localMatch.id);
+    return {
+      ...remoteProfile,
+      createdAt: remoteProfile.createdAt > 0 && localMatch.createdAt > 0
+        ? Math.min(remoteProfile.createdAt, localMatch.createdAt)
+        : remoteProfile.createdAt || localMatch.createdAt,
+      stats: mergeStats(remoteProfile.stats, localMatch.stats),
+    };
+  });
+
+  for (const localHuman of localHumans) {
+    if (matchedLocalIds.has(localHuman.id)) continue;
+    if (mergedProfiles.length >= MAX_PROFILES) break;
+    // Skip an untouched default 'Chris' profile when the remote account already has its own humans
+    if (localHuman.id === 'chris' && localHuman.stats.numberOfGamesPlayed === 0 && localNorm.selectedId !== 'chris') continue;
+    mergedProfiles.push({ ...localHuman, stats: { ...emptyStats(), ...localHuman.stats } });
+  }
+
+  let selectedId = remoteNorm.selectedId;
+  if (remoteUntouched) {
+    const localSelected = localHumans.find((p) => p.id === localNorm.selectedId);
+    const mergedSelected = localSelected
+      ? mergedProfiles.find((p) => !isCharacterId(p.id) && (p.id === localSelected.id || p.name.toLowerCase() === localSelected.name.toLowerCase()))
+      : undefined;
+    if (mergedSelected) selectedId = mergedSelected.id;
+  }
+
+  const opponentIds = remoteUntouched && localNorm.opponentIds.length > 0
+    ? localNorm.opponentIds
+    : remoteNorm.opponentIds;
+
+  return normalizeProfileState({
+    profiles: mergedProfiles,
+    selectedId,
+    opponentIds,
+  });
+}
+
+export type StatsSummary = {
+  rounds: number;
+  won: number;
+  lost: number;
+  pushed: number;
+  /** undefined until a hand has been played */
+  winRate?: number;
+  blackjacks: number;
+  busts: number;
+  /** bank change across every settled hand; negative when down */
+  net: number;
+};
+
+/** Turn the raw stats into the figures shown to the player */
+export function summarizeStats(stats: PlayerStats): StatsSummary {
+  const rounds = stats.numberOfGamesPlayed;
+  const won = stats.numberOfGamesWon;
+  const lost = stats.numberOfGamesLost;
+  return {
+    rounds,
+    won,
+    lost,
+    pushed: Math.max(0, rounds - won - lost),
+    winRate: rounds > 0 ? won / rounds : undefined,
+    blackjacks: stats.numberOfTimesBlackjack,
+    busts: stats.numberOfTimesBusted,
+    net: stats.netResult ?? 0,
+  };
+}

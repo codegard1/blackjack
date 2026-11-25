@@ -1,6 +1,6 @@
 import { teamsHighContrastTheme, webDarkTheme, webLightTheme } from '@fluentui/react-components';
 import { describe, expect, it } from 'vitest';
-import { accentKeys } from '../types';
+import { accentKeys } from '../../shared';
 import { brandPresets } from './brand';
 import { createAppTheme, resolveThemeMode, themeForSettings } from './createAppTheme';
 

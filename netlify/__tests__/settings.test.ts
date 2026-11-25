@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { settingDefaults } from '../../src/types/SettingState';
+import { settingDefaults } from '../../shared/SettingState';
 import { resetIndexes } from '../lib/handler';
 import { ConfigError } from '../lib/mongo';
 import { mintOwnerId } from '../lib/owner';

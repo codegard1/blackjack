@@ -1,8 +1,9 @@
-import type { IPlayer, IPlayerStoreState } from '../../src/interfaces';
-import type { ActivityLogEntry, DeckState, PlayerHand, SavedGame, SavedGameSnapshot } from '../../src/types';
-import { cloneSessionSummary, isSessionSummary } from '../../src/functions/session';
-import { isTableRules, tableRulesFrom } from '../../src/types/TableRules';
-import { cloneBotAccounts, isBotAccountState, isWorkTaskId } from '../../src/types/Work';
+import type { IPlayer } from '../../shared/IPlayer';
+import type { IPlayerStoreState } from '../../shared/IPlayerStore';
+import type { ActivityLogEntry, DeckState, PlayerHand, SavedGame, SavedGameSnapshot } from '../../shared';
+import { cloneSessionSummary, isSessionSummary } from '../../shared/SessionSummary';
+import { isTableRules, tableRulesFrom } from '../../shared/TableRules';
+import { cloneBotAccounts, isBotAccountState, isWorkTaskId } from '../../shared/Work';
 import { isFiniteNumber, isObject, isStats, parseJsonBody } from './validate';
 
 /**

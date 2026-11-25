@@ -1,5 +1,5 @@
-import type { PlayerProfile, PlayerStats, ProfileState } from '../../src/types';
-import { isBalanceHistory, isCharacterWorkState, isWorkTaskId } from '../../src/types/Work';
+import type { PlayerProfile, PlayerStats, ProfileState } from '../../shared';
+import { isBalanceHistory, isCharacterWorkState, isWorkTaskId } from '../../shared/Work';
 
 /** The document stored for each owner: the profiles plus when they were last written */
 export type ProfileDocument = {

@@ -6,14 +6,28 @@ import { Card, FluentProvider, Text, makeStyles, tokens } from '@fluentui/react-
 
 // Local Resources
 import './App.css';
-import { AppHeader, Table } from './components';
+import { AppHeader, Table } from './ui';
 
-const OptionsPanel = React.lazy(() => import('./components/OptionsPanel').then((m) => ({ default: m.OptionsPanel })));
-const PlayersDialog = React.lazy(() => import('./components/PlayersDialog').then((m) => ({ default: m.PlayersDialog })));
-import { GameContext, GameDispatchContext, GameStatusContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext, useSettingContext } from './context';
-import { GameAction, GameStatus } from './enums';
-import { allPlayers, botAccountsFor, collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync, useSettingSync, useTabLock } from './functions';
-import { GameReducerAction } from './interfaces';
+const OptionsPanel = React.lazy(() => import('./ui/OptionsPanel').then((m) => ({ default: m.OptionsPanel })));
+const PlayersDialog = React.lazy(() => import('./ui/PlayersDialog').then((m) => ({ default: m.PlayersDialog })));
+import { GameContext, GameDispatchContext, GameStatusContext } from './game/GameContext';
+import { PlayersDialogContext } from './ui/PlayersDialogContext';
+import { ProfileContext, ProfileDispatchContext } from './game/ProfileContext';
+import { SettingContext, SettingDispatchContext, useSettingContext } from './game/SettingContext';
+import { GameAction, GameStatus } from '../shared';
+import { allPlayers } from './game/playerStore';
+import { botAccountsFor, collectStats, profileReducer, seatsFor } from './game/profiles';
+import { gameReducer } from './game/gameReducer';
+import { isBetweenHands, rosterSignature } from './game/round';
+import { loadGameState, loadProfiles, loadSettings, saveGameState, saveProfiles, saveSettings } from './sync/persistence';
+import { settingReducer } from './game/settingReducer';
+import { stampAction } from './game/random';
+import { useCommunitySync } from './game/community';
+import { useGameSync } from './sync/useGameSync';
+import { useProfileSync } from './sync/useProfileSync';
+import { useSettingSync } from './sync/useSettingSync';
+import { useTabLock } from './sync/useTabLock';
+import { GameReducerAction } from '../shared/GameReducerAction';
 import { createAppTheme, isDarkMode, PAGE_GUTTER, resolveThemeMode, usePrefersDark } from './theme';
 
 // The page behind the table: a striped felt drawn from the brand color, so it follows

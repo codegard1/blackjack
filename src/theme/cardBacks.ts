@@ -1,4 +1,4 @@
-import { CardBackColor, CardBackPattern, cardBackColors, cardBackPatterns } from '../types';
+import { CardBackColor, CardBackPattern, cardBackColors, cardBackPatterns } from '../../shared';
 
 /**
  * Card back design system. A back is the product of two independent axes: a
