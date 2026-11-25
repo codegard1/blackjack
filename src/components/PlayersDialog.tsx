@@ -41,9 +41,10 @@ import { WORK_TASKS, chooseTask, describeCharacterWork, returnThreshold } from '
 import { IPlayersDialogProps } from '../interfaces/IPlayersDialogProps';
 import { isWorkTaskId } from '../types';
 import { BalanceChart } from './BalanceChart';
-import { CharacterDialog } from './CharacterCard';
 import { CharacterPortrait } from './CharacterPortrait';
 import { GoogleAccountSection } from './GoogleAccountSection';
+
+const CharacterDialog = React.lazy(() => import('./CharacterCard').then((m) => ({ default: m.CharacterDialog })));
 
 const useStyles = makeStyles({
   surface: {
@@ -401,15 +402,19 @@ export const PlayersDialog: React.FC<IPlayersDialogProps> = (props) => {
           </DialogActions>
         </DialogBody>
         {/* nested inside the surface: a Dialog's own children are read as its trigger and surface */}
-        <CharacterDialog
-          character={getCharacter(characterId)}
-          stats={profiles.profiles.find((profile) => profile.id === characterId)?.stats}
-          account={characterId ? (activeBotAccounts[characterId] ?? profileBotAccounts[characterId]) : undefined}
-          minimumBet={gameState.minimumBet}
-          isSeated={characterId ? profiles.opponentIds.includes(characterId) : false}
-          open={!!characterId}
-          onOpenChange={(isOpen) => { if (!isOpen) setCharacterId(undefined); }}
-        />
+        {characterId && (
+          <React.Suspense fallback={null}>
+            <CharacterDialog
+              character={getCharacter(characterId)}
+              stats={profiles.profiles.find((profile) => profile.id === characterId)?.stats}
+              account={activeBotAccounts[characterId] ?? profileBotAccounts[characterId]}
+              minimumBet={gameState.minimumBet}
+              isSeated={profiles.opponentIds.includes(characterId)}
+              open={!!characterId}
+              onOpenChange={(isOpen) => { if (!isOpen) setCharacterId(undefined); }}
+            />
+          </React.Suspense>
+        )}
       </DialogSurface>
     </Dialog>
   );

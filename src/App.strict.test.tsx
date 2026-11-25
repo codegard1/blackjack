@@ -17,10 +17,11 @@ type SavedEntry = { event?: string; description: string };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- what the game saved, read back as it is
 const saved = (store: StoreName): any => JSON.parse(localStorage.getItem(store)!);
 
-it('plays two hands under strict mode, which runs every reducer and effect twice, without doing anything twice', () => {
+it('plays two hands under strict mode, which runs every reducer and effect twice, without doing anything twice', async () => {
   render(<React.StrictMode><App /></React.StrictMode>);
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   const dialog = screen.getByRole('dialog', { name: 'Players' });
   fireEvent.click(within(dialog).getByRole('checkbox', { name: /Ogion/ }));
   fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));

@@ -6,7 +6,10 @@ import { Card, FluentProvider, Text, makeStyles, tokens } from '@fluentui/react-
 
 // Local Resources
 import './App.css';
-import { AppHeader, OptionsPanel, PlayersDialog, Table } from './components';
+import { AppHeader, Table } from './components';
+
+const OptionsPanel = React.lazy(() => import('./components/OptionsPanel').then((m) => ({ default: m.OptionsPanel })));
+const PlayersDialog = React.lazy(() => import('./components/PlayersDialog').then((m) => ({ default: m.PlayersDialog })));
 import { GameContext, GameDispatchContext, PlayersDialogContext, ProfileContext, ProfileDispatchContext, SettingContext, SettingDispatchContext, useSettingContext } from './context';
 import { GameAction, GameStatus } from './enums';
 import { allPlayers, botAccountsFor, collectStats, gameReducer, isBetweenHands, loadGameState, loadProfiles, loadSettings, profileReducer, rosterSignature, saveGameState, saveProfiles, saveSettings, seatsFor, settingReducer, stampAction, useCommunitySync, useGameSync, useProfileSync, useSettingSync, useTabLock } from './functions';
@@ -50,7 +53,15 @@ const ActiveGame: React.FC = () => {
   const [profiles, profileDispatch] = React.useReducer(profileReducer, undefined, loadProfiles);
   // The Players dialog opens from the header and from the end-of-hand controls
   const [isPlayersOpen, setPlayersOpen] = React.useState(false);
-  const openPlayers = React.useCallback(() => setPlayersOpen(true), []);
+  const [hasOpenedPlayers, setHasOpenedPlayers] = React.useState(false);
+  const [hasOpenedOptions, setHasOpenedOptions] = React.useState(settings.isOptionsPanelVisible);
+  if (settings.isOptionsPanelVisible && !hasOpenedOptions) {
+    setHasOpenedOptions(true);
+  }
+  const openPlayers = React.useCallback(() => {
+    setHasOpenedPlayers(true);
+    setPlayersOpen(true);
+  }, []);
 
   // Persist game and player profiles so a reload resumes where the player left off
   React.useEffect(() => saveGameState(gameState), [gameState]);
@@ -115,11 +126,19 @@ const ActiveGame: React.FC = () => {
           <GameDispatchContext.Provider value={gameDispatch}>
             <PlayersDialogContext.Provider value={openPlayers}>
               <AppHeader />
-              <OptionsPanel />
+              {hasOpenedOptions && (
+                <React.Suspense fallback={null}>
+                  <OptionsPanel />
+                </React.Suspense>
+              )}
               <div className="app-content">
                 <Table />
               </div>
-              <PlayersDialog open={isPlayersOpen} onOpenChange={setPlayersOpen} />
+              {hasOpenedPlayers && (
+                <React.Suspense fallback={null}>
+                  <PlayersDialog open={isPlayersOpen} onOpenChange={setPlayersOpen} />
+                </React.Suspense>
+              )}
             </PlayersDialogContext.Provider>
           </GameDispatchContext.Provider>
         </GameContext.Provider>

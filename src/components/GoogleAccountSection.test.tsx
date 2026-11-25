@@ -17,10 +17,11 @@ afterEach(() => {
 });
 
 describe('GoogleAccountSection in PlayersDialog', () => {
-  it('stays hidden when no VITE_GOOGLE_CLIENT_ID is configured and no user is signed in', () => {
+  it('stays hidden when no VITE_GOOGLE_CLIENT_ID is configured and no user is signed in', async () => {
     vi.stubEnv('VITE_GOOGLE_CLIENT_ID', '');
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+    await act(async () => { await vi.dynamicImportSettled(); });
     const dialog = screen.getByRole('dialog', { name: 'Players' });
     expect(within(dialog).queryByRole('heading', { name: 'Google Account' })).not.toBeInTheDocument();
   });
@@ -57,6 +58,7 @@ describe('GoogleAccountSection in PlayersDialog', () => {
 
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+    await act(async () => { await vi.dynamicImportSettled(); });
     const dialog = screen.getByRole('dialog', { name: 'Players' });
 
     // Create a local player before signing in
@@ -107,6 +109,7 @@ describe('GoogleAccountSection in PlayersDialog', () => {
 
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+    await act(async () => { await vi.dynamicImportSettled(); });
     const dialog = screen.getByRole('dialog', { name: 'Players' });
 
     const signInButton = await within(dialog).findByRole('button', { name: 'Sign in with Google' });
@@ -118,7 +121,7 @@ describe('GoogleAccountSection in PlayersDialog', () => {
     expect(within(dialog).getByRole('alert')).toHaveTextContent('Invalid Google credential.');
   });
 
-  it('resets bot account work settings and app settings on sign-out even after a game has started', () => {
+  it('resets bot account work settings and app settings on sign-out even after a game has started', async () => {
     saveSyncState({
       ownerId: GOOGLE_OWNER,
       user: { name: 'Chris Odegard', email: 'chris@example.com' },
@@ -127,12 +130,14 @@ describe('GoogleAccountSection in PlayersDialog', () => {
 
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    await act(async () => { await vi.dynamicImportSettled(); });
     fireEvent.click(screen.getByRole('radio', { name: 'Light' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
     expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'light');
 
     fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
     fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+    await act(async () => { await vi.dynamicImportSettled(); });
     const dialog = screen.getByRole('dialog', { name: 'Players' });
 
     const ogionItem = within(dialog).getByRole('checkbox', { name: /Ogion/ }).closest('li')!;

@@ -272,7 +272,7 @@ it("keeps the dealer above the stage while its hole card turns over after the hu
   vi.useRealTimers();
 });
 
-it("turns the dealer's hole card over where it waits when Show Dealer Hand is switched on, holding play until it has", () => {
+it("turns the dealer's hole card over where it waits when Show Dealer Hand is switched on, holding play until it has", async () => {
   allowMotion();
   vi.mocked(dealCards).mockImplementation(rigDeal({
     chris: ['Spade_10', 'Diamond_7'],
@@ -292,6 +292,7 @@ it("turns the dealer's hole card over where it waits when Show Dealer Hand is sw
   expect(screen.getByRole('button', { name: 'Stay' })).not.toHaveAttribute('aria-disabled');
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   fireEvent.click(screen.getByRole('switch', { name: 'Show Dealer Hand' }));
   fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
 
@@ -332,7 +333,7 @@ it("shows the dealer's hand as cards among the seats still to play during the hu
   expect(screen.getByRole('region', { name: "Chris's hand" }).closest('.table-focus')).not.toBeNull();
 });
 
-it('forgets a pinned seat and an open pot breakdown when the game is reset and started again', () => {
+it('forgets a pinned seat and an open pot breakdown when the game is reset and started again', async () => {
   // hands that leave the human a turn to take; a natural would end the round on the deal
   vi.mocked(dealCards).mockImplementation(rigDeal({
     chris: ['Spade_10', 'Diamond_7'],
@@ -356,6 +357,7 @@ it('forgets a pinned seat and an open pot breakdown when the game is reset and s
 
   // a new game reaches the same hand number, status and turn; neither choice may come back with it
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   fireEvent.click(screen.getByRole('button', { name: 'Clear application data stored locally in the browser' }));
   startAndDeal();
   expect(stageKey()).toBe('chris');

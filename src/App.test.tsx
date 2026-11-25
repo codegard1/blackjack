@@ -61,7 +61,7 @@ it.each([
   expect(log().getByText('Round 2 started')).toBeInTheDocument();
 });
 
-it('replaces the controls with Next hand and Change players when the hand ends', () => {
+it('replaces the controls with Next hand and Change players when the hand ends', async () => {
   vi.mocked(dealCards).mockImplementation(rigDeal({
     chris: ['Spade_10', 'Diamond_7'],
     dealer: ['Club_10', 'Heart_7'],
@@ -94,6 +94,7 @@ it('replaces the controls with Next hand and Change players when the hand ends',
 
   // Change players opens the same dialog as the header button
   fireEvent.click(screen.getByRole('button', { name: 'Change players' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   expect(screen.getByRole('dialog', { name: 'Players' })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
@@ -133,20 +134,21 @@ describe('changing the roster', () => {
     }));
     vi.mocked(drawCards).mockImplementation((deck) => ({ deck, drawn: ['Heart_5'] }));
   };
-  const toggleOgion = () => {
+  const toggleOgion = async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Players' }));
+    await act(async () => { await vi.dynamicImportSettled(); });
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Players' })).getByRole('checkbox', { name: 'Ogion, The Rock' }));
   };
   const closePlayers = () => fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
-  it('ignores roster changes while a hand is in play, then seats them for the next hand', () => {
+  it('ignores roster changes while a hand is in play, then seats them for the next hand', async () => {
     mockBustableHand();
     vi.useFakeTimers();
     const { container } = render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
     fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
-    toggleOgion();
+    await toggleOgion();
     expect(within(screen.getByRole('dialog', { name: 'Players' })).getByText(/Changes apply from the next hand/)).toBeInTheDocument();
     closePlayers();
     expect(container.querySelector('[data-seat-key="ogion"]')).not.toBeInTheDocument();
@@ -162,7 +164,7 @@ describe('changing the roster', () => {
     expect(screen.getByRole('toolbar')).toBeInTheDocument();
   });
 
-  it('updates the table at once when the roster changes between hands', () => {
+  it('updates the table at once when the roster changes between hands', async () => {
     mockBustableHand();
     const { container } = render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
@@ -170,6 +172,7 @@ describe('changing the roster', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Change players' }));
+    await act(async () => { await vi.dynamicImportSettled(); });
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Players' })).getByRole('checkbox', { name: 'Ogion, The Rock' }));
     expect(container.querySelector('[data-seat-key="ogion"]')).toBeInTheDocument();
 
@@ -178,7 +181,7 @@ describe('changing the roster', () => {
   });
 });
 
-it('starts a new game with the selected player and the dealer', () => {
+it('starts a new game with the selected player and the dealer', async () => {
   render(<App />);
 
   // before the game starts, the seats for the next game float on the table
@@ -194,12 +197,13 @@ it('starts a new game with the selected player and the dealer', () => {
   expect(screen.getByRole('button', { name: 'Draw one card from the top of the deck (H)' })).toBeDisabled();
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   fireEvent.click(screen.getByText('Reset Game'));
 
   expect(screen.getByRole('button', { name: 'Start game' })).toBeInTheDocument();
 });
 
-it('always shows card ranks and opens the activity log drawer by default from the setting', () => {
+it('always shows card ranks and opens the activity log drawer by default from the setting', async () => {
   vi.useFakeTimers();
   vi.mocked(dealCards).mockImplementation(rigDeal({
     chris: ['Spade_10', 'Diamond_7'],
@@ -230,6 +234,7 @@ it('always shows card ranks and opens the activity log drawer by default from th
   fireEvent.click(screen.getByRole('button', { name: /^Chris \(\$/ }));
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   expect(screen.queryByRole('switch', { name: 'Show Card Titles' })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
 
@@ -255,11 +260,12 @@ it('always shows card ranks and opens the activity log drawer by default from th
   expect(screen.getAllByText('was dealt two cards')).toHaveLength(2);
 });
 
-it('clears in-memory game state and returns to player selection', () => {
+it('clears in-memory game state and returns to player selection', async () => {
   render(<App />);
 
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  await act(async () => { await vi.dynamicImportSettled(); });
   fireEvent.click(screen.getByRole('button', { name: 'Clear application data stored locally in the browser' }));
 
   expect(screen.getByRole('button', { name: 'Start game' })).toBeInTheDocument();
