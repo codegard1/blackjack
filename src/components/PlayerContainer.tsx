@@ -74,8 +74,13 @@ const useStyles = makeStyles({
     rowGap: tokens.spacingVerticalXXS,
   },
   tagline: {
+    display: 'block',
+    flex: '1 1 auto',
+    maxWidth: '100%',
     fontStyle: 'italic',
     color: tokens.colorNeutralForeground3,
+    overflowWrap: 'anywhere',
+    whiteSpace: 'normal',
   },
   body: {
     display: 'flex',
