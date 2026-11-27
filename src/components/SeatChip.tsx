@@ -133,7 +133,7 @@ const useStyles = makeStyles({
  * A collapsed seat: the player's name and bank, an optional status and hand total,
  * and the player's cards when given
  */
-export const SeatChip: React.FC<ISeatChipProps> = (props) => {
+export const SeatChip: React.FC<ISeatChipProps> = React.memo((props) => {
   const { player, status, total, cards, floating, index, focus, onSelect } = props;
   const styles = useStyles();
 
@@ -163,7 +163,7 @@ export const SeatChip: React.FC<ISeatChipProps> = (props) => {
   );
 
   const info = onSelect
-    ? <button type="button" className={mergeClasses(styles.info, styles.selectable)} onClick={onSelect}>{infoContent}</button>
+    ? <button type="button" className={mergeClasses(styles.info, styles.selectable)} onClick={() => onSelect(player.key)}>{infoContent}</button>
     : <div className={styles.info}>{infoContent}</div>;
 
   return (
@@ -172,4 +172,4 @@ export const SeatChip: React.FC<ISeatChipProps> = (props) => {
       {cards && cards.length > 0 && <CardStack cards={cards} hidden={false} isSelectable={false} player={player} title={player.title} variant="mini" />}
     </div>
   );
-}
+});

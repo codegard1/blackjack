@@ -29,7 +29,7 @@ import {
 
 // Context
 import { CardBackPreview } from "./CardBackPreview";
-import { useGameContext, useProfileContext, useSettingContext } from "../context";
+import { useGameDispatch, useProfileContext, useSettingContext } from "../context";
 import { GameAction } from "../enums";
 import { clearStores } from "../functions";
 import { brandPresets, cardBackColorList, cardBackPatternList, cardStyleList, cardStylePresets, themeModeList } from "../theme";
@@ -39,7 +39,7 @@ export const OptionsPanel: React.FC = () => {
 
   // Context
   const { settings, toggleSetting } = useSettingContext();
-  const { gameDispatch } = useGameContext();
+  const gameDispatch = useGameDispatch();
   const { profileDispatch } = useProfileContext();
 
   const closeOptionsPanel = () => {

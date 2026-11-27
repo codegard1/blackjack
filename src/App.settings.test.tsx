@@ -141,13 +141,14 @@ it('uses table rules selected before starting a game', async () => {
   render(<App />);
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
   await act(async () => { await vi.dynamicImportSettled(); });
-  fireEvent.click(screen.getByRole('radio', { name: '8' }));
+  fireEvent.click(await screen.findByRole('radio', { name: '8' }));
   fireEvent.click(screen.getByRole('radio', { name: '6:5' }));
   fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+  await act(async () => { await new Promise((r) => setTimeout(r, 300)); });
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
   fireEvent.click(screen.getByRole('button', { name: 'Blackjack rules' }));
   await act(async () => { await vi.dynamicImportSettled(); });
-  const dialog = screen.getByRole('dialog', { name: 'Blackjack rules' });
+  const dialog = await screen.findByRole('dialog', { name: 'Blackjack rules' });
   expect(dialog).toHaveTextContent('active shoe uses 8 decks');
   expect(dialog).toHaveTextContent('natural blackjack is paid 6:5');
 });

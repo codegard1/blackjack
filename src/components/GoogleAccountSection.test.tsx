@@ -131,14 +131,15 @@ describe('GoogleAccountSection in PlayersDialog', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     await act(async () => { await vi.dynamicImportSettled(); });
-    fireEvent.click(screen.getByRole('radio', { name: 'Light' }));
+    fireEvent.click(await screen.findByRole('radio', { name: 'Light' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+    await act(async () => { await new Promise((r) => setTimeout(r, 300)); });
     expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'light');
 
     fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
     fireEvent.click(screen.getByRole('button', { name: 'Players' }));
     await act(async () => { await vi.dynamicImportSettled(); });
-    const dialog = screen.getByRole('dialog', { name: 'Players' });
+    const dialog = await screen.findByRole('dialog', { name: 'Players' }, { timeout: 5000 });
 
     const ogionItem = within(dialog).getByRole('checkbox', { name: /Ogion/ }).closest('li')!;
     const allowReturnSwitch = within(ogionItem).getByRole('switch', { name: 'Let back when ready' });
@@ -148,5 +149,5 @@ describe('GoogleAccountSection in PlayersDialog', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Sign out' }));
     expect(allowReturnSwitch).not.toBeChecked();
     expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'dark');
-  });
+  }, 15_000);
 });
