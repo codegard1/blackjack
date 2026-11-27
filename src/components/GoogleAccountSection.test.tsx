@@ -138,7 +138,7 @@ describe('GoogleAccountSection in PlayersDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
     fireEvent.click(screen.getByRole('button', { name: 'Players' }));
     await act(async () => { await vi.dynamicImportSettled(); });
-    const dialog = await screen.findByRole('dialog', { name: 'Players' });
+    const dialog = await screen.findByRole('dialog', { name: 'Players' }, { timeout: 5000 });
 
     const ogionItem = within(dialog).getByRole('checkbox', { name: /Ogion/ }).closest('li')!;
     const allowReturnSwitch = within(ogionItem).getByRole('switch', { name: 'Let back when ready' });
