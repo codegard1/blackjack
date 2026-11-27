@@ -316,7 +316,7 @@ export const ControlPanel: React.FC<IControlPanelProps> = (props) => {
 
         {!npcFlag && (
           <Tooltip content="Deal a new round (Enter or N)" relationship="description">
-            <ToolbarButton className={styles.button} aria-label="Deal" appearance={isRoundComplete ? 'primary' : 'subtle'} icon={<ArrowClockwise20Regular />} disabled={isDealDisabled} disabledFocusable={waitUnless(isDealDisabled)} onClick={deal}>
+            <ToolbarButton className={styles.button} aria-label="Deal" appearance={isDealDisabled ? 'subtle' : 'primary'} icon={<ArrowClockwise20Regular />} disabled={isDealDisabled} disabledFocusable={waitUnless(isDealDisabled)} onClick={deal}>
               <Label>Deal</Label>
             </ToolbarButton>
           </Tooltip>

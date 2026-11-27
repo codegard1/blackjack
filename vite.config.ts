@@ -41,6 +41,16 @@ export default defineConfig(({ command, mode }) => {
     server: {
       host: '0.0.0.0',
       port: 3000,
+      headers: isDevServer
+        ? {
+            'Content-Security-Policy':
+              "default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; " +
+              "style-src 'self' 'unsafe-inline' https://accounts.google.com; " +
+              "img-src 'self' data: https://*.googleusercontent.com; " +
+              "connect-src 'self' ws: wss: https://accounts.google.com; frame-src https://accounts.google.com; " +
+              "worker-src 'self' blob:; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+          }
+        : undefined,
     },
     build: {
       outDir: 'dist',
