@@ -68,21 +68,23 @@ it('carries a settled round into each player\'s statistics, including the next g
   fireEvent.click(screen.getByRole('button', { name: 'Deal' }));
 
   // Chris has blackjack: 3:2 on a $25 stake wins $37
-  const statsRow = (name: string) => {
-    const table = screen.getByRole('table', { name: 'Player statistics' });
-    const row = within(table).getAllByRole('row').find((candidate) => candidate.textContent?.startsWith(name));
+  const statsRow = async (name: string) => {
+    const dialog = await screen.findByRole('dialog', { name: 'Players' });
+    const table = within(dialog).getByRole('table', { name: 'Player statistics' });
+    const rows = await within(table).findAllByRole('row');
+    const row = rows.find((candidate) => candidate.textContent?.startsWith(name));
     return within(row!).getAllByRole('cell').map((cell) => cell.textContent).slice(1);
   };
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
   await act(async () => { await vi.dynamicImportSettled(); });
-  expect(statsRow('Chris')).toEqual(['1', '1', '0', '0', '100%', '1', '0', '+$37']);
+  expect(await statsRow('Chris')).toEqual(['1', '1', '0', '0', '100%', '1', '0', '+$37']);
   // Faxe's record is the simulated history plus this lost round, which paid Chris $37
   const history = CHARACTER_HISTORY.stats.dealer;
   const n = (value: number) => value.toLocaleString('en-US');
   const rounds = history.numberOfGamesPlayed + 1;
   const lost = history.numberOfGamesLost + 1;
-  expect(statsRow('Faxe')).toEqual([
+  expect(await statsRow('Faxe')).toEqual([
     n(rounds), n(history.numberOfGamesWon), n(lost), n(rounds - history.numberOfGamesWon - lost),
     `${Math.round((history.numberOfGamesWon / rounds) * 100)}%`,
     n(history.numberOfTimesBlackjack), n(history.numberOfTimesBusted), formatNet(history.netResult - 37),
@@ -91,12 +93,12 @@ it('carries a settled round into each player\'s statistics, including the next g
 
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
   await act(async () => { await vi.dynamicImportSettled(); });
-  fireEvent.click(screen.getByText('Reset Game'));
+  fireEvent.click(await screen.findByText('Reset Game'));
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
   await act(async () => { await vi.dynamicImportSettled(); });
-  expect(statsRow('Chris')[0]).toBe('1');
+  expect((await statsRow('Chris'))[0]).toBe('1');
 });
 
 it('seats chosen computer players, who play their turns before the dealer', async () => {
@@ -335,7 +337,7 @@ it("overrides a character's work task from the Players dialog before and during 
   // Before the game starts, override Ogion's task from his own pick (gobrin-ice) to weaving-baskets
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
   await act(async () => { await vi.dynamicImportSettled(); });
-  let dialog = screen.getByRole('dialog', { name: 'Players' });
+  let dialog = await screen.findByRole('dialog', { name: 'Players' });
   const taskSelect = within(dialog).getByRole<HTMLSelectElement>('combobox', { name: "Ogion's work task" });
   expect(taskSelect.value).toBe('gobrin-ice');
   expect(within(taskSelect).getByRole('option', { name: /Hauling a sledge across the Gobrin Ice.*\(character's pick\)/ })).toBeInTheDocument();
@@ -358,7 +360,7 @@ it("overrides a character's work task from the Players dialog before and during 
   // Switching the task in the Players dialog while the game is active updates the live work state at once
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
   await act(async () => { await vi.dynamicImportSettled(); });
-  dialog = screen.getByRole('dialog', { name: 'Players' });
+  dialog = await screen.findByRole('dialog', { name: 'Players' });
   expect(within(dialog).getByText('Away working: Weaving baskets (7 days left, +$1) · $10 / $300')).toBeInTheDocument();
 
   const liveSelect = within(dialog).getByRole<HTMLSelectElement>('combobox', { name: "Ogion's work task" });
