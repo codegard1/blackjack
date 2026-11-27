@@ -133,6 +133,7 @@ describe('GoogleAccountSection in PlayersDialog', () => {
     await act(async () => { await vi.dynamicImportSettled(); });
     fireEvent.click(await screen.findByRole('radio', { name: 'Light' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close options' }));
+    await act(async () => { await new Promise((r) => setTimeout(r, 300)); });
     expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'light');
 
     fireEvent.click(screen.getByRole('button', { name: 'Start game' }));

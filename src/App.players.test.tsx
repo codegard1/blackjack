@@ -95,6 +95,8 @@ it('carries a settled round into each player\'s statistics, including the next g
   await act(async () => { await vi.dynamicImportSettled(); });
   fireEvent.click(await screen.findByText('Reset Game'));
   await waitFor(() => expect(screen.queryByText('Reset Game')).not.toBeInTheDocument());
+  // Let Fluent UI / tabster's 250ms modalizer cleanup timers settle before opening the next dialog
+  await act(async () => { await new Promise((r) => setTimeout(r, 300)); });
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
@@ -353,6 +355,7 @@ it("overrides a character's work task from the Players dialog before and during 
   expect(taskSelect.value).toBe('weaving-baskets');
 
   fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+  await act(async () => { await new Promise((r) => setTimeout(r, 300)); });
 
   // Starting the game runs collectAntes: broke Ogion ($10 < $25) leaves to work on the overridden task
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
