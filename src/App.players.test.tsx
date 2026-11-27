@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { dealCards, emptyHand } from './functions/deck';
 import { handValue } from './functions/getHandValue';
@@ -94,6 +94,7 @@ it('carries a settled round into each player\'s statistics, including the next g
   fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
   await act(async () => { await vi.dynamicImportSettled(); });
   fireEvent.click(await screen.findByText('Reset Game'));
+  await waitFor(() => expect(screen.queryByText('Reset Game')).not.toBeInTheDocument());
   fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
 
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
