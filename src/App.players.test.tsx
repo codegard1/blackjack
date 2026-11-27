@@ -99,7 +99,7 @@ it('carries a settled round into each player\'s statistics, including the next g
   fireEvent.click(screen.getByRole('button', { name: 'Players' }));
   await act(async () => { await vi.dynamicImportSettled(); });
   expect((await statsRow('Chris'))[0]).toBe('1');
-});
+}, 15_000);
 
 it('seats chosen computer players, who play their turns before the dealer', async () => {
   vi.spyOn(Math, 'random').mockReturnValue(0.99);

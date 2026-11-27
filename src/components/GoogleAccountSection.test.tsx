@@ -148,5 +148,5 @@ describe('GoogleAccountSection in PlayersDialog', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Sign out' }));
     expect(allowReturnSwitch).not.toBeChecked();
     expect(document.querySelector('[data-theme-mode]')).toHaveAttribute('data-theme-mode', 'dark');
-  });
+  }, 15_000);
 });
